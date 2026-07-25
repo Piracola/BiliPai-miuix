@@ -17,7 +17,7 @@ java -version
 | 工具 | 用途 | 局限 |
 | --- | --- | --- |
 | Compose Preview | 在 Android Studio 里立即查看手机/平板、浅色/深色 | 不验证真实系统栏、播放器和复杂动画 |
-| Debug UI 验证台 | 在模拟器或真机上集中查看主题、排版和基础组件 | 需要安装 Debug 版本 |
+| Debug UI 验证台 | 在 ARM64 模拟器或真机上集中查看主题、排版和基础组件 | 需要安装 Debug 版本 |
 | ADB 截图脚本 | 保存可直接对比的真实设备 PNG | 当前不做自动像素判定 |
 | Compose UI Test | 验证显示、点击、语义和尺寸 | 不能独立判断视觉是否合理 |
 
@@ -54,6 +54,8 @@ Preview      -> 使用固定假数据调用 Content
 
 Debug Manifest 注册了独立的 `UiValidationActivity`。安装 Debug 版本后可直接启动：
 
+当前应用所有变体只打包 `arm64-v8a`。推荐使用 ARM64 真机；模拟器也必须使用 ARM64 系统镜像。常见 Windows `x86_64` 模拟器无法安装这个 Debug 包，会报告 `INSTALL_FAILED_NO_MATCHING_ABIS`。
+
 ```powershell
 adb shell am start -n com.android.purebilibili.debug/com.android.purebilibili.debug.UiValidationActivity
 ```
@@ -73,7 +75,7 @@ adb shell am start -n com.android.purebilibili.debug/com.android.purebilibili.de
 
 ```powershell
 adb devices
-./gradlew :app:installDebug
+.\gradlew.bat :app:installDebug
 ```
 
 分别保存浅色和深色截图：
@@ -91,11 +93,23 @@ powershell -ExecutionPolicy Bypass -File scripts/ui_capture.ps1 -Theme light -Se
 
 图片保存在 `build/reports/ui-validation/`，默认不会提交到 Git。设计评审时应记录设备、主题和界面状态，并同时保留修改前、修改后截图。
 
+脚本会先重启 Debug 应用进程，确保每次传入的浅色/深色参数生效；随后等待验证台成为前台 Activity，并检查拉回文件的 PNG 签名。如果验证台启动崩溃、被其他页面覆盖或截图文件损坏，命令会直接失败，不会把错误画面报告为成功基线。
+
+## Compose UI Test
+
+仓库提供验证台的基础仪器测试，覆盖页面渲染和浅色/深色控件切换。连接 ARM64 设备后运行：
+
+```powershell
+.\gradlew.bat :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.android.purebilibili.debug.UiValidationActivityTest
+```
+
+该命令会构建并安装 Debug APK 与测试 APK。它验证交互和语义，不替代人工截图检查；其他页面应按改动范围选择对应的 `*UiRegressionTest`。
+
 ## 每次 UI 改动的验证顺序
 
 1. 更新或新增对应 Content Preview。
 2. 检查手机/平板、浅色/深色和长文字。
-3. 运行相关 Compose UI Test，确认点击、语义和尺寸没有退化。
+3. 运行验证台测试或改动页面对应的 Compose UI Test，确认点击、语义和尺寸没有退化。
 4. 在真机验证台或实际页面保存修改前后截图。
 5. 播放器、手势、键盘、横竖屏和动画仍需实际设备操作或录屏。
 6. 视觉结果确认后再提交代码；截图是否成为长期 Golden 基线应单独评审。

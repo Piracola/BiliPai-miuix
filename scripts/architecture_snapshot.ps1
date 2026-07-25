@@ -6,6 +6,7 @@ $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $sourceRoot = Join-Path $repoRoot "app\src\main\java\com\android\purebilibili"
+$settingsFile = Join-Path $repoRoot "settings.gradle.kts"
 
 if (-not (Test-Path -LiteralPath $sourceRoot)) {
     throw "Main source directory not found: $sourceRoot"
@@ -17,18 +18,99 @@ if ([string]::IsNullOrWhiteSpace($OutputPath)) {
     $OutputPath = Join-Path $repoRoot $OutputPath
 }
 
-$layers = @("shell", "app", "core", "data", "domain", "feature", "navigation", "navigation3")
+$preferredLayerOrder = @("app", "core", "data", "domain", "feature", "navigation", "navigation3")
+$discoveredLayers = @(
+    Get-ChildItem -LiteralPath $sourceRoot -Directory |
+        Select-Object -ExpandProperty Name
+)
+$layers = @("shell") + @($preferredLayerOrder | Where-Object { $_ -in $discoveredLayers })
+$layers += @($discoveredLayers | Where-Object { $_ -notin $preferredLayerOrder } | Sort-Object)
 $layerStats = @()
 $edgeCounts = @{}
 $crossFeatureCounts = @{}
 $crossFeatureFiles = @{}
+$moduleStats = @()
+$moduleEdges = @{}
+
+function Get-KotlinSourceStats {
+    param([string]$Path)
+
+    if (-not (Test-Path -LiteralPath $Path -PathType Container)) {
+        return [pscustomobject]@{ Files = 0; Lines = 0 }
+    }
+
+    $files = @(Get-ChildItem -LiteralPath $Path -Recurse -File -Filter "*.kt")
+    $lineCount = 0
+    foreach ($file in $files) {
+        foreach ($unusedLine in [System.IO.File]::ReadLines($file.FullName)) {
+            if (-not [string]::IsNullOrWhiteSpace($unusedLine)) {
+                $lineCount++
+            }
+        }
+    }
+    return [pscustomobject]@{ Files = $files.Count; Lines = $lineCount }
+}
+
+if (Test-Path -LiteralPath $settingsFile -PathType Leaf) {
+    $declaredModules = [System.Collections.Generic.List[string]]::new()
+    foreach ($line in [System.IO.File]::ReadLines($settingsFile)) {
+        foreach ($match in [regex]::Matches($line, 'include\("(?<module>:[^"]+)"\)')) {
+            $moduleName = $match.Groups["module"].Value
+            if (-not $declaredModules.Contains($moduleName)) {
+                $declaredModules.Add($moduleName)
+            }
+        }
+    }
+
+    foreach ($moduleName in $declaredModules) {
+        $moduleRelativePath = $moduleName.TrimStart(":").Replace(":", [System.IO.Path]::DirectorySeparatorChar)
+        $modulePath = Join-Path $repoRoot $moduleRelativePath
+        $moduleMainPath = Join-Path $modulePath "src\main"
+        $moduleSourceStats = Get-KotlinSourceStats -Path $moduleMainPath
+        $moduleStats += [pscustomobject]@{
+            Module = $moduleName
+            Files = $moduleSourceStats.Files
+            Lines = $moduleSourceStats.Lines
+        }
+
+        $buildFile = Join-Path $modulePath "build.gradle.kts"
+        if (Test-Path -LiteralPath $buildFile -PathType Leaf) {
+            foreach ($buildLine in [System.IO.File]::ReadLines($buildFile)) {
+                foreach ($match in [regex]::Matches(
+                    $buildLine,
+                    '(?:api|implementation|compileOnly|runtimeOnly)\s*\(\s*project\("(?<target>:[^"]+)"\)\s*\)'
+                )) {
+                    $edgeKey = "$moduleName -> $($match.Groups["target"].Value)"
+                    if (-not $moduleEdges.ContainsKey($edgeKey)) {
+                        $moduleEdges[$edgeKey] = 0
+                    }
+                    $moduleEdges[$edgeKey]++
+                }
+                foreach ($match in [regex]::Matches(
+                    $buildLine,
+                    'targetProjectPath\s*=\s*"(?<target>:[^"]+)"'
+                )) {
+                    $edgeKey = "$moduleName -> $($match.Groups["target"].Value)"
+                    if (-not $moduleEdges.ContainsKey($edgeKey)) {
+                        $moduleEdges[$edgeKey] = 0
+                    }
+                    $moduleEdges[$edgeKey]++
+                }
+            }
+        }
+    }
+}
 
 foreach ($layer in $layers) {
     if ($layer -eq "shell") {
         $files = @(Get-ChildItem -LiteralPath $sourceRoot -File -Filter "*.kt")
     } else {
         $layerPath = Join-Path $sourceRoot $layer
-        $files = @(Get-ChildItem -LiteralPath $layerPath -Recurse -File -Filter "*.kt")
+        $files = if (Test-Path -LiteralPath $layerPath -PathType Container) {
+            @(Get-ChildItem -LiteralPath $layerPath -Recurse -File -Filter "*.kt")
+        } else {
+            @()
+        }
     }
     $lineCount = 0
     foreach ($file in $files) {
@@ -96,6 +178,26 @@ $lines = [System.Collections.Generic.List[string]]::new()
 $lines.Add("# BiliPai Architecture Snapshot")
 $lines.Add("")
 $lines.Add("Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss zzz')")
+$lines.Add("")
+$lines.Add("Scope: Gradle modules declared in ``settings.gradle.kts`` and Kotlin sources under each module's ``src/main``. Package import details cover ``:app`` main sources only.")
+$lines.Add("")
+$lines.Add("## Gradle Module Size")
+$lines.Add("")
+$lines.Add("| Module | Kotlin files | Non-empty lines |")
+$lines.Add("| --- | ---: | ---: |")
+foreach ($stat in $moduleStats) {
+    $lines.Add("| ``$($stat.Module)`` | $($stat.Files) | $($stat.Lines) |")
+}
+
+$lines.Add("")
+$lines.Add("## Gradle Project Dependencies")
+$lines.Add("")
+$lines.Add("| Direction | Declarations |")
+$lines.Add("| --- | ---: |")
+foreach ($edge in ($moduleEdges.GetEnumerator() | Sort-Object Name)) {
+    $lines.Add("| ``$($edge.Name)`` | $($edge.Value) |")
+}
+
 $lines.Add("")
 $lines.Add("## Top-level Package Size")
 $lines.Add("")

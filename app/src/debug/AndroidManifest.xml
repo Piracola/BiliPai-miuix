@@ -4,7 +4,8 @@
         <activity
             android:name=".debug.UiValidationActivity"
             android:exported="true"
-            android:label="UI Validation" />
+            android:label="UI Validation"
+            android:theme="@style/Theme.PureBiliBili.Main" />
     </application>
 
 </manifest>

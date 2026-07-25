@@ -1,6 +1,6 @@
 # 架构说明
 
-最后更新：2026-07-25（按 `main` 分支 `42cb9c0b` 校对）
+最后更新：2026-07-25（源码快照基于提交 `42cb9c0b`）
 
 本页描述当前真实结构、主要依赖问题和渐进目标。目录名称只表达意图，实际依赖以源码导入和 Gradle 配置为准。
 
@@ -23,7 +23,7 @@ flowchart LR
     APP --> SETTINGS[":settings-core"]
     APP --> NETWORK[":network-core"]
     APP --> SDK[":plugin-sdk"]
-    SAMPLES["plugins/samples 独立工程"] -. compileOnly .-> SDK
+    SAMPLES["Kotlin 插件示例独立工程"] -. "implementation + composite substitution" .-> SDK
 ```
 
 - `:app`：几乎全部产品代码。
@@ -31,6 +31,7 @@ flowchart LR
 - `:network-core`：网络回退与匿名化策略。
 - `:plugin-sdk`：相对稳定的插件契约，可独立发布。
 - `:baselineprofile`：启动、首页、视频详情等性能场景。
+- `plugins/samples/watch-compass` 和 `today-watch-remix` 通过 Maven 坐标声明 `implementation`，本地开发时由 composite build 替换到 `:plugin-sdk`；JSON 皮肤示例不依赖 SDK。
 
 当前不是“缺少模块所以无法维护”，而是模块化之前的包依赖还没有稳定。不要先创建一批空 Feature 模块。
 
@@ -39,9 +40,8 @@ flowchart LR
 ```mermaid
 flowchart TD
     APPLICATION["PureApplication\n启动与全局初始化"] --> ACTIVITY["MainActivity\n深链/PIP/顶层播放协调"]
-    ACTIVITY --> LEGACY["AppNavigation\n旧字符串路由与页面装配"]
-    ACTIVITY --> NAV3["navigation3\n返回栈/预测返回/转场"]
-    LEGACY <--> NAV3
+    ACTIVITY --> LEGACY["AppNavigation\n旧路由适配与页面装配"]
+    LEGACY --> NAV3["navigation3\n返回栈/预测返回/转场 Host"]
     LEGACY --> SCREEN["Feature Screen/Route"]
     NAV3 --> SCREEN
     SCREEN --> VM["ViewModel / State holder"]
@@ -108,13 +108,13 @@ flowchart TD
 
 ## 架构快照
 
-运行以下命令会在 `build/reports/architecture/architecture-snapshot.md` 生成当前规模、顶层依赖和跨 Feature 热点：
+运行以下命令会在 `build/reports/architecture/architecture-snapshot.md` 生成 Gradle 模块规模与项目依赖，以及 `:app` 主源码的顶层包依赖和跨 Feature 热点：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/architecture_snapshot.ps1
 ```
 
-该报告是辅助快照，不替代编译、测试或人工判断。当前仓库没有初始化 CodeGraph；需要更深的调用链分析时再单独建立索引。
+报告会从 `settings.gradle.kts` 和源码目录动态发现模块与顶层包；包级方向仍只统计 Kotlin `import`，不包含反射、生成代码和运行时调用。它不替代编译、测试或人工判断。当前仓库没有初始化 CodeGraph；需要更深的调用链分析时再单独建立索引。
 
 ## UI 验证
 

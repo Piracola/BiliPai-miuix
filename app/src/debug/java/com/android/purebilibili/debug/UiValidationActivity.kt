@@ -3,7 +3,9 @@ package com.android.purebilibili.debug
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,6 +41,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -47,6 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.android.purebilibili.core.theme.AndroidNativeVariant
@@ -59,6 +63,7 @@ import com.android.purebilibili.core.ui.components.IOSClickableItem
 import com.android.purebilibili.core.ui.components.IOSGroup
 import com.android.purebilibili.core.ui.components.IOSSectionTitle
 import com.android.purebilibili.core.ui.components.IOSSwitchItem
+import com.android.purebilibili.feature.settings.AppThemeMode
 
 class UiValidationActivity : ComponentActivity() {
 
@@ -66,8 +71,24 @@ class UiValidationActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val initialDarkTheme = intent.getStringExtra(EXTRA_THEME) == THEME_DARK
         setContent {
-            UiValidationRoot(initialDarkTheme = initialDarkTheme)
+            UiValidationRoot(
+                initialDarkTheme = initialDarkTheme,
+                onSystemBarStyleChange = ::updateSystemBars
+            )
         }
+    }
+
+    private fun updateSystemBars(darkTheme: Boolean) {
+        val transparent = android.graphics.Color.TRANSPARENT
+        val style = if (darkTheme) {
+            SystemBarStyle.dark(transparent)
+        } else {
+            SystemBarStyle.light(transparent, transparent)
+        }
+        enableEdgeToEdge(
+            statusBarStyle = style,
+            navigationBarStyle = style
+        )
     }
 
     private companion object {
@@ -77,11 +98,18 @@ class UiValidationActivity : ComponentActivity() {
 }
 
 @Composable
-private fun UiValidationRoot(initialDarkTheme: Boolean) {
+private fun UiValidationRoot(
+    initialDarkTheme: Boolean,
+    onSystemBarStyleChange: (Boolean) -> Unit = {}
+) {
     var darkTheme by rememberSaveable { mutableStateOf(initialDarkTheme) }
+    LaunchedEffect(darkTheme) {
+        onSystemBarStyleChange(darkTheme)
+    }
     PureBiliBiliTheme(
         uiPreset = UiPreset.MD3,
         androidNativeVariant = AndroidNativeVariant.MIUIX,
+        themeMode = if (darkTheme) AppThemeMode.DARK else AppThemeMode.LIGHT,
         darkTheme = darkTheme,
         dynamicColor = false
     ) {
@@ -129,8 +157,8 @@ private fun UiValidationScreen(
             item {
                 Column(
                     modifier = Modifier
-                        .fillMaxWidth()
                         .widthIn(max = 920.dp)
+                        .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 20.dp)
                 ) {
                     Text(
@@ -210,8 +238,8 @@ private fun UiValidationScreen(
             item {
                 Column(
                     modifier = Modifier
-                        .fillMaxWidth()
                         .widthIn(max = 920.dp)
+                        .fillMaxWidth()
                 ) {
                     IOSSectionTitle("列表与设置")
                     IOSGroup {
@@ -252,6 +280,7 @@ private fun ThemeModeControl(
     SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
         listOf(false to "浅色", true to "深色").forEachIndexed { index, (dark, label) ->
             SegmentedButton(
+                modifier = Modifier.testTag(if (dark) "theme_dark" else "theme_light"),
                 selected = darkTheme == dark,
                 onClick = { onDarkThemeChange(dark) },
                 shape = SegmentedButtonDefaults.itemShape(index = index, count = 2),
@@ -275,8 +304,8 @@ private fun ValidationSection(
 ) {
     Column(
         modifier = Modifier
-            .fillMaxWidth()
             .widthIn(max = 920.dp)
+            .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         Text(
