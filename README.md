@@ -180,6 +180,7 @@ cd BiliPai
 | AI / LLM 入口 | [llms.txt](llms.txt) · [docs/wiki/AI.md](docs/wiki/AI.md) |
 | 功能矩阵 | [docs/wiki/FEATURE_MATRIX.md](docs/wiki/FEATURE_MATRIX.md) |
 | 架构说明 | [docs/wiki/ARCHITECTURE.md](docs/wiki/ARCHITECTURE.md) |
+| UI 验证环境 | [docs/wiki/UI_VALIDATION.md](docs/wiki/UI_VALIDATION.md) |
 | QA 手册 | [docs/wiki/QA.md](docs/wiki/QA.md) |
 | 用户问答 | [docs/wiki/FAQ.md](docs/wiki/FAQ.md) |
 | 发布流程 | [docs/wiki/RELEASE_WORKFLOW.md](docs/wiki/RELEASE_WORKFLOW.md) |

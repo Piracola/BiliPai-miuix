@@ -6,6 +6,7 @@
 
 - [功能矩阵](FEATURE_MATRIX.md)
 - [架构说明](ARCHITECTURE.md)
+- [UI 验证环境](UI_VALIDATION.md)
 - [AI 导航指南](AI.md)
 - [Miuix 对齐记录](MIUIX_ALIGNMENT.md)
 - [发布流程](RELEASE_WORKFLOW.md)

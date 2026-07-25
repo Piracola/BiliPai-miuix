@@ -1,1 +1,10 @@
-<manifest />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <activity
+            android:name=".debug.UiValidationActivity"
+            android:exported="true"
+            android:label="UI Validation" />
+    </application>
+
+</manifest>

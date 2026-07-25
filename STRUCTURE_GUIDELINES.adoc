@@ -22,12 +22,14 @@
   - `service/`：对外部系统或 I/O 的封装。
 - 同一领域（例如 WebDAV）集中到单独子包，如：`feature/settings/webdav/`。
 
-## 3. 依赖方向（必须满足）
+## 3. 目标依赖方向（新增代码必须满足）
 
-- `feature -> domain -> data -> core`（允许跨过某层读取，但禁止反向依赖）。
-- `core` 不能依赖任何 `feature/*`。
-- 禁止 `feature/A` 直接依赖 `feature/B` 的 UI 组件。
-- 跨 feature 共享能力应先下沉到 `core` 或 `domain`。
+- `app/navigation -> feature -> domain`：应用壳负责装配，Feature 只消费稳定业务契约。
+- `data -> domain`：Data 实现 Domain 定义的 Repository 契约；Domain 不依赖 Data 实现。
+- `feature` 与 `data` 可以依赖对应的 `core` 基础能力，但 `core` 不能依赖任何 `feature/*`。
+- 禁止 `feature/A` 直接依赖 `feature/B` 的 UI、ViewModel 或页面状态。
+- 跨 Feature 的播放、设置、账号等契约应下沉到 `domain` 或职责明确的 `core` 包。
+- 当前单体 `app` 中仍有历史反向依赖；治理时按 `docs/wiki/ARCHITECTURE.md` 的优先级渐进收敛，不做一次性搬迁。
 
 ## 4. 命名与可读性约束
 
