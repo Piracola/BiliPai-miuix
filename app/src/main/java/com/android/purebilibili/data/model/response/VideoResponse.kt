@@ -247,11 +247,13 @@ private fun videoPlaybackSelectionScore(
     isAv1Supported: Boolean
 ): Int {
     var score = 0
-    val codecs = video.codecs.lowercase()
+    val codecFormat = VideoDecodeFormat.fromCodecs(video.codecs)
+    val preferredFormat = VideoDecodeFormat.fromCodecs(preferCodec)
+    val secondPreferredFormat = VideoDecodeFormat.fromCodecs(secondPreferCodec)
 
-    val isAvc = codecs.startsWith("avc")
-    val isHevc = codecs.startsWith("hev")
-    val isAv1 = codecs.startsWith("av01")
+    val isAvc = codecFormat == VideoDecodeFormat.AVC
+    val isHevc = codecFormat == VideoDecodeFormat.HEVC
+    val isAv1 = codecFormat == VideoDecodeFormat.AV1
 
     val supported = when {
         isAvc -> true
@@ -264,9 +266,9 @@ private fun videoPlaybackSelectionScore(
         return -100
     }
 
-    if (codecs.contains(preferCodec, ignoreCase = true)) {
+    if (preferredFormat != null && codecFormat == preferredFormat) {
         score += 10
-    } else if (secondPreferCodec.isNotBlank() && codecs.contains(secondPreferCodec, ignoreCase = true)) {
+    } else if (secondPreferredFormat != null && codecFormat == secondPreferredFormat) {
         score += 6
     }
 

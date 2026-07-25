@@ -283,6 +283,24 @@ private fun isAllowedCustomCdnUrl(url: String, allowedHosts: Set<String>): Boole
         (host == "bilivideo.com" || host.endsWith(".bilivideo.com") || host in allowedHosts)
 }
 
+internal fun selectPlaybackCdnCandidatesForMode(
+    customCandidates: List<PlaybackCdnCandidate>,
+    regionCandidates: List<PlaybackCdnCandidate>,
+    originalCandidates: List<PlaybackCdnCandidate>,
+    strictCustomCdn: Boolean,
+    healthByHost: Map<String, CdnCandidateHealth>
+): List<PlaybackCdnCandidate> {
+    val candidates = if (strictCustomCdn && customCandidates.isNotEmpty()) {
+        customCandidates
+    } else {
+        customCandidates + regionCandidates + originalCandidates
+    }
+    return sortPlaybackCdnCandidatesByHealth(
+        candidates = candidates.distinctBy { it.videoUrl to it.audioUrl },
+        healthByHost = healthByHost
+    )
+}
+
 internal fun sortPlaybackCdnCandidatesByHealth(
     candidates: List<PlaybackCdnCandidate>,
     healthByHost: Map<String, CdnCandidateHealth>

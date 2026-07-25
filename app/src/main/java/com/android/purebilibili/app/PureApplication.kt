@@ -41,6 +41,7 @@ import com.android.purebilibili.feature.settings.applyAppLanguage
 import com.android.purebilibili.feature.settings.AppThemeMode
 import com.android.purebilibili.feature.settings.resolveThemeModePreference
 import com.android.purebilibili.feature.plugin.AdFilterPlugin
+import com.android.purebilibili.feature.plugin.Anime4KPlugin
 import com.android.purebilibili.feature.plugin.CdnRegionPlugin
 import com.android.purebilibili.feature.plugin.DanmakuEnhancePlugin
 import com.android.purebilibili.feature.plugin.EyeProtectionPlugin
@@ -183,6 +184,7 @@ class PureApplication : Application(), ImageLoaderFactory, ComponentCallbacks2 {
         PluginManager.initialize(this)
         PluginManager.register(SponsorBlockPlugin())
         PluginManager.register(AdFilterPlugin())
+        PluginManager.register(Anime4KPlugin())
         PluginManager.register(DanmakuEnhancePlugin())
         PluginManager.register(EyeProtectionPlugin())
         PluginManager.register(TodayWatchPlugin())
@@ -190,7 +192,7 @@ class PureApplication : Application(), ImageLoaderFactory, ComponentCallbacks2 {
         PluginManager.register(HomeFeedAnonymizerPlugin())
         PluginManager.register(DlnaCastPlugin())
         PluginManager.register(GoogleCastPlugin())
-        Logger.d(PureApplicationRuntimeConfig.TAG, " Plugin system initialized with 9 built-in plugins")
+        Logger.d(PureApplicationRuntimeConfig.TAG, " Plugin system initialized with 10 built-in plugins")
 
         com.android.purebilibili.core.plugin.json.JsonPluginManager.initialize(this)
         Logger.d(PureApplicationRuntimeConfig.TAG, " JSON plugin system initialized")

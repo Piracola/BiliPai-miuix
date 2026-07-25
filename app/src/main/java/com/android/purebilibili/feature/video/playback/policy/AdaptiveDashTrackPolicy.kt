@@ -81,7 +81,25 @@ fun buildAdaptiveDashTrackSet(
         is PlaybackQualityMode.LOCKED -> supportedVideos.filter { it.id == mode.qualityId }
     }
 
-    val sortedVideos = candidateVideos.sortedWith(
+    val codecSelectedVideos = candidateVideos
+        .groupBy { it.id }
+        .values
+        .flatMap { videosAtQuality ->
+            val preferredVideos = preferredCodec?.let { codec ->
+                videosAtQuality.filter { normalizeCodecFamilyKey(it.codecs) == codec }
+            }.orEmpty()
+            val secondaryVideos = secondaryCodec?.let { codec ->
+                videosAtQuality.filter { normalizeCodecFamilyKey(it.codecs) == codec }
+            }.orEmpty()
+
+            when {
+                preferredVideos.isNotEmpty() -> preferredVideos
+                secondaryVideos.isNotEmpty() -> secondaryVideos
+                else -> videosAtQuality
+            }
+        }
+
+    val sortedVideos = codecSelectedVideos.sortedWith(
         compareByDescending<DashVideo> { it.id }
             .thenByDescending { scoreCodecPreference(it.codecs, preferredCodec, secondaryCodec) }
             .thenByDescending { it.bandwidth }

@@ -153,10 +153,14 @@ class CdnRegionPlugin : PlaybackCdnPlugin {
             isp = snapshot.location.isp
         )
         val regionCandidates = rewritePlaybackCdnCandidatesForRegion(originalCandidates, hosts)
-        val candidates = (customCandidates + regionCandidates + originalCandidates)
-            .distinctBy { it.videoUrl to it.audioUrl }
         return PlaybackCdnRewriteResult(
-            candidates = sortPlaybackCdnCandidatesByHealth(candidates, snapshot.healthByHost),
+            candidates = selectPlaybackCdnCandidatesForMode(
+                customCandidates = customCandidates,
+                regionCandidates = regionCandidates,
+                originalCandidates = originalCandidates,
+                strictCustomCdn = snapshot.strictCustomCdn,
+                healthByHost = snapshot.healthByHost
+            ),
             regionLabel = snapshot.selectedRegion.takeIf { hosts.isNotEmpty() }
         )
     }
@@ -223,6 +227,7 @@ class CdnRegionPlugin : PlaybackCdnPlugin {
         var catalogSnapshot by remember { mutableStateOf(catalog) }
         var probing by remember { mutableStateOf(false) }
         var customRules by remember(snapshot.customRules) { mutableStateOf(snapshot.customRules) }
+        var strictCustomCdn by remember(snapshot.strictCustomCdn) { mutableStateOf(snapshot.strictCustomCdn) }
         var customRuleError by remember { mutableStateOf<String?>(null) }
 
         LaunchedEffect(Unit) {
@@ -296,7 +301,24 @@ class CdnRegionPlugin : PlaybackCdnPlugin {
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = "规则按顺序匹配完整播放 URL，仅应用首条命中规则。替换结果必须是 HTTPS 且指向 B 站或当前候选 CDN；失败时会自动回退原始线路。",
+                text = "规则按顺序匹配完整播放 URL，仅应用首条命中规则。替换结果必须是 HTTPS 且指向 B 站或当前候选 CDN。",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "严格使用自定义 CDN",
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Switch(
+                    checked = strictCustomCdn,
+                    onCheckedChange = { strictCustomCdn = it }
+                )
+            }
+            Text(
+                text = "开启后，只要有自定义规则成功生成播放地址，就不再加入属地和原始线路；没有规则命中时仍会自动回退，避免无法播放。",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -343,7 +365,10 @@ class CdnRegionPlugin : PlaybackCdnPlugin {
                     if (error != null) {
                         customRuleError = error
                     } else {
-                        val next = snapshot.copy(customRules = customRules)
+                        val next = snapshot.copy(
+                            customRules = customRules,
+                            strictCustomCdn = strictCustomCdn
+                        )
                         snapshot = next
                         cache = next
                         compiledCustomRules = compileCdnCustomRules(next.customRules)
@@ -599,15 +624,14 @@ class CdnRegionPlugin : PlaybackCdnPlugin {
                 location = location,
                 catalog = loadedCatalog
             )
-            val next = CdnRegionPluginCache(
+            val next = current.copy(
                 location = location,
                 selectedRegion = selection.region,
                 selectedHosts = selection.hosts,
                 fallbackRegion = "",
                 fallbackUsed = selection.fallbackUsed,
                 refreshedAtMs = System.currentTimeMillis(),
-                lastError = null,
-                healthByHost = current.healthByHost
+                lastError = null
             )
             cache = next
             CdnRegionPluginStore.write(context, next)
@@ -636,7 +660,8 @@ internal data class CdnRegionPluginCache(
     val refreshedAtMs: Long = 0L,
     val lastError: String? = null,
     val healthByHost: Map<String, CdnCandidateHealth> = emptyMap(),
-    val customRules: List<CdnCustomRule> = emptyList()
+    val customRules: List<CdnCustomRule> = emptyList(),
+    val strictCustomCdn: Boolean = false
 )
 
 internal object CdnRegionPluginStore {

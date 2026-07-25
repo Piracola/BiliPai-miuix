@@ -84,6 +84,8 @@ import com.android.purebilibili.core.ui.adaptive.resolveEffectiveMotionTier
 import com.android.purebilibili.core.util.ShareUtils
 import com.android.purebilibili.core.util.WindowWidthSizeClass
 import com.android.purebilibili.core.util.Logger
+import com.android.purebilibili.feature.anime4k.Anime4KBypassReason
+import com.android.purebilibili.feature.anime4k.Anime4KPreset
 
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -581,6 +583,12 @@ fun VideoPlayerOverlay(
     onSecondCodecChange: (String) -> Unit = {},
     currentAudioQuality: Int = -1,
     onAudioQualityChange: (Int) -> Unit = {},
+    anime4kEnabled: Boolean = false,
+    anime4kAvailable: Boolean = false,
+    anime4kBypassReason: Anime4KBypassReason = Anime4KBypassReason.DISABLED,
+    anime4kPreset: Anime4KPreset = Anime4KPreset.FAST,
+    onAnime4kToggle: (Boolean) -> Unit = {},
+    onAnime4kPresetChange: (Anime4KPreset) -> Unit = {},
     // [New] AI Audio Translation
     aiAudioInfo: com.android.purebilibili.data.model.response.AiAudioInfo? = null,
     currentAudioLang: String? = null,
@@ -1380,6 +1388,11 @@ fun VideoPlayerOverlay(
                     isLoggedIn = isLoggedIn,
                     subtitleControlState = subtitleControlState,
                     subtitleControlCallbacks = subtitleControlCallbacks,
+                    anime4kEnabled = anime4kEnabled,
+                    anime4kAvailable = anime4kAvailable,
+                    anime4kPreset = anime4kPreset,
+                    onAnime4kToggle = onAnime4kToggle,
+                    onAnime4kPresetChange = onAnime4kPresetChange,
                     currentQualityLabel = currentQualityLabel,
                     onQualityClick = { showQualityMenu = true },
                     // 🖼️ [新增] 视频预览图数据
@@ -1934,6 +1947,12 @@ fun VideoPlayerOverlay(
                     onAudioQualityChange(quality)
                     showVideoSettings = false
                 },
+                anime4kEnabled = anime4kEnabled,
+                anime4kAvailable = anime4kAvailable,
+                anime4kBypassReason = anime4kBypassReason,
+                anime4kPreset = anime4kPreset,
+                onAnime4kToggle = onAnime4kToggle,
+                onAnime4kPresetChange = onAnime4kPresetChange,
                 // [New] AI Audio
                 aiAudioInfo = aiAudioInfo,
                 currentAudioLang = currentAudioLang,

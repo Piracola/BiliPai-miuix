@@ -323,6 +323,9 @@ class VideoPlayerState(
 
     private val _debugInfo = MutableStateFlow(PlaybackDebugInfo())
     val debugInfo: StateFlow<PlaybackDebugInfo> = _debugInfo.asStateFlow()
+    /** 当前解码视频格式，供需要严格旁路 HDR 的输出效果使用。 */
+    private val _videoInputFormat = MutableStateFlow<Format?>(null)
+    val videoInputFormat: StateFlow<Format?> = _videoInputFormat.asStateFlow()
     private val _diagnosticEvents = MutableStateFlow<List<String>>(emptyList())
     val diagnosticEvents: StateFlow<List<String>> = _diagnosticEvents.asStateFlow()
     val pendingUserAction: StateFlow<PendingPlaybackUserAction?> =
@@ -523,6 +526,7 @@ class VideoPlayerState(
             format: Format,
             decoderReuseEvaluation: androidx.media3.exoplayer.DecoderReuseEvaluation?
         ) {
+            _videoInputFormat.value = format
             _debugInfo.value = applyVideoFormatDebugInfo(
                 current = _debugInfo.value,
                 format = format
@@ -722,6 +726,7 @@ class VideoPlayerState(
      */
     fun resetVideoSize() {
         _videoSize.value = Pair(0, 0)
+        _videoInputFormat.value = null
         _apiDimension.value = null
         _debugInfo.value = PlaybackDebugInfo()
         _diagnosticEvents.value = emptyList()

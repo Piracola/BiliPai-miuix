@@ -60,6 +60,8 @@ import com.android.purebilibili.feature.video.subtitle.SubtitleTrackOption
 import com.android.purebilibili.feature.video.subtitle.resolveSubtitleDisplayOptions
 import com.android.purebilibili.feature.video.playback.policy.resolveDisplayedPlaybackTransitionPosition
 import com.android.purebilibili.core.store.PlayerProgressPlacement
+import com.android.purebilibili.feature.anime4k.Anime4KPreset
+import com.android.purebilibili.feature.anime4k.resolveAnime4KPresetLabel
 import kotlin.math.roundToInt
 
 /**
@@ -240,14 +242,16 @@ internal fun shouldShowMoreActionsButtonInControlBar(
     showNextEpisodeButton: Boolean,
     showPlaybackOrderLabel: Boolean,
     showAspectRatioButton: Boolean,
-    showPortraitSwitchButton: Boolean
+    showPortraitSwitchButton: Boolean,
+    showAnime4KToggle: Boolean = false
 ): Boolean {
     return isFullscreen && (
         showEpisodeInMoreActions ||
             showNextEpisodeButton ||
             showPlaybackOrderLabel ||
             showAspectRatioButton ||
-            showPortraitSwitchButton
+            showPortraitSwitchButton ||
+            showAnime4KToggle
         )
 }
 
@@ -257,9 +261,9 @@ internal fun shouldApplyNavigationBarPaddingToBottomControlBar(
 
 internal fun resolveFloatingControlPanelMinWidthDp(widthDp: Int): Int {
     return when {
-        widthDp >= 840 -> 216
-        widthDp >= 600 -> 196
-        else -> 176
+        widthDp >= 840 -> 184
+        widthDp >= 600 -> 176
+        else -> 168
     }
 }
 
@@ -361,6 +365,11 @@ fun BottomControlBar(
     isLoggedIn: Boolean = true,
     subtitleControlState: SubtitleControlUiState = SubtitleControlUiState(),
     subtitleControlCallbacks: SubtitleControlCallbacks = SubtitleControlCallbacks(),
+    anime4kEnabled: Boolean = false,
+    anime4kAvailable: Boolean = false,
+    anime4kPreset: Anime4KPreset = Anime4KPreset.FAST,
+    onAnime4kToggle: (Boolean) -> Unit = {},
+    onAnime4kPresetChange: (Anime4KPreset) -> Unit = {},
     
     // Quality
     currentQualityLabel: String = "",
@@ -526,7 +535,8 @@ fun BottomControlBar(
         showNextEpisodeButton,
         showPlaybackOrderLabel,
         showAspectRatioButton,
-        showPortraitSwitchButton
+        showPortraitSwitchButton,
+        anime4kAvailable
     ) {
         shouldShowMoreActionsButtonInControlBar(
             isFullscreen = isFullscreen,
@@ -534,7 +544,8 @@ fun BottomControlBar(
             showNextEpisodeButton = showNextEpisodeButton,
             showPlaybackOrderLabel = showPlaybackOrderLabel,
             showAspectRatioButton = showAspectRatioButton,
-            showPortraitSwitchButton = showPortraitSwitchButton
+            showPortraitSwitchButton = showPortraitSwitchButton,
+            showAnime4KToggle = anime4kAvailable
         )
     }
     val shouldConsumeFloatingPanelBackground = remember(showSubtitlePanel, showMoreActionsPanel) {
@@ -985,7 +996,7 @@ fun BottomControlBar(
             ) {
                 Column(
                     modifier = Modifier
-                        .widthIn(min = floatingPanelMinWidthDp.dp)
+                        .width(floatingPanelMinWidthDp.dp)
                         .padding(horizontal = 12.dp, vertical = 10.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(6.dp)
@@ -1039,6 +1050,14 @@ fun BottomControlBar(
                                 showMoreActionsPanel = false
                                 onPortraitFullscreen()
                             }
+                        )
+                    }
+                    if (anime4kAvailable) {
+                        Anime4KMoreAction(
+                            enabled = anime4kEnabled,
+                            preset = anime4kPreset,
+                            onCheckedChange = onAnime4kToggle,
+                            onPresetChange = onAnime4kPresetChange
                         )
                     }
                     if (
@@ -1147,6 +1166,86 @@ private fun MoreActionTextButton(
             .clickable(onClick = onClick)
             .padding(horizontal = 10.dp, vertical = 8.dp)
     )
+}
+
+@Composable
+private fun Anime4KMoreAction(
+    enabled: Boolean,
+    preset: Anime4KPreset,
+    onCheckedChange: (Boolean) -> Unit,
+    onPresetChange: (Anime4KPreset) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp, vertical = 2.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Anime4K", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                Text(
+                    text = if (enabled) "模型：${resolveAnime4KPresetLabel(preset)}" else "实时超分辨率",
+                    color = Color.White.copy(alpha = 0.68f),
+                    fontSize = 11.sp
+                )
+            }
+            Switch(
+                checked = enabled,
+                onCheckedChange = onCheckedChange
+            )
+        }
+        AnimatedVisibility(visible = enabled) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                listOf(
+                    Anime4KPreset.FAST,
+                    Anime4KPreset.QUALITY
+                ).forEach { option ->
+                    Anime4KIntensityOption(
+                        label = resolveAnime4KPresetLabel(option),
+                        selected = preset == option,
+                        modifier = Modifier.weight(1f),
+                        onClick = { onPresetChange(option) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun Anime4KIntensityOption(
+    label: String,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .heightIn(min = 48.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(
+                if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.3f) else Color.White.copy(alpha = 0.1f)
+            )
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            color = if (selected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.86f),
+            fontSize = 12.sp,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+            maxLines = 1
+        )
+    }
 }
 
 /**

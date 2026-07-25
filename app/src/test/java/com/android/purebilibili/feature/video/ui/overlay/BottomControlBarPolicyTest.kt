@@ -253,9 +253,9 @@ class BottomControlBarPolicyTest {
 
     @Test
     fun floatingPanelMinWidthScalesWithLandscapeWidth() {
-        assertEquals(176, resolveFloatingControlPanelMinWidthDp(widthDp = 560))
-        assertEquals(196, resolveFloatingControlPanelMinWidthDp(widthDp = 720))
-        assertEquals(216, resolveFloatingControlPanelMinWidthDp(widthDp = 1024))
+        assertEquals(168, resolveFloatingControlPanelMinWidthDp(widthDp = 560))
+        assertEquals(176, resolveFloatingControlPanelMinWidthDp(widthDp = 720))
+        assertEquals(184, resolveFloatingControlPanelMinWidthDp(widthDp = 1024))
     }
 
     @Test

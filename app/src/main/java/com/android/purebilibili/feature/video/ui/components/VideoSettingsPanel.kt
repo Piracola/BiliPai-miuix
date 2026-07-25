@@ -55,6 +55,8 @@ import com.android.purebilibili.core.ui.components.DefaultPlaybackSpeedPreferenc
 import com.android.purebilibili.core.ui.components.formatDefaultPlaybackSpeed
 import com.android.purebilibili.data.model.response.AiAudioInfo
 import com.android.purebilibili.feature.plugin.CdnLineDiagnostic
+import com.android.purebilibili.feature.anime4k.Anime4KBypassReason
+import com.android.purebilibili.feature.anime4k.Anime4KPreset
 import com.android.purebilibili.core.ui.AppSurfaceTokens
 import top.yukonga.miuix.kmp.basic.BasicComponent
 import top.yukonga.miuix.kmp.basic.BasicComponentDefaults
@@ -195,6 +197,12 @@ fun VideoSettingsPanel(
     onSecondCodecChange: (String) -> Unit = {},
     currentAudioQuality: Int = -1,
     onAudioQualityChange: (Int) -> Unit = {},
+    anime4kEnabled: Boolean = false,
+    anime4kAvailable: Boolean = false,
+    anime4kBypassReason: Anime4KBypassReason = Anime4KBypassReason.DISABLED,
+    anime4kPreset: Anime4KPreset = Anime4KPreset.FAST,
+    onAnime4kToggle: (Boolean) -> Unit = {},
+    onAnime4kPresetChange: (Anime4KPreset) -> Unit = {},
     // [New] 音频语言 (AI Translation)
     aiAudioInfo: AiAudioInfo? = null,
     currentAudioLang: String? = null,
@@ -336,6 +344,32 @@ fun VideoSettingsPanel(
                         onDismiss()
                     }
                 )
+                SettingsDivider()
+            }
+
+            item {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    VideoSettingsSwitchRow(
+                        icon = qualityIcon,
+                        title = "Anime4K 超分辨率",
+                        subtitle = resolveAnime4KSettingsSubtitle(
+                            enabled = anime4kEnabled,
+                            available = anime4kAvailable,
+                            bypassReason = anime4kBypassReason
+                        ),
+                        checked = anime4kEnabled && anime4kAvailable,
+                        onCheckedChange = { enabled ->
+                            if (anime4kAvailable) onAnime4kToggle(enabled)
+                        }
+                    )
+                    AnimatedVisibility(visible = anime4kEnabled && anime4kAvailable) {
+                        Anime4KPresetOptions(
+                            preset = anime4kPreset,
+                            onPresetChange = onAnime4kPresetChange,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                        )
+                    }
+                }
                 SettingsDivider()
             }
 
