@@ -138,10 +138,9 @@ import com.android.purebilibili.feature.video.playback.session.shouldUsePlayback
 import com.android.purebilibili.feature.video.playback.session.startPlaybackSeekInteraction
 import com.android.purebilibili.feature.video.playback.session.syncPlaybackSeekSession
 import com.android.purebilibili.feature.video.playback.session.updatePlaybackSeekInteraction
-import com.android.purebilibili.feature.video.playback.audio.AUDIO_QUALITY_DOLBY
-import com.android.purebilibili.feature.video.playback.audio.AUDIO_QUALITY_HI_RES
 import com.android.purebilibili.feature.video.playback.audio.AudioQualityOption
 import com.android.purebilibili.feature.video.playback.audio.collectAudioStreamCandidates
+import com.android.purebilibili.feature.video.playback.audio.resolveAudioQualityControlPresentation
 import com.android.purebilibili.feature.video.playback.audio.resolveRequestedAudioQuality
 import com.android.purebilibili.feature.video.playback.policy.shouldRefreshPremiumAudioForPlaybackSpeedChange
 import com.android.purebilibili.feature.video.ui.overlay.PlayerProgress
@@ -1645,16 +1644,12 @@ private fun VideoPageItem(
     var showSubtitlePanel by rememberSaveable(bvid) { mutableStateOf(false) }
     var subtitleTrackAvailable by remember(bvid) { mutableStateOf(false) }
     var subtitleOverlayEnabled by remember(bvid) { mutableStateOf(false) }
-    val selectedAudioOption = availableAudioQualities
-        .firstOrNull { it.preferenceId == selectedAudioQuality }
-    val audioQualityChipLabel = when (selectedAudioQuality) {
-        AUDIO_QUALITY_HI_RES -> "无损"
-        30250 -> "杜比"
-        else -> selectedAudioOption?.label.orEmpty()
+    val audioQualityPresentation = remember(availableAudioQualities, selectedAudioQuality) {
+        resolveAudioQualityControlPresentation(
+            options = availableAudioQualities,
+            selectedAudioQuality = selectedAudioQuality
+        )
     }
-    val showAudioQualityChip = availableAudioQualities.count {
-        it.preferenceId != -1
-    } >= 2
     val subtitleAutoPreference by SettingsManager
         .getSubtitleAutoPreference(context)
         .collectAsStateWithLifecycle(initialValue = SubtitleAutoPreference.OFF)
@@ -2812,10 +2807,9 @@ private fun VideoPageItem(
             
             currentSpeed = currentPlaybackSpeed,
             currentQualityLabel = qualityLabel,
-            currentAudioQualityLabel = audioQualityChipLabel,
-            showAudioQualityChip = showAudioQualityChip,
-            isHiResAudioSelected = selectedAudioQuality == AUDIO_QUALITY_HI_RES,
-            isDolbyAudioSelected = selectedAudioQuality == AUDIO_QUALITY_DOLBY,
+            currentAudioQualityLabel = audioQualityPresentation.label,
+            isHiResAudioSelected = audioQualityPresentation.showHiResBadge,
+            isDolbyAudioSelected = audioQualityPresentation.showDolbyBadge,
             currentRatio = aspectRatio,
             danmakuEnabled = danmakuEnabled,
             isStatusBarHidden = true,
@@ -2902,7 +2896,7 @@ private fun VideoPageItem(
                 }
             },
             onAudioQualityClick = {
-                if (isCurrentPage && showAudioQualityChip) {
+                if (isCurrentPage) {
                     showAudioQualityMenu = true
                     showQualityMenu = false
                     showSubtitlePanel = false

@@ -35,6 +35,12 @@ data class AudioQualityOption(
     val isDolby: Boolean = false
 )
 
+data class AudioQualityControlPresentation(
+    val label: String,
+    val showHiResBadge: Boolean,
+    val showDolbyBadge: Boolean
+)
+
 data class AudioSelectionDecision(
     val requestedPreferenceId: Int,
     val effectivePreferenceId: Int,

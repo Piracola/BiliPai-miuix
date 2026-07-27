@@ -401,7 +401,7 @@ fun BottomControlBar(
     onAnime4kPresetChange: (Anime4KPreset) -> Unit = {},
     
     // Quality
-    currentAudioQualityLabel: String = "",
+    currentAudioQualityLabel: String = "音质",
     isHiResAudioSelected: Boolean = false,
     isDolbyAudioSelected: Boolean = false,
     onAudioQualityClick: () -> Unit = {},
@@ -796,26 +796,24 @@ fun BottomControlBar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(layoutPolicy.rightActionSpacingDp.dp)
             ) {
-                if (currentAudioQualityLabel.isNotEmpty()) {
-                    Row(
-                        modifier = Modifier
-                            .heightIn(min = 48.dp)
-                            .clickable(onClick = onAudioQualityClick),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(
-                            text = currentAudioQualityLabel,
-                            color = Color.White,
-                            fontSize = layoutPolicy.actionTextFontSp.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                        if (isHiResAudioSelected) {
-                            HiResBadge()
-                        }
-                        if (isDolbyAudioSelected) {
-                            DolbyBadge()
-                        }
+                Row(
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .clickable(onClick = onAudioQualityClick),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = currentAudioQualityLabel.ifBlank { "音质" },
+                        color = Color.White,
+                        fontSize = layoutPolicy.actionTextFontSp.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    if (isHiResAudioSelected) {
+                        HiResBadge()
+                    }
+                    if (isDolbyAudioSelected) {
+                        DolbyBadge()
                     }
                 }
 

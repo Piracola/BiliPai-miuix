@@ -688,9 +688,8 @@ fun VideoSettingsPanel(
                 SettingsDivider()
             }
 
-            // 音频音质只展示当前播放资源真实返回的可切换项。
-            if (availableAudioQualities.count { it.preferenceId != -1 } >= 2) {
-                item {
+            // 音质入口始终保留，具体选项仍以当前播放资源真实返回的数据为准。
+            item {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -757,8 +756,6 @@ fun VideoSettingsPanel(
                     }
                 }
                 SettingsDivider()
-            }
-                item { SettingsDivider() }
             }
 
              // [New] 音频语言选择 (AI Translation)

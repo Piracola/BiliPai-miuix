@@ -69,9 +69,8 @@ import com.android.purebilibili.data.repository.selectCastDashAudio
 import com.android.purebilibili.data.repository.selectCastDashVideo
 import com.android.purebilibili.feature.plugin.CdnLineDiagnostic
 import com.android.purebilibili.feature.video.playback.dash.buildLocalDashManifest
-import com.android.purebilibili.feature.video.playback.audio.AUDIO_QUALITY_DOLBY
-import com.android.purebilibili.feature.video.playback.audio.AUDIO_QUALITY_HI_RES
 import com.android.purebilibili.feature.video.playback.audio.AudioQualityOption
+import com.android.purebilibili.feature.video.playback.audio.resolveAudioQualityControlPresentation
 import com.android.purebilibili.feature.common.resolveIndexedVideoLazyKey
 import com.android.purebilibili.feature.video.progress.PbpRidgeSample
 import com.android.purebilibili.core.ui.AdaptiveLoadingIndicator
@@ -707,6 +706,12 @@ fun VideoPlayerOverlay(
     val context = LocalContext.current
     val fullscreenLockButtonState = remember(isScreenLocked) {
         resolveFullscreenLockButtonVisualState(isScreenLocked = isScreenLocked)
+    }
+    val audioQualityPresentation = remember(availableAudioQualities, selectedAudioQuality) {
+        resolveAudioQualityControlPresentation(
+            options = availableAudioQualities,
+            selectedAudioQuality = selectedAudioQuality
+        )
     }
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val lifecycleState by lifecycleOwner.lifecycle.currentStateAsState()
@@ -1414,24 +1419,9 @@ fun VideoPlayerOverlay(
                     anime4kPreset = anime4kPreset,
                     onAnime4kToggle = onAnime4kToggle,
                     onAnime4kPresetChange = onAnime4kPresetChange,
-                    currentAudioQualityLabel = availableAudioQualities
-                        .firstOrNull { it.preferenceId == selectedAudioQuality }
-                        ?.let { option ->
-                            when (option.preferenceId) {
-                                AUDIO_QUALITY_HI_RES -> "音质"
-                                30250 -> "杜比"
-                                else -> option.label
-                            }
-                        }
-                        .orEmpty()
-                        .takeIf {
-                            availableAudioQualities.count { option ->
-                                option.preferenceId != -1
-                            } >= 2
-                        }
-                        .orEmpty(),
-                    isHiResAudioSelected = selectedAudioQuality == AUDIO_QUALITY_HI_RES,
-                    isDolbyAudioSelected = selectedAudioQuality == AUDIO_QUALITY_DOLBY,
+                    currentAudioQualityLabel = audioQualityPresentation.label,
+                    isHiResAudioSelected = audioQualityPresentation.showHiResBadge,
+                    isDolbyAudioSelected = audioQualityPresentation.showDolbyBadge,
                     onAudioQualityClick = { showAudioQualityMenu = true },
                     currentQualityLabel = currentQualityLabel,
                     onQualityClick = { showQualityMenu = true },

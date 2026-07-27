@@ -35,8 +35,15 @@ fun collectAudioStreamCandidates(dash: Dash): List<AudioStreamCandidate> {
                 track = track
             )
         }
-    val dolby = dash.dolby?.audio.orEmpty()
-        .filter { it.getValidUrl().isNotBlank() }
+    val dolby = dash.dolby
+        ?.takeIf { it.type > 0 }
+        ?.audio
+        .orEmpty()
+        .filter { track ->
+            track.getValidUrl().isNotBlank() &&
+                track.id == AUDIO_QUALITY_DOLBY &&
+                track.codecs.isDolbyAtmosCodec()
+        }
         .map { track ->
             AudioStreamCandidate(
                 preferenceId = AUDIO_QUALITY_DOLBY,
@@ -157,6 +164,33 @@ fun resolveAudioStreamSelection(
         availableOptions = availableOptions,
         fallbackReason = fallbackReason
     )
+}
+
+fun resolveAudioQualityControlPresentation(
+    options: List<AudioQualityOption>,
+    selectedAudioQuality: Int
+): AudioQualityControlPresentation {
+    val selectedOption = options.firstOrNull { it.preferenceId == selectedAudioQuality }
+    val label = when (selectedOption?.preferenceId) {
+        AUDIO_QUALITY_HI_RES -> "音质"
+        AUDIO_QUALITY_DOLBY -> "杜比"
+        else -> selectedOption?.label?.takeIf { it.isNotBlank() } ?: "音质"
+    }
+    return AudioQualityControlPresentation(
+        label = label,
+        showHiResBadge = selectedOption?.isHiRes == true,
+        showDolbyBadge = selectedOption?.isDolby == true
+    )
+}
+
+private fun String.isDolbyAtmosCodec(): Boolean {
+    val normalized = lowercase()
+        .replace("_", "-")
+        .replace(" ", "")
+    return normalized.contains("ec-3") ||
+        normalized.contains("e-ac-3") ||
+        normalized.contains("eac3") ||
+        normalized == "ec3"
 }
 
 private fun audioKindOrder(kind: AudioStreamKind): Int {

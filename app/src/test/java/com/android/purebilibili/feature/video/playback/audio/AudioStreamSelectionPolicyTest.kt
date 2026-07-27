@@ -24,7 +24,9 @@ class AudioStreamSelectionPolicyTest {
     private val dolby = DashAudio(
         id = AUDIO_QUALITY_DOLBY,
         baseUrl = "https://example.com/audio-dolby.m4s",
-        bandwidth = 448_000
+        bandwidth = 448_000,
+        mimeType = "audio/mp4",
+        codecs = "ec-3"
     )
     private val hiRes = DashAudio(
         id = AUDIO_QUALITY_HI_RES,
@@ -136,6 +138,51 @@ class AudioStreamSelectionPolicyTest {
     }
 
     @Test
+    fun `dolby container does not promote AAC track to dolby`() {
+        val aacInDolbyContainer = standard192.copy(
+            baseUrl = "https://example.com/audio-aac-in-dolby-container.m4s",
+            codecs = "mp4a.40.2"
+        )
+
+        val candidates = collectAudioStreamCandidates(
+            Dash(
+                audio = listOf(standard192),
+                dolby = Dolby(type = 1, audio = listOf(aacInDolbyContainer))
+            )
+        )
+
+        assertTrue(candidates.none { it.kind == AudioStreamKind.DOLBY })
+    }
+
+    @Test
+    fun `dolby track requires both dolby id and E AC 3 codec`() {
+        val dolbyIdWithAacCodec = dolby.copy(codecs = "mp4a.40.2")
+        val wrongIdWithDolbyCodec = dolby.copy(id = 30280)
+
+        val candidates = collectAudioStreamCandidates(
+            Dash(
+                dolby = Dolby(
+                    type = 1,
+                    audio = listOf(dolbyIdWithAacCodec, wrongIdWithDolbyCodec)
+                )
+            )
+        )
+
+        assertTrue(candidates.none { it.kind == AudioStreamKind.DOLBY })
+    }
+
+    @Test
+    fun `disabled dolby container does not expose dolby track`() {
+        val candidates = collectAudioStreamCandidates(
+            Dash(
+                dolby = Dolby(type = 0, audio = listOf(dolby))
+            )
+        )
+
+        assertTrue(candidates.none { it.kind == AudioStreamKind.DOLBY })
+    }
+
+    @Test
     fun `premium options expose matching audio badges`() {
         val options = buildAvailableAudioQualityOptions(
             collectAudioStreamCandidates(fullDash())
@@ -156,10 +203,36 @@ class AudioStreamSelectionPolicyTest {
         assertEquals(AudioStreamKind.STANDARD, aacOption.kind)
     }
 
+    @Test
+    fun `audio quality control keeps a visible fallback when options are empty`() {
+        val presentation = resolveAudioQualityControlPresentation(
+            options = emptyList(),
+            selectedAudioQuality = AUDIO_QUALITY_AUTO
+        )
+
+        assertEquals("音质", presentation.label)
+        assertTrue(!presentation.showHiResBadge)
+        assertTrue(!presentation.showDolbyBadge)
+    }
+
+    @Test
+    fun `single AAC option remains visible in audio quality control`() {
+        val options = buildAvailableAudioQualityOptions(
+            collectAudioStreamCandidates(Dash(audio = listOf(standard192)))
+        )
+
+        val presentation = resolveAudioQualityControlPresentation(
+            options = options,
+            selectedAudioQuality = AUDIO_QUALITY_AUTO
+        )
+
+        assertEquals("高品质 AAC", presentation.label)
+    }
+
     private fun fullDash(): Dash {
         return Dash(
             audio = listOf(standard192, standard64),
-            dolby = Dolby(audio = listOf(dolby)),
+            dolby = Dolby(type = 1, audio = listOf(dolby)),
             flac = Flac(display = true, audio = hiRes)
         )
     }
