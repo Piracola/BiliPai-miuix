@@ -4,6 +4,7 @@ import com.android.purebilibili.data.model.response.Dash
 import com.android.purebilibili.data.model.response.DashAudio
 import com.android.purebilibili.data.model.response.DashVideo
 import com.android.purebilibili.data.model.response.Durl
+import com.android.purebilibili.data.model.response.Flac
 import com.android.purebilibili.data.model.response.Owner
 import com.android.purebilibili.data.model.response.PlayUrlData
 import com.android.purebilibili.data.model.response.RelatedVideo
@@ -225,6 +226,43 @@ class PortraitVideoLoadPolicyTest {
         )
 
         assertEquals("https://cdn.example/80.m4s", urls?.videoUrl)
+    }
+
+    @Test
+    fun playbackStreamUrls_selectsRequestedHiResTrack() {
+        val playData = PlayUrlData(
+            dash = Dash(
+                video = listOf(
+                    DashVideo(
+                        id = 80,
+                        baseUrl = "https://cdn.example/video.m4s",
+                        codecs = "avc1.64001E"
+                    )
+                ),
+                audio = listOf(
+                    DashAudio(
+                        id = 30232,
+                        baseUrl = "https://cdn.example/standard.m4s"
+                    )
+                ),
+                flac = Flac(
+                    display = true,
+                    audio = DashAudio(
+                        id = 30251,
+                        baseUrl = "https://cdn.example/hires.m4s"
+                    )
+                )
+            )
+        )
+
+        val urls = resolvePortraitPlaybackStreamUrls(
+            playData = playData,
+            requestedAudioQuality = 30251
+        )
+
+        assertEquals("https://cdn.example/hires.m4s", urls?.audioUrl)
+        assertEquals(30251, urls?.audioSelection?.selectedPreferenceId)
+        assertTrue(urls?.audioSelection?.availableOptions?.any { it.isHiRes } == true)
     }
 
     @Test

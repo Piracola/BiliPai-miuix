@@ -51,7 +51,6 @@ import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.analytics.AnalyticsListener
-import androidx.media3.common.PlaybackParameters
 import androidx.media3.ui.PlayerView
 import com.android.purebilibili.core.plugin.PluginManager
 import com.android.purebilibili.data.model.response.Page
@@ -74,6 +73,8 @@ import com.android.purebilibili.feature.video.ui.gesture.resolveGestureLevelKind
 import com.android.purebilibili.feature.video.ui.gesture.resolveGestureLevelOverlaySpec
 import com.android.purebilibili.feature.video.ui.gesture.resolveGestureLevelOverlayStyle
 import com.android.purebilibili.feature.video.ui.overlay.PlaybackDebugInfo
+import com.android.purebilibili.feature.video.playback.audio.AudioQualityOption
+import com.android.purebilibili.feature.video.ui.section.resolveLongPressPlaybackParameters
 import com.android.purebilibili.feature.video.ui.section.VideoOutputRouter
 import com.android.purebilibili.feature.video.ui.section.VideoGestureMode
 import com.android.purebilibili.feature.video.ui.section.resolveSystemStreamVolumeFromGesture
@@ -124,6 +125,10 @@ fun BangumiPlayerView(
     isLoggedIn: Boolean = false,
     isVip: Boolean = false,
     onQualityChange: (Int) -> Unit = {},
+    requestedAudioQuality: Int = -1,
+    selectedAudioQuality: Int = -1,
+    availableAudioQualities: List<AudioQualityOption> = emptyList(),
+    onAudioQualityChange: (Int) -> Unit = {},
     onBack: () -> Unit,
     onToggleFullscreen: () -> Unit,
     sponsorSegment: SponsorSegment? = null,
@@ -318,12 +323,15 @@ fun BangumiPlayerView(
     Box(
         modifier = modifier
             .background(Color.Black)
-            .pointerInput(isScreenLocked, longPressSpeed, exoPlayer) {
+            .pointerInput(isScreenLocked, longPressSpeed, requestedAudioQuality, exoPlayer) {
                 detectDragGesturesAfterLongPress(
                     onDragStart = {
                         if (isScreenLocked) return@detectDragGesturesAfterLongPress
                         longPressOriginalPlaybackParameters = exoPlayer.playbackParameters
-                        exoPlayer.playbackParameters = PlaybackParameters(longPressSpeed)
+                        exoPlayer.playbackParameters = resolveLongPressPlaybackParameters(
+                            requestedSpeed = longPressSpeed,
+                            currentAudioQuality = requestedAudioQuality
+                        )
                     },
                     onDragEnd = {
                         exoPlayer.playbackParameters = longPressOriginalPlaybackParameters
@@ -606,6 +614,11 @@ fun BangumiPlayerView(
             isLoggedIn = isLoggedIn,
             isVip = isVip,
             onQualityChange = onQualityChange,
+            requestedAudioQuality = requestedAudioQuality,
+            selectedAudioQuality = selectedAudioQuality,
+            availableAudioQualities = availableAudioQualities,
+            onAudioQualityChange = onAudioQualityChange,
+            onPlaybackSpeedChange = onSpeedChange,
             onBack = onBack,
             onToggleFullscreen = onToggleFullscreen,
             danmakuEnabled = danmakuEnabled,

@@ -18,6 +18,7 @@ import com.android.purebilibili.feature.video.ui.overlay.PlaybackDebugInfo
 import com.android.purebilibili.feature.video.ui.overlay.SubtitleControlCallbacks
 import com.android.purebilibili.feature.video.ui.overlay.SubtitleControlUiState
 import com.android.purebilibili.feature.video.ui.overlay.VideoPlayerOverlay
+import com.android.purebilibili.feature.video.playback.audio.AudioQualityOption
 
 @Composable
 internal fun BangumiPlayerOverlayHost(
@@ -44,6 +45,11 @@ internal fun BangumiPlayerOverlayHost(
     isLoggedIn: Boolean,
     isVip: Boolean,
     onQualityChange: (Int) -> Unit,
+    requestedAudioQuality: Int,
+    selectedAudioQuality: Int,
+    availableAudioQualities: List<AudioQualityOption>,
+    onAudioQualityChange: (Int) -> Unit,
+    onPlaybackSpeedChange: (Float) -> Unit,
     onBack: () -> Unit,
     onToggleFullscreen: () -> Unit,
     danmakuEnabled: Boolean,
@@ -117,6 +123,11 @@ internal fun BangumiPlayerOverlayHost(
         currentAudioUrl = currentAudioUrl,
         debugInfo = debugInfo,
         isVip = isVip,
+        currentAudioQuality = requestedAudioQuality,
+        selectedAudioQuality = selectedAudioQuality,
+        availableAudioQualities = availableAudioQualities,
+        onAudioQualityChange = onAudioQualityChange,
+        onPlaybackSpeedChange = onPlaybackSpeedChange,
         isLiked = isLiked,
         isCoined = coinCount > 0,
         coinCount = coinCount,

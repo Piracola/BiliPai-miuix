@@ -513,6 +513,10 @@ fun BangumiPlayerScreen(
                     isLoggedIn = successState?.isLoggedIn == true,
                     isVip = successState?.isVip == true,
                     onQualityChange = { viewModel.changeQuality(it) },
+                    requestedAudioQuality = successState?.requestedAudioQuality ?: -1,
+                    selectedAudioQuality = successState?.selectedAudioQuality ?: -1,
+                    availableAudioQualities = successState?.availableAudioQualities.orEmpty(),
+                    onAudioQualityChange = viewModel::changeAudioQuality,
                     onBack = if (isFullscreenMode) { { toggleOrientation() } } else onBack,
                     onToggleFullscreen = { toggleOrientation() },
                     sponsorSegment = sponsorSegment,
@@ -521,7 +525,10 @@ fun BangumiPlayerScreen(
                     onSponsorDismiss = { viewModel.dismissSponsorSkipButton() },
                     //  倍速控制
                     currentSpeed = currentSpeed,
-                    onSpeedChange = { currentSpeed = it },
+                    onSpeedChange = {
+                        currentSpeed = it
+                        viewModel.applyPlaybackSpeedFromUi(it)
+                    },
                     //  弹幕设置
                     danmakuOpacity = danmakuOpacity,
                     danmakuFontScale = danmakuFontScale,

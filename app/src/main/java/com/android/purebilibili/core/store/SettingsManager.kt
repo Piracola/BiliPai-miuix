@@ -6364,6 +6364,7 @@ object SettingsManager {
             StringShareablePreferenceDefinition(KEY_VIDEO_CODEC, SettingsShareSection.PLAYBACK),
             StringShareablePreferenceDefinition(KEY_VIDEO_SECOND_CODEC, SettingsShareSection.PLAYBACK),
             IntShareablePreferenceDefinition(KEY_AUDIO_QUALITY, SettingsShareSection.PLAYBACK),
+            IntShareablePreferenceDefinition(KEY_DEFAULT_AUDIO_QUALITY, SettingsShareSection.PLAYBACK),
             BooleanShareablePreferenceDefinition(KEY_AUTO_HIGHEST_QUALITY, SettingsShareSection.PLAYBACK),
             BooleanShareablePreferenceDefinition(KEY_SPONSOR_BLOCK_ENABLED, SettingsShareSection.PLAYBACK),
             BooleanShareablePreferenceDefinition(KEY_SPONSOR_BLOCK_AUTO_SKIP, SettingsShareSection.PLAYBACK),

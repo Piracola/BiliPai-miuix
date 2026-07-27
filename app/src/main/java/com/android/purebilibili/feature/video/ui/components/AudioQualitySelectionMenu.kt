@@ -63,7 +63,7 @@ fun HiResBadge(
 @Composable
 fun AudioQualitySelectionMenu(
     options: List<AudioQualityOption>,
-    selectedAudioQuality: Int,
+    requestedAudioQuality: Int,
     onAudioQualitySelected: (Int) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -106,10 +106,11 @@ fun AudioQualitySelectionMenu(
                 )
                 HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
                 options.forEach { option ->
-                    val isSelected = option.preferenceId == selectedAudioQuality
+                    val isSelected = option.preferenceId == requestedAudioQuality
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(min = 48.dp)
                             .clickable(enabled = !isSelected) {
                                 onAudioQualitySelected(option.preferenceId)
                             }

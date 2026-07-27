@@ -13,9 +13,10 @@ import com.android.purebilibili.data.model.response.DashVideo
 import com.android.purebilibili.data.model.response.PlayUrlData
 import com.android.purebilibili.data.model.response.RelatedVideo
 import com.android.purebilibili.data.model.response.ViewInfo
-import com.android.purebilibili.data.model.response.getBestAudio
 import com.android.purebilibili.data.model.response.getBestVideo
 import com.android.purebilibili.feature.plugin.PlaybackCdnPlugin
+import com.android.purebilibili.feature.video.playback.audio.AudioSelectionDecision
+import com.android.purebilibili.feature.video.playback.audio.resolveAudioStreamSelection
 import com.android.purebilibili.feature.video.viewmodel.buildPlaybackAudioUrlCandidates
 import kotlin.math.min
 
@@ -35,7 +36,8 @@ internal data class PortraitPagePlaybackIdentity(
 
 internal data class PortraitPlaybackStreamUrls(
     val videoUrl: String,
-    val audioUrl: String?
+    val audioUrl: String?,
+    val audioSelection: AudioSelectionDecision? = null
 )
 
 /**
@@ -191,7 +193,9 @@ internal fun resolvePortraitPlaybackStreamUrls(
     playData: PlayUrlData,
     targetQuality: Int = PORTRAIT_PLAYBACK_TARGET_QUALITY,
     isHevcSupported: Boolean = MediaUtils.isHevcSupported(),
-    isAv1Supported: Boolean = MediaUtils.isAv1Supported()
+    isAv1Supported: Boolean = MediaUtils.isAv1Supported(),
+    requestedAudioQuality: Int = -1,
+    playbackSpeed: Float = 1.0f
 ): PortraitPlaybackStreamUrls? {
     val dash = playData.dash
     if (dash != null) {
@@ -200,14 +204,20 @@ internal fun resolvePortraitPlaybackStreamUrls(
             isHevcSupported = isHevcSupported,
             isAv1Supported = isAv1Supported
         )
-        val dashAudio = dash.getBestAudio()
+        val audioSelection = resolveAudioStreamSelection(
+            dash = dash,
+            requestedAudioQuality = requestedAudioQuality,
+            playbackSpeed = playbackSpeed
+        )
+        val dashAudio = audioSelection.selected?.track
         val videoUrl = dashVideo?.getValidUrl()?.takeIf { it.isNotEmpty() }
             ?: playData.durl?.firstOrNull()?.url?.takeIf { it.isNotEmpty() }
         if (videoUrl.isNullOrEmpty()) return null
         val audioUrl = dashAudio?.getValidUrl()?.takeIf { it.isNotEmpty() }
         return PortraitPlaybackStreamUrls(
             videoUrl = videoUrl,
-            audioUrl = audioUrl
+            audioUrl = audioUrl,
+            audioSelection = audioSelection
         )
     }
 
@@ -245,7 +255,8 @@ internal fun resolvePortraitPlaybackCdnUrls(
         videoUrl = rewrite?.videoUrls?.firstOrNull()?.takeIf { it.isNotBlank() }
             ?: streamUrls.videoUrl,
         audioUrl = rewrite?.audioUrls?.firstOrNull()?.takeIf { it.isNotBlank() }
-            ?: streamUrls.audioUrl
+            ?: streamUrls.audioUrl,
+        audioSelection = streamUrls.audioSelection
     )
 }
 
