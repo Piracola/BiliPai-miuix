@@ -764,6 +764,8 @@ fun PlaybackSettingsContent(
 
                     val qualityOptions = resolveDefaultPlaybackQualityOptions()
                     val audioQualityOptions = resolveDefaultAudioQualityOptions()
+                    val normalizedDefaultAudioQuality =
+                        normalizeDefaultAudioQualityOption(defaultAudioQuality)
 
                     fun getQualityLabel(id: Int): String = resolveSelectionLabel(
                         options = qualityOptions,
@@ -882,9 +884,9 @@ fun PlaybackSettingsContent(
                         AppPreferenceDivider()
 
                         AppSegmentedPreference(
-                            title = "默认音质：${getAudioQualityLabel(defaultAudioQuality)}",
+                            title = "默认音质：${getAudioQualityLabel(normalizedDefaultAudioQuality)}",
                             subtitle = if (
-                                defaultAudioQuality ==
+                                normalizedDefaultAudioQuality ==
                                 com.android.purebilibili.core.store.DEFAULT_AUDIO_QUALITY_FOLLOW_LAST
                             ) {
                                 "新视频跟随播放器上次手动选择"
@@ -892,7 +894,7 @@ fun PlaybackSettingsContent(
                                 "具体默认音质优先于上次手动选择；当前视频仍可临时切换"
                             },
                             options = audioQualityOptions,
-                            selectedValue = defaultAudioQuality,
+                            selectedValue = normalizedDefaultAudioQuality,
                             onSelectionChange = { audioQuality ->
                                 scope.launch {
                                     com.android.purebilibili.core.store.SettingsManager

@@ -724,7 +724,7 @@ class BangumiPlayerViewModel : BasePlayerViewModel() {
         val selectedLabel = state.availableAudioQualities
             .firstOrNull { it.preferenceId == state.selectedAudioQuality }
             ?.label
-            ?: "自动"
+            ?: "高品质 AAC"
         val message = when (state.audioFallbackReason) {
             AudioFallbackReason.SPEED_INCOMPATIBLE ->
                 "当前倍速暂不支持所选音质，已临时使用 $selectedLabel"

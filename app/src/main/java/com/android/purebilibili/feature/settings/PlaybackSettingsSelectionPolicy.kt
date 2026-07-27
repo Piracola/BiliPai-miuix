@@ -66,11 +66,20 @@ internal fun resolveDefaultPlaybackQualityOptions(): List<AppSegmentOption<Int>>
 internal fun resolveDefaultAudioQualityOptions(): List<PlaybackSegmentOption<Int>> {
     return listOf(
         PlaybackSegmentOption(DEFAULT_AUDIO_QUALITY_FOLLOW_LAST, "跟随上次"),
-        PlaybackSegmentOption(-1, "自动"),
-        PlaybackSegmentOption(30280, "192K"),
-        PlaybackSegmentOption(30250, "杜比"),
-        PlaybackSegmentOption(30251, "Hi-Res")
+        PlaybackSegmentOption(30251, "Hi-Res 无损"),
+        PlaybackSegmentOption(30250, "杜比全景声"),
+        PlaybackSegmentOption(-1, "高品质 AAC")
     )
+}
+
+internal fun normalizeDefaultAudioQualityOption(value: Int): Int {
+    return when (value) {
+        DEFAULT_AUDIO_QUALITY_FOLLOW_LAST,
+        -1,
+        30250,
+        30251 -> value
+        else -> -1
+    }
 }
 
 internal fun resolveDefaultQualitySubtitle(

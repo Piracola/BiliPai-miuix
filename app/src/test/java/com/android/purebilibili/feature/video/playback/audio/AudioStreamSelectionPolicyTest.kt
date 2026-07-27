@@ -55,8 +55,9 @@ class AudioStreamSelectionPolicyTest {
             requestedAudioQuality = AUDIO_QUALITY_AUTO
         )
 
-        assertEquals(30280, decision.selectedPreferenceId)
+        assertEquals(AUDIO_QUALITY_AUTO, decision.selectedPreferenceId)
         assertEquals(AudioStreamKind.STANDARD, decision.selected?.kind)
+        assertEquals(30280, decision.selected?.track?.id)
         assertNull(decision.fallbackReason)
     }
 
@@ -80,7 +81,7 @@ class AudioStreamSelectionPolicyTest {
         )
 
         assertEquals(AUDIO_QUALITY_HI_RES, decision.requestedPreferenceId)
-        assertEquals(30280, decision.selectedPreferenceId)
+        assertEquals(AUDIO_QUALITY_AUTO, decision.selectedPreferenceId)
         assertEquals(AudioFallbackReason.REQUESTED_UNAVAILABLE, decision.fallbackReason)
     }
 
@@ -94,14 +95,14 @@ class AudioStreamSelectionPolicyTest {
 
         assertEquals(AUDIO_QUALITY_HI_RES, decision.requestedPreferenceId)
         assertEquals(AUDIO_QUALITY_AUTO, decision.effectivePreferenceId)
-        assertEquals(30280, decision.selectedPreferenceId)
+        assertEquals(AUDIO_QUALITY_AUTO, decision.selectedPreferenceId)
         assertEquals(AudioFallbackReason.SPEED_INCOMPATIBLE, decision.fallbackReason)
     }
 
     @Test
-    fun `concrete default overrides remembered manual selection`() {
+    fun `legacy concrete AAC default maps to high quality AAC`() {
         assertEquals(
-            30280,
+            AUDIO_QUALITY_AUTO,
             resolveRequestedAudioQuality(
                 defaultAudioQuality = 30280,
                 rememberedAudioQuality = AUDIO_QUALITY_HI_RES
@@ -128,7 +129,8 @@ class AudioStreamSelectionPolicyTest {
             )
         )
 
-        assertEquals(listOf(AUDIO_QUALITY_AUTO, 30280), options.map { it.preferenceId })
+        assertEquals(listOf(AUDIO_QUALITY_AUTO), options.map { it.preferenceId })
+        assertEquals("高品质 AAC", options.single().label)
         assertTrue(options.none { it.isHiRes })
         assertTrue(options.none { it.isDolby })
     }
@@ -141,11 +143,17 @@ class AudioStreamSelectionPolicyTest {
 
         val hiResOption = options.first { it.preferenceId == AUDIO_QUALITY_HI_RES }
         val dolbyOption = options.first { it.preferenceId == AUDIO_QUALITY_DOLBY }
+        val aacOption = options.first { it.preferenceId == AUDIO_QUALITY_AUTO }
 
+        assertEquals(
+            listOf(AUDIO_QUALITY_HI_RES, AUDIO_QUALITY_DOLBY, AUDIO_QUALITY_AUTO),
+            options.map { it.preferenceId }
+        )
         assertTrue(hiResOption.isHiRes)
         assertTrue(!hiResOption.isDolby)
         assertTrue(dolbyOption.isDolby)
         assertTrue(!dolbyOption.isHiRes)
+        assertEquals(AudioStreamKind.STANDARD, aacOption.kind)
     }
 
     private fun fullDash(): Dash {

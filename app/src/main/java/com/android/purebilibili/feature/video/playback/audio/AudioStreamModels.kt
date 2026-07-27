@@ -43,5 +43,9 @@ data class AudioSelectionDecision(
     val fallbackReason: AudioFallbackReason?
 ) {
     val selectedPreferenceId: Int
-        get() = selected?.preferenceId ?: AUDIO_QUALITY_AUTO
+        get() = when (selected?.kind) {
+            AudioStreamKind.HI_RES -> AUDIO_QUALITY_HI_RES
+            AudioStreamKind.DOLBY -> AUDIO_QUALITY_DOLBY
+            AudioStreamKind.STANDARD, null -> AUDIO_QUALITY_AUTO
+        }
 }

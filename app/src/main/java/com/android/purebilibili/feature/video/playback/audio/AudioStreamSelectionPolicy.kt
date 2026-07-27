@@ -1,17 +1,26 @@
 package com.android.purebilibili.feature.video.playback.audio
 
 import com.android.purebilibili.data.model.response.Dash
-import com.android.purebilibili.data.model.response.DashAudio
 import com.android.purebilibili.feature.video.playback.policy.resolveSpeedCompatibleAudioQualityPreference
 
 fun resolveRequestedAudioQuality(
     defaultAudioQuality: Int,
     rememberedAudioQuality: Int
 ): Int {
-    return if (defaultAudioQuality == AUDIO_QUALITY_FOLLOW_LAST_SELECTED) {
+    val resolvedPreference = if (defaultAudioQuality == AUDIO_QUALITY_FOLLOW_LAST_SELECTED) {
         rememberedAudioQuality
     } else {
         defaultAudioQuality
+    }
+    return normalizeAudioQualityPreference(resolvedPreference)
+}
+
+fun normalizeAudioQualityPreference(preferenceId: Int): Int {
+    return when (preferenceId) {
+        AUDIO_QUALITY_HI_RES,
+        AUDIO_QUALITY_DOLBY,
+        AUDIO_QUALITY_AUTO -> preferenceId
+        else -> AUDIO_QUALITY_AUTO
     }
 }
 
@@ -22,7 +31,7 @@ fun collectAudioStreamCandidates(dash: Dash): List<AudioStreamCandidate> {
             AudioStreamCandidate(
                 preferenceId = track.id,
                 kind = AudioStreamKind.STANDARD,
-                label = resolveStandardAudioLabel(track),
+                label = "高品质 AAC",
                 track = track
             )
         }
@@ -64,7 +73,8 @@ fun buildAvailableAudioQualityOptions(
 ): List<AudioQualityOption> {
     if (candidates.isEmpty()) return emptyList()
 
-    val explicitOptions = candidates
+    val premiumOptions = candidates
+        .filter { it.kind != AudioStreamKind.STANDARD }
         .groupBy { it.preferenceId }
         .mapNotNull { (_, groupedCandidates) ->
             groupedCandidates.maxByOrNull { it.track.bandwidth }
@@ -84,16 +94,16 @@ fun buildAvailableAudioQualityOptions(
         }
 
     val hasStandardAudio = candidates.any { it.kind == AudioStreamKind.STANDARD }
-    return if (hasStandardAudio) {
+    return premiumOptions + if (hasStandardAudio) {
         listOf(
             AudioQualityOption(
                 preferenceId = AUDIO_QUALITY_AUTO,
-                kind = null,
-                label = "自动（普通最佳）"
+                kind = AudioStreamKind.STANDARD,
+                label = "高品质 AAC"
             )
-        ) + explicitOptions
+        )
     } else {
-        explicitOptions
+        emptyList()
     }
 }
 
@@ -102,11 +112,12 @@ fun resolveAudioStreamSelection(
     requestedAudioQuality: Int,
     playbackSpeed: Float = 1.0f
 ): AudioSelectionDecision {
+    val normalizedRequestedAudioQuality = normalizeAudioQualityPreference(requestedAudioQuality)
     val candidates = collectAudioStreamCandidates(dash)
     val availableOptions = buildAvailableAudioQualityOptions(candidates)
     if (candidates.isEmpty()) {
         return AudioSelectionDecision(
-            requestedPreferenceId = requestedAudioQuality,
+            requestedPreferenceId = normalizedRequestedAudioQuality,
             effectivePreferenceId = AUDIO_QUALITY_AUTO,
             selected = null,
             availableOptions = emptyList(),
@@ -115,7 +126,7 @@ fun resolveAudioStreamSelection(
     }
 
     val effectivePreference = resolveSpeedCompatibleAudioQualityPreference(
-        requestedAudioQuality = requestedAudioQuality,
+        requestedAudioQuality = normalizedRequestedAudioQuality,
         playbackSpeed = playbackSpeed
     )
     val bestStandard = candidates
@@ -132,7 +143,7 @@ fun resolveAudioStreamSelection(
     val selected = exactSelection ?: bestStandard
     val fallbackReason = when {
         selected == null -> AudioFallbackReason.NO_PLAYABLE_AUDIO
-        effectivePreference != requestedAudioQuality ->
+        effectivePreference != normalizedRequestedAudioQuality ->
             AudioFallbackReason.SPEED_INCOMPATIBLE
         effectivePreference != AUDIO_QUALITY_AUTO && exactSelection == null ->
             AudioFallbackReason.REQUESTED_UNAVAILABLE
@@ -140,26 +151,12 @@ fun resolveAudioStreamSelection(
     }
 
     return AudioSelectionDecision(
-        requestedPreferenceId = requestedAudioQuality,
+        requestedPreferenceId = normalizedRequestedAudioQuality,
         effectivePreferenceId = effectivePreference,
         selected = selected,
         availableOptions = availableOptions,
         fallbackReason = fallbackReason
     )
-}
-
-private fun resolveStandardAudioLabel(track: DashAudio): String {
-    return when (track.id) {
-        30280 -> "192K"
-        30232 -> "132K"
-        30216 -> "64K"
-        else -> {
-            val bitrateKbps = track.bandwidth
-                .takeIf { it > 0 }
-                ?.div(1000)
-            bitrateKbps?.let { "${it}K" } ?: "音质 ${track.id}"
-        }
-    }
 }
 
 private fun audioKindOrder(kind: AudioStreamKind): Int {

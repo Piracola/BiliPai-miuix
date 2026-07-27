@@ -21,13 +21,23 @@ class PlaybackSettingsSelectionPolicyTest {
         assertEquals(
             listOf(
                 DEFAULT_AUDIO_QUALITY_FOLLOW_LAST,
-                -1,
-                30280,
+                30251,
                 30250,
-                30251
+                -1
             ),
             resolveDefaultAudioQualityOptions().map { it.value }
         )
+        assertEquals(
+            listOf("跟随上次", "Hi-Res 无损", "杜比全景声", "高品质 AAC"),
+            resolveDefaultAudioQualityOptions().map { it.label }
+        )
+    }
+
+    @Test
+    fun `legacy concrete AAC preference is normalized to high quality AAC`() {
+        assertEquals(-1, normalizeDefaultAudioQualityOption(30280))
+        assertEquals(-1, normalizeDefaultAudioQualityOption(30232))
+        assertEquals(-1, normalizeDefaultAudioQualityOption(30216))
     }
 
     @Test

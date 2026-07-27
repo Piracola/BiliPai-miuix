@@ -6,6 +6,7 @@ import com.android.purebilibili.data.model.response.Dash
 import com.android.purebilibili.data.model.response.Durl
 import com.android.purebilibili.data.model.response.Flac
 import com.android.purebilibili.data.model.response.PlayUrlData
+import com.android.purebilibili.feature.video.playback.audio.AUDIO_QUALITY_AUTO
 import com.android.purebilibili.feature.video.playback.audio.AUDIO_QUALITY_HI_RES
 import com.android.purebilibili.feature.video.playback.audio.AudioFallbackReason
 import com.android.purebilibili.feature.video.playback.policy.PlaybackQualityMode
@@ -422,7 +423,7 @@ class VideoPlaybackUseCaseQualitySwitchTest {
         assertEquals("https://example.com/audio-192.m4s", result?.audioUrl)
         assertEquals(listOf(30280, 30216), result?.adaptiveDashSource?.audioTracks?.map { it.id })
         assertEquals(AUDIO_QUALITY_HI_RES, result?.requestedAudioQuality)
-        assertEquals(30280, result?.selectedAudioQuality)
+        assertEquals(AUDIO_QUALITY_AUTO, result?.selectedAudioQuality)
         assertEquals(AudioFallbackReason.SPEED_INCOMPATIBLE, result?.audioFallbackReason)
     }
 
@@ -462,7 +463,7 @@ class VideoPlaybackUseCaseQualitySwitchTest {
         assertEquals(listOf(AUDIO_QUALITY_HI_RES), result?.adaptiveDashSource?.audioTracks?.map { it.id })
         assertEquals(AUDIO_QUALITY_HI_RES, result?.selectedAudioQuality)
         assertEquals(
-            listOf(-1, AUDIO_QUALITY_HI_RES, 30280),
+            listOf(AUDIO_QUALITY_HI_RES, AUDIO_QUALITY_AUTO),
             result?.availableAudioQualities?.map { it.preferenceId }
         )
         assertEquals(hiResAudio, result?.cachedDash?.flac?.audio)

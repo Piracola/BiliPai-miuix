@@ -4722,12 +4722,9 @@ class VideoPlaybackViewModel : ViewModel() {
                 ?.firstOrNull { it.preferenceId == nextState.selectedAudioQuality }
                 ?.label
                 ?: when (nextState?.selectedAudioQuality) {
-                    30280 -> "192K"
-                    30232 -> "132K"
-                    30216 -> "64K"
                     30250 -> "杜比全景声"
                     30251 -> "Hi-Res 无损"
-                    else -> "自动"
+                    else -> "高品质 AAC"
                 }
             val message = when (nextState?.audioFallbackReason) {
                 AudioFallbackReason.SPEED_INCOMPATIBLE ->
