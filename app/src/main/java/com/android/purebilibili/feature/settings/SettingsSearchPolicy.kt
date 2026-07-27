@@ -83,7 +83,7 @@ private val SETTINGS_SEARCH_INDEX: List<SettingsSearchEntry> = listOf(
         title = "播放与画质",
         subtitle = "解码、画质、字幕、倍速、连播与网络策略",
         section = "设置",
-        aliases = listOf("播放", "解码", "画质", "默认画质", "最高画质", "自动最高画质", "省流量", "定向流量", "字幕", "倍速", "自动连播")
+        aliases = listOf("播放", "解码", "画质", "音质", "默认画质", "默认音质", "Hi-Res", "杜比", "最高画质", "自动最高画质", "省流量", "定向流量", "字幕", "倍速", "自动连播")
     ),
     SettingsSearchEntry(
         target = SettingsSearchTarget.FULLSCREEN_GESTURE,
@@ -305,6 +305,9 @@ private val SETTINGS_SEARCH_INDEX: List<SettingsSearchEntry> = listOf(
             "默认画质",
             "无线网络默认画质",
             "流量默认画质",
+            "默认音质",
+            "Hi-Res",
+            "杜比音质",
             "省流量模式",
             "定向流量",
             "b站定向流量",
@@ -599,9 +602,9 @@ private val SETTINGS_SEARCH_INDEX: List<SettingsSearchEntry> = listOf(
     SettingsSearchEntry(
         target = SettingsSearchTarget.PLAYBACK,
         title = "网络与画质",
-        subtitle = "自动最高画质、默认画质、定向流量",
+        subtitle = "自动最高画质、默认画质、默认音质、定向流量",
         section = "播放设置",
-        aliases = listOf("网络与画质", "自动最高画质", "默认画质", "无线网络默认画质", "流量默认画质", "定向流量", "b站定向流量"),
+        aliases = listOf("网络与画质", "自动最高画质", "默认画质", "无线网络默认画质", "流量默认画质", "默认音质", "音质", "Hi-Res", "杜比音质", "跟随上次选择", "定向流量", "b站定向流量"),
         focusId = SettingsSearchFocusIds.PLAYBACK_NETWORK
     ),
     SettingsSearchEntry(

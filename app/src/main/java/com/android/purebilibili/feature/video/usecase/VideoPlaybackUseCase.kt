@@ -22,9 +22,12 @@ import com.android.purebilibili.data.model.VideoLoadError
 import com.android.purebilibili.data.model.response.*
 import com.android.purebilibili.feature.video.playback.dash.AdaptiveDashPlaybackSource
 import com.android.purebilibili.feature.video.playback.dash.buildLocalDashManifest
+import com.android.purebilibili.feature.video.playback.audio.AudioFallbackReason
+import com.android.purebilibili.feature.video.playback.audio.AudioQualityOption
+import com.android.purebilibili.feature.video.playback.audio.collectAudioStreamCandidates
+import com.android.purebilibili.feature.video.playback.audio.resolveAudioStreamSelection
 import com.android.purebilibili.feature.video.playback.policy.PlaybackQualityMode
 import com.android.purebilibili.feature.video.playback.policy.buildAdaptiveDashTrackSet
-import com.android.purebilibili.feature.video.playback.policy.resolveSpeedCompatibleAudioQualityPreference
 import com.android.purebilibili.data.repository.ActionRepository
 import com.android.purebilibili.data.repository.VideoRepository
 import com.android.purebilibili.feature.video.controller.PlaybackProgressManager
@@ -60,6 +63,11 @@ sealed class VideoLoadResult {
         val switchableQualityIds: List<Int> = emptyList(),
         val cachedDashVideos: List<DashVideo>,
         val cachedDashAudios: List<DashAudio>,
+        val cachedDash: Dash? = null,
+        val requestedAudioQuality: Int = -1,
+        val selectedAudioQuality: Int = -1,
+        val availableAudioQualities: List<AudioQualityOption> = emptyList(),
+        val audioFallbackReason: AudioFallbackReason? = null,
         val emoteMap: Map<String, String>,
         val isLoggedIn: Boolean,
         val isVip: Boolean,
@@ -106,6 +114,11 @@ data class QualitySwitchResult(
     val adaptiveDashSource: AdaptiveDashPlaybackSource? = null,
     val cachedDashVideos: List<DashVideo>,
     val cachedDashAudios: List<DashAudio>,
+    val cachedDash: Dash? = null,
+    val requestedAudioQuality: Int = -1,
+    val selectedAudioQuality: Int = -1,
+    val availableAudioQualities: List<AudioQualityOption> = emptyList(),
+    val audioFallbackReason: AudioFallbackReason? = null,
     val switchableQualityIds: List<Int> = emptyList(),
     val qualityIds: List<Int> = emptyList(),
     val qualityLabels: List<String> = emptyList()
@@ -119,6 +132,11 @@ data class PlaybackSelectionResult(
     val adaptiveDashSource: AdaptiveDashPlaybackSource? = null,
     val cachedDashVideos: List<DashVideo>,
     val cachedDashAudios: List<DashAudio>,
+    val cachedDash: Dash? = null,
+    val requestedAudioQuality: Int = -1,
+    val selectedAudioQuality: Int = -1,
+    val availableAudioQualities: List<AudioQualityOption> = emptyList(),
+    val audioFallbackReason: AudioFallbackReason? = null,
     val switchableQualityIds: List<Int>,
     val qualityIds: List<Int>,
     val qualityLabels: List<String>,
@@ -667,6 +685,11 @@ class VideoPlaybackUseCase(
                         switchableQualityIds = selection.switchableQualityIds,
                         cachedDashVideos = selection.cachedDashVideos,
                         cachedDashAudios = selection.cachedDashAudios,
+                        cachedDash = selection.cachedDash,
+                        requestedAudioQuality = selection.requestedAudioQuality,
+                        selectedAudioQuality = selection.selectedAudioQuality,
+                        availableAudioQualities = selection.availableAudioQualities,
+                        audioFallbackReason = selection.audioFallbackReason,
                         emoteMap = emoteMap,
                         isLoggedIn = isLogin,
                         isVip = isEffectiveVip, // Pass effective VIP status (true if actual VIP or Unlocked)
@@ -813,6 +836,7 @@ class VideoPlaybackUseCase(
         qualityId: Int,
         cachedVideos: List<DashVideo>,
         cachedAudios: List<DashAudio>,
+        cachedDash: Dash? = null,
         currentPos: Long,
         durationMs: Long = 0L,
         playbackQualityMode: PlaybackQualityMode = PlaybackQualityMode.AUTO,
@@ -868,27 +892,21 @@ class VideoPlaybackUseCase(
         )
         val videoUrl = match.getValidUrl()
         
-        // [修复] 音频也应该重新选择最佳匹配，而不是盲目取第一个
-        val effectiveAudioQualityPreference = resolveSpeedCompatibleAudioQualityPreference(
+        val dashCatalog = cachedDash ?: Dash(video = cachedVideos, audio = cachedAudios)
+        val audioSelection = resolveAudioStreamSelection(
+            dash = dashCatalog,
             requestedAudioQuality = audioQualityPreference,
             playbackSpeed = playbackSpeed
         )
-
-        val dashAudio = if (effectiveAudioQualityPreference != -1) {
-            // 使用 Dash.getBestAudio 逻辑的简化版 (因为这里只有 List<DashAudio>)
-            cachedAudios.find { it.id == effectiveAudioQualityPreference }
-                ?: cachedAudios.minByOrNull { kotlin.math.abs(it.id - effectiveAudioQualityPreference) }
-        } else {
-            cachedAudios.maxByOrNull { it.bandwidth }
-        }
+        val dashAudio = audioSelection.selected?.track
          
         val audioUrl = dashAudio?.getValidUrl()
         val adaptiveDashSource = buildAdaptiveDashPlaybackSource(
             durationMs = durationMs,
             minBufferTimeMs = 1500L,
-            dash = Dash(video = cachedVideos, audio = cachedAudios),
+            dash = dashCatalog,
             targetQuality = requestedQuality,
-            audioQualityPreference = effectiveAudioQualityPreference,
+            audioQualityPreference = audioSelection.effectivePreferenceId,
             videoCodecPreference = videoCodecPreference,
             videoSecondCodecPreference = videoSecondCodecPreference,
             playbackQualityMode = effectivePlaybackQualityMode,
@@ -910,7 +928,12 @@ class VideoPlaybackUseCase(
                 wasFallback = false,
                 adaptiveDashSource = adaptiveDashSource,
                 cachedDashVideos = cachedVideos,
-                cachedDashAudios = cachedAudios,
+                cachedDashAudios = collectAudioStreamCandidates(dashCatalog).map { it.track },
+                cachedDash = dashCatalog,
+                requestedAudioQuality = audioSelection.requestedPreferenceId,
+                selectedAudioQuality = audioSelection.selectedPreferenceId,
+                availableAudioQualities = audioSelection.availableOptions,
+                audioFallbackReason = audioSelection.fallbackReason,
                 switchableQualityIds = availableIds
             )
         }
@@ -995,6 +1018,11 @@ class VideoPlaybackUseCase(
             adaptiveDashSource = selection.adaptiveDashSource,
             cachedDashVideos = selection.cachedDashVideos,
             cachedDashAudios = selection.cachedDashAudios,
+            cachedDash = selection.cachedDash,
+            requestedAudioQuality = selection.requestedAudioQuality,
+            selectedAudioQuality = selection.selectedAudioQuality,
+            availableAudioQualities = selection.availableAudioQualities,
+            audioFallbackReason = selection.audioFallbackReason,
             switchableQualityIds = selection.switchableQualityIds,
             qualityIds = selection.qualityIds,
             qualityLabels = selection.qualityLabels
@@ -1054,11 +1082,14 @@ class VideoPlaybackUseCase(
             isHevcSupported = isHevcSupported,
             isAv1Supported = isAv1Supported
         )
-        val effectiveAudioQualityPreference = resolveSpeedCompatibleAudioQualityPreference(
-            requestedAudioQuality = audioQualityPreference,
-            playbackSpeed = playbackSpeed
-        )
-        val dashAudio = playUrlData.dash?.getBestAudio(effectiveAudioQualityPreference)
+        val audioSelection = playUrlData.dash?.let { dash ->
+            resolveAudioStreamSelection(
+                dash = dash,
+                requestedAudioQuality = audioQualityPreference,
+                playbackSpeed = playbackSpeed
+            )
+        }
+        val dashAudio = audioSelection?.selected?.track
         val videoUrl = getValidVideoUrl(dashVideo, playUrlData)
         if (videoUrl.isBlank()) return null
 
@@ -1072,7 +1103,7 @@ class VideoPlaybackUseCase(
             minBufferTimeMs = playUrlData.dash?.minBufferTime?.times(1000f)?.toLong() ?: 1500L,
             dash = playUrlData.dash,
             targetQuality = targetQuality,
-            audioQualityPreference = effectiveAudioQualityPreference,
+            audioQualityPreference = audioSelection?.effectivePreferenceId ?: audioQualityPreference,
             videoCodecPreference = videoCodecPreference,
             videoSecondCodecPreference = videoSecondCodecPreference,
             playbackQualityMode = playbackQualityMode,
@@ -1086,7 +1117,15 @@ class VideoPlaybackUseCase(
             isDashPlayback = dashVideo != null,
             adaptiveDashSource = adaptiveDashSource,
             cachedDashVideos = playUrlData.dash?.video ?: emptyList(),
-            cachedDashAudios = playUrlData.dash?.audio ?: emptyList(),
+            cachedDashAudios = playUrlData.dash
+                ?.let(::collectAudioStreamCandidates)
+                ?.map { it.track }
+                .orEmpty(),
+            cachedDash = playUrlData.dash,
+            requestedAudioQuality = audioSelection?.requestedPreferenceId ?: audioQualityPreference,
+            selectedAudioQuality = audioSelection?.selectedPreferenceId ?: -1,
+            availableAudioQualities = audioSelection?.availableOptions.orEmpty(),
+            audioFallbackReason = audioSelection?.fallbackReason,
             switchableQualityIds = qualitySelectionState.switchableQualityIds,
             qualityIds = qualitySelectionState.qualityIds,
             qualityLabels = qualitySelectionState.qualityLabels,

@@ -60,6 +60,7 @@ import com.android.purebilibili.feature.video.ui.components.SeekPreviewBubble
 import com.android.purebilibili.feature.video.ui.components.SeekPreviewBubblePlacement
 import com.android.purebilibili.feature.video.ui.components.SeekPreviewBubbleSimple
 import com.android.purebilibili.feature.video.ui.components.VideoAspectRatio
+import com.android.purebilibili.feature.video.ui.components.HiResBadge
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -399,6 +400,9 @@ fun BottomControlBar(
     onAnime4kPresetChange: (Anime4KPreset) -> Unit = {},
     
     // Quality
+    currentAudioQualityLabel: String = "",
+    isHiResAudioSelected: Boolean = false,
+    onAudioQualityClick: () -> Unit = {},
     currentQualityLabel: String = "",
     onQualityClick: () -> Unit = {},
     
@@ -790,6 +794,26 @@ fun BottomControlBar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(layoutPolicy.rightActionSpacingDp.dp)
             ) {
+                if (currentAudioQualityLabel.isNotEmpty()) {
+                    Row(
+                        modifier = Modifier
+                            .heightIn(min = 48.dp)
+                            .clickable(onClick = onAudioQualityClick),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = currentAudioQualityLabel,
+                            color = Color.White,
+                            fontSize = layoutPolicy.actionTextFontSp.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        if (isHiResAudioSelected) {
+                            HiResBadge()
+                        }
+                    }
+                }
+
                 // Quality
                 if (currentQualityLabel.isNotEmpty()) {
                     AppText(

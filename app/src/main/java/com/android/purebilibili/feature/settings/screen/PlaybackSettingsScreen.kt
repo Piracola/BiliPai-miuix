@@ -749,6 +749,11 @@ fun PlaybackSettingsContent(
                         .getWifiQuality(context).collectAsStateWithLifecycle(initialValue = 80)
                     val mobileQuality by com.android.purebilibili.core.store.SettingsManager
                         .getMobileQuality(context).collectAsStateWithLifecycle(initialValue = 64)
+                    val defaultAudioQuality by com.android.purebilibili.core.store.SettingsManager
+                        .getDefaultAudioQuality(context)
+                        .collectAsStateWithLifecycle(
+                            initialValue = com.android.purebilibili.core.store.DEFAULT_AUDIO_QUALITY_FOLLOW_LAST
+                        )
                     val autoHighestQualityEnabled by com.android.purebilibili.core.store.SettingsManager
                         .getAutoHighestQuality(context).collectAsStateWithLifecycle(initialValue = false)
                     val directedTrafficEnabled by com.android.purebilibili.core.store.SettingsManager
@@ -758,11 +763,18 @@ fun PlaybackSettingsContent(
                     val isVip = TokenManager.isVipCache
 
                     val qualityOptions = resolveDefaultPlaybackQualityOptions()
+                    val audioQualityOptions = resolveDefaultAudioQualityOptions()
 
                     fun getQualityLabel(id: Int): String = resolveSelectionLabel(
                         options = qualityOptions,
                         selectedValue = id,
                         fallbackLabel = "720P"
+                    )
+
+                    fun getAudioQualityLabel(id: Int): String = resolveSelectionLabel(
+                        options = audioQualityOptions,
+                        selectedValue = id,
+                        fallbackLabel = "跟随上次"
                     )
 
                     AppPreferenceGroup {
@@ -863,6 +875,28 @@ fun PlaybackSettingsContent(
                                 scope.launch {
                                     com.android.purebilibili.core.store.SettingsManager
                                         .setMobileQuality(context, qualityId)
+                                }
+                            }
+                        )
+
+                        AppPreferenceDivider()
+
+                        AppSegmentedPreference(
+                            title = "默认音质：${getAudioQualityLabel(defaultAudioQuality)}",
+                            subtitle = if (
+                                defaultAudioQuality ==
+                                com.android.purebilibili.core.store.DEFAULT_AUDIO_QUALITY_FOLLOW_LAST
+                            ) {
+                                "新视频跟随播放器上次手动选择"
+                            } else {
+                                "具体默认音质优先于上次手动选择；当前视频仍可临时切换"
+                            },
+                            options = audioQualityOptions,
+                            selectedValue = defaultAudioQuality,
+                            onSelectionChange = { audioQuality ->
+                                scope.launch {
+                                    com.android.purebilibili.core.store.SettingsManager
+                                        .setDefaultAudioQuality(context, audioQuality)
                                 }
                             }
                         )

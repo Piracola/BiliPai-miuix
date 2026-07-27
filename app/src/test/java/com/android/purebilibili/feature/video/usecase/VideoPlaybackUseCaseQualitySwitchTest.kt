@@ -4,7 +4,10 @@ import com.android.purebilibili.data.model.response.DashAudio
 import com.android.purebilibili.data.model.response.DashVideo
 import com.android.purebilibili.data.model.response.Dash
 import com.android.purebilibili.data.model.response.Durl
+import com.android.purebilibili.data.model.response.Flac
 import com.android.purebilibili.data.model.response.PlayUrlData
+import com.android.purebilibili.feature.video.playback.audio.AUDIO_QUALITY_HI_RES
+import com.android.purebilibili.feature.video.playback.audio.AudioFallbackReason
 import com.android.purebilibili.feature.video.playback.policy.PlaybackQualityMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -418,6 +421,51 @@ class VideoPlaybackUseCaseQualitySwitchTest {
 
         assertEquals("https://example.com/audio-192.m4s", result?.audioUrl)
         assertEquals(listOf(30280, 30216), result?.adaptiveDashSource?.audioTracks?.map { it.id })
+        assertEquals(AUDIO_QUALITY_HI_RES, result?.requestedAudioQuality)
+        assertEquals(30280, result?.selectedAudioQuality)
+        assertEquals(AudioFallbackReason.SPEED_INCOMPATIBLE, result?.audioFallbackReason)
+    }
+
+    @Test
+    fun `resolvePlaybackSelection selects flac and exposes real audio options`() {
+        val useCase = VideoPlaybackUseCase()
+        val hiResAudio = DashAudio(
+            id = AUDIO_QUALITY_HI_RES,
+            baseUrl = "https://example.com/audio-hires.m4s",
+            bandwidth = 1_800_000,
+            codecs = "fLaC"
+        )
+
+        val result = useCase.resolvePlaybackSelection(
+            playUrlData = PlayUrlData(
+                quality = 80,
+                acceptQuality = listOf(80),
+                dash = Dash(
+                    video = listOf(
+                        DashVideo(id = 80, baseUrl = "https://example.com/1080-hevc.m4s", codecs = "hev1")
+                    ),
+                    audio = listOf(
+                        DashAudio(id = 30280, baseUrl = "https://example.com/audio-192.m4s", bandwidth = 192_000)
+                    ),
+                    flac = Flac(display = true, audio = hiResAudio)
+                )
+            ),
+            targetQuality = 80,
+            audioQualityPreference = AUDIO_QUALITY_HI_RES,
+            videoCodecPreference = "hev1",
+            videoSecondCodecPreference = "avc1",
+            isHevcSupported = true,
+            isAv1Supported = false
+        )
+
+        assertEquals("https://example.com/audio-hires.m4s", result?.audioUrl)
+        assertEquals(listOf(AUDIO_QUALITY_HI_RES), result?.adaptiveDashSource?.audioTracks?.map { it.id })
+        assertEquals(AUDIO_QUALITY_HI_RES, result?.selectedAudioQuality)
+        assertEquals(
+            listOf(-1, AUDIO_QUALITY_HI_RES, 30280),
+            result?.availableAudioQualities?.map { it.preferenceId }
+        )
+        assertEquals(hiResAudio, result?.cachedDash?.flac?.audio)
     }
 
     @Test
