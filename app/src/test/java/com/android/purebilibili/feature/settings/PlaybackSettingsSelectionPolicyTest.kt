@@ -28,7 +28,7 @@ class PlaybackSettingsSelectionPolicyTest {
             resolveDefaultAudioQualityOptions().map { it.value }
         )
         assertEquals(
-            listOf("跟随上次", "Hi-Res 无损", "杜比全景声", "高品质 AAC"),
+            listOf("跟随上次", "Hi-Res 无损", "杜比全景声", "AAC"),
             resolveDefaultAudioQualityOptions().map { it.label }
         )
     }

@@ -132,7 +132,7 @@ class AudioStreamSelectionPolicyTest {
         )
 
         assertEquals(listOf(AUDIO_QUALITY_AUTO), options.map { it.preferenceId })
-        assertEquals("高品质 AAC", options.single().label)
+        assertEquals("AAC", options.single().label)
         assertTrue(options.none { it.isHiRes })
         assertTrue(options.none { it.isDolby })
     }
@@ -183,6 +183,20 @@ class AudioStreamSelectionPolicyTest {
     }
 
     @Test
+    fun `unsupported dolby decoder hides dolby and falls back to AAC`() {
+        val decision = resolveAudioStreamSelection(
+            dash = fullDash(),
+            requestedAudioQuality = AUDIO_QUALITY_DOLBY,
+            isDolbyAudioSupported = false
+        )
+
+        assertEquals(AUDIO_QUALITY_AUTO, decision.selectedPreferenceId)
+        assertEquals(AudioStreamKind.STANDARD, decision.selected?.kind)
+        assertEquals(AudioFallbackReason.REQUESTED_UNAVAILABLE, decision.fallbackReason)
+        assertTrue(decision.availableOptions.none { it.isDolby })
+    }
+
+    @Test
     fun `premium options expose matching audio badges`() {
         val options = buildAvailableAudioQualityOptions(
             collectAudioStreamCandidates(fullDash())
@@ -226,7 +240,7 @@ class AudioStreamSelectionPolicyTest {
             selectedAudioQuality = AUDIO_QUALITY_AUTO
         )
 
-        assertEquals("高品质 AAC", presentation.label)
+        assertEquals("AAC", presentation.label)
     }
 
     private fun fullDash(): Dash {

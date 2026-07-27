@@ -60,7 +60,8 @@ fun buildAdaptiveDashTrackSet(
     preferredVideoCodec: String,
     secondaryVideoCodec: String,
     isHevcSupported: Boolean,
-    isAv1Supported: Boolean
+    isAv1Supported: Boolean,
+    isDolbyAudioSupported: Boolean = true
 ): AdaptiveDashTrackSet {
     val preferredCodec = normalizeCodecFamilyKey(preferredVideoCodec)
     val secondaryCodec = normalizeCodecFamilyKey(secondaryVideoCodec)
@@ -117,7 +118,8 @@ fun buildAdaptiveDashTrackSet(
     } else {
         resolveAudioStreamSelection(
             dash = dash,
-            requestedAudioQuality = preferredAudioQuality
+            requestedAudioQuality = preferredAudioQuality,
+            isDolbyAudioSupported = isDolbyAudioSupported
         ).selected?.track?.let(::listOf).orEmpty()
     }
 

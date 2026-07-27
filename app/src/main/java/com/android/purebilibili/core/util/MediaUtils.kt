@@ -26,6 +26,13 @@ object MediaUtils {
     }
 
     /**
+     * 检查设备是否具备杜比全景声音轨使用的 E-AC-3/JOC 解码器。
+     */
+    fun isDolbyAtmosAudioSupported(): Boolean {
+        return hasDecoder("audio/eac3") || hasDecoder("audio/eac3-joc")
+    }
+
+    /**
      * Check if HDR (HDR10/HLG) video is supported
      * HDR requires both decoder support and display capability
      */

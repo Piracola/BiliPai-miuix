@@ -6,6 +6,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MergingMediaSource
 import com.android.purebilibili.data.model.response.Dash
+import com.android.purebilibili.core.util.MediaUtils
 import com.android.purebilibili.feature.plugin.PlaybackCdnPlugin
 import com.android.purebilibili.feature.video.playback.audio.AudioSelectionDecision
 import com.android.purebilibili.feature.video.playback.audio.collectAudioStreamCandidates
@@ -29,13 +30,15 @@ internal fun switchPortraitPlaybackAudioSource(
     requestedAudioQuality: Int,
     targetVideoQuality: Int,
     mediaId: String,
-    cdnPlugin: PlaybackCdnPlugin?
+    cdnPlugin: PlaybackCdnPlugin?,
+    isDolbyAudioSupported: Boolean = MediaUtils.isDolbyAtmosAudioSupported()
 ): PortraitAudioSourceSwitchResult? {
     if (currentVideoUrl.isBlank() || mediaId.isBlank()) return null
     val selection = resolveAudioStreamSelection(
         dash = dash,
         requestedAudioQuality = requestedAudioQuality,
-        playbackSpeed = player.playbackParameters.speed
+        playbackSpeed = player.playbackParameters.speed,
+        isDolbyAudioSupported = isDolbyAudioSupported
     )
     val selectedAudioUrl = selection.selected?.track?.getValidUrl()
         ?.takeIf { it.isNotBlank() }
@@ -47,7 +50,10 @@ internal fun switchPortraitPlaybackAudioSource(
             audioSelection = selection
         ),
         cachedDashVideos = dash.video,
-        cachedDashAudios = collectAudioStreamCandidates(dash).map { it.track },
+        cachedDashAudios = collectAudioStreamCandidates(
+            dash = dash,
+            isDolbyAudioSupported = isDolbyAudioSupported
+        ).map { it.track },
         targetQuality = targetVideoQuality,
         cdnPlugin = cdnPlugin
     )

@@ -4,9 +4,11 @@ import com.android.purebilibili.data.model.response.DashAudio
 import com.android.purebilibili.data.model.response.DashVideo
 import com.android.purebilibili.data.model.response.Dash
 import com.android.purebilibili.data.model.response.Durl
+import com.android.purebilibili.data.model.response.Dolby
 import com.android.purebilibili.data.model.response.Flac
 import com.android.purebilibili.data.model.response.PlayUrlData
 import com.android.purebilibili.feature.video.playback.audio.AUDIO_QUALITY_AUTO
+import com.android.purebilibili.feature.video.playback.audio.AUDIO_QUALITY_DOLBY
 import com.android.purebilibili.feature.video.playback.audio.AUDIO_QUALITY_HI_RES
 import com.android.purebilibili.feature.video.playback.audio.AudioFallbackReason
 import com.android.purebilibili.feature.video.playback.policy.PlaybackQualityMode
@@ -467,6 +469,54 @@ class VideoPlaybackUseCaseQualitySwitchTest {
             result?.availableAudioQualities?.map { it.preferenceId }
         )
         assertEquals(hiResAudio, result?.cachedDash?.flac?.audio)
+    }
+
+    @Test
+    fun `resolvePlaybackSelection excludes dolby when device decoder is unavailable`() {
+        val useCase = VideoPlaybackUseCase()
+        val standardAudio = DashAudio(
+            id = 30280,
+            baseUrl = "https://example.com/audio-aac.m4s",
+            bandwidth = 192_000,
+            codecs = "mp4a.40.2"
+        )
+        val dolbyAudio = DashAudio(
+            id = AUDIO_QUALITY_DOLBY,
+            baseUrl = "https://example.com/audio-dolby.m4s",
+            bandwidth = 448_000,
+            codecs = "ec-3"
+        )
+
+        val result = useCase.resolvePlaybackSelection(
+            playUrlData = PlayUrlData(
+                quality = 80,
+                acceptQuality = listOf(80),
+                dash = Dash(
+                    video = listOf(
+                        DashVideo(
+                            id = 80,
+                            baseUrl = "https://example.com/1080-hevc.m4s",
+                            codecs = "hev1"
+                        )
+                    ),
+                    audio = listOf(standardAudio),
+                    dolby = Dolby(type = 1, audio = listOf(dolbyAudio))
+                )
+            ),
+            targetQuality = 80,
+            audioQualityPreference = AUDIO_QUALITY_DOLBY,
+            videoCodecPreference = "hev1",
+            videoSecondCodecPreference = "avc1",
+            isHevcSupported = true,
+            isAv1Supported = false,
+            isDolbyAudioSupported = false
+        )
+
+        assertEquals(standardAudio.getValidUrl(), result?.audioUrl)
+        assertEquals(listOf(30280), result?.adaptiveDashSource?.audioTracks?.map { it.id })
+        assertEquals(AUDIO_QUALITY_AUTO, result?.selectedAudioQuality)
+        assertEquals(AudioFallbackReason.REQUESTED_UNAVAILABLE, result?.audioFallbackReason)
+        assertTrue(result?.availableAudioQualities?.none { it.preferenceId == AUDIO_QUALITY_DOLBY } == true)
     }
 
     @Test

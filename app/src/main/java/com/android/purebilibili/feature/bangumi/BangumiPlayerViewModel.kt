@@ -7,6 +7,7 @@ import com.android.purebilibili.core.player.BasePlayerViewModel
 import com.android.purebilibili.core.network.NetworkModule
 import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.store.TokenManager
+import com.android.purebilibili.core.util.MediaUtils
 import com.android.purebilibili.data.model.response.*
 import com.android.purebilibili.data.repository.ActionRepository
 import com.android.purebilibili.data.repository.BangumiRepository
@@ -375,7 +376,8 @@ class BangumiPlayerViewModel : BasePlayerViewModel() {
                 resolveAudioStreamSelection(
                     dash = dash,
                     requestedAudioQuality = requestedAudioQuality,
-                    playbackSpeed = exoPlayer?.playbackParameters?.speed ?: 1.0f
+                    playbackSpeed = exoPlayer?.playbackParameters?.speed ?: 1.0f,
+                    isDolbyAudioSupported = MediaUtils.isDolbyAtmosAudioSupported()
                 )
             }
             
@@ -587,7 +589,8 @@ class BangumiPlayerViewModel : BasePlayerViewModel() {
                     resolveAudioStreamSelection(
                         dash = it,
                         requestedAudioQuality = currentState.requestedAudioQuality,
-                        playbackSpeed = exoPlayer?.playbackParameters?.speed ?: 1.0f
+                        playbackSpeed = exoPlayer?.playbackParameters?.speed ?: 1.0f,
+                        isDolbyAudioSupported = MediaUtils.isDolbyAtmosAudioSupported()
                     )
                 }
                 
@@ -691,7 +694,8 @@ class BangumiPlayerViewModel : BasePlayerViewModel() {
         val selection = resolveAudioStreamSelection(
             dash = dash,
             requestedAudioQuality = audioQuality,
-            playbackSpeed = player.playbackParameters.speed
+            playbackSpeed = player.playbackParameters.speed,
+            isDolbyAudioSupported = MediaUtils.isDolbyAtmosAudioSupported()
         )
         val audioUrl = selection.selected?.track?.getValidUrl()
             ?.takeIf { it.isNotBlank() }
@@ -724,7 +728,7 @@ class BangumiPlayerViewModel : BasePlayerViewModel() {
         val selectedLabel = state.availableAudioQualities
             .firstOrNull { it.preferenceId == state.selectedAudioQuality }
             ?.label
-            ?: "高品质 AAC"
+            ?: "AAC"
         val message = when (state.audioFallbackReason) {
             AudioFallbackReason.SPEED_INCOMPATIBLE ->
                 "当前倍速暂不支持所选音质，已临时使用 $selectedLabel"

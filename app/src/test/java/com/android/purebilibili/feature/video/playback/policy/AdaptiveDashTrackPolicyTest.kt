@@ -153,10 +153,11 @@ class AdaptiveDashTrackPolicyTest {
         val dolby = DashAudio(
             id = AUDIO_QUALITY_DOLBY,
             baseUrl = "https://example.com/audio-dolby.m4s",
-            bandwidth = 448_000
+            bandwidth = 448_000,
+            codecs = "ec-3"
         )
         val result = buildAdaptiveDashTrackSet(
-            dash = dash.copy(dolby = Dolby(audio = listOf(dolby))),
+            dash = dash.copy(dolby = Dolby(type = 1, audio = listOf(dolby))),
             mode = PlaybackQualityMode.AUTO,
             autoQualityCap = 80,
             preferredAudioQuality = AUDIO_QUALITY_DOLBY,
@@ -167,6 +168,29 @@ class AdaptiveDashTrackPolicyTest {
         )
 
         assertEquals(listOf("https://example.com/audio-dolby.m4s"), result.audioTracks.map { it.getValidUrl() })
+    }
+
+    @Test
+    fun `unsupported dolby decoder falls back to standard representation`() {
+        val dolby = DashAudio(
+            id = AUDIO_QUALITY_DOLBY,
+            baseUrl = "https://example.com/audio-dolby.m4s",
+            bandwidth = 448_000,
+            codecs = "ec-3"
+        )
+        val result = buildAdaptiveDashTrackSet(
+            dash = dash.copy(dolby = Dolby(type = 1, audio = listOf(dolby))),
+            mode = PlaybackQualityMode.AUTO,
+            autoQualityCap = 80,
+            preferredAudioQuality = AUDIO_QUALITY_DOLBY,
+            preferredVideoCodec = "hev1",
+            secondaryVideoCodec = "avc1",
+            isHevcSupported = true,
+            isAv1Supported = false,
+            isDolbyAudioSupported = false
+        )
+
+        assertEquals(listOf(30280), result.audioTracks.map { it.id })
     }
 
     @Test

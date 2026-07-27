@@ -194,6 +194,7 @@ internal fun resolvePortraitPlaybackStreamUrls(
     targetQuality: Int = PORTRAIT_PLAYBACK_TARGET_QUALITY,
     isHevcSupported: Boolean = MediaUtils.isHevcSupported(),
     isAv1Supported: Boolean = MediaUtils.isAv1Supported(),
+    isDolbyAudioSupported: Boolean = MediaUtils.isDolbyAtmosAudioSupported(),
     requestedAudioQuality: Int = -1,
     playbackSpeed: Float = 1.0f
 ): PortraitPlaybackStreamUrls? {
@@ -207,7 +208,8 @@ internal fun resolvePortraitPlaybackStreamUrls(
         val audioSelection = resolveAudioStreamSelection(
             dash = dash,
             requestedAudioQuality = requestedAudioQuality,
-            playbackSpeed = playbackSpeed
+            playbackSpeed = playbackSpeed,
+            isDolbyAudioSupported = isDolbyAudioSupported
         )
         val dashAudio = audioSelection.selected?.track
         val videoUrl = dashVideo?.getValidUrl()?.takeIf { it.isNotEmpty() }
