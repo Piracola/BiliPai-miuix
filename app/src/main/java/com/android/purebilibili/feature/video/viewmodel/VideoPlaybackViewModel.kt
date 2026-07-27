@@ -13,6 +13,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.Tracks
+import androidx.media3.exoplayer.ExoPlaybackException
 import androidx.media3.exoplayer.ExoPlayer
 import com.android.purebilibili.core.cache.PlayUrlCache
 import com.android.purebilibili.core.cooldown.PlaybackCooldownManager
@@ -87,6 +88,8 @@ import com.android.purebilibili.feature.video.playback.loader.PlaybackLoader
 import com.android.purebilibili.feature.video.playback.dash.AdaptiveDashPlaybackSource
 import com.android.purebilibili.feature.video.playback.audio.AudioFallbackReason
 import com.android.purebilibili.feature.video.playback.audio.AudioQualityOption
+import com.android.purebilibili.feature.video.playback.audio.AUDIO_QUALITY_AUTO
+import com.android.purebilibili.feature.video.playback.audio.isPremiumAudioPlaybackFailure
 import com.android.purebilibili.feature.video.playback.audio.resolveRequestedAudioQuality
 import com.android.purebilibili.feature.video.playback.policy.PlaybackPostLoadTask
 import com.android.purebilibili.feature.video.playback.policy.PlaybackQualityMode
@@ -2132,6 +2135,24 @@ class VideoPlaybackViewModel : ViewModel() {
 
         override fun onPlayerError(error: PlaybackException) {
             Logger.w("PlayerVM", "Playback error: ${error.errorCodeName}, message=${error.message}")
+            val current = _uiState.value as? VideoPlaybackUiState.Success
+            val exoPlaybackError = error as? ExoPlaybackException
+            if (
+                current != null &&
+                isPremiumAudioPlaybackFailure(
+                    errorCode = error.errorCode,
+                    selectedAudioQuality = current.selectedAudioQuality,
+                    rendererName = exoPlaybackError?.rendererName,
+                    rendererSampleMimeType = exoPlaybackError?.rendererFormat?.sampleMimeType
+                )
+            ) {
+                Logger.w(
+                    "PlayerVM",
+                    "Hi-Res audio decoder failed; switching current playback to AAC"
+                )
+                fallbackFromPremiumAudioPlaybackError()
+                return
+            }
             recordCurrentCdnHealthEvent(CdnHealthEvent.PLAYER_ERROR)
             fallbackFromCdnRewrite(reason = "player_error")
         }
@@ -4666,6 +4687,7 @@ class VideoPlaybackViewModel : ViewModel() {
     
     private val _audioQualityPreference = MutableStateFlow(-1)
     val audioQualityPreference = _audioQualityPreference.asStateFlow()
+    private var premiumAudioFallbackInProgress = false
     
     fun setVideoCodec(codec: String) {
         _videoCodecPreference.value = codec // Optimistic update
@@ -4731,11 +4753,72 @@ class VideoPlaybackViewModel : ViewModel() {
                     "当前倍速暂不支持所选音质，已临时使用 $selectedLabel"
                 AudioFallbackReason.REQUESTED_UNAVAILABLE ->
                     "当前视频不支持所选音质，已使用 $selectedLabel"
+                AudioFallbackReason.DECODER_ERROR ->
+                    "当前设备无法稳定解码所选音质，已临时使用 $selectedLabel"
                 AudioFallbackReason.NO_PLAYABLE_AUDIO ->
                     "当前视频没有可用音轨"
                 null -> "✓ 已切换至 $selectedLabel"
             }
             toast(message, PlayerToastPresentation.CenteredHighlight)
+        }
+    }
+
+    internal fun fallbackFromPremiumAudioPlaybackError() {
+        if (premiumAudioFallbackInProgress) return
+
+        val current = _uiState.value as? VideoPlaybackUiState.Success ?: return
+        val player = exoPlayer ?: return
+        val hasStandardAudio = current.availableAudioQualities.any { option ->
+            option.preferenceId == AUDIO_QUALITY_AUTO
+        }
+        if (!hasStandardAudio) {
+            player.pause()
+            viewModelScope.launch {
+                toast("当前设备无法解码该 Hi-Res 音轨，且没有可回退的 AAC 音轨")
+            }
+            return
+        }
+
+        val requestedAudioQuality = current.requestedAudioQuality
+        val currentPos = player.currentPosition.coerceAtLeast(0L)
+        val playWhenReady = resolvePlaybackIntentForSourceReplacement(
+            playWhenReady = player.playWhenReady,
+            isPlaying = player.isPlaying
+        )
+        premiumAudioFallbackInProgress = true
+        playbackCdnFallbackJob?.cancel()
+        playbackCdnFallbackJob = null
+        playbackCdnFallbackState = PlaybackCdnFallbackState.Inactive
+
+        viewModelScope.launch {
+            try {
+                val switched = refreshPlaybackAudioForSpeedCompatibility(
+                    current = current,
+                    audioPreference = AUDIO_QUALITY_AUTO,
+                    currentPos = currentPos,
+                    playWhenReady = playWhenReady
+                )
+                val updated = _uiState.value as? VideoPlaybackUiState.Success
+                if (switched && updated?.selectedAudioQuality == AUDIO_QUALITY_AUTO) {
+                    _uiState.value = updated.copy(
+                        requestedAudioQuality = requestedAudioQuality,
+                        audioFallbackReason = AudioFallbackReason.DECODER_ERROR
+                    )
+                    toast(
+                        "当前设备无法稳定解码 Hi-Res，已临时切换至 AAC",
+                        PlayerToastPresentation.CenteredHighlight
+                    )
+                } else {
+                    player.pause()
+                    toast("Hi-Res 解码失败，AAC 回退也未能完成")
+                }
+            } catch (error: Exception) {
+                Logger.w("PlayerVM", "Hi-Res audio fallback failed: ${error.message}")
+                player.pause()
+                toast("Hi-Res 解码失败，AAC 回退也未能完成")
+            } finally {
+                premiumAudioFallbackInProgress = false
+            }
         }
     }
 

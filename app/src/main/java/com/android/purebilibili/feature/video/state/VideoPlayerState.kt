@@ -30,6 +30,7 @@ import androidx.media3.common.Player
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.analytics.AnalyticsListener
+import androidx.media3.exoplayer.ExoPlaybackException
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import coil.imageLoader
@@ -39,6 +40,7 @@ import coil.size.Scale
 import coil.transform.RoundedCornersTransformation
 import com.android.purebilibili.R
 import com.android.purebilibili.core.network.NetworkModule
+import com.android.purebilibili.core.player.HiResCompatibleRenderersFactory
 import com.android.purebilibili.core.player.PlaybackMediaCache
 import com.android.purebilibili.core.util.FormatUtils
 import com.android.purebilibili.core.util.Logger
@@ -46,6 +48,7 @@ import com.android.purebilibili.core.util.NetworkUtils
 import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.store.PlaybackCompletionBehavior
 import com.android.purebilibili.feature.video.playback.policy.resolvePlaybackWakeMode
+import com.android.purebilibili.feature.video.playback.audio.isPremiumAudioPlaybackFailure
 import com.android.purebilibili.feature.video.playback.session.resolvePlaybackPauseDecision
 import com.android.purebilibili.feature.video.playback.session.resolvePlaybackResumeDecision
 import com.android.purebilibili.feature.video.playback.session.PendingPlaybackUserAction
@@ -841,11 +844,11 @@ fun rememberVideoPlayerState(
             //  根据设置选择 RenderersFactory
             val renderersFactory = if (hwDecodeEnabled) {
                 // 默认 Factory，优先使用硬件解码
-                androidx.media3.exoplayer.DefaultRenderersFactory(context)
+                HiResCompatibleRenderersFactory(context)
                     .setExtensionRendererMode(androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
             } else {
                 // 强制使用软件解码
-                androidx.media3.exoplayer.DefaultRenderersFactory(context)
+                HiResCompatibleRenderersFactory(context)
                     .setExtensionRendererMode(androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF)
                     .setEnableDecoderFallback(true)
             }
@@ -1129,6 +1132,17 @@ fun rememberVideoPlayerState(
                 val currentState = viewModel.uiState.value
                 val hasCdnAlternatives = currentState is com.android.purebilibili.feature.video.viewmodel.VideoPlaybackUiState.Success 
                     && currentState.cdnCount > 1
+                val exoPlaybackError = error as? ExoPlaybackException
+                val isPremiumAudioFailure =
+                    currentState is VideoPlaybackUiState.Success &&
+                        isPremiumAudioPlaybackFailure(
+                            errorCode = error.errorCode,
+                            selectedAudioQuality = currentState.selectedAudioQuality,
+                            rendererName = exoPlaybackError?.rendererName,
+                            rendererSampleMimeType = exoPlaybackError
+                                ?.rendererFormat
+                                ?.sampleMimeType
+                        )
 
                 val action = decidePlayerErrorRecovery(
                     errorCode = error.errorCode,
@@ -1140,10 +1154,15 @@ fun rememberVideoPlayerState(
                     isDecoderLikeFailure = isDecoderLikeFailure(
                         errorMessage = error.message,
                         causeClassName = causeName
-                    )
+                    ),
+                    isPremiumAudioFailure = isPremiumAudioFailure
                 )
 
                 when (action) {
+                    PlayerErrorRecoveryAction.FALLBACK_PREMIUM_AUDIO -> {
+                        viewModel.fallbackFromPremiumAudioPlaybackError()
+                    }
+
                     PlayerErrorRecoveryAction.SWITCH_CDN -> {
                         retryCountRef.cdnSwitchCount++
                         com.android.purebilibili.core.util.Logger.d(

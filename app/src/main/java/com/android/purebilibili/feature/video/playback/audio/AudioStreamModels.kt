@@ -17,6 +17,7 @@ enum class AudioStreamKind {
 enum class AudioFallbackReason {
     REQUESTED_UNAVAILABLE,
     SPEED_INCOMPATIBLE,
+    DECODER_ERROR,
     NO_PLAYABLE_AUDIO
 }
 

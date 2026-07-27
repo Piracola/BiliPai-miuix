@@ -7,6 +7,7 @@ import android.content.ContextWrapper
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.widget.Toast
+import com.android.purebilibili.core.player.HiResCompatibleRenderersFactory
 import com.android.purebilibili.core.ui.LocalNavigationBackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -94,9 +95,12 @@ fun BangumiPlayerScreen(
     
     // 创建 ExoPlayer
     val exoPlayer = remember {
-        ExoPlayer.Builder(context).build().apply {
-            playWhenReady = true
-        }
+        ExoPlayer.Builder(context)
+            .setRenderersFactory(HiResCompatibleRenderersFactory(context))
+            .build()
+            .apply {
+                playWhenReady = true
+            }
     }
     val miniPlayerManager = remember(context) {
         MiniPlayerManager.getInstance(context.applicationContext)

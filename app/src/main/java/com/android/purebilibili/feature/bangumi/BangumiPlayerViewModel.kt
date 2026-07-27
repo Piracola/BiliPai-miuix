@@ -734,6 +734,8 @@ class BangumiPlayerViewModel : BasePlayerViewModel() {
                 "当前倍速暂不支持所选音质，已临时使用 $selectedLabel"
             AudioFallbackReason.REQUESTED_UNAVAILABLE ->
                 "当前视频不支持所选音质，已使用 $selectedLabel"
+            AudioFallbackReason.DECODER_ERROR ->
+                "当前设备无法稳定解码所选音质，已临时使用 $selectedLabel"
             AudioFallbackReason.NO_PLAYABLE_AUDIO -> "当前视频没有可用音轨"
             null -> "✓ 已切换至 $selectedLabel"
         }

@@ -3,6 +3,7 @@ package com.android.purebilibili.feature.video.state
 import androidx.media3.common.PlaybackException
 
 internal enum class PlayerErrorRecoveryAction {
+    FALLBACK_PREMIUM_AUDIO,
     SWITCH_CDN,
     RETRY_NETWORK,
     RETRY_DECODER_FALLBACK,
@@ -17,8 +18,12 @@ internal fun decidePlayerErrorRecovery(
     maxRetries: Int,
     cdnSwitchCount: Int,
     maxCdnSwitches: Int,
-    isDecoderLikeFailure: Boolean
+    isDecoderLikeFailure: Boolean,
+    isPremiumAudioFailure: Boolean = false
 ): PlayerErrorRecoveryAction {
+    if (isPremiumAudioFailure) {
+        return PlayerErrorRecoveryAction.FALLBACK_PREMIUM_AUDIO
+    }
     return if (isNetworkPlaybackError(errorCode)) {
         when {
             hasCdnAlternatives && cdnSwitchCount < maxCdnSwitches -> PlayerErrorRecoveryAction.SWITCH_CDN
