@@ -183,7 +183,7 @@ fun resolveAudioQualityControlPresentation(
 ): AudioQualityControlPresentation {
     val selectedOption = options.firstOrNull { it.preferenceId == selectedAudioQuality }
     val label = when (selectedOption?.preferenceId) {
-        AUDIO_QUALITY_HI_RES -> "音质"
+        AUDIO_QUALITY_HI_RES -> "Hi-Res"
         AUDIO_QUALITY_DOLBY -> "杜比"
         else -> selectedOption?.label?.takeIf { it.isNotBlank() } ?: "音质"
     }

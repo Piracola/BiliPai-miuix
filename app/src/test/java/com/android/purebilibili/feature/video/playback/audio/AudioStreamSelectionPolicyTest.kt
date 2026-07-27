@@ -243,6 +243,21 @@ class AudioStreamSelectionPolicyTest {
         assertEquals("AAC", presentation.label)
     }
 
+    @Test
+    fun `Hi Res control shows explicit text next to badge`() {
+        val options = buildAvailableAudioQualityOptions(
+            collectAudioStreamCandidates(fullDash())
+        )
+
+        val presentation = resolveAudioQualityControlPresentation(
+            options = options,
+            selectedAudioQuality = AUDIO_QUALITY_HI_RES
+        )
+
+        assertEquals("Hi-Res", presentation.label)
+        assertTrue(presentation.showHiResBadge)
+    }
+
     private fun fullDash(): Dash {
         return Dash(
             audio = listOf(standard192, standard64),

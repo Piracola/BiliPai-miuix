@@ -28,6 +28,7 @@ import com.android.purebilibili.feature.audio.player.MusicQueueItemUi
 import com.android.purebilibili.feature.audio.screen.MusicPlayerContent
 import com.android.purebilibili.feature.audio.viewmodel.MusicViewModel
 import com.android.purebilibili.feature.video.player.PlaylistManager
+import com.android.purebilibili.feature.video.playback.audio.resolveAudioQualityControlPresentation
 import com.android.purebilibili.feature.video.ui.components.CollectionSheet
 import com.android.purebilibili.feature.video.ui.components.PagesSelector
 import com.android.purebilibili.feature.video.viewmodel.VideoPlaybackUiState
@@ -164,6 +165,15 @@ internal fun AudioModeMusicPlayer(
     }
     val currentIndex = playlistIndex.takeIf { it in queue.indices } ?: 0
     val coverUrl = queue.getOrNull(currentIndex)?.coverUrl ?: FormatUtils.fixImageUrl(info.pic)
+    val audioQualityPresentation = remember(
+        successState.availableAudioQualities,
+        successState.selectedAudioQuality
+    ) {
+        resolveAudioQualityControlPresentation(
+            options = successState.availableAudioQualities,
+            selectedAudioQuality = successState.selectedAudioQuality
+        )
+    }
 
     MusicPlayerContent(
         state = MusicPlayerUiState(
@@ -215,6 +225,12 @@ internal fun AudioModeMusicPlayer(
         },
         onSleepTimerClick = { showSleepTimerDialog = true },
         sleepTimerLabel = formatAudioModeSleepTimerButtonLabel(sleepTimerMinutes),
+        audioQualityLabel = audioQualityPresentation.label,
+        audioQualityOptions = successState.availableAudioQualities,
+        requestedAudioQuality = successState.requestedAudioQuality,
+        isHiResAudioSelected = audioQualityPresentation.showHiResBadge,
+        isDolbyAudioSelected = audioQualityPresentation.showDolbyBadge,
+        onAudioQualitySelected = viewModel::setAudioQuality,
         onPipClick = if (showPipButton) onEnterPip else null,
         onToggleOrientation = onToggleOrientation,
         orientationActionLabel = orientationActionLabel,

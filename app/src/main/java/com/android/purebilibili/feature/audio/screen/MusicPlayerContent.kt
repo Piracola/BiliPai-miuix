@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -100,7 +101,11 @@ import com.android.purebilibili.feature.audio.lyrics.resolveLyricFocusScrollOffs
 import com.android.purebilibili.feature.audio.player.MusicPlayerUiState
 import com.android.purebilibili.feature.home.components.BottomBarLiquidSegmentedControl
 import com.android.purebilibili.feature.home.components.BottomBarMatchedReusableLiquidDock
+import com.android.purebilibili.feature.video.playback.audio.AudioQualityOption
 import com.android.purebilibili.feature.video.player.PlayMode
+import com.android.purebilibili.feature.video.ui.components.AudioQualitySelectionMenu
+import com.android.purebilibili.feature.video.ui.components.DolbyBadge
+import com.android.purebilibili.feature.video.ui.components.HiResBadge
 import io.github.alexzhirkevich.cupertino.icons.CupertinoIcons
 import io.github.alexzhirkevich.cupertino.icons.filled.BackwardEnd
 import io.github.alexzhirkevich.cupertino.icons.filled.ForwardEnd
@@ -141,6 +146,12 @@ internal fun MusicPlayerContent(
     onCollectionClick: (() -> Unit)? = null,
     onSleepTimerClick: (() -> Unit)? = null,
     sleepTimerLabel: String = "定时关闭",
+    audioQualityLabel: String = "音质",
+    audioQualityOptions: List<AudioQualityOption> = emptyList(),
+    requestedAudioQuality: Int = -1,
+    isHiResAudioSelected: Boolean = false,
+    isDolbyAudioSelected: Boolean = false,
+    onAudioQualitySelected: ((Int) -> Unit)? = null,
     onPipClick: (() -> Unit)? = null,
     onToggleOrientation: (() -> Unit)? = null,
     orientationActionLabel: String = "横屏",
@@ -155,6 +166,7 @@ internal fun MusicPlayerContent(
     var artworkBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
     var showQueue by remember { mutableStateOf(false) }
     var showActions by remember { mutableStateOf(false) }
+    var showAudioQuality by remember { mutableStateOf(false) }
     var showLyricsSearch by remember { mutableStateOf(false) }
     var progressSeekRevision by remember { mutableIntStateOf(0) }
     var lyricsControlsVisible by remember(state.title) { mutableStateOf(true) }
@@ -245,6 +257,13 @@ internal fun MusicPlayerContent(
                                 onNext = onNext,
                                 onPlayModeChange = onPlayModeChange,
                                 miuixBackdrop = musicBackdrop,
+                                audioQualityLabel = audioQualityLabel,
+                                isHiResAudioSelected = isHiResAudioSelected,
+                                isDolbyAudioSelected = isDolbyAudioSelected,
+                                onAudioQualityClick = onAudioQualitySelected?.let {
+                                    { showAudioQuality = true }
+                                },
+                                glassTintColor = backgroundColor,
                                 modifier = Modifier.padding(bottom = 70.dp)
                             )
                         } else {
@@ -331,6 +350,13 @@ internal fun MusicPlayerContent(
                     onNext = onNext,
                     onPlayModeChange = onPlayModeChange,
                     miuixBackdrop = musicBackdrop,
+                    audioQualityLabel = audioQualityLabel,
+                    isHiResAudioSelected = isHiResAudioSelected,
+                    isDolbyAudioSelected = isDolbyAudioSelected,
+                    onAudioQualityClick = onAudioQualitySelected?.let {
+                        { showAudioQuality = true }
+                    },
+                    glassTintColor = backgroundColor,
                     modifier = Modifier.weight(1f)
                 )
                 LyricsPage(
@@ -424,6 +450,18 @@ internal fun MusicPlayerContent(
             }
             Spacer(Modifier.navigationBarsPadding().height(12.dp))
         }
+    }
+
+    if (showAudioQuality && onAudioQualitySelected != null) {
+        AudioQualitySelectionMenu(
+            options = audioQualityOptions,
+            requestedAudioQuality = requestedAudioQuality,
+            onAudioQualitySelected = { quality ->
+                onAudioQualitySelected(quality)
+                showAudioQuality = false
+            },
+            onDismiss = { showAudioQuality = false }
+        )
     }
 
     if (showQueue) {
@@ -600,6 +638,11 @@ private fun PlayerPage(
     onNext: (() -> Unit)?,
     onPlayModeChange: (PlayMode) -> Unit,
     miuixBackdrop: MiuixBackdrop?,
+    audioQualityLabel: String,
+    isHiResAudioSelected: Boolean,
+    isDolbyAudioSelected: Boolean,
+    onAudioQualityClick: (() -> Unit)?,
+    glassTintColor: Color,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -641,6 +684,15 @@ private fun PlayerPage(
                 AppText(it, color = Color(0xFFFF9B92), style = MaterialTheme.typography.bodySmall)
             }
         }
+        onAudioQualityClick?.let { action ->
+            Spacer(Modifier.height(14.dp))
+            MusicAudioQualityControl(
+                label = audioQualityLabel,
+                isHiResSelected = isHiResAudioSelected,
+                isDolbySelected = isDolbyAudioSelected,
+                onClick = action
+            )
+        }
         Spacer(Modifier.height(14.dp))
         MusicProgress(state, onSeek)
         Spacer(Modifier.height(8.dp))
@@ -652,6 +704,45 @@ private fun PlayerPage(
             miuixBackdrop = miuixBackdrop,
             onPlayModeChange = onPlayModeChange
         )
+    }
+}
+
+@Composable
+private fun MusicAudioQualityControl(
+    label: String,
+    isHiResSelected: Boolean,
+    isDolbySelected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(MusicContentColor.copy(alpha = 0.12f))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = "音质",
+            color = MusicContentColor.copy(alpha = 0.72f),
+            style = MaterialTheme.typography.labelLarge
+        )
+        Spacer(Modifier.weight(1f))
+        Text(
+            text = label.ifBlank { "音质" },
+            color = MusicContentColor,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold
+        )
+        if (isHiResSelected) {
+            HiResBadge()
+        }
+        if (isDolbySelected) {
+            DolbyBadge()
+        }
     }
 }
 
