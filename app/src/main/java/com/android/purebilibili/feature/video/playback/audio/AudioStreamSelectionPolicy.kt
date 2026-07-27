@@ -78,7 +78,8 @@ fun buildAvailableAudioQualityOptions(
                 preferenceId = candidate.preferenceId,
                 kind = candidate.kind,
                 label = candidate.label,
-                isHiRes = candidate.kind == AudioStreamKind.HI_RES
+                isHiRes = candidate.kind == AudioStreamKind.HI_RES,
+                isDolby = candidate.kind == AudioStreamKind.DOLBY
             )
         }
 

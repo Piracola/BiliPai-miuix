@@ -138,6 +138,7 @@ import com.android.purebilibili.feature.video.playback.session.shouldUsePlayback
 import com.android.purebilibili.feature.video.playback.session.startPlaybackSeekInteraction
 import com.android.purebilibili.feature.video.playback.session.syncPlaybackSeekSession
 import com.android.purebilibili.feature.video.playback.session.updatePlaybackSeekInteraction
+import com.android.purebilibili.feature.video.playback.audio.AUDIO_QUALITY_DOLBY
 import com.android.purebilibili.feature.video.playback.audio.AUDIO_QUALITY_HI_RES
 import com.android.purebilibili.feature.video.playback.audio.AudioQualityOption
 import com.android.purebilibili.feature.video.playback.audio.collectAudioStreamCandidates
@@ -2814,6 +2815,7 @@ private fun VideoPageItem(
             currentAudioQualityLabel = audioQualityChipLabel,
             showAudioQualityChip = showAudioQualityChip,
             isHiResAudioSelected = selectedAudioQuality == AUDIO_QUALITY_HI_RES,
+            isDolbyAudioSelected = selectedAudioQuality == AUDIO_QUALITY_DOLBY,
             currentRatio = aspectRatio,
             danmakuEnabled = danmakuEnabled,
             isStatusBarHidden = true,

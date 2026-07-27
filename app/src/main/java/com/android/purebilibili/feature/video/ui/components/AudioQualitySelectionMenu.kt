@@ -38,20 +38,48 @@ import io.github.alexzhirkevich.cupertino.icons.filled.*
 import io.github.alexzhirkevich.cupertino.icons.outlined.*
 
 private val HiResGold = Color(0xFFFFD36A)
+private val DolbyBlue = Color(0xFF8DCDFF)
 
 @Composable
 fun HiResBadge(
     modifier: Modifier = Modifier
 ) {
+    AudioFormatBadge(
+        text = "Hi-Res",
+        accentColor = HiResGold,
+        backgroundColor = Color(0xFF332A14),
+        modifier = modifier
+    )
+}
+
+@Composable
+fun DolbyBadge(
+    modifier: Modifier = Modifier
+) {
+    AudioFormatBadge(
+        text = "DOLBY",
+        accentColor = DolbyBlue,
+        backgroundColor = Color(0xFF142A3A),
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun AudioFormatBadge(
+    text: String,
+    accentColor: Color,
+    backgroundColor: Color,
+    modifier: Modifier = Modifier
+) {
     Surface(
         modifier = modifier,
-        color = Color(0xFF332A14).copy(alpha = 0.9f),
-        contentColor = HiResGold,
+        color = backgroundColor.copy(alpha = 0.9f),
+        contentColor = accentColor,
         shape = RoundedCornerShape(4.dp),
-        border = androidx.compose.foundation.BorderStroke(0.75.dp, HiResGold.copy(alpha = 0.9f))
+        border = androidx.compose.foundation.BorderStroke(0.75.dp, accentColor.copy(alpha = 0.9f))
     ) {
         Text(
-            text = "Hi-Res",
+            text = text,
             fontSize = 8.sp,
             fontWeight = FontWeight.Bold,
             lineHeight = 9.sp,
@@ -138,6 +166,10 @@ fun AudioQualitySelectionMenu(
                         if (option.isHiRes) {
                             Spacer(modifier = Modifier.width(8.dp))
                             HiResBadge()
+                        }
+                        if (option.isDolby) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            DolbyBadge()
                         }
                         Spacer(modifier = Modifier.weight(1f))
                         if (isSelected) {

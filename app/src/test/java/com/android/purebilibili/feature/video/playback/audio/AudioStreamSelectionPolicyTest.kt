@@ -130,6 +130,22 @@ class AudioStreamSelectionPolicyTest {
 
         assertEquals(listOf(AUDIO_QUALITY_AUTO, 30280), options.map { it.preferenceId })
         assertTrue(options.none { it.isHiRes })
+        assertTrue(options.none { it.isDolby })
+    }
+
+    @Test
+    fun `premium options expose matching audio badges`() {
+        val options = buildAvailableAudioQualityOptions(
+            collectAudioStreamCandidates(fullDash())
+        )
+
+        val hiResOption = options.first { it.preferenceId == AUDIO_QUALITY_HI_RES }
+        val dolbyOption = options.first { it.preferenceId == AUDIO_QUALITY_DOLBY }
+
+        assertTrue(hiResOption.isHiRes)
+        assertTrue(!hiResOption.isDolby)
+        assertTrue(dolbyOption.isDolby)
+        assertTrue(!dolbyOption.isHiRes)
     }
 
     private fun fullDash(): Dash {

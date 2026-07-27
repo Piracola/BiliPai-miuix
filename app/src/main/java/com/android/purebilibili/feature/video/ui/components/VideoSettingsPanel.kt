@@ -748,6 +748,9 @@ fun VideoSettingsPanel(
                                     if (option.isHiRes) {
                                         HiResBadge()
                                     }
+                                    if (option.isDolby) {
+                                        DolbyBadge()
+                                    }
                                 }
                             }
                         }

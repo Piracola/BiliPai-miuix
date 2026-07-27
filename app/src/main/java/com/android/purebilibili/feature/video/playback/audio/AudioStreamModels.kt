@@ -31,7 +31,8 @@ data class AudioQualityOption(
     val preferenceId: Int,
     val kind: AudioStreamKind?,
     val label: String,
-    val isHiRes: Boolean = false
+    val isHiRes: Boolean = false,
+    val isDolby: Boolean = false
 )
 
 data class AudioSelectionDecision(

@@ -60,6 +60,7 @@ import com.android.purebilibili.feature.video.ui.components.SeekPreviewBubble
 import com.android.purebilibili.feature.video.ui.components.SeekPreviewBubblePlacement
 import com.android.purebilibili.feature.video.ui.components.SeekPreviewBubbleSimple
 import com.android.purebilibili.feature.video.ui.components.VideoAspectRatio
+import com.android.purebilibili.feature.video.ui.components.DolbyBadge
 import com.android.purebilibili.feature.video.ui.components.HiResBadge
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -402,6 +403,7 @@ fun BottomControlBar(
     // Quality
     currentAudioQualityLabel: String = "",
     isHiResAudioSelected: Boolean = false,
+    isDolbyAudioSelected: Boolean = false,
     onAudioQualityClick: () -> Unit = {},
     currentQualityLabel: String = "",
     onQualityClick: () -> Unit = {},
@@ -810,6 +812,9 @@ fun BottomControlBar(
                         )
                         if (isHiResAudioSelected) {
                             HiResBadge()
+                        }
+                        if (isDolbyAudioSelected) {
+                            DolbyBadge()
                         }
                     }
                 }
