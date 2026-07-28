@@ -42,6 +42,22 @@ class AudioQualityVisibilityStructureTest {
         assertTrue(source.contains("text = \"音频音质\""))
     }
 
+    @Test
+    fun `portrait video player opens audio quality menu in a full screen dialog`() {
+        val overlaySource = loadSource(
+            "src/main/java/com/android/purebilibili/feature/video/ui/overlay/VideoPlayerOverlay.kt"
+        )
+        val menuSource = loadSource(
+            "src/main/java/com/android/purebilibili/feature/video/ui/components/AudioQualitySelectionMenu.kt"
+        )
+        val audioMenuHost = overlaySource
+            .substringAfter("if (showAudioQualityMenu)")
+            .substringBefore("// --- 7.")
+
+        assertTrue(audioMenuHost.contains("AudioQualitySelectionMenuDialog("))
+        assertTrue(menuSource.contains("DialogProperties(usePlatformDefaultWidth = false)"))
+    }
+
     private fun loadSource(relativePath: String): String {
         val moduleRelative = File(relativePath)
         val repositoryRelative = File("app/$relativePath")

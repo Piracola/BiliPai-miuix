@@ -32,6 +32,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.android.purebilibili.feature.video.playback.audio.AudioQualityOption
 import io.github.alexzhirkevich.cupertino.icons.CupertinoIcons
 import io.github.alexzhirkevich.cupertino.icons.filled.*
@@ -184,5 +186,25 @@ fun AudioQualitySelectionMenu(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun AudioQualitySelectionMenuDialog(
+    options: List<AudioQualityOption>,
+    requestedAudioQuality: Int,
+    onAudioQualitySelected: (Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        AudioQualitySelectionMenu(
+            options = options,
+            requestedAudioQuality = requestedAudioQuality,
+            onAudioQualitySelected = onAudioQualitySelected,
+            onDismiss = onDismiss
+        )
     }
 }

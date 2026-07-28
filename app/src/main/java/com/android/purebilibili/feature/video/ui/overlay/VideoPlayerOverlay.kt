@@ -50,7 +50,7 @@ import com.android.purebilibili.core.util.FormatUtils
 import com.android.purebilibili.feature.video.danmaku.DanmakuCloudSyncUiState
 // Import reusable components from standalone files
 import com.android.purebilibili.feature.video.ui.components.QualitySelectionMenu
-import com.android.purebilibili.feature.video.ui.components.AudioQualitySelectionMenu
+import com.android.purebilibili.feature.video.ui.components.AudioQualitySelectionMenuDialog
 import com.android.purebilibili.feature.video.ui.components.SpeedSelectionMenuDialog
 import com.android.purebilibili.feature.video.ui.components.SpeedSelectionMenuPlacement
 import com.android.purebilibili.feature.video.ui.components.DanmakuSettingsPanel
@@ -1807,7 +1807,7 @@ fun VideoPlayerOverlay(
         }
 
         if (showAudioQualityMenu) {
-            AudioQualitySelectionMenu(
+            AudioQualitySelectionMenuDialog(
                 options = availableAudioQualities,
                 requestedAudioQuality = currentAudioQuality,
                 onAudioQualitySelected = { preferenceId ->
