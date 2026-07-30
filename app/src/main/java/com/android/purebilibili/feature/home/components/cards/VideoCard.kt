@@ -74,6 +74,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope.OverlayClip
+import androidx.compose.animation.SharedTransitionScope.ResizeMode.Companion.scaleToBounds
 import androidx.compose.animation.core.tween
 import com.android.purebilibili.core.ui.LocalSharedTransitionScope
 import com.android.purebilibili.core.ui.LocalAnimatedVisibilityScope
@@ -776,6 +777,7 @@ internal fun ElegantVideoCard(
                             targetBounds = targetBounds,
                         )
                     },
+                    resizeMode = scaleToBounds(ContentScale.Crop, Alignment.Center),
                     clipInOverlayDuringTransition = OverlayClip(coverShape),
                 )
             }

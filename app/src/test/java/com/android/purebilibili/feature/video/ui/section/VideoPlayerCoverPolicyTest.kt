@@ -31,6 +31,19 @@ class VideoPlayerCoverPolicyTest {
     }
 
     @Test
+    fun sharedTransition_keepsCoverMountedAfterFirstFrameReveal() {
+        assertTrue(
+            shouldShowCoverImage(
+                isFirstFrameRendered = true,
+                forceCoverDuringReturnAnimation = false,
+                shouldKeepCoverForManualStart = false,
+                hasStartedSmoothReveal = true,
+                isCoverSharedTransitionActive = true,
+            )
+        )
+    }
+
+    @Test
     fun verticalVideo_fillsPlayerViewportDuringCoverPhase() {
         assertTrue(
             shouldFillPlayerViewportForManualStartCover(
@@ -308,7 +321,7 @@ class VideoPlayerCoverPolicyTest {
     }
 
     @Test
-    fun autoPlaybackCover_doesNotStealSharedBoundsFromPlayerContainer() {
+    fun autoPlaybackCover_ownsSharedBoundsInsteadOfPlayerContainer() {
         val spec = resolveVideoPlayerEntryPresentationSpec(
             shouldKeepCoverForManualStart = false,
             forceCoverDuringReturnAnimation = false,
@@ -316,7 +329,7 @@ class VideoPlayerCoverPolicyTest {
             targetMode = VideoSharedTransitionTargetMode.InlinePlayer
         )
 
-        assertFalse(spec.coverUsesSharedBounds)
+        assertTrue(spec.coverUsesSharedBounds)
         assertFalse(spec.fillCoverViewport)
         assertFalse(spec.showManualStartPlayButton)
         assertFalse(spec.enableManualStartCoverOverlay)

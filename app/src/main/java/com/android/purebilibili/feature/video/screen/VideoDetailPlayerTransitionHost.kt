@@ -22,6 +22,7 @@ import kotlin.math.roundToInt
 internal data class ContinuousPlayerHostLayout(
     val modifier: Modifier,
     val viewportWidth: Dp,
+    val viewportHeight: Dp,
     val alpha: State<Float>,
     val scale: State<Float>,
     val isFullscreen: Boolean,
@@ -94,6 +95,7 @@ internal fun Modifier.continuousPlayerViewportHeight(
 internal fun PortraitInlineVideoPlayerHost(
     modifier: Modifier,
     animatedViewportWidth: Dp,
+    animatedViewportHeight: Dp,
     inlinePlayerAlpha: State<Float>,
     inlinePlayerScale: State<Float>,
     isFullscreen: Boolean = false,
@@ -139,6 +141,7 @@ internal fun PortraitInlineVideoPlayerHost(
     Box(
         modifier = modifier
             .fillMaxWidth()
+            .height(animatedViewportHeight)
             .graphicsLayer {
                 alpha = inlinePlayerAlpha.value
                 scaleX = inlinePlayerScale.value

@@ -964,15 +964,12 @@ class VideoDetailReturnCoverPolicyTest {
     }
 
     @Test
-    fun `player container shared bounds are disabled during return to avoid cover key conflict`() {
+    fun `phone player container never owns cover shared bounds`() {
         val source = File("src/main/java/com/android/purebilibili/feature/video/screen/VideoDetailScreenStateHolder.kt")
             .readText()
-        val playerContainerBlock = source
-            .substringAfter("val playerContainerModifier = if (")
-            .substringBefore(") {")
-        assertTrue(
-            "Player container must not claim the cover shared bounds during return; the forced return cover overlay owns that key.",
-            playerContainerBlock.contains("!forceCoverOnlyForReturn")
+        assertFalse(
+            "The full PlayerView tree must stay out of sharedBounds; only the lightweight cover owns the morph.",
+            source.contains("val playerContainerModifier = if (")
         )
     }
 
