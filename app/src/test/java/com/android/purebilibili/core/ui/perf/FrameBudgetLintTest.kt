@@ -189,7 +189,7 @@ class FrameBudgetLintTest {
         val HAZE_SOURCE = Regex("""\.hazeSourceCompat\(""")
         val RUN_BLOCKING = Regex("""\brunBlocking\s*[({]""")
         val BLUR_EFFECT = Regex("""createBlurEffect\s*\(""")
-        val RADIUS_GUARD = Regex("""last\w*(Blur)?Radius""")
+        val RADIUS_GUARD = Regex("""(?:last|cached)\w*(Blur)?Radius""")
         val INFINITE_TRANSITION = Regex("""rememberInfiniteTransition\s*\(""")
 
         // 限定第一个实参是 context/ctx/this，这正是 SettingsManager 的 *Sync 约定。
@@ -210,7 +210,7 @@ class FrameBudgetLintTest {
 
         // 当前 3 个：PredictiveBackBackgroundPolicy.kt（每帧重建，转场期最热的一条路径）、
         // ImagePreviewDialog.kt、MainActivity.kt（splash 淡出期，峰值半径 70dp）。
-        const val MAX_UNGUARDED_BLUR_EFFECT_FILES = 3
+        const val MAX_UNGUARDED_BLUR_EFFECT_FILES = 2
 
         val cachedMain: List<File> by lazy {
             val roots = listOf(
