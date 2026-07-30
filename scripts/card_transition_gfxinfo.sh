@@ -88,10 +88,6 @@ if ! adb_cmd shell pm path "$PKG" 2>/dev/null | grep -q '^package:'; then
   echo "[card-transition] $PKG is not installed on $DEVICE" >&2
   exit 1
 fi
-if ! adb_cmd shell run-as "$PKG" true >/dev/null 2>&1; then
-  echo "[card-transition] $PKG is not debuggable; install a normal debug build" >&2
-  exit 1
-fi
 PID="$(adb_cmd shell pidof "$PKG" 2>/dev/null | tr -d '\r')"
 if [[ -z "$PID" ]]; then
   echo "[card-transition] $PKG is not running; open it and stop on a card source page" >&2
