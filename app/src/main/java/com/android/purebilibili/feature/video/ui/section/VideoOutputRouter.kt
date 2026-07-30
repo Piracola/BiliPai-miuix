@@ -17,6 +17,7 @@ internal class VideoOutputRouter(
     private var shouldBindDirectPlayerView = false
     private var shouldUseAnime4K = false
     private var usingAnime4K = false
+    private var transitionFrozen = false
 
     fun update(
         playerView: PlayerView?,
@@ -28,10 +29,21 @@ internal class VideoOutputRouter(
         anime4kInputSurface = inputSurface
         this.shouldBindDirectPlayerView = shouldBindDirectPlayerView
         this.shouldUseAnime4K = shouldUseAnime4K
-        applyRoute()
+        applyRouteIfAllowed()
+    }
+
+    /**
+     * Surface transactions are expensive around a shared transition. While frozen, [update]
+     * keeps the most recent desired route and applies it once the caller releases the lock.
+     */
+    fun setTransitionFrozen(frozen: Boolean) {
+        if (transitionFrozen == frozen) return
+        transitionFrozen = frozen
+        if (!frozen) applyRoute()
     }
 
     fun rebindDirectSurfaceIfNeeded() {
+        if (transitionFrozen) return
         if (!usingAnime4K && shouldBindDirectPlayerView) {
             directPlayerView?.let { rebindPlayerSurfaceIfNeeded(it, player) }
         }
@@ -40,6 +52,7 @@ internal class VideoOutputRouter(
     fun release() {
         if (usingAnime4K) player.clearVideoSurface()
         usingAnime4K = false
+        transitionFrozen = false
         anime4kInputSurface = null
         boundAnime4kSurface = null
         directPlayerView?.takeIf { it.player === player }?.player = null
@@ -75,5 +88,9 @@ internal class VideoOutputRouter(
         } else if (view.player === player) {
             view.player = null
         }
+    }
+
+    private fun applyRouteIfAllowed() {
+        if (!transitionFrozen) applyRoute()
     }
 }

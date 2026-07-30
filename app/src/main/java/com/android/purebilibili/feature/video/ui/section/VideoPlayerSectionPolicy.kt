@@ -901,10 +901,11 @@ internal fun shouldUseTextureSurfaceForFlip(
     liveBackPreview: Boolean = false,
     navigationTransformEnabled: Boolean = false
 ): Boolean {
+    @Suppress("UNUSED_VARIABLE")
+    val ignoredNavigationTransform = navigationTransformEnabled
     return isFlippedHorizontal ||
         isFlippedVertical ||
-        liveBackPreview ||
-        navigationTransformEnabled
+        liveBackPreview
 }
 
 internal fun shouldEnableLivePlayerSharedElement(

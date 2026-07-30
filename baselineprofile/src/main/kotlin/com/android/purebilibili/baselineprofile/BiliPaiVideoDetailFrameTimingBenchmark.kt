@@ -249,9 +249,7 @@ class BiliPaiVideoDetailFrameTimingBenchmark {
     }
 
     private fun resolveBenchmarkBvid(): String {
-        val args = InstrumentationRegistry.getArguments()
-        val configured = args.getString("benchmark.bvid").orEmpty().trim()
-        return if (configured.isNotBlank()) configured else DEFAULT_BENCHMARK_BVID
+        return requireBenchmarkBvid()
     }
 
     private enum class VideoCardCloseAction {

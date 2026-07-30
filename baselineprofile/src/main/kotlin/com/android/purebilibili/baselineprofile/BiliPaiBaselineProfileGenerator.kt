@@ -182,11 +182,7 @@ class BiliPaiBaselineProfileGenerator {
     }
 
     private fun resolveBenchmarkBvid(): String {
-        val configured = InstrumentationRegistry.getArguments()
-            .getString("benchmark.bvid")
-            .orEmpty()
-            .trim()
-        return if (configured.isNotBlank()) configured else DEFAULT_BENCHMARK_BVID
+        return requireBenchmarkBvid()
     }
 
     private fun resolveBenchmarkMid(): Long = InstrumentationRegistry.getArguments()

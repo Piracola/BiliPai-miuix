@@ -49,8 +49,8 @@ class VideoPlayerSurfacePolicyTest {
     }
 
     @Test
-    fun `navigation transform requires texture surface before back starts`() {
-        assertTrue(
+    fun `navigation transform keeps the default surface`() {
+        assertFalse(
             shouldUseTextureSurfaceForFlip(
                 isFlippedHorizontal = false,
                 isFlippedVertical = false,
