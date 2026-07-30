@@ -20,7 +20,7 @@ class BiliPaiSettingsReturnFrameTimingBenchmark {
 
     @Test
     fun settingsSubpageReturn_compilationPartial() = benchmarkRule.measureRepeated(
-        packageName = TARGET_PACKAGE_NAME,
+        packageName = requireBenchmarkTargetPackage(),
         metrics = listOf(FrameTimingMetric()),
         compilationMode = CompilationMode.Partial(),
         iterations = FRAME_TIMING_BENCHMARK_ITERATIONS,

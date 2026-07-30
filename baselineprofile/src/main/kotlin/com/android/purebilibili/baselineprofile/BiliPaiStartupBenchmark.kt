@@ -39,7 +39,7 @@ class BiliPaiStartupBenchmark {
     fun startupFullCompilation() = startup(CompilationMode.Full())
 
     private fun startup(compilationMode: CompilationMode) = benchmarkRule.measureRepeated(
-        packageName = TARGET_PACKAGE_NAME,
+        packageName = requireBenchmarkTargetPackage(),
         metrics = listOf(StartupTimingMetric()),
         compilationMode = compilationMode,
         iterations = STARTUP_BENCHMARK_ITERATIONS,

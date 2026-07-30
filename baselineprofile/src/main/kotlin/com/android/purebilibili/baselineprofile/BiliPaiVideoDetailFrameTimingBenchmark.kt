@@ -69,7 +69,7 @@ class BiliPaiVideoDetailFrameTimingBenchmark {
 
     private fun benchmarkVideoDetailContentScroll(compilationMode: CompilationMode) =
         benchmarkRule.measureRepeated(
-            packageName = TARGET_PACKAGE_NAME,
+            packageName = requireBenchmarkTargetPackage(),
             metrics = listOf(FrameTimingMetric()),
             compilationMode = compilationMode,
             iterations = FRAME_TIMING_BENCHMARK_ITERATIONS,
@@ -88,7 +88,7 @@ class BiliPaiVideoDetailFrameTimingBenchmark {
 
     private fun benchmarkPlayerSwipeGesture(compilationMode: CompilationMode) =
         benchmarkRule.measureRepeated(
-            packageName = TARGET_PACKAGE_NAME,
+            packageName = requireBenchmarkTargetPackage(),
             metrics = listOf(FrameTimingMetric()),
             compilationMode = compilationMode,
             iterations = FRAME_TIMING_BENCHMARK_ITERATIONS,
@@ -109,7 +109,7 @@ class BiliPaiVideoDetailFrameTimingBenchmark {
 
     private fun benchmarkVideoCardTransition(closeAction: VideoCardCloseAction?) =
         benchmarkRule.measureRepeated(
-            packageName = TARGET_PACKAGE_NAME,
+            packageName = requireBenchmarkTargetPackage(),
             metrics = listOf(FrameTimingMetric()),
             compilationMode = CompilationMode.Partial(),
             iterations = FRAME_TIMING_BENCHMARK_ITERATIONS,
@@ -151,7 +151,8 @@ class BiliPaiVideoDetailFrameTimingBenchmark {
 
     private fun MacrobenchmarkScope.startVideoDetailActivity() {
         val benchmarkBvid = resolveBenchmarkBvid()
-        val component = "$TARGET_PACKAGE_NAME/.feature.video.VideoActivity"
+        val targetPackage = requireBenchmarkTargetPackage()
+        val component = "$targetPackage/.feature.video.VideoActivity"
         device.executeShellCommand("am start -W -n $component --es bvid $benchmarkBvid")
         device.waitForIdle()
     }

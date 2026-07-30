@@ -69,7 +69,7 @@ class BiliPaiNonLiveSurfaceFrameTimingBenchmark {
         setup: MacrobenchmarkScope.() -> Unit,
         measure: MacrobenchmarkScope.() -> Unit,
     ) = benchmarkRule.measureRepeated(
-        packageName = TARGET_PACKAGE_NAME,
+        packageName = requireBenchmarkTargetPackage(),
         metrics = listOf(FrameTimingMetric()),
         compilationMode = CompilationMode.Partial(),
         iterations = FRAME_TIMING_BENCHMARK_ITERATIONS,
@@ -82,12 +82,13 @@ class BiliPaiNonLiveSurfaceFrameTimingBenchmark {
     )
 
     private fun MacrobenchmarkScope.startExplicitDeepLink(uri: String) {
-        val component = "$TARGET_PACKAGE_NAME/.MainActivity"
+        val targetPackage = requireBenchmarkTargetPackage()
+        val component = "$targetPackage/.MainActivity"
         device.executeShellCommand(
             "am start -W -n $component -a android.intent.action.VIEW -d ${shellQuote(uri)}"
         )
         requireNotNull(
-            device.wait(Until.findObject(By.pkg(TARGET_PACKAGE_NAME)), UI_WAIT_TIMEOUT_MS)
+            device.wait(Until.findObject(By.pkg(targetPackage)), UI_WAIT_TIMEOUT_MS)
         )
         device.waitForIdle()
     }

@@ -20,7 +20,7 @@ class BiliPaiBaselineProfileGenerator {
     @Test
     fun generateBaselineProfile() {
         baselineProfileRule.collect(
-            packageName = TARGET_PACKAGE_NAME,
+            packageName = requireBenchmarkTargetPackage(),
             includeInStartupProfile = true,
             maxIterations = 8
         ) {
@@ -150,18 +150,20 @@ class BiliPaiBaselineProfileGenerator {
     }
 
     private fun MacrobenchmarkScope.startExplicitDeepLink(uri: String) {
-        val component = "$TARGET_PACKAGE_NAME/.MainActivity"
+        val targetPackage = requireBenchmarkTargetPackage()
+        val component = "$targetPackage/.MainActivity"
         device.executeShellCommand(
             "am start -W -n $component -a android.intent.action.VIEW -d ${shellQuote(uri)}"
         )
-        device.wait(Until.findObject(By.pkg(TARGET_PACKAGE_NAME)), 8_000)
+        device.wait(Until.findObject(By.pkg(targetPackage)), 8_000)
         device.waitForIdle()
     }
 
     private fun MacrobenchmarkScope.startVideoDetailActivity() {
-        val component = "$TARGET_PACKAGE_NAME/.feature.video.VideoActivity"
+        val targetPackage = requireBenchmarkTargetPackage()
+        val component = "$targetPackage/.feature.video.VideoActivity"
         device.executeShellCommand("am start -W -n $component --es bvid ${resolveBenchmarkBvid()}")
-        device.wait(Until.findObject(By.pkg(TARGET_PACKAGE_NAME)), 8_000)
+        device.wait(Until.findObject(By.pkg(targetPackage)), 8_000)
         device.waitForIdle()
     }
 

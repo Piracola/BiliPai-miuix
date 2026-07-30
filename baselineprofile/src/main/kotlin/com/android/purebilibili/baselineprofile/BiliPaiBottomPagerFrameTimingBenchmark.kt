@@ -30,7 +30,7 @@ class BiliPaiBottomPagerFrameTimingBenchmark {
 
     private fun benchmarkBottomPagerSwitch(compilationMode: CompilationMode) =
         benchmarkRule.measureRepeated(
-            packageName = TARGET_PACKAGE_NAME,
+            packageName = requireBenchmarkTargetPackage(),
             metrics = listOf(FrameTimingMetric()),
             compilationMode = compilationMode,
             iterations = FRAME_TIMING_BENCHMARK_ITERATIONS,

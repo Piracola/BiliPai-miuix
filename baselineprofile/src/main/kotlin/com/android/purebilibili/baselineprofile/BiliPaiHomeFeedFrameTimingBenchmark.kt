@@ -27,7 +27,7 @@ class BiliPaiHomeFeedFrameTimingBenchmark {
 
     @Test
     fun homeFeedSlowScroll_compilationPartial() = benchmarkRule.measureRepeated(
-        packageName = TARGET_PACKAGE_NAME,
+        packageName = requireBenchmarkTargetPackage(),
         metrics = listOf(FrameTimingMetric()),
         compilationMode = CompilationMode.Partial(),
         iterations = FRAME_TIMING_BENCHMARK_ITERATIONS,
@@ -46,7 +46,7 @@ class BiliPaiHomeFeedFrameTimingBenchmark {
 
     @Test
     fun homeCategoryHorizontalDrag_compilationPartial() = benchmarkRule.measureRepeated(
-        packageName = TARGET_PACKAGE_NAME,
+        packageName = requireBenchmarkTargetPackage(),
         metrics = listOf(FrameTimingMetric()),
         compilationMode = CompilationMode.Partial(),
         iterations = FRAME_TIMING_BENCHMARK_ITERATIONS,
@@ -64,7 +64,7 @@ class BiliPaiHomeFeedFrameTimingBenchmark {
     }
 
     private fun scrollFeed(compilationMode: CompilationMode) = benchmarkRule.measureRepeated(
-        packageName = TARGET_PACKAGE_NAME,
+        packageName = requireBenchmarkTargetPackage(),
         metrics = listOf(FrameTimingMetric()),
         compilationMode = compilationMode,
         iterations = FRAME_TIMING_BENCHMARK_ITERATIONS,

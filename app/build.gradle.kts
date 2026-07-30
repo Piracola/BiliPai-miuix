@@ -7,6 +7,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization")
     // Room 数据库编译插件
     id("com.google.devtools.ksp")
+    id("androidx.baselineprofile")
     // 🔥 Firebase 相关插件
     // id("com.google.gms.google-services")
     // id("com.google.firebase.crashlytics")
@@ -285,6 +286,7 @@ dependencies {
     implementation(project(":network-core"))
     implementation(project(":plugin-sdk"))
     implementation(project(":design-system"))
+    baselineProfile(project(":baselineprofile"))
 
     // --- 1. Compose UI ---
     implementation(platform("androidx.compose:compose-bom:2026.03.01"))  // 🔥 更新到最新版本
