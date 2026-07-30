@@ -13,7 +13,8 @@ enum class Anime4KBypassReason {
     HDR_OR_DOLBY_VISION,
     PICTURE_IN_PICTURE,
     AUDIO_ONLY,
-    HOST_NOT_STARTED
+    HOST_NOT_STARTED,
+    TRANSITION_FROZEN,
 }
 
 data class Anime4KOutputDecision(
@@ -28,7 +29,8 @@ fun resolveAnime4KOutputDecision(
     sampleMimeType: String?,
     isInPipMode: Boolean,
     isAudioOnly: Boolean,
-    hostLifecycleStarted: Boolean
+    hostLifecycleStarted: Boolean,
+    transitionFrozen: Boolean = false,
 ): Anime4KOutputDecision {
     val bypassReason = when {
         !pluginEnabled -> Anime4KBypassReason.DISABLED
@@ -37,6 +39,7 @@ fun resolveAnime4KOutputDecision(
         isInPipMode -> Anime4KBypassReason.PICTURE_IN_PICTURE
         isAudioOnly -> Anime4KBypassReason.AUDIO_ONLY
         !hostLifecycleStarted -> Anime4KBypassReason.HOST_NOT_STARTED
+        transitionFrozen -> Anime4KBypassReason.TRANSITION_FROZEN
         else -> Anime4KBypassReason.NONE
     }
     return Anime4KOutputDecision(

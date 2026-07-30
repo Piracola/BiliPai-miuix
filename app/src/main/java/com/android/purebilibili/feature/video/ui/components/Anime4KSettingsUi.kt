@@ -53,6 +53,7 @@ internal fun resolveAnime4KSettingsSubtitle(
         Anime4KBypassReason.PICTURE_IN_PICTURE -> "小窗模式使用原始输出"
         Anime4KBypassReason.AUDIO_ONLY -> "音频模式使用原始输出"
         Anime4KBypassReason.HOST_NOT_STARTED -> "后台时使用原始输出"
+        Anime4KBypassReason.TRANSITION_FROZEN -> "转场期间使用原始输出"
         Anime4KBypassReason.GL_UNAVAILABLE -> "渲染管线不可用"
         Anime4KBypassReason.DISABLED -> "关闭"
     }

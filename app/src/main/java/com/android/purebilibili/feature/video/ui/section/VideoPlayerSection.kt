@@ -513,7 +513,8 @@ fun VideoPlayerSection(
         videoInputFormat,
         isInPipMode,
         isAudioOnly,
-        lifecycleState
+        lifecycleState,
+        forceCoverOnly,
     ) {
         resolveAnime4KOutputDecision(
             pluginEnabled = anime4kPluginInfo?.enabled == true,
@@ -522,7 +523,8 @@ fun VideoPlayerSection(
             sampleMimeType = videoInputFormat?.sampleMimeType,
             isInPipMode = isInPipMode,
             isAudioOnly = isAudioOnly,
-            hostLifecycleStarted = lifecycleState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)
+            hostLifecycleStarted = lifecycleState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED),
+            transitionFrozen = forceCoverOnly,
         )
     }
     val shouldUseAnime4kPipeline = anime4kOutputDecision.shouldUsePipeline
@@ -532,6 +534,9 @@ fun VideoPlayerSection(
     val videoOutputRouter = remember(playerState.player) { VideoOutputRouter(playerState.player) }
     DisposableEffect(videoOutputRouter) {
         onDispose { videoOutputRouter.release() }
+    }
+    LaunchedEffect(videoOutputRouter, forceCoverOnly) {
+        videoOutputRouter.setTransitionFrozen(forceCoverOnly)
     }
     LaunchedEffect(hostLifecycleStarted, shouldUseAnime4kPipeline, anime4kSurfaceViewRef) {
         val surfaceView = anime4kSurfaceViewRef ?: return@LaunchedEffect

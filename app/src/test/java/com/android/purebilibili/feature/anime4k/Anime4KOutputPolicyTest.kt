@@ -10,6 +10,23 @@ import kotlin.test.assertTrue
 class Anime4KOutputPolicyTest {
 
     @Test
+    fun transitionFrozen_bypassesPipeline() {
+        val decision = resolveAnime4KOutputDecision(
+            pluginEnabled = true,
+            glAvailable = true,
+            colorTransfer = C.COLOR_TRANSFER_SDR,
+            sampleMimeType = "video/avc",
+            isInPipMode = false,
+            isAudioOnly = false,
+            hostLifecycleStarted = true,
+            transitionFrozen = true,
+        )
+
+        assertFalse(decision.shouldUsePipeline)
+        assertEquals(Anime4KBypassReason.TRANSITION_FROZEN, decision.bypassReason)
+    }
+
+    @Test
     fun efficiencyProfile_usesCompleteKazumiLiteChain() {
         val profile = resolveAnime4KRenderProfile(Anime4KPreset.FAST)
 
