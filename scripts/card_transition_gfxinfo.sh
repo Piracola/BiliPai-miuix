@@ -6,13 +6,20 @@ PKG="${PKG:-com.android.purebilibili.debug}"
 DEVICE=""
 DURATION=""
 OUT_DIR="${OUT_DIR:-docs/perf/raw}"
+SCENARIO="card-transition"
+TEST_MATERIAL="${TEST_MATERIAL:-}"
+ACCOUNT_STATE="${ACCOUNT_STATE:-}"
+FEATURE_FLAGS="${FEATURE_FLAGS:-}"
+VARIANT="${VARIANT:-}"
 QUIET_LOGS=1
 QUIET_TAGS="${QUIET_TAGS:-VideoCardTransition,VideoDetailScreen,VideoPlaybackViewModel,VideoPlayerCover,VideoPlayerOverlay,VideoPlayerSection,FullscreenPlayer,PlayerVM}"
 
 usage() {
   cat <<'EOF'
 Usage:
-  ./scripts/card_transition_gfxinfo.sh [--device SERIAL] [--duration SEC] [--no-quiet-logs]
+  ./scripts/card_transition_gfxinfo.sh [--device SERIAL] [--package PACKAGE] [--duration SEC]
+      [--scenario NAME] [--test-material VALUE] [--account-state VALUE]
+      [--feature-flags VALUE] [--variant VALUE] [--no-quiet-logs]
 
 Examples:
   # 交互采样：按提示连续开合卡片 5～8 次
@@ -36,7 +43,13 @@ while [[ $# -gt 0 ]]; do
       DEVICE="${2:-}"
       shift 2
       ;;
+    --package) PKG="${2:-}"; shift 2 ;;
     --duration) DURATION="${2:-}"; shift 2 ;;
+    --scenario) SCENARIO="${2:-}"; shift 2 ;;
+    --test-material) TEST_MATERIAL="${2:-}"; shift 2 ;;
+    --account-state) ACCOUNT_STATE="${2:-}"; shift 2 ;;
+    --feature-flags) FEATURE_FLAGS="${2:-}"; shift 2 ;;
+    --variant) VARIANT="${2:-}"; shift 2 ;;
     --no-quiet-logs)
       QUIET_LOGS=0
       shift
@@ -119,6 +132,31 @@ STAMP="$(date +%Y%m%d-%H%M%S)"
 GFX_FILE="$OUT_DIR/card-transition-${DEVICE}-${STAMP}-gfxinfo.txt"
 MEM_BEFORE_FILE="$OUT_DIR/card-transition-${DEVICE}-${STAMP}-mem-before.txt"
 MEM_AFTER_FILE="$OUT_DIR/card-transition-${DEVICE}-${STAMP}-mem-after.txt"
+METADATA_FILE="$OUT_DIR/card-transition-${DEVICE}-${STAMP}-metadata.json"
+
+read_device_value() {
+  local value
+  value="$(adb_cmd shell "$@" 2>/dev/null | tr -d '\r' | sed -n '1p')"
+  if [[ -z "$value" ]]; then
+    printf 'unavailable'
+  else
+    printf '%s' "$value"
+  fi
+}
+
+GIT_COMMIT="$(git rev-parse HEAD 2>/dev/null || printf 'unavailable')"
+DEVICE_MODEL="$(read_device_value getprop ro.product.model)"
+DEVICE_BUILD="$(read_device_value getprop ro.build.fingerprint)"
+ANDROID_RELEASE="$(read_device_value getprop ro.build.version.release)"
+THERMAL_STATUS="$(read_device_value dumpsys thermalservice)"
+BATTERY_STATUS="$(read_device_value dumpsys battery)"
+WINDOW_ANIMATION_SCALE="$(read_device_value settings get global window_animation_scale)"
+TRANSITION_ANIMATION_SCALE="$(read_device_value settings get global transition_animation_scale)"
+ANIMATOR_DURATION_SCALE="$(read_device_value settings get global animator_duration_scale)"
+DISPLAY_MODE="$(read_device_value dumpsys display)"
+CPU_FREQUENCY="$(read_device_value cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq)"
+GPU_FREQUENCY="$(read_device_value cat /sys/class/kgsl/kgsl-3d0/gpuclk)"
+POWER_STATS="$(read_device_value dumpsys power)"
 
 echo "[card-transition] device=$DEVICE package=$PKG pid=$PID"
 echo "[card-transition] mode=debug low_intrusion=yes quiet_log_tags=$QUIET_LOGS"
@@ -256,8 +294,68 @@ else:
     print("[card-transition] memory: TOTAL PSS unavailable")
 PY
 
+export GIT_COMMIT DEVICE_MODEL DEVICE_BUILD ANDROID_RELEASE THERMAL_STATUS BATTERY_STATUS
+export WINDOW_ANIMATION_SCALE TRANSITION_ANIMATION_SCALE ANIMATOR_DURATION_SCALE DISPLAY_MODE
+export CPU_FREQUENCY GPU_FREQUENCY POWER_STATS PKG DEVICE SCENARIO TEST_MATERIAL ACCOUNT_STATE FEATURE_FLAGS VARIANT
+python3 - "$GFX_FILE" "$MEM_BEFORE_FILE" "$MEM_AFTER_FILE" "$METADATA_FILE" <<'PY'
+from pathlib import Path
+import json, os, re, statistics, sys
+
+gfx, before, after, output = map(Path, sys.argv[1:])
+text = gfx.read_text(errors="ignore")
+frames, header, profiling = [], None, False
+for line in text.splitlines():
+    line = line.strip()
+    if line == "---PROFILEDATA---":
+        profiling = not profiling
+        header = None
+    elif profiling and line.startswith("Flags,"):
+        header = [part.strip() for part in line.split(",") if part.strip()]
+    elif profiling and header and line[:1].isdigit():
+        parts = [part.strip() for part in line.split(",") if part.strip()]
+        if len(parts) == len(header):
+            try:
+                row = dict(zip(header, map(int, parts)))
+                if not row.get("Flags", 0) & 8 and row.get("FrameCompleted", 0) >= row.get("IntendedVsync", 0):
+                    frames.append(row)
+            except ValueError:
+                pass
+def p(values, q):
+    return sorted(values)[max(0, int(len(values) * q + .999999) - 1)] if values else None
+durations = [(row["FrameCompleted"] - row["IntendedVsync"]) / 1_000_000 for row in frames]
+budgets = [(row.get("WorkloadTarget") or row.get("FrameInterval", 0)) / 1_000_000 for row in frames]
+max_consecutive = current = 0
+for duration, budget in zip(durations, budgets):
+    current = current + 1 if budget and duration > budget else 0
+    max_consecutive = max(max_consecutive, current)
+def pss(path):
+    match = re.search(r"TOTAL PSS:\s*([0-9,]+)", path.read_text(errors="ignore"))
+    return int(match.group(1).replace(",", "")) if match else None
+def value(name):
+    result = os.environ.get(name, "").strip()
+    return result if result else "unavailable"
+payload = {
+    "schema": 1,
+    "git_commit": value("GIT_COMMIT"),
+    "package": value("PKG"), "device_serial": value("DEVICE"),
+    "scenario": value("SCENARIO"), "test_material": value("TEST_MATERIAL"),
+    "account_state": value("ACCOUNT_STATE"), "feature_flags": value("FEATURE_FLAGS"), "variant": value("VARIANT"),
+    "device": {"model": value("DEVICE_MODEL"), "build": value("DEVICE_BUILD"), "android": value("ANDROID_RELEASE")},
+    "runtime": {"thermal": value("THERMAL_STATUS"), "battery": value("BATTERY_STATUS"),
+        "window_animation_scale": value("WINDOW_ANIMATION_SCALE"), "transition_animation_scale": value("TRANSITION_ANIMATION_SCALE"),
+        "animator_duration_scale": value("ANIMATOR_DURATION_SCALE"), "display": value("DISPLAY_MODE"),
+        "cpu_frequency": value("CPU_FREQUENCY"), "gpu_frequency": value("GPU_FREQUENCY"), "power": value("POWER_STATS")},
+    "metrics": {"frame_count": len(durations), "p50_ms": p(durations, .50), "p95_ms": p(durations, .95), "p99_ms": p(durations, .99),
+        "jank_frames": sum(d > b for d, b in zip(durations, budgets) if b), "max_consecutive_over_budget": max_consecutive,
+        "pss_before_kb": pss(before), "pss_after_kb": pss(after)},
+    "raw_files": {"gfxinfo": str(gfx), "mem_before": str(before), "mem_after": str(after)},
+}
+output.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+PY
+
 echo "[card-transition] raw files:"
 echo "  $GFX_FILE"
 echo "  $MEM_BEFORE_FILE"
 echo "  $MEM_AFTER_FILE"
+echo "  $METADATA_FILE"
 echo "[card-transition] 注意：active_render_rate 只统计连续活跃帧；平台 Janky/Frame deadline missed 是主要门槛。"
