@@ -2,11 +2,9 @@ package com.android.purebilibili.feature.video.screen
 
 internal enum class ContinuousPlayerTransitionPhase {
     Inline,
-    Expanding,
     AwaitingLandscape,
     Fullscreen,
     AwaitingPortrait,
-    Collapsing,
 }
 
 internal enum class ContinuousPlayerOrientationRequest {
@@ -17,8 +15,6 @@ internal enum class ContinuousPlayerOrientationRequest {
 
 internal sealed interface ContinuousPlayerTransitionEvent {
     data object Toggle : ContinuousPlayerTransitionEvent
-    data object ExpansionFinished : ContinuousPlayerTransitionEvent
-    data object CollapseFinished : ContinuousPlayerTransitionEvent
     data class OrientationChanged(val isLandscape: Boolean) : ContinuousPlayerTransitionEvent
 }
 
@@ -34,13 +30,9 @@ internal fun reduceContinuousPlayerTransition(
 ): ContinuousPlayerTransitionDecision {
     return when (event) {
         ContinuousPlayerTransitionEvent.Toggle -> when (phase) {
-            ContinuousPlayerTransitionPhase.Inline,
-            ContinuousPlayerTransitionPhase.Collapsing -> ContinuousPlayerTransitionDecision(
-                phase = ContinuousPlayerTransitionPhase.Expanding,
-            )
-
-            ContinuousPlayerTransitionPhase.Expanding -> ContinuousPlayerTransitionDecision(
-                phase = ContinuousPlayerTransitionPhase.Collapsing,
+            ContinuousPlayerTransitionPhase.Inline -> ContinuousPlayerTransitionDecision(
+                phase = ContinuousPlayerTransitionPhase.AwaitingLandscape,
+                orientationRequest = ContinuousPlayerOrientationRequest.Landscape,
             )
 
             ContinuousPlayerTransitionPhase.AwaitingLandscape,
@@ -55,25 +47,6 @@ internal fun reduceContinuousPlayerTransition(
             )
         }
 
-        ContinuousPlayerTransitionEvent.ExpansionFinished -> {
-            if (phase == ContinuousPlayerTransitionPhase.Expanding) {
-                ContinuousPlayerTransitionDecision(
-                    phase = ContinuousPlayerTransitionPhase.AwaitingLandscape,
-                    orientationRequest = ContinuousPlayerOrientationRequest.Landscape,
-                )
-            } else {
-                ContinuousPlayerTransitionDecision(phase)
-            }
-        }
-
-        ContinuousPlayerTransitionEvent.CollapseFinished -> {
-            if (phase == ContinuousPlayerTransitionPhase.Collapsing) {
-                ContinuousPlayerTransitionDecision(ContinuousPlayerTransitionPhase.Inline)
-            } else {
-                ContinuousPlayerTransitionDecision(phase)
-            }
-        }
-
         is ContinuousPlayerTransitionEvent.OrientationChanged -> when {
             event.isLandscape &&
                 phase == ContinuousPlayerTransitionPhase.AwaitingLandscape ->
@@ -81,10 +54,9 @@ internal fun reduceContinuousPlayerTransition(
 
             !event.isLandscape &&
                 phase == ContinuousPlayerTransitionPhase.AwaitingPortrait ->
-                ContinuousPlayerTransitionDecision(ContinuousPlayerTransitionPhase.Collapsing)
+                ContinuousPlayerTransitionDecision(ContinuousPlayerTransitionPhase.Inline)
 
             else -> ContinuousPlayerTransitionDecision(phase)
         }
     }
 }
-

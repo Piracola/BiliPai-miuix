@@ -184,14 +184,11 @@ import com.android.purebilibili.core.ui.transition.resolveVideoCardSecondaryCont
 import com.android.purebilibili.core.ui.transition.resolveVideoSharedCoverCacheKey
 import com.android.purebilibili.core.ui.transition.resolveVideoSharedTransitionPlaybackIntent
 import com.android.purebilibili.core.ui.transition.resolveVideoSharedTransitionSourceCornerDp
-import com.android.purebilibili.core.ui.transition.resolveVideoSharedTransitionVisualSpec
-import com.android.purebilibili.core.ui.transition.shouldEnableVideoCoverSharedTransition
 import com.android.purebilibili.core.ui.transition.shouldForceCoverOnlyForReturnOwnership
 import com.android.purebilibili.core.ui.transition.shouldTreatLiveSurfaceRenderableForReturnMorph
 import com.android.purebilibili.core.ui.transition.shouldUseVideoCardShellContainerTransform
 import com.android.purebilibili.core.ui.transition.VideoCardShellSharedBoundsRole
 import com.android.purebilibili.core.ui.transition.videoCardShellSharedBoundsOrEmpty
-import com.android.purebilibili.core.ui.transition.videoSharedElementBoundsTransformSpec
 import com.android.purebilibili.core.ui.rememberAppCollectionIcon
 import com.android.purebilibili.core.ui.rememberAppDownloadIcon
 import com.android.purebilibili.core.ui.rememberAppMusicIcon
@@ -236,7 +233,6 @@ import com.android.purebilibili.feature.video.viewmodel.PlayerToastPresentation
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-private const val CONTINUOUS_PLAYER_MORPH_DURATION_MILLIS = 280
 
 private const val VIDEO_DETAIL_COLLAPSE_SIGNAL_IDLE_TIMEOUT_MS = 120L
 
@@ -1768,10 +1764,6 @@ internal fun VideoDetailScreenStateHolder(
             }
         )
     }
-    val continuousPlayerProgress = remember(currentBvid) {
-        Animatable(if (isLandscape) 1f else 0f)
-    }
-
     fun applyContinuousPlayerDecision(decision: ContinuousPlayerTransitionDecision) {
         continuousPlayerPhase = decision.phase
         when (decision.orientationRequest) {
@@ -1796,11 +1788,9 @@ internal fun VideoDetailScreenStateHolder(
         if (!continuousFullscreenTransitionEnabled) return@LaunchedEffect
         when {
             isLandscape && continuousPlayerPhase == ContinuousPlayerTransitionPhase.Inline -> {
-                continuousPlayerProgress.snapTo(1f)
                 continuousPlayerPhase = ContinuousPlayerTransitionPhase.Fullscreen
             }
             !isLandscape && continuousPlayerPhase == ContinuousPlayerTransitionPhase.Fullscreen -> {
-                continuousPlayerProgress.snapTo(0f)
                 continuousPlayerPhase = ContinuousPlayerTransitionPhase.Inline
             }
             else -> applyContinuousPlayerDecision(
@@ -1810,70 +1800,6 @@ internal fun VideoDetailScreenStateHolder(
                 )
             )
         }
-    }
-
-    LaunchedEffect(continuousFullscreenTransitionEnabled, continuousPlayerPhase) {
-        if (!continuousFullscreenTransitionEnabled) return@LaunchedEffect
-        when (continuousPlayerPhase) {
-            ContinuousPlayerTransitionPhase.Expanding -> {
-                val remaining = (1f - continuousPlayerProgress.value).coerceIn(0f, 1f)
-                continuousPlayerProgress.animateTo(
-                    targetValue = 1f,
-                    animationSpec = tween(
-                        durationMillis = (CONTINUOUS_PLAYER_MORPH_DURATION_MILLIS * remaining)
-                            .roundToInt()
-                            .coerceAtLeast(1),
-                        easing = FastOutSlowInEasing,
-                    ),
-                )
-                applyContinuousPlayerDecision(
-                    reduceContinuousPlayerTransition(
-                        continuousPlayerPhase,
-                        ContinuousPlayerTransitionEvent.ExpansionFinished,
-                    )
-                )
-            }
-            ContinuousPlayerTransitionPhase.Collapsing -> {
-                val remaining = continuousPlayerProgress.value.coerceIn(0f, 1f)
-                continuousPlayerProgress.animateTo(
-                    targetValue = 0f,
-                    animationSpec = tween(
-                        durationMillis = (CONTINUOUS_PLAYER_MORPH_DURATION_MILLIS * remaining)
-                            .roundToInt()
-                            .coerceAtLeast(1),
-                        easing = FastOutSlowInEasing,
-                    ),
-                )
-                applyContinuousPlayerDecision(
-                    reduceContinuousPlayerTransition(
-                        continuousPlayerPhase,
-                        ContinuousPlayerTransitionEvent.CollapseFinished,
-                    )
-                )
-            }
-            else -> Unit
-        }
-    }
-    val activeVideoSharedTransitionVisualSpec = remember(
-        sourceRouteForSharedElement,
-        sharedTransitionSourceCornerDp,
-        videoSharedPlaybackIntent,
-        startInFullscreen,
-        autoEnterPortraitFromRoute,
-        initialVerticalFromRoute,
-        isVerticalVideo,
-        useReturningVideoDetailVisualState
-    ) {
-        resolveVideoSharedTransitionVisualSpec(
-            sourceRoute = sourceRouteForSharedElement,
-            sourceCornerDp = sharedTransitionSourceCornerDp,
-            playbackIntent = videoSharedPlaybackIntent,
-            fullscreen = startInFullscreen,
-            autoPortrait = autoEnterPortraitFromRoute,
-            initialVertical = initialVerticalFromRoute,
-            isVerticalVideo = isVerticalVideo,
-            isReturning = useReturningVideoDetailVisualState
-        )
     }
     LaunchedEffect(
         autoRotateEnabled,
@@ -3046,11 +2972,7 @@ internal fun VideoDetailScreenStateHolder(
                             collapsedViewportHeight,
                             effectiveCollapseProgress
                         )
-                        val animatedViewportHeight = lerp(
-                            inlineViewportHeight,
-                            (screenHeightDp - playerTopInset).coerceAtLeast(1.dp),
-                            continuousPlayerProgress.value,
-                        )
+                        val animatedViewportHeight = inlineViewportHeight
                         val expandedViewportWidth = if (useOfficialInlinePortraitDetailExperience) {
                             expandedPortraitInlineSpec.widthDp.dp
                         } else {
@@ -3066,11 +2988,7 @@ internal fun VideoDetailScreenStateHolder(
                             collapsedViewportWidth,
                             effectiveCollapseProgress
                         )
-                        val animatedViewportWidth = lerp(
-                            inlineViewportWidth,
-                            screenWidthDp,
-                            continuousPlayerProgress.value,
-                        )
+                        val animatedViewportWidth = inlineViewportWidth
                         val animatedPlayerHeight = animatedViewportHeight + playerTopInset
 
                         //  注意：移除了状态栏黑色 Spacer
@@ -3081,58 +2999,6 @@ internal fun VideoDetailScreenStateHolder(
 
                         //  视频播放器区域：状态栏可见时避让，隐藏时让画面沉浸到顶部。
                         //  尝试获取共享元素作用域
-                        val sharedTransitionScope = LocalSharedTransitionScope.current
-                        val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
-                        val coverSharedElementSourceRoute = resolveForcedReturnCoverSharedElementSourceRoute(
-                            sourceRouteForSharedElement
-                        )
-
-                        //  为播放器容器添加共享元素标记（封面 ↔ 播放器区域映射）
-                        val isFullscreenTarget = activeVideoSharedTransitionVisualSpec.fillTargetViewport
-                        val playerContainerModifier = if (
-                            shouldEnableVideoCoverSharedTransition(
-                                transitionEnabled = detailChildTransitionEnabled,
-                                hasSharedTransitionScope = sharedTransitionScope != null,
-                                hasAnimatedVisibilityScope = animatedVisibilityScope != null
-                            ) &&
-                            activeVideoSharedTransitionVisualSpec.useCoverSharedBounds &&
-                            videoSharedPlaybackIntent == VideoSharedTransitionPlaybackIntent.ImmediatePlayback &&
-                            !forceCoverOnlyForReturn
-                        ) {
-                            with(requireNotNull(sharedTransitionScope)) {
-                                Modifier
-                                    .sharedBounds(
-                                        sharedContentState = rememberSharedContentState(
-                                            key = com.android.purebilibili.core.ui.transition.videoCoverSharedElementKey(
-                                                bvid,
-                                                sourceRoute = coverSharedElementSourceRoute
-                                            )
-                                        ),
-                                        animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
-                                        boundsTransform = { initialBounds, targetBounds ->
-                                            val duration = if (
-                                                homeSharedTransitionMotionSpec.enabled && isFullscreenTarget
-                                            ) {
-                                                homeSharedTransitionMotionSpec.fullscreenDurationMillis
-                                            } else {
-                                                homeSharedTransitionMotionSpec.durationMillis
-                                            }
-                                            videoSharedElementBoundsTransformSpec(
-                                                motion = homeSharedTransitionMotionSpec,
-                                                initialBounds = initialBounds,
-                                                targetBounds = targetBounds,
-                                                durationMillis = duration
-                                            )
-                                        },
-                                        clipInOverlayDuringTransition = OverlayClip(
-                                            RoundedCornerShape(activeVideoSharedTransitionVisualSpec.targetCornerDp.dp)
-                                        )
-                                    )
-                            }
-                        } else {
-                            Modifier
-                        }
-
                         val isLeaving = useReturningVideoDetailVisualState
                         val crossfadeCoverUrl = remember(coverUrl) {
                             if (coverUrl.isNotBlank()) {
@@ -3171,7 +3037,7 @@ internal fun VideoDetailScreenStateHolder(
                         //  播放器容器按当前顶部避让高度计算，避免隐藏状态栏后留下黑边。
                         //  [修复] 始终保持播放器在 Composition 中，避免隐藏时重新创建导致重载
                         Box(
-                            modifier = playerContainerModifier
+                            modifier = Modifier
                                 .fillMaxWidth()
                                 .height(animatedPlayerHeight)  //  使用动画高度（包含0高度）
                                 .background(Color.Black)  // 黑色背景

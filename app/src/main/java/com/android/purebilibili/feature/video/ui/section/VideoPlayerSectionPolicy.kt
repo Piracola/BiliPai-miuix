@@ -944,13 +944,15 @@ internal fun shouldShowCoverImage(
     isFirstFrameRendered: Boolean,
     forceCoverDuringReturnAnimation: Boolean,
     shouldKeepCoverForManualStart: Boolean,
-    hasStartedSmoothReveal: Boolean
+    hasStartedSmoothReveal: Boolean,
+    isCoverSharedTransitionActive: Boolean = false,
 ): Boolean {
     return shouldHoldEntryCoverUnderlay(
         isFirstFrameRendered = isFirstFrameRendered,
         forceCoverDuringReturnAnimation = forceCoverDuringReturnAnimation,
         shouldKeepCoverForManualStart = shouldKeepCoverForManualStart,
         hasStartedSmoothReveal = hasStartedSmoothReveal,
+        isCoverSharedTransitionActive = isCoverSharedTransitionActive,
     )
 }
 
@@ -963,9 +965,11 @@ internal fun shouldHoldEntryCoverUnderlay(
     forceCoverDuringReturnAnimation: Boolean,
     shouldKeepCoverForManualStart: Boolean,
     hasStartedSmoothReveal: Boolean,
+    isCoverSharedTransitionActive: Boolean = false,
 ): Boolean {
     return forceCoverDuringReturnAnimation ||
         shouldKeepCoverForManualStart ||
+        isCoverSharedTransitionActive ||
         !isFirstFrameRendered ||
         !hasStartedSmoothReveal
 }
@@ -1083,7 +1087,9 @@ internal fun resolveVideoPlayerEntryPresentationSpec(
     val fillCoverViewport = !forceCoverDuringReturnAnimation &&
         (targetFillsViewport || (shouldKeepCoverForManualStart && isVerticalVideo))
     return VideoPlayerEntryPresentationSpec(
-        coverUsesSharedBounds = forceCoverDuringReturnAnimation || shouldKeepCoverForManualStart,
+        // Only the lightweight cover participates in the hero morph. Animating the complete
+        // PlayerView tree forces repeated measurement and Surface/overlay work on every frame.
+        coverUsesSharedBounds = true,
         fillCoverViewport = fillCoverViewport,
         showManualStartPlayButton = shouldKeepCoverForManualStart,
         enableManualStartCoverOverlay = shouldKeepCoverForManualStart,

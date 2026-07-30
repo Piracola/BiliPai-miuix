@@ -1809,7 +1809,7 @@ class VideoPlayerSectionPolicyTest {
     }
 
     @Test
-    fun returnCoverPresentation_doesNotUseSharedBoundsForNormalPlayback() {
+    fun normalPlaybackPresentation_usesCoverOnlySharedBounds() {
         val spec = resolveVideoPlayerEntryPresentationSpec(
             shouldKeepCoverForManualStart = false,
             forceCoverDuringReturnAnimation = false,
@@ -1817,7 +1817,7 @@ class VideoPlayerSectionPolicyTest {
             targetMode = com.android.purebilibili.core.ui.transition.VideoSharedTransitionTargetMode.InlinePlayer
         )
 
-        assertFalse(spec.coverUsesSharedBounds)
+        assertTrue(spec.coverUsesSharedBounds)
         assertFalse(spec.showManualStartPlayButton)
     }
 }

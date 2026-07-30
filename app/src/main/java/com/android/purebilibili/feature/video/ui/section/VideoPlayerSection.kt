@@ -74,6 +74,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.animation.*
+import androidx.compose.animation.SharedTransitionScope.ResizeMode.Companion.scaleToBounds
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -3040,17 +3041,22 @@ fun VideoPlayerSection(
             android.util.Log.d("VideoPlayerCover", "✨ Smooth cover reveal committed for bvid=$bvid")
         }
     }
+    val isCoverSharedTransitionActive = transitionEnabled &&
+        !sourceRouteForSharedElement.isNullOrBlank() &&
+        sharedTransitionScope?.isTransitionActive == true
     val holdEntryCoverUnderlay = shouldHoldEntryCoverUnderlay(
         isFirstFrameRendered = isFirstFrameRendered,
         forceCoverDuringReturnAnimation = forceCoverDuringReturnAnimation,
         shouldKeepCoverForManualStart = keepCoverForManualStart,
         hasStartedSmoothReveal = hasStartedSmoothReveal,
+        isCoverSharedTransitionActive = isCoverSharedTransitionActive,
     )
     val showCover = shouldShowCoverImage(
         isFirstFrameRendered = isFirstFrameRendered,
         forceCoverDuringReturnAnimation = forceCoverDuringReturnAnimation,
         shouldKeepCoverForManualStart = keepCoverForManualStart,
-        hasStartedSmoothReveal = hasStartedSmoothReveal
+        hasStartedSmoothReveal = hasStartedSmoothReveal,
+        isCoverSharedTransitionActive = isCoverSharedTransitionActive,
     )
     val manualStartPlayButtonLayoutSpec = remember {
         resolveManualStartPlayButtonLayoutSpec()
@@ -3190,6 +3196,7 @@ fun VideoPlayerSection(
                             targetBounds = targetBounds
                         )
                     },
+                    resizeMode = scaleToBounds(ContentScale.Crop, Alignment.Center),
                     clipInOverlayDuringTransition = OverlayClip(coverCardShape)
                 )
             }
