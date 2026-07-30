@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.offset
 import com.android.purebilibili.core.ui.components.AppText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
@@ -75,15 +74,14 @@ fun AdvancedDanmakuOverlay(
         val maxWidthPx = constraints.maxWidth
         val maxHeightPx = constraints.maxHeight
         
-        // 筛选当前时间应该显示的弹幕
-        // 为了性能，只处理当前时间窗口内的弹幕
-        val activeDanmakus by remember(danmakuList, currentPosition) {
-            derivedStateOf {
-                // 预留一些 buffer，避免刚好在边界闪烁
-                danmakuList.filter { 
-                    currentPosition >= it.startTimeMs - 100 && currentPosition <= it.startTimeMs + it.durationMs + 100
-                }
-            }
+        val timelineIndex = remember(danmakuList) {
+            buildAdvancedDanmakuTimelineIndex(danmakuList)
+        }
+        val activeDanmakus = remember(timelineIndex, currentPosition) {
+            resolveActiveAdvancedDanmakus(
+                index = timelineIndex,
+                positionMs = currentPosition,
+            )
         }
         
         activeDanmakus.forEach { danmaku ->

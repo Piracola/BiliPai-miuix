@@ -3386,7 +3386,11 @@ fun VideoPlayerSection(
     }
 
     // 2. DanmakuView (使用 ByteDance DanmakuRenderEngine - 覆盖在 PlayerView 上方)
-    val shouldShowDanmakuLayer = !forceCoverDuringReturnAnimation && shouldShowDanmakuLayers(
+    val suppressTransitionPlayerOverlays =
+        com.android.purebilibili.core.ui.transition.LocalTransitionPerformanceSnapshot.current
+            ?.suppressPlayerOverlays == true
+    val shouldShowDanmakuLayer = !forceCoverDuringReturnAnimation &&
+        !suppressTransitionPlayerOverlays && shouldShowDanmakuLayers(
         isInPipMode = isInPipMode,
         danmakuEnabled = danmakuEnabled,
         isPortraitFullscreen = isPortraitFullscreen,
