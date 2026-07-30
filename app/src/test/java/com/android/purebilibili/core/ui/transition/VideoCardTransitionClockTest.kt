@@ -8,6 +8,49 @@ import kotlin.test.assertTrue
 class VideoCardTransitionClockTest {
 
     @Test
+    fun performanceSnapshot_isRetainedForReturnAndClearedWhenIdle() {
+        val snapshot = resolveTransitionPerformanceSnapshot(
+            TransitionPerformanceInputs(
+                motionTier = com.android.purebilibili.core.ui.adaptive.MotionTier.Normal,
+                systemAnimationsEnabled = true,
+                powerSaveMode = false,
+                thermalLevel = TransitionThermalLevel.NONE,
+                runtimeGuardDowngraded = false,
+            ),
+        )
+        val clock = VideoCardTransitionClock()
+
+        clock.beginOpening(sourceRoute = "home", snapshot = snapshot)
+        clock.beginReturning(sourceRoute = "home")
+
+        assertEquals(snapshot, clock.performanceSnapshot)
+        clock.markIdle()
+        assertEquals(null, clock.performanceSnapshot)
+    }
+
+    @Test
+    fun sharedReturnCompletion_clearsPerformanceSnapshot() {
+        val clock = VideoCardTransitionClock()
+        clock.beginReturning(
+            sourceRoute = "home",
+            snapshot = resolveTransitionPerformanceSnapshot(
+                TransitionPerformanceInputs(
+                    motionTier = com.android.purebilibili.core.ui.adaptive.MotionTier.Normal,
+                    systemAnimationsEnabled = true,
+                    powerSaveMode = false,
+                    thermalLevel = TransitionThermalLevel.NONE,
+                    runtimeGuardDowngraded = false,
+                ),
+            ),
+        )
+
+        clock.reportSharedMorphProgress(morphFraction = 0f, active = false)
+
+        assertEquals(VideoCardTransitionBackgroundPhase.IDLE, clock.phase)
+        assertEquals(null, clock.performanceSnapshot)
+    }
+
+    @Test
     fun depthPriority_gestureBeatsSharedBeatsFallback() {
         assertEquals(
             0.4f,

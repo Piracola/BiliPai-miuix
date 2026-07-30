@@ -1,6 +1,7 @@
 package com.android.purebilibili.core.ui.transition
 
 import com.android.purebilibili.core.ui.adaptive.MotionTier
+import androidx.compose.runtime.compositionLocalOf
 
 /**
  * A transition receives one immutable decision before its first visual frame.
@@ -50,6 +51,9 @@ internal data class TransitionPerformanceSnapshot(
     val lockOutputRoute: Boolean,
     val force60Hz: Boolean,
 )
+
+/** Null outside a card transition; an active transition always exposes one fixed snapshot. */
+internal val LocalTransitionPerformanceSnapshot = compositionLocalOf<TransitionPerformanceSnapshot?> { null }
 
 internal fun resolveTransitionPerformanceSnapshot(
     inputs: TransitionPerformanceInputs,

@@ -35,6 +35,8 @@ import kotlin.math.roundToInt
  */
 @Stable
 internal class VideoCardTransitionClock {
+    var performanceSnapshot: TransitionPerformanceSnapshot? by mutableStateOf(null)
+        private set
     var phase: VideoCardTransitionBackgroundPhase by mutableStateOf(
         VideoCardTransitionBackgroundPhase.IDLE,
     )
@@ -117,6 +119,7 @@ internal class VideoCardTransitionClock {
         ) {
             phase = VideoCardTransitionBackgroundPhase.IDLE
             sourceRoute = null
+            performanceSnapshot = null
         }
     }
 
@@ -129,16 +132,24 @@ internal class VideoCardTransitionClock {
     fun hasActiveSharedMorphProgress(): Boolean =
         sharedMorphActive && sharedMorphFraction != null
 
-    fun beginOpening(sourceRoute: String?) {
+    fun beginOpening(
+        sourceRoute: String?,
+        snapshot: TransitionPerformanceSnapshot? = null,
+    ) {
         this.sourceRoute = sourceRoute
+        performanceSnapshot = snapshot
         phase = VideoCardTransitionBackgroundPhase.OPENING
         gestureBackProgress = null
         gestureRestoreInProgress = false
         clearSharedMorphProgress()
     }
 
-    fun beginReturning(sourceRoute: String?) {
+    fun beginReturning(
+        sourceRoute: String?,
+        snapshot: TransitionPerformanceSnapshot? = performanceSnapshot,
+    ) {
         this.sourceRoute = sourceRoute
+        performanceSnapshot = snapshot
         phase = VideoCardTransitionBackgroundPhase.RETURNING
         gestureBackProgress = null
         gestureRestoreInProgress = false
@@ -159,6 +170,7 @@ internal class VideoCardTransitionClock {
         gestureBackProgress = null
         gestureRestoreInProgress = false
         clearSharedMorphProgress()
+        performanceSnapshot = null
     }
 
     fun beginGesture(backProgress: Float) {
@@ -210,6 +222,7 @@ internal class VideoCardTransitionClock {
         gestureRestoreInProgress = false
         fallback.snapTo(0f)
         phase = VideoCardTransitionBackgroundPhase.IDLE
+        performanceSnapshot = null
     }
 }
 

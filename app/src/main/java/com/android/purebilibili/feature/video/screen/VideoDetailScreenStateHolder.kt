@@ -177,6 +177,8 @@ import com.android.purebilibili.core.ui.LocalPredictiveBackGestureEnabled
 import com.android.purebilibili.core.ui.LocalSharedTransitionScope
 import com.android.purebilibili.core.ui.LocalAnimatedVisibilityScope
 import com.android.purebilibili.core.ui.transition.LocalVideoCardTransitionBackgroundState
+import com.android.purebilibili.core.ui.transition.LocalTransitionPerformanceSnapshot
+import com.android.purebilibili.core.ui.transition.TransitionReturnOutputMode
 import com.android.purebilibili.core.ui.transition.LocalVideoSharedTransitionSpeedSettings
 import com.android.purebilibili.core.ui.transition.VideoSharedTransitionPlaybackIntent
 import com.android.purebilibili.core.ui.transition.resolveVideoCardSharedTransitionMotionSpec
@@ -1558,6 +1560,12 @@ internal fun VideoDetailScreenStateHolder(
         forceCoverOnlyOnReturn = forceCoverOnlyForReturn,
         isCommittedCardReturn = isCommittedCardReturn,
     )
+    val transitionPerformanceSnapshot = LocalTransitionPerformanceSnapshot.current
+    val performanceRequiresCoverReturn = isCommittedCardReturn &&
+        transitionPerformanceSnapshot?.returnOutputMode != null &&
+        transitionPerformanceSnapshot.returnOutputMode != TransitionReturnOutputMode.LIVE_SURFACE
+    val forceCoverOnlyForPerformanceReturn =
+        forceCoverOnlyForLiveSafeReturn || performanceRequiresCoverReturn
     val videoCardDepthBackgroundState = LocalVideoCardTransitionBackgroundState.current
     val videoCardTransitionDensity = LocalDensity.current
     val videoCardDetailChromeAlphaProvider = remember(videoCardDepthBackgroundState) {
@@ -2444,7 +2452,7 @@ internal fun VideoDetailScreenStateHolder(
                 presentationState.markNavigatingToAudioMode()
                 onNavigateToAudioMode()
             },
-            forceCoverOnly = forceCoverOnlyForLiveSafeReturn ||
+            forceCoverOnly = forceCoverOnlyForPerformanceReturn ||
                 shouldForceBackPreviewPlayerCover(
                     keepLoadedContentForBackPreview = keepLoadedContentForBackPreview,
                     bindLivePlayerForBackPreview = bindLivePlayerForBackPreview,
@@ -2664,7 +2672,7 @@ internal fun VideoDetailScreenStateHolder(
                     onFavoritePlaylistClick = {
                         showExternalPlaylistQueueSheet = true
                     },
-                    forceCoverOnly = forceCoverOnlyForLiveSafeReturn,
+                    forceCoverOnly = forceCoverOnlyForPerformanceReturn,
                     preserveCurrentFrameOnFullscreenChange = preserveCurrentFrameOnFullscreenChange,
                     useTextureSurfaceForNavigation = transitionEnabled,
                     predictiveBackCancelRecoveryGeneration = predictiveBackCancelRecoveryGeneration,
@@ -2742,7 +2750,7 @@ internal fun VideoDetailScreenStateHolder(
                             // 🔁 [新增] 播放模式
                             currentPlayMode = currentPlayMode,
                             onPlayModeClick = { com.android.purebilibili.feature.video.player.PlaylistManager.togglePlayMode() },
-                            forceCoverOnlyOnReturn = forceCoverOnlyForLiveSafeReturn,
+                            forceCoverOnlyOnReturn = forceCoverOnlyForPerformanceReturn,
                             predictiveBackCancelRecoveryGeneration = predictiveBackCancelRecoveryGeneration
                         )
                     } else {
@@ -3172,7 +3180,7 @@ internal fun VideoDetailScreenStateHolder(
                                     presentationState.markNavigatingToAudioMode()
                                     onNavigateToAudioMode()
                                 },
-                                forceCoverOnly = forceCoverOnlyForLiveSafeReturn ||
+                                forceCoverOnly = forceCoverOnlyForPerformanceReturn ||
                                     shouldForceBackPreviewPlayerCover(
                                         keepLoadedContentForBackPreview = keepLoadedContentForBackPreview,
                                         bindLivePlayerForBackPreview = bindLivePlayerForBackPreview

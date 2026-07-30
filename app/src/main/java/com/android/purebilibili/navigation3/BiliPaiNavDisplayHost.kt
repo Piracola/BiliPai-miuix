@@ -56,6 +56,7 @@ import com.android.purebilibili.core.ui.transition.LocalVideoCardMorphProgressRe
 import com.android.purebilibili.core.ui.transition.LocalVideoCardSharedElementSourceRoute
 import com.android.purebilibili.core.ui.transition.LocalVideoCardTransitionBackgroundState
 import com.android.purebilibili.core.ui.transition.LocalVideoCardTransitionClock
+import com.android.purebilibili.core.ui.transition.LocalTransitionPerformanceSnapshot
 import com.android.purebilibili.core.ui.transition.PREDICTIVE_BACK_BACKGROUND_CANCEL_DURATION_MS
 import com.android.purebilibili.core.ui.transition.PREDICTIVE_BACK_EXIT_SETTLE_DURATION_MS
 import com.android.purebilibili.core.ui.transition.PredictiveBackBackgroundState
@@ -70,6 +71,9 @@ import com.android.purebilibili.core.ui.transition.resolvePredictiveBackGestureB
 import com.android.purebilibili.core.ui.transition.resolveVideoCardTimelineSpec
 import com.android.purebilibili.core.ui.transition.resolveVideoCardTransitionReturnFullDurationMillis
 import com.android.purebilibili.core.ui.transition.resolveVideoCardSharedMorphRemainingDurationMs
+import com.android.purebilibili.core.ui.transition.TransitionPerformanceInputs
+import com.android.purebilibili.core.ui.transition.TransitionThermalLevel
+import com.android.purebilibili.core.ui.transition.resolveTransitionPerformanceSnapshot
 import com.android.purebilibili.core.ui.transition.isVideoCardTransitionBackgroundGesturePhase
 import com.android.purebilibili.core.ui.transition.shouldApplyPredictiveBackGestureBlur
 import com.android.purebilibili.core.ui.transition.shouldShowVideoCardTransitionNavBackdrop
@@ -85,6 +89,9 @@ import com.android.purebilibili.navigation3.predictiveback.resolveBiliPaiPredict
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import android.content.Context
+import android.os.Build
+import android.os.PowerManager
 
 internal class BiliPaiProgrammaticBackDispatcher {
     private var callback: (() -> Unit)? = null
@@ -209,6 +216,30 @@ internal fun BiliPaiNavDisplayHost(
     // 默认保留完整 12dp 景深；系统减弱动画或连续转场掉帧时降为 scrim-only。
     val transitionBackgroundMotionTier =
         if (reduceMotion) MotionTier.Reduced else runtimeGuardDecision.effectiveMotionTier
+    val powerManager = remember(application) {
+        application.getSystemService(Context.POWER_SERVICE) as? PowerManager
+    }
+    fun captureTransitionPerformanceSnapshot() = resolveTransitionPerformanceSnapshot(
+        TransitionPerformanceInputs(
+            motionTier = transitionBackgroundMotionTier,
+            systemAnimationsEnabled = !reduceMotion,
+            powerSaveMode = powerManager?.isPowerSaveMode == true,
+            thermalLevel = when {
+                Build.VERSION.SDK_INT < Build.VERSION_CODES.Q -> TransitionThermalLevel.NONE
+                (powerManager?.currentThermalStatus ?: PowerManager.THERMAL_STATUS_NONE) >=
+                    PowerManager.THERMAL_STATUS_CRITICAL -> TransitionThermalLevel.CRITICAL
+                (powerManager?.currentThermalStatus ?: PowerManager.THERMAL_STATUS_NONE) >=
+                    PowerManager.THERMAL_STATUS_SEVERE -> TransitionThermalLevel.SEVERE
+                (powerManager?.currentThermalStatus ?: PowerManager.THERMAL_STATUS_NONE) >=
+                    PowerManager.THERMAL_STATUS_MODERATE -> TransitionThermalLevel.MODERATE
+                (powerManager?.currentThermalStatus ?: PowerManager.THERMAL_STATUS_NONE) >=
+                    PowerManager.THERMAL_STATUS_LIGHT -> TransitionThermalLevel.LIGHT
+                else -> TransitionThermalLevel.NONE
+            },
+            runtimeGuardDowngraded = runtimeGuardDecision.effectiveMotionTier == MotionTier.Reduced ||
+                runtimeGuardDecision.forceLowBlurBudget,
+        )
+    )
     var previousVideoCardTransitionBackStack by remember {
         mutableStateOf(safeBackStack)
     }
@@ -238,7 +269,10 @@ internal fun BiliPaiNavDisplayHost(
 
         when {
             openedVideoDetail -> {
-                videoCardClock.beginOpening(openingSourceRoute)
+                videoCardClock.beginOpening(
+                    sourceRoute = openingSourceRoute,
+                    snapshot = captureTransitionPerformanceSnapshot(),
+                )
                 // 先给详情 AVS 一个 frame 建立 shared 回灌。已建立时不能再启动
                 // fallback Animatable，否则两条曲线在中段交接会让背景顿一下再追卡片。
                 launchVideoCardDepthAnimation {
@@ -282,7 +316,11 @@ internal fun BiliPaiNavDisplayHost(
                         cancelVideoCardDepthAnimation()
                         videoCardClock.snapClearAndIdle()
                     } else {
-                        videoCardClock.beginReturning(returningSourceRoute)
+                        videoCardClock.beginReturning(
+                            sourceRoute = returningSourceRoute,
+                            snapshot = videoCardClock.performanceSnapshot
+                                ?: captureTransitionPerformanceSnapshot(),
+                        )
                         launchVideoCardDepthAnimation {
                             withFrameNanos { }
                             if (
@@ -556,6 +594,7 @@ internal fun BiliPaiNavDisplayHost(
                     CompositionLocalProvider(
                         LocalVideoCardSharedElementSourceRoute provides entryRoute,
                         LocalVideoCardTransitionClock provides videoCardClock,
+                        LocalTransitionPerformanceSnapshot provides videoCardClock.performanceSnapshot,
                         LocalVideoCardMorphProgressReporter provides morphProgressReporter,
                         LocalVideoCardTransitionBackgroundState provides VideoCardTransitionBackgroundState(
                             progressProvider = videoCardBackgroundProgressProvider,
