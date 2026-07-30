@@ -7,6 +7,7 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RenderEffect as ComposeRenderEffect
 import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.graphicsLayer
 import com.android.purebilibili.core.ui.adaptive.MotionTier
@@ -142,6 +143,8 @@ private class PredictiveBackBlurFrameCache {
     private var lastMotionTier: MotionTier? = null
     private var lastIsLightBackground: Boolean? = null
     private var cached = PredictiveBackBlurFrame(blurRadiusPx = 0f)
+    private var cachedEffectRadiusPx = Float.NaN
+    private var cachedEffect: ComposeRenderEffect? = null
 
     fun resolve(
         progress: Float,
@@ -164,6 +167,25 @@ private class PredictiveBackBlurFrameCache {
         }
         return cached
     }
+
+    fun resolveRenderEffect(frame: PredictiveBackBlurFrame): ComposeRenderEffect? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || frame.blurRadiusPx <= 0.01f) {
+            cachedEffectRadiusPx = 0f
+            cachedEffect = null
+            return null
+        }
+        if (frame.blurRadiusPx != cachedEffectRadiusPx) {
+            cachedEffectRadiusPx = frame.blurRadiusPx
+            cachedEffect = RenderEffect
+                .createBlurEffect(
+                    frame.blurRadiusPx,
+                    frame.blurRadiusPx,
+                    Shader.TileMode.CLAMP,
+                )
+                .asComposeRenderEffect()
+        }
+        return cachedEffect
+    }
 }
 
 internal fun Modifier.predictiveBackBackgroundEffect(
@@ -178,17 +200,7 @@ internal fun Modifier.predictiveBackBackgroundEffect(
             motionTierProvider(),
             isLightBackgroundProvider(),
         )
-        renderEffect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && frame.blurRadiusPx > 0.01f) {
-            RenderEffect
-                .createBlurEffect(
-                    frame.blurRadiusPx,
-                    frame.blurRadiusPx,
-                    Shader.TileMode.CLAMP,
-                )
-                .asComposeRenderEffect()
-        } else {
-            null
-        }
+        renderEffect = frameCache.resolveRenderEffect(frame)
     }.drawWithContent {
         drawContent()
         val frame = frameCache.resolve(
