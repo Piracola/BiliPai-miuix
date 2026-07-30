@@ -29,7 +29,7 @@ Examples:
   ./scripts/card_transition_gfxinfo.sh --device SERIAL --duration 25
 
 Notes:
-  1) 仅接受可调试的 *.debug 包；默认包名可用 PKG 环境变量覆盖。
+  1) 仅接受可调试的安装包；默认包名可用 PKG 环境变量覆盖。
   2) 采样窗口内不持续读取 logcat、不录屏、不启用 Perfetto，减少采集扰动。
   3) 默认临时把转场/详情相关 tag 的 D/I 日志门槛提高到 WARN，结束后恢复。
   4) debug 构建请勿传 -Pbili.debug.verboseLogs=true 或
@@ -74,11 +74,6 @@ if [[ -n "$DURATION" && ! "$DURATION" =~ ^[1-9][0-9]*$ ]]; then
   echo "[card-transition] --duration must be a positive integer" >&2
   exit 1
 fi
-if [[ "$PKG" != *.debug ]]; then
-  echo "[card-transition] refusing non-debug package: $PKG" >&2
-  exit 1
-fi
-
 [[ -n "$DEVICE" ]] || DEVICE="$(adb devices | awk 'NR>1 && $2=="device" { print $1; exit }')"
 if [[ -z "$DEVICE" ]]; then
   echo "[card-transition] no online adb device found" >&2
