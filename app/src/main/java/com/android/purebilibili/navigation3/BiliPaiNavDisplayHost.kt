@@ -57,6 +57,7 @@ import com.android.purebilibili.core.ui.transition.LocalVideoCardSharedElementSo
 import com.android.purebilibili.core.ui.transition.LocalVideoCardTransitionBackgroundState
 import com.android.purebilibili.core.ui.transition.LocalVideoCardTransitionClock
 import com.android.purebilibili.core.ui.transition.PREDICTIVE_BACK_BACKGROUND_CANCEL_DURATION_MS
+import com.android.purebilibili.core.ui.transition.PREDICTIVE_BACK_EXIT_SETTLE_DURATION_MS
 import com.android.purebilibili.core.ui.transition.PredictiveBackBackgroundState
 import com.android.purebilibili.core.ui.transition.VIDEO_CARD_TRANSITION_BACKGROUND_CANCEL_DURATION_MS
 import com.android.purebilibili.core.ui.transition.VideoCardMorphProgressReporter
@@ -82,6 +83,7 @@ import com.android.purebilibili.navigation3.predictiveback.resolveBiliPaiAutoPre
 import com.android.purebilibili.navigation3.predictiveback.resolveBiliPaiPredictiveBackAnimationHandler
 import com.android.purebilibili.navigation3.predictiveback.resolveBiliPaiPredictiveBackExitDirection
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 internal class BiliPaiProgrammaticBackDispatcher {
@@ -431,7 +433,7 @@ internal fun BiliPaiNavDisplayHost(
                 gestureReturningVideoCard = false,
                 motionTier = transitionBackgroundMotionTier,
             ) && predictiveBlurAtCommit > 0f
-            val predictiveBlurFadeJob = if (shouldFadePredictiveBlur) {
+            if (shouldFadePredictiveBlur) {
                 launch {
                     predictiveBackBackgroundProgress.snapTo(predictiveBlurAtCommit)
                     predictiveBackBackgroundProgress.animateTo(
@@ -444,14 +446,11 @@ internal fun BiliPaiNavDisplayHost(
                         ),
                     )
                 }
-            } else {
-                null
             }
             predictiveBackHandler.onBackPressed(
                 transitionState = navigationEventState?.transitionState,
                 currentPageKey = safeBackStack.lastOrNull(),
             )
-            predictiveBlurFadeJob?.join()
             val isVideoCardActiveReturn = videoCardDepthEffectEnabled &&
                 (
                     videoCardClock.phase == VideoCardTransitionBackgroundPhase.HELD ||
@@ -461,7 +460,7 @@ internal fun BiliPaiNavDisplayHost(
             if (isVideoCardActiveReturn) {
                 cancelVideoCardDepthAnimation()
             }
-            val videoBlurFadeJob = if (isVideoCardActiveReturn) {
+            if (isVideoCardActiveReturn) {
                 val morphSource = resolveCardMorphDestinationSourceRoute(currentBackKey)
                 val quickReturnForDepthClear = onPrepareVideoCardSharedReturn()
                 if (
@@ -471,7 +470,6 @@ internal fun BiliPaiNavDisplayHost(
                     )
                 ) {
                     videoCardClock.snapClearAndIdle()
-                    null
                 } else {
                     val gestureFractionAtCommit = videoCardClock.gestureBackProgress
                     val blurAtCommit = videoCardClock.depthProgress()
@@ -508,16 +506,14 @@ internal fun BiliPaiNavDisplayHost(
                             videoCardClock.markIdle()
                         }
                     }
-                    videoCardDepthAnimationJob
                 }
-            } else {
-                null
             }
             videoCardReturnGestureInProgress = false
             videoCardClock.endGesture()
             commitTransitionCallBack()
             onBack()
-            videoBlurFadeJob?.join()
+            // 模糊清理、当前页退出和目标页稳定从这里同时开始；不串行等待模糊动画。
+            delay(PREDICTIVE_BACK_EXIT_SETTLE_DURATION_MS.toLong())
             predictiveBackBackgroundProgress.snapTo(0f)
             }
         }

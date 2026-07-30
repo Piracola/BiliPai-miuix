@@ -5,6 +5,7 @@ import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
+import com.android.purebilibili.core.ui.transition.PREDICTIVE_BACK_EXIT_SETTLE_DURATION_MS
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -35,7 +36,10 @@ internal class BiliPaiDefaultPredictiveBackAnimation : BiliPaiPredictiveBackAnim
         targetContentEnter = EnterTransition.None,
         initialContentExit = slideOutHorizontally(
             targetOffsetX = { it },
-            animationSpec = tween(durationMillis = 550, easing = LinearEasing),
+            animationSpec = tween(
+                durationMillis = PREDICTIVE_BACK_EXIT_SETTLE_DURATION_MS,
+                easing = LinearEasing,
+            ),
         ),
     )
 

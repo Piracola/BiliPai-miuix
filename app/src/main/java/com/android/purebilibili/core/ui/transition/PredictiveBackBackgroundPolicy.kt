@@ -19,7 +19,10 @@ private const val PREDICTIVE_BACK_MAX_BLUR_RADIUS_PX_LIGHT = 22f
 private const val PREDICTIVE_BACK_BLUR_QUANTUM_PX = 2f
 private const val PREDICTIVE_BACK_LIGHT_SEPARATION_TINT_ALPHA = 0.05f
 
-/** 与 SCALE handler 提交退出动画时长对齐。 */
+/**
+ * 普通预测返回的模糊清理和页面退出共用同一个收尾窗口，避免先清模糊再退出。
+ */
+internal const val PREDICTIVE_BACK_EXIT_SETTLE_DURATION_MS = 240
 internal const val PREDICTIVE_BACK_BACKGROUND_COMMIT_DURATION_MS = 200
 internal const val PREDICTIVE_BACK_BACKGROUND_CANCEL_DURATION_MS = 160
 

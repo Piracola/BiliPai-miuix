@@ -207,4 +207,9 @@ class PredictiveBackBackgroundPolicyTest {
             resolvePredictiveBackCommitBlurDurationMs(0f),
         )
     }
+
+    @Test
+    fun predictiveBackExitSettleDuration_isFixedAt240Milliseconds() {
+        assertEquals(240, PREDICTIVE_BACK_EXIT_SETTLE_DURATION_MS)
+    }
 }
