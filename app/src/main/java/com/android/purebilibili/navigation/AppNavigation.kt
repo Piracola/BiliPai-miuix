@@ -44,7 +44,7 @@ import com.android.purebilibili.feature.home.HomeVideoClickRequest
 import com.android.purebilibili.feature.home.HomeVideoClickSource
 import com.android.purebilibili.feature.home.HomeScreen
 import com.android.purebilibili.feature.home.HomeViewModel
-import com.android.purebilibili.feature.home.DepthSyncedGlobalHomeWallpaperBackdrop
+import com.android.purebilibili.feature.home.GlobalHomeWallpaperBackdrop
 import com.android.purebilibili.feature.home.resolveHomeWallpaperBackdropAppearance
 import com.android.purebilibili.feature.home.resolveHomeWallpaperUri
 import com.android.purebilibili.feature.home.shouldExposeGlobalHomeWallpaperChrome
@@ -98,22 +98,12 @@ import com.android.purebilibili.core.ui.ProvideAnimatedVisibilityScope
 import com.android.purebilibili.core.ui.SharedTransitionProvider
 import com.android.purebilibili.core.ui.LocalAnimatedVisibilityScope
 import com.android.purebilibili.core.ui.LocalSharedTransitionScope
-import com.android.purebilibili.core.ui.transition.LocalPredictiveBackBackgroundState
 import com.android.purebilibili.core.ui.transition.LocalVideoCardSharedElementSourceRoute
-import com.android.purebilibili.core.ui.transition.LocalVideoCardTransitionBackgroundState
 import com.android.purebilibili.core.ui.transition.LocalVideoSharedTransitionSpeedSettings
-import com.android.purebilibili.core.ui.transition.rememberVideoCardTransitionClock
 import com.android.purebilibili.core.ui.transition.VideoCardTransitionVisualTimeline
 import com.android.purebilibili.core.ui.motion.rememberSystemReduceMotion
 import com.android.purebilibili.core.ui.transition.VideoSharedTransitionSpeedSettings
 import com.android.purebilibili.core.ui.transition.resolveVideoSharedTransitionDurationMillis
-import com.android.purebilibili.core.ui.transition.predictiveBackBackgroundEffect
-import com.android.purebilibili.core.ui.transition.pinSourcePageDuringSharedTransition
-import com.android.purebilibili.core.ui.transition.shouldApplyPredictiveBackBlurToRoute
-import com.android.purebilibili.core.ui.transition.shouldApplyVideoCardTransitionBackgroundToRoute
-import com.android.purebilibili.core.ui.transition.resolveVideoCardTransitionBackgroundScaleReduction
-import com.android.purebilibili.core.ui.transition.resolveVideoCardTransitionBackgroundSource
-import com.android.purebilibili.core.ui.transition.videoCardTransitionBackgroundEffect
 import androidx.compose.runtime.mutableFloatStateOf
 import com.android.purebilibili.data.model.response.BgmInfo
 
@@ -375,7 +365,6 @@ fun AppNavigation(
     }
     // Legacy animation preferences remain readable for migration only.
     val cardTransitionEnabled = false
-    val videoTransitionRealtimeBlurEnabled = false
     val isBottomBarBlurEnabled = appearance.bottomBarBlurEnabled
     val bottomBarLabelMode = appearance.bottomBarLabelMode
     val isBottomBarFloating = appearance.bottomBarFloating
@@ -438,8 +427,6 @@ fun AppNavigation(
     val launchToPortraitFeedOnStartupAtInit = resolvedPortraitStartupRoute ?: return
 
     val videoSharedTransitionSpeedSettings = remember { VideoSharedTransitionSpeedSettings() }
-    val videoSharedTransitionDurationMillis = 0
-    val videoCardTransitionClock = rememberVideoCardTransitionClock()
     val systemReduceMotion = rememberSystemReduceMotion()
     val appMotionPolicy = remember(systemReduceMotion) {
         com.android.purebilibili.core.ui.motion.AppMotionPolicy.default(
@@ -448,7 +435,6 @@ fun AppNavigation(
     }
     // 页面导航统一硬切。旧设置值只保留读取兼容，不能再重新开启共享元素路径。
     val sharedVideoCardTransitionEnabled = false
-    val effectiveVideoCardTransitionDurationMillis = 0
     SharedTransitionProvider(enabled = sharedVideoCardTransitionEnabled) {
         CompositionLocalProvider(
             LocalVideoSharedTransitionSpeedSettings provides videoSharedTransitionSpeedSettings,
@@ -1539,23 +1525,11 @@ fun AppNavigation(
                                 }
                             )
                     ) {
-                        DepthSyncedGlobalHomeWallpaperBackdrop(
+                        GlobalHomeWallpaperBackdrop(
                             wallpaperUri = globalHomeWallpaperUri,
                             appearance = globalHomeWallpaperAppearance,
                             baseColor = backgroundColor,
-                            depthProgressProvider = {
-                                videoCardTransitionClock.depthProgress()
-                            },
-                            depthPhaseProvider = {
-                                videoCardTransitionClock.phase
-                            },
-                            depthGestureRestoreProvider = {
-                                videoCardTransitionClock.gestureRestoreInProgress
-                            },
                             isDataSaverActive = isDataSaverActiveForGlobalWallpaper,
-                            isLightBackground = isLightBackground,
-                            // Transition depth blur is independent of badge haze sampling.
-                            realtimeBlurEnabled = videoTransitionRealtimeBlurEnabled,
                         )
                     }
                 fun bottomPagerNavKeyForItem(item: BottomNavItem): BiliPaiNavKey {
@@ -1598,73 +1572,6 @@ fun AppNavigation(
                 }
 
                 @Composable
-                fun VideoCardTransitionBackgroundRouteContent(
-                    key: BiliPaiNavKey,
-                    content: @Composable () -> Unit
-                ) {
-                    val entryRoute = key.toLegacyRoute()
-                    val backgroundState = LocalVideoCardTransitionBackgroundState.current
-                    val predictiveBackState = LocalPredictiveBackBackgroundState.current
-                    val backgroundScaleReduction = resolveVideoCardTransitionBackgroundScaleReduction(
-                        resolveVideoCardTransitionBackgroundSource(
-                            sourceRoute = backgroundState.sourceRouteProvider(),
-                        )
-                    )
-                    val shouldApplyBackground = cardTransitionEnabled &&
-                        shouldApplyVideoCardTransitionBackgroundToRoute(
-                            entryRoute = entryRoute,
-                            sourceRoute = backgroundState.sourceRouteProvider(),
-                            activeMainHostRoute = activeMainHostRoute
-                        )
-                    val shouldApplyPredictiveBlur = shouldApplyPredictiveBackBlurToRoute(
-                        entryKey = key,
-                        targetBackKey = predictiveBackState.targetKeyProvider(),
-                    )
-                    val routeModifier = Modifier
-                        .fillMaxSize()
-                        .let { baseModifier ->
-                            baseModifier
-                                .let { modifier ->
-                                    if (shouldApplyBackground) {
-                                        modifier
-                                            .pinSourcePageDuringSharedTransition()
-                                            .videoCardTransitionBackgroundEffect(
-                                            progressProvider = backgroundState.progressProvider,
-                                            phaseProvider = backgroundState.phaseProvider,
-                                            exposureProvider = backgroundState.exposureProvider,
-                                            isGestureRestoreInProgressProvider = backgroundState.isGestureRestoreInProgressProvider,
-                                            motionTierProvider = backgroundState.motionTierProvider,
-                                            isLightBackgroundProvider = backgroundState.isLightBackgroundProvider,
-                                            realtimeBlurEnabledProvider = {
-                                                videoTransitionRealtimeBlurEnabled
-                                            },
-                                            scaleReductionProvider = {
-                                                backgroundScaleReduction
-                                            },
-                                            snapshotHandle = backgroundState.snapshotHandle,
-                                        )
-                                    } else {
-                                        modifier
-                                    }
-                                }
-                                .let { modifier ->
-                                    if (shouldApplyPredictiveBlur) {
-                                        modifier.predictiveBackBackgroundEffect(
-                                            progressProvider = predictiveBackState.progressProvider,
-                                            motionTierProvider = predictiveBackState.motionTierProvider,
-                                            isLightBackgroundProvider = predictiveBackState.isLightBackgroundProvider,
-                                        )
-                                    } else {
-                                        modifier
-                                    }
-                                }
-                        }
-                    Box(modifier = routeModifier) {
-                        content()
-                    }
-                }
-
-                @Composable
                 fun RenderNavigationContent(
                     key: BiliPaiNavKey,
                     isBottomPagerPageActive: Boolean = true,
@@ -1685,11 +1592,6 @@ fun AppNavigation(
                             CompositionLocalProvider(
                                 LocalBottomBarVisible provides resolveMainHostBottomBarVisible()
                             ) {
-                                // MainHost 已由 NavDisplay entry 外层的
-                                // VideoCardTransitionBackgroundRouteContent 持有唯一冻结层。
-                                // 此处不能再给 Pager 页挂同一个 snapshotHandle：嵌套
-                                // GraphicsLayer.record 会递归录制自身，返回时只剩 shared 卡片、
-                                // 来源页变黑。页面路由仍通过 Local source route 提供给卡片匹配。
                                 Box(modifier = Modifier.fillMaxSize()) {
                                     HorizontalPager(
                                         modifier = Modifier.fillMaxSize(),
@@ -3086,9 +2988,6 @@ fun AppNavigation(
                     cardTransitionEnabled = false,
                     videoCardDepthEffectEnabled = false,
                     reduceMotion = systemReduceMotion,
-                    videoSharedTransitionDurationMillis =
-                        effectiveVideoCardTransitionDurationMillis,
-                    videoCardClock = videoCardTransitionClock,
                     predictiveBackEnabled = predictiveBackEnabled && !systemReduceMotion,
                     predictiveBackAnimationStyle = predictiveBackAnimationStyle,
                     predictiveBackExitDirectionOverride = predictiveBackExitDirection,
@@ -3125,9 +3024,7 @@ fun AppNavigation(
                     navigation3SaveableStateHolder.SaveableStateProvider(
                         key = resolveNavigation3SaveableStateKey(key)
                     ) {
-                        VideoCardTransitionBackgroundRouteContent(key) {
-                            RenderNavigationContent(key)
-                        }
+                        RenderNavigationContent(key)
                     }
                 }
                 }

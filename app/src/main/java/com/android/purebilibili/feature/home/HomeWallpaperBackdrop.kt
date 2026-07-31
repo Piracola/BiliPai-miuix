@@ -19,68 +19,21 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import coil.size.Scale
-import com.android.purebilibili.core.ui.adaptive.MotionTier
-import com.android.purebilibili.core.ui.motion.rememberSystemReduceMotion
-import com.android.purebilibili.core.ui.transition.VideoCardTransitionBackgroundPhase
-import com.android.purebilibili.core.ui.transition.resolveVideoCardTransitionExposure
-import com.android.purebilibili.core.ui.transition.videoCardTransitionBackgroundEffect
-
-/**
- * App 根层全局壁纸。
- * 景深值直接延迟读取根层单时钟，不再经每帧 Snapshot 状态桥接。
- */
 @Composable
-internal fun DepthSyncedGlobalHomeWallpaperBackdrop(
+internal fun GlobalHomeWallpaperBackdrop(
     wallpaperUri: String,
     appearance: HomeWallpaperBackdropAppearance,
     baseColor: Color,
-    depthProgressProvider: () -> Float,
-    depthPhaseProvider: () -> VideoCardTransitionBackgroundPhase,
-    depthGestureRestoreProvider: () -> Boolean,
     isDataSaverActive: Boolean = false,
-    isLightBackground: Boolean = false,
-    realtimeBlurEnabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
-    val phase = depthPhaseProvider()
-    val applyDepth = shouldApplyVideoCardDepthToGlobalHomeWallpaper(
-        wallpaperVisible = appearance.visible,
-        phase = phase,
+    HomeWallpaperBackdrop(
+        wallpaperUri = wallpaperUri,
+        appearance = appearance,
+        baseColor = baseColor,
+        isDataSaverActive = isDataSaverActive,
+        modifier = modifier,
     )
-    val motionTier =
-        if (rememberSystemReduceMotion()) MotionTier.Reduced else MotionTier.Normal
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .then(
-                if (applyDepth) {
-                    Modifier.videoCardTransitionBackgroundEffect(
-                        progressProvider = depthProgressProvider,
-                        phaseProvider = depthPhaseProvider,
-                        exposureProvider = {
-                            resolveVideoCardTransitionExposure(
-                                phase = depthPhaseProvider(),
-                                predictiveBackInProgress = false,
-                                gestureRestoreInProgress = depthGestureRestoreProvider(),
-                            )
-                        },
-                        isGestureRestoreInProgressProvider = depthGestureRestoreProvider,
-                        motionTierProvider = { motionTier },
-                        isLightBackgroundProvider = { isLightBackground },
-                        realtimeBlurEnabledProvider = { realtimeBlurEnabled },
-                    )
-                } else {
-                    Modifier
-                }
-            )
-    ) {
-        HomeWallpaperBackdrop(
-            wallpaperUri = wallpaperUri,
-            appearance = appearance,
-            baseColor = baseColor,
-            isDataSaverActive = isDataSaverActive,
-        )
-    }
 }
 
 @Composable

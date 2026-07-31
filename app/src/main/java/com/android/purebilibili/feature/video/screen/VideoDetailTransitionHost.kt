@@ -1,42 +1,19 @@
 package com.android.purebilibili.feature.video.screen
 
 import androidx.compose.animation.AnimatedVisibilityScope
-import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.State
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.dp
-import com.android.purebilibili.core.ui.LocalAnimatedVisibilityScope
-import com.android.purebilibili.core.ui.LocalSharedTransitionScope
-import com.android.purebilibili.core.ui.transition.LocalVideoCardMorphProgressReporter
-import com.android.purebilibili.core.ui.transition.LocalVideoCardTransitionClock
 import com.android.purebilibili.core.ui.transition.VideoSharedTransitionMotionSpec
-import com.android.purebilibili.core.ui.transition.shouldEnableVideoCoverSharedTransition
-import com.android.purebilibili.core.ui.transition.shouldUseVideoCardShellContainerTransform
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 internal data class VideoDetailTransitionState(
@@ -54,6 +31,7 @@ internal data class VideoDetailTransitionState(
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
+@Suppress("UNUSED_PARAMETER")
 internal fun rememberVideoDetailTransitionState(
     bvid: String,
     sourceRoute: String?,
@@ -84,131 +62,6 @@ internal fun rememberVideoDetailTransitionState(
         },
     )
 
-    val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
-    val sharedTransitionScope = LocalSharedTransitionScope.current
-    val videoCardClock = LocalVideoCardTransitionClock.current
-    // Nav3 1.2 + ExitTransition.None can finish AnimatedContent before PostExit is observed.
-    // Also treat card-clock RETURNING as exit so secondary chrome / live morph stay in sync.
-    val isExitTransitionInProgress = shouldTreatVideoDetailExitTransitionInProgress(
-        animatedVisibilityTargetIsPostExit =
-            animatedVisibilityScope?.transition?.targetState == EnterExitState.PostExit,
-        videoCardBackgroundPhase = videoCardClock?.phase,
-    )
-    val detailShellSharedBoundsEnabled = shouldUseVideoCardShellContainerTransform(
-        sourceRoute = sourceRoute,
-        transitionEnabled = transitionEnabled,
-        hasSharedTransitionScope = sharedTransitionScope != null,
-        hasAnimatedVisibilityScope = animatedVisibilityScope != null,
-    )
-    var wasKeptAsBackPreview by rememberSaveable(bvid) { mutableStateOf(false) }
-    SideEffect {
-        if (keepLoadedContentForBackPreview) wasKeptAsBackPreview = true
-    }
-    val suppressEnterFadeAfterBackPreview = shouldSuppressVideoDetailEnterFadeAfterBackPreview(
-        wasKeptAsBackPreview = wasKeptAsBackPreview,
-        keepLoadedContentForBackPreview = keepLoadedContentForBackPreview,
-    )
-    // Shell sharedBounds 路径：根 progress 必须与 boundsTransform 同 duration/easing，
-    // 再回灌 VideoCardTransitionClock，形成单时钟。
-    val progress = if (
-        shouldUseVideoDetailRootTransitionProgress(
-            detailShellSharedBoundsEnabled = detailShellSharedBoundsEnabled,
-            hasAnimatedVisibilityScope = animatedVisibilityScope != null,
-            keepLoadedContentForBackPreview = keepLoadedContentForBackPreview,
-        )
-    ) {
-        requireNotNull(animatedVisibilityScope).transition.animateFloat(
-            transitionSpec = {
-                if (targetState == EnterExitState.PostExit) {
-                    // 返回：Linear + 满 morph 时长，与 videoSharedElementReturnTweenSpec 一致
-                    tween(
-                        durationMillis = motionSpec.durationMillis.coerceAtLeast(0),
-                        easing = androidx.compose.animation.core.LinearEasing,
-                    )
-                } else {
-                    // 进场：Continuity + 满 morph 时长，与 bounds enter 一致
-                    tween(
-                        durationMillis = motionSpec.durationMillis.coerceAtLeast(0),
-                        easing = motionSpec.enterAlphaEasing,
-                    )
-                }
-            },
-            label = "video-detail-shared-morph-clock",
-        ) { state ->
-            if (state == EnterExitState.Visible) 1f else 0f
-        }
-    } else {
-        remember { mutableFloatStateOf(1f) }
-    }
-    val detailChildTransitionEnabled = transitionEnabled && !detailShellSharedBoundsEnabled
-    val coverSharedBoundsActive = shouldEnableVideoCoverSharedTransition(
-        transitionEnabled = detailChildTransitionEnabled,
-        hasSharedTransitionScope = sharedTransitionScope != null,
-        hasAnimatedVisibilityScope = animatedVisibilityScope != null,
-    ) && !sourceRoute.isNullOrBlank()
-    val sharedBoundsActive = detailShellSharedBoundsEnabled || coverSharedBoundsActive
-    // 单时钟回灌：与 sharedBounds 共用 AVS Transition 的 progress。
-    // progress.value 每帧变化，必须圈在独立重组作用域内读取：本函数带返回值、
-    // 不可重启，若在这里读会把每帧重组放大到整个详情 StateHolder，
-    // morph 期间掉帧直接表现为进场/返回画面抖动。
-    ReportVideoDetailMorphProgressToClock(
-        enabled = detailShellSharedBoundsEnabled,
-        progress = progress,
-        sharedTransitionScope = sharedTransitionScope,
-        animatedVisibilityScope = animatedVisibilityScope,
-    )
-    val routeSheetFrameProvider = rememberVideoDetailRouteSheetFrameProvider(
-        motion = routeSheetMotion,
-        isExitTransitionInProgress = isExitTransitionInProgress,
-        sharedBoundsActive = sharedBoundsActive,
-    )
-    return VideoDetailTransitionState(
-        animatedVisibilityScope = animatedVisibilityScope,
-        sharedTransitionScope = sharedTransitionScope,
-        isExitTransitionInProgress = isExitTransitionInProgress,
-        detailShellSharedBoundsEnabled = detailShellSharedBoundsEnabled,
-        suppressEnterFadeAfterBackPreview = suppressEnterFadeAfterBackPreview,
-        progress = progress,
-        detailChildTransitionEnabled = detailChildTransitionEnabled,
-        coverSharedBoundsActive = coverSharedBoundsActive,
-        sharedBoundsActive = sharedBoundsActive,
-        routeSheetFrameProvider = routeSheetFrameProvider,
-    )
-}
-
-/**
- * 把详情 AVS 的 morph progress 逐帧回灌 [VideoCardTransitionClock]（单时钟）。
- *
- * 独立 Unit composable：progress / isTransitionActive / isRunning 这些每帧
- * 变化的快照读取被圈在这个近零成本的重组作用域内，宿主（详情 StateHolder）
- * 不再随 morph 每帧重组。仍用 [SideEffect] 回灌，保证发生在本帧组合完成后、
- * 绘制前，与 sharedBounds overlay 同帧同源，不引入一帧滞后。
- */
-@OptIn(ExperimentalSharedTransitionApi::class)
-@Composable
-private fun ReportVideoDetailMorphProgressToClock(
-    enabled: Boolean,
-    progress: State<Float>,
-    sharedTransitionScope: SharedTransitionScope?,
-    animatedVisibilityScope: AnimatedVisibilityScope?,
-) {
-    val morphReporter = LocalVideoCardMorphProgressReporter.current
-    if (!enabled || morphReporter == null) return
-    val morphFraction = progress.value
-    val morphActive = sharedTransitionScope?.isTransitionActive == true ||
-        animatedVisibilityScope?.transition?.isRunning == true ||
-        animatedVisibilityScope?.transition?.targetState == EnterExitState.PostExit
-    SideEffect {
-        morphReporter.report(
-            morphFraction = morphFraction,
-            active = morphActive,
-        )
-    }
-    DisposableEffect(morphReporter) {
-        onDispose {
-            morphReporter.report(morphFraction = progress.value, active = false)
-        }
-    }
 }
 
 @Composable

@@ -96,14 +96,13 @@ class AppNavigationAppearancePolicyTest {
             .substringAfter(".layerBackdrop(bottomBarBackdrop)")
             .substringBefore("// ===== 全局底栏")
 
-        val wallpaperIndex = capturedLayerSource.indexOf("DepthSyncedGlobalHomeWallpaperBackdrop(")
+        val wallpaperIndex = capturedLayerSource.indexOf("GlobalHomeWallpaperBackdrop(")
         val navDisplayIndex = capturedLayerSource.indexOf("BiliPaiNavDisplayHost(")
 
         assertTrue(wallpaperIndex >= 0)
         assertTrue(navDisplayIndex > wallpaperIndex)
-        assertTrue(capturedLayerSource.contains("depthProgressProvider"))
-        assertTrue(capturedLayerSource.contains("videoCardTransitionClock.depthProgress()"))
-        assertFalse(capturedLayerSource.contains("onVideoCardDepthFrame"))
+        assertFalse(capturedLayerSource.contains("depthProgressProvider"))
+        assertFalse(capturedLayerSource.contains("videoCardTransitionClock"))
         assertTrue(capturedLayerSource.contains(".then(if (mainHazeState != null) Modifier.hazeSourceCompat(mainHazeState) else Modifier)"))
     }
 
@@ -150,11 +149,11 @@ class AppNavigationAppearancePolicyTest {
     }
 
     @Test
-    fun appNavigationReadsVideoTransitionRealtimeBlurSetting() {
+    fun appNavigationDoesNotReadVideoTransitionRealtimeBlurSetting() {
         val source = loadSource("app/src/main/java/com/android/purebilibili/navigation/AppNavigation.kt")
 
-        assertTrue(source.contains("videoTransitionRealtimeBlurEnabled"))
-        assertTrue(source.contains("realtimeBlurEnabledProvider"))
+        assertFalse(source.contains("videoTransitionRealtimeBlurEnabled"))
+        assertFalse(source.contains("realtimeBlurEnabledProvider"))
         assertFalse(source.contains("video_source_background_blur"))
         assertFalse(source.contains("RenderEffect.createBlurEffect"))
     }

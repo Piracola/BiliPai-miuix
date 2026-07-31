@@ -38,7 +38,6 @@ import androidx.navigationevent.compose.NavigationEventState
 import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.ui.ProvideAnimatedVisibilityScope
 import com.android.purebilibili.core.ui.transition.LocalVideoCardSharedElementSourceRoute
-import com.android.purebilibili.core.ui.transition.VideoCardTransitionClock
 import com.android.purebilibili.navigation3.predictiveback.BiliPaiPredictiveBackAnimationStyle
 
 internal class BiliPaiProgrammaticBackDispatcher {
@@ -75,8 +74,6 @@ internal fun BiliPaiNavDisplayHost(
     cardTransitionEnabled: Boolean = true,
     videoCardDepthEffectEnabled: Boolean = cardTransitionEnabled,
     reduceMotion: Boolean = false,
-    videoSharedTransitionDurationMillis: Int,
-    videoCardClock: VideoCardTransitionClock,
     predictiveBackEnabled: Boolean = true,
     predictiveBackAnimationStyle: BiliPaiPredictiveBackAnimationStyle =
         BiliPaiPredictiveBackAnimationStyle.SCALE,

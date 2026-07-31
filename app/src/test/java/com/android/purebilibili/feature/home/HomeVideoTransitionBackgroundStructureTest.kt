@@ -28,34 +28,25 @@ class HomeVideoTransitionBackgroundStructureTest {
     }
 
     @Test
-    fun appNavigationAppliesVideoTransitionBackgroundToRealRouteContent() {
+    fun appNavigationDoesNotApplyVideoTransitionBackgroundToRouteContent() {
         val source = appNavigationSource()
 
-        assertTrue(source.contains("VideoCardTransitionBackgroundRouteContent("))
-        assertTrue(source.contains("videoCardTransitionBackgroundEffect("))
-        assertTrue(source.contains("realtimeBlurEnabledProvider"))
-        assertTrue(source.contains("shouldApplyVideoCardTransitionBackgroundToRoute("))
+        assertFalse(source.contains("VideoCardTransitionBackgroundRouteContent("))
+        assertFalse(source.contains("videoCardTransitionBackgroundEffect("))
+        assertFalse(source.contains("predictiveBackBackgroundEffect("))
         assertTrue(source.contains("RenderNavigationContent(key)"))
-        assertTrue(source.contains("sourceRoute = backgroundState.sourceRouteProvider()"))
-        assertFalse(source.contains("val predictiveBlurProgress = predictiveBackState.progressProvider()"))
     }
 
     @Test
-    fun mainHostOwnsExactlyOneVideoTransitionBackgroundLayer() {
+    fun mainHostRendersWithoutVideoTransitionBackgroundLayer() {
         val source = appNavigationSource()
         val mainHostBranch = source
             .substringAfter("BiliPaiNavEntryContentRole.MAIN_HOST -> {")
             .substringBefore("BiliPaiNavEntryContentRole.HOME ->")
 
-        assertFalse(
-            mainHostBranch.contains("VideoCardTransitionBackgroundRouteContent("),
-            "MainHost Pager must not recursively record the root snapshot GraphicsLayer",
-        )
-        assertTrue(
-            source.substringAfter("BiliPaiNavDisplayHost(")
-                .contains("VideoCardTransitionBackgroundRouteContent(key)"),
-            "NavDisplay entry shell must remain the single transition background owner",
-        )
+        assertFalse(mainHostBranch.contains("VideoCardTransitionBackgroundRouteContent("))
+        assertFalse(source.contains("VideoCardTransitionBackgroundRouteContent("))
+        assertTrue(source.substringAfter("BiliPaiNavDisplayHost(").contains("RenderNavigationContent(key)"))
         assertTrue(
             source.contains("val activeMainHostRoute = currentBottomNavItem.route"),
             "MainHost transition matching must retain the selected pager route while VideoDetail is top-most",
@@ -67,23 +58,17 @@ class HomeVideoTransitionBackgroundStructureTest {
     }
 
     @Test
-    fun videoCardTransitionBackgroundUsesFrozenSnapshotLayerForDynamicBlur() {
+    fun globalWallpaperDoesNotAttachVideoTransitionBlurOrSnapshot() {
         val source = listOf(
-            File("app/src/main/java/com/android/purebilibili/core/ui/transition/VideoCardTransitionBackgroundPolicy.kt"),
-            File("src/main/java/com/android/purebilibili/core/ui/transition/VideoCardTransitionBackgroundPolicy.kt"),
+            File("app/src/main/java/com/android/purebilibili/feature/home/HomeWallpaperBackdrop.kt"),
+            File("src/main/java/com/android/purebilibili/feature/home/HomeWallpaperBackdrop.kt"),
         ).first { it.exists() }.readText()
 
-        assertTrue(source.contains("rememberGraphicsLayer()"))
-        assertTrue(source.contains("shouldUseVideoCardTransitionSnapshotBlur"))
-        assertTrue(source.contains("freezeRecording"))
-        assertTrue(source.contains("contentLayer.record"))
-        assertTrue(source.contains("BlurEffect("))
-        assertTrue(source.contains("DisposableEffect(snapshotState, contentLayer, isHostOwnedSnapshot)"))
-        assertTrue(source.contains("shouldInvalidateSnapshotOnSourceDispose"))
-        assertTrue(source.contains("snapshotState.invalidateRecordedContent()"))
-        // 冻结后不得每帧对 live content 再挂 android RenderEffect
-        assertFalse(source.contains("android.graphics.RenderEffect"))
-        assertFalse(source.contains("createBlurEffect("))
+        assertTrue(source.contains("GlobalHomeWallpaperBackdrop("))
+        assertFalse(source.contains("videoCardTransitionBackgroundEffect("))
+        assertFalse(source.contains("depthProgressProvider"))
+        assertFalse(source.contains("rememberGraphicsLayer()"))
+        assertFalse(source.contains("BlurEffect("))
     }
 
     @Test
