@@ -262,10 +262,10 @@ fun SimpleLiquidIndicator(
         liquidGlassTuning ?: resolveLiquidGlassTuning(liquidGlassStyle)
     }
     val styleTuning = remember(resolvedTuning) { resolveLiquidStyleTuning(resolvedTuning) }
-    val lensProfile = remember(isDragging, velocityPxPerSecond, resolvedTuning) {
+    val lensProfile = remember(resolvedTuning) {
         resolveLiquidLensProfile(
-            isDragging = isDragging,
-            velocityPxPerSecond = velocityPxPerSecond,
+            isDragging = false,
+            velocityPxPerSecond = 0f,
             idleThresholdPxPerSecond = styleTuning.idleThresholdPxPerSecond,
             dragMotionFloor = styleTuning.dragMotionFloor,
             lensIntensityBoost = styleTuning.lensIntensityMultiplier,
@@ -287,16 +287,8 @@ fun SimpleLiquidIndicator(
     // [修复] 居中偏移：将指示器居中放置在每个 Tab 单元格内
     val centerOffsetPx = (itemWidthPx - indicatorWidthPx) / 2f
     
-    val scale by animateFloatAsState(
-        targetValue = 1f + lensProfile.motionFraction * (0.12f * styleTuning.deformationMultiplier),
-        animationSpec = AppMotionTokens.expressiveSpec(),
-        label = "scale"
-    )
-    val indicatorAlphaScale by animateFloatAsState(
-        targetValue = if (isLiquidGlassEnabled) 0.92f else 1f,
-        animationSpec = AppMotionTokens.standardSpec(),
-        label = "indicatorAlphaScale"
-    )
+    val scale = 1f
+    val indicatorAlphaScale = 1f
     val resolvedIndicatorColor = indicatorColor.copy(
         alpha = (indicatorColor.alpha * indicatorAlphaScale).coerceIn(0f, 1f)
     )
@@ -315,7 +307,7 @@ fun SimpleLiquidIndicator(
                     translationY = verticalCenterOffsetPx
                     
                     this.scaleX = scale
-                    this.scaleY = 1f - lensProfile.motionFraction * (0.08f * styleTuning.deformationMultiplier)
+                    this.scaleY = 1f
                 }
                 .size(indicatorWidth, indicatorHeight)
                 .clip(RoundedCornerShape(cornerRadius))

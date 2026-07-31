@@ -75,6 +75,18 @@ class AnimationApiBoundaryTest {
         assertFalse(primaryButton.contains("graphicsLayer"))
     }
 
+    @Test
+    fun simpleTopTabIndicatorTracksPositionWithoutDecorativeDeformation() {
+        val indicator = source("feature/home/components/LiquidIndicator.kt")
+        val simpleIndicator = indicator
+            .substringAfter("fun SimpleLiquidIndicator(")
+            .substringBefore("internal fun resolveTopTabIndicatorWidthPx")
+
+        assertFalse(simpleIndicator.contains("animateFloatAsState("))
+        assertTrue(simpleIndicator.contains("isDragging = false"))
+        assertTrue(simpleIndicator.contains("val scale = 1f"))
+    }
+
     private fun source(relativePath: String): String {
         return File("src/main/java/com/android/purebilibili/$relativePath").readText()
     }
