@@ -2,7 +2,6 @@ package com.android.purebilibili.feature.onboarding
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class OnboardingMotionPolicyTest {
 
@@ -13,14 +12,16 @@ class OnboardingMotionPolicyTest {
     }
 
     @Test
-    fun normalMotionUsesLayeredPageAndHeroAnimation() {
+    fun normalMotionAlsoUsesStaticPageAndHeroState() {
         val spec = resolveOnboardingMotionSpec(reduceMotion = false)
 
-        assertTrue(spec.pager.minScale < 1f)
-        assertTrue(spec.pager.minAlpha < 1f)
-        assertTrue(spec.floating.translationYPx > 0f)
-        assertTrue(spec.halo.maxScale > spec.halo.minScale)
-        assertTrue(spec.card.selectedScale > spec.card.unselectedScale)
+        assertEquals(1f, spec.pager.minScale)
+        assertEquals(1f, spec.pager.minAlpha)
+        assertEquals(0f, spec.floating.translationYPx)
+        assertEquals(0, spec.floating.durationMillis)
+        assertEquals(1f, spec.halo.minScale)
+        assertEquals(1f, spec.halo.maxScale)
+        assertEquals(1f, spec.card.selectedScale)
     }
 
     @Test

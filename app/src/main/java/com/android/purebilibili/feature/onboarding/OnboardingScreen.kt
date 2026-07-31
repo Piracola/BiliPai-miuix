@@ -102,7 +102,7 @@ fun OnboardingScreen(
                 }
             } else {
                 scope.launch {
-                    pagerState.animateScrollToPage((pagerState.currentPage + 1).coerceAtMost(lastPage))
+                    pagerState.scrollToPage((pagerState.currentPage + 1).coerceAtMost(lastPage))
                 }
             }
         }
@@ -181,18 +181,12 @@ private fun OnboardingBottomControls(
         ) {
             repeat(pageCount) { index ->
                 val selected = currentPage == index
-                val width by animateDpAsState(
-                    targetValue = if (selected) 24.dp else 8.dp,
-                    label = "onboardingIndicatorWidth"
-                )
-                val color by animateColorAsState(
-                    targetValue = if (selected) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                    },
-                    label = "onboardingIndicatorColor"
-                )
+                val width = if (selected) 24.dp else 8.dp
+                val color = if (selected) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                }
                 Box(
                     modifier = Modifier
                         .height(8.dp)
@@ -246,14 +240,7 @@ private fun OnboardingAnimatedPage(
     content: @Composable BoxScope.() -> Unit
 ) {
     Box(
-        modifier = modifier.graphicsLayer {
-            val clampedOffset = pageOffset().absoluteValue.coerceIn(0f, 1f)
-            val scale = lerp(1f, motionSpec.pager.minScale, clampedOffset)
-            scaleX = scale
-            scaleY = scale
-            alpha = lerp(1f, motionSpec.pager.minAlpha, clampedOffset)
-            translationY = 24f * clampedOffset
-        },
+        modifier = modifier,
         contentAlignment = Alignment.Center,
         content = content
     )
@@ -623,35 +610,20 @@ private fun SettingsProfileCard(
     motionSpec: OnboardingMotionSpec,
     onClick: () -> Unit
 ) {
-    val borderColor by animateColorAsState(
-        targetValue = if (selected) {
+    val borderColor = if (selected) {
             MaterialTheme.colorScheme.primary
         } else {
             MaterialTheme.colorScheme.outline.copy(alpha = 0.28f)
-        },
-        label = "settingsProfileBorder"
-    )
-    val backgroundColor by animateColorAsState(
-        targetValue = if (selected) {
+        }
+    val backgroundColor = if (selected) {
             MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.52f)
         } else {
             MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.28f)
-        },
-        label = "settingsProfileBackground"
-    )
-    val scale by animateFloatAsState(
-        targetValue = if (selected) motionSpec.card.selectedScale else motionSpec.card.unselectedScale,
-        animationSpec = spring(dampingRatio = 0.75f, stiffness = 420f),
-        label = "settingsProfileScale"
-    )
+        }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
             .clip(RoundedCornerShape(20.dp))
             .background(backgroundColor)
             .border(1.dp, borderColor, RoundedCornerShape(20.dp))
