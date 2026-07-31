@@ -2,6 +2,7 @@ package com.android.purebilibili.navigation
 
 import java.io.File
 import kotlin.test.Test
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class HomeMotionAndFeedPerformanceStructureTest {
@@ -53,7 +54,7 @@ class HomeMotionAndFeedPerformanceStructureTest {
 
         assertTrue(source.contains("remember(isTabletLayout, cardTransitionEnabled)"))
         assertTrue(source.contains("cardTransitionEnabled = cardTransitionEnabled"))
-        assertTrue(source.contains("val shouldApplyBackground = cardTransitionEnabled &&"))
+        assertFalse(source.contains("val shouldApplyBackground = cardTransitionEnabled &&"))
     }
 
     private fun sourceFile(relativePath: String): String {

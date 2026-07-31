@@ -65,28 +65,6 @@ internal fun rememberVideoDetailTransitionState(
 }
 
 @Composable
-internal fun rememberVideoDetailRouteSheetFrameProvider(
-    motion: VideoDetailRouteSheetMotion,
-    isExitTransitionInProgress: Boolean,
-    sharedBoundsActive: Boolean = false
-): () -> VideoDetailRouteSheetFrame {
-    // shell sharedBounds 接管整张详情壳的 morph 时，sheet 自身的 scale/translation/corner/scrim
-    // 必须全部停摆——否则会与共享元素同时形变导致撕裂。等价于 motion.enabled = false。
-    // 详情路由壳不再参与页面转场；保留该兼容入口只为不影响播放器和返回栈生命周期。
-    return remember {
-        {
-            VideoDetailRouteSheetFrame(
-                scale = 1f,
-                translationYDp = 0f,
-                cornerDp = 0f,
-                backgroundScrimAlpha = 0f,
-                settleProgress = 0f,
-            )
-        }
-    }
-}
-
-@Composable
 internal fun VideoDetailRouteSheetHost(
     frameProvider: () -> VideoDetailRouteSheetFrame,
     motion: VideoDetailRouteSheetMotion,

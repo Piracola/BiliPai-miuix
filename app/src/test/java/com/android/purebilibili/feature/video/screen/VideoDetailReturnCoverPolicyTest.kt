@@ -884,14 +884,14 @@ class VideoDetailReturnCoverPolicyTest {
     }
 
     @Test
-    fun `return cover player and content read one shared transition progress`() {
+    fun `return content does not read shared transition progress`() {
         val source = File("src/main/java/com/android/purebilibili/feature/video/screen/VideoDetailScreenStateHolder.kt")
             .readText()
 
         assertTrue(source.contains("val detailTransitionProgress ="))
-        assertTrue(source.contains("alpha = resolveVideoDetailReturnCoverAlpha("))
-        assertTrue(source.contains("alpha = resolveVideoDetailReturnPlayerAlpha("))
-        assertTrue(source.contains("alpha = resolveVideoDetailReturnContentAlpha("))
+        assertFalse(source.contains("videoCardDepthBackgroundState"))
+        assertFalse(source.contains("resolveVideoCardSecondaryContentVisualFrame("))
+        assertFalse(source.contains("alpha = resolveVideoDetailReturnContentAlpha("))
         assertFalse(source.contains("val coverCrossfadeAlpha ="))
         assertFalse(source.contains("val playerFadeAlpha ="))
     }
@@ -945,7 +945,7 @@ class VideoDetailReturnCoverPolicyTest {
     }
 
     @Test
-    fun `returning visual is wired from exit progress and session for handoff`() {
+    fun `return session keeps business handoff without a shared morph clock`() {
         val source = File("src/main/java/com/android/purebilibili/feature/video/screen/VideoDetailScreenStateHolder.kt")
             .readText()
         val transitionHostSource = File(
@@ -959,7 +959,7 @@ class VideoDetailReturnCoverPolicyTest {
         assertTrue(source.contains("val isSessionReturningToCard = isReturningFromDetail &&"))
         assertTrue(call.contains("isSessionReturningToCard = isSessionReturningToCard"))
         assertTrue(source.contains("shouldTreatVideoDetailCardReturnAsCommitted("))
-        assertTrue(transitionHostSource.contains("video-detail-shared-morph-clock"))
+        assertFalse(transitionHostSource.contains("video-detail-shared-morph-clock"))
     }
 
     @Test

@@ -36,16 +36,15 @@ class VideoDetailScreenMethodSizeStructureTest {
     }
 
     @Test
-    fun playerAndDetailContentShareTheRootTransitionProgress() {
+    fun playerAndDetailContentUseStaticRouteSheetPresentation() {
         val holder = loadSource("VideoDetailScreenStateHolder.kt")
         val transitionHost = loadSource("VideoDetailTransitionHost.kt")
         val content = loadSource("VideoDetailScreenContent.kt")
 
-        assertTrue(transitionHost.contains("label = \"video-detail-shared-morph-clock\""))
-        assertTrue(holder.contains("val detailTransitionProgress = transitionState.progress"))
-        assertTrue(holder.contains("resolveVideoDetailReturnCoverAlpha("))
-        assertTrue(holder.contains("resolveVideoDetailReturnPlayerAlpha("))
-        assertTrue(holder.contains("resolveVideoDetailReturnContentAlpha("))
+        assertFalse(transitionHost.contains("video-detail-shared-morph-clock"))
+        assertFalse(holder.contains("videoCardDepthBackgroundState"))
+        assertFalse(holder.contains("resolveVideoCardSecondaryContentVisualFrame("))
+        assertFalse(holder.contains("alpha = resolveVideoDetailReturnContentAlpha("))
         assertTrue(content.contains("transitionState.routeSheetFrameProvider"))
     }
 

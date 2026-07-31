@@ -202,9 +202,9 @@ class FrameBudgetLintTest {
         const val MAX_OFFSCREEN = 2
         const val MAX_HAZE_SOURCE = 28
         const val MAX_RUN_BLOCKING_IN_STORE = 1
-        // 17 → 15：删掉 LottieComponents 里两个零调用点的设置页动画头部
-        // （含一个 tween(2000) Reverse 无限动画）后的实测值。
-        const val MAX_INFINITE_TRANSITION = 15
+        // 动画最小化重构后，无限循环动画只能由真实的 Material 进度组件承担，
+        // 不能直接在 app 源码中创建。
+        const val MAX_INFINITE_TRANSITION = 0
 
         const val MAX_SETTINGS_SYNC_CALL_SITES = 89
 

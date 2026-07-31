@@ -95,7 +95,6 @@ import com.android.purebilibili.core.ui.adaptive.MotionTier
 import com.android.purebilibili.core.ui.components.UpBadgeName
 import com.android.purebilibili.core.ui.components.resolveUpStatsText
 import com.android.purebilibili.core.ui.transition.LocalVideoCardSharedElementSourceRoute
-import com.android.purebilibili.core.ui.transition.LocalVideoCardTransitionBackgroundState
 import com.android.purebilibili.core.ui.transition.LocalVideoSharedTransitionSpeedSettings
 import com.android.purebilibili.core.ui.transition.VideoSharedTransitionMotionSpec
 import com.android.purebilibili.core.ui.transition.VideoSharedTransitionVisualSpec
@@ -696,14 +695,7 @@ internal fun ElegantVideoCard(
                 lastClickedVideoSourceKey = CardPositionManager.lastClickedVideoSourceKey,
             )
         }
-        val videoCardTransitionBackgroundState = LocalVideoCardTransitionBackgroundState.current
-        val hideCoverDuringShellMorph = shouldHideHomeCardCoverDuringShellMorph(
-            useCardContainerSharedBounds = useCardShellSharedBounds,
-            isSharedMorphSourceCard = isCoverSharedReturnTarget,
-            isReturningFromDetail = isReturningFromVideoDetail,
-            transitionBackgroundPhase = videoCardTransitionBackgroundState.phaseProvider(),
-            isVideoCardReturnGestureInProgress = videoCardTransitionBackgroundState.isReturnGestureInProgressProvider(),
-        )
+        val hideCoverDuringShellMorph = false
         val coverCrossfadeEnabled = shouldEnableVideoCardCoverCrossfade(
             isScrollInProgress = scrollLiteModeEnabled,
             isReturningFromDetail = isReturningFromVideoDetail,

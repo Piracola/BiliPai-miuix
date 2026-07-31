@@ -102,58 +102,6 @@ class StartupSplashPolicyTest {
     }
 
     @Test
-    fun enablesSplashFlyoutOnlyAfterStartupPrivacyFlowCompleted() {
-        assertFalse(
-            shouldEnableSplashFlyoutAnimation(
-                sdkInt = 30,
-                hasCompletedOnboarding = false,
-                hasAcceptedReleaseDisclaimer = false,
-                splashIconAnimationEnabled = true
-            )
-        )
-        assertFalse(
-            shouldEnableSplashFlyoutAnimation(
-                sdkInt = 30,
-                hasCompletedOnboarding = false,
-                hasAcceptedReleaseDisclaimer = true,
-                splashIconAnimationEnabled = true
-            )
-        )
-        assertFalse(
-            shouldEnableSplashFlyoutAnimation(
-                sdkInt = 30,
-                hasCompletedOnboarding = true,
-                hasAcceptedReleaseDisclaimer = false,
-                splashIconAnimationEnabled = true
-            )
-        )
-        assertFalse(
-            shouldEnableSplashFlyoutAnimation(
-                sdkInt = 30,
-                hasCompletedOnboarding = true,
-                hasAcceptedReleaseDisclaimer = true,
-                splashIconAnimationEnabled = true
-            )
-        )
-        assertTrue(
-            shouldEnableSplashFlyoutAnimation(
-                sdkInt = 31,
-                hasCompletedOnboarding = true,
-                hasAcceptedReleaseDisclaimer = true,
-                splashIconAnimationEnabled = true
-            )
-        )
-        assertFalse(
-            shouldEnableSplashFlyoutAnimation(
-                sdkInt = 31,
-                hasCompletedOnboarding = true,
-                hasAcceptedReleaseDisclaimer = true,
-                splashIconAnimationEnabled = false
-            )
-        )
-    }
-
-    @Test
     fun systemSplashPreloadHold_followsSplashIconVisibilitySwitch() {
         assertTrue(
             shouldKeepSystemSplashForPreload(

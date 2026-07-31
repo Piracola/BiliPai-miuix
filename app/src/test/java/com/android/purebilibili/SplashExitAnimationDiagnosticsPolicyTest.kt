@@ -1,55 +1,24 @@
 package com.android.purebilibili
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import java.io.File
+import kotlin.test.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class SplashExitAnimationDiagnosticsPolicyTest {
 
     @Test
-    fun resolvesSystemIconAsPreferredFlyoutTarget() {
-        assertEquals(
-            SplashFlyoutTargetType.SYSTEM_ICON,
-            resolveSplashFlyoutTargetType(hasSystemIcon = true, hasFallbackIcon = true)
-        )
+    fun doesNotKeepCustomExitDiagnosticsOrFallbackAnimationPath() {
+        val source = loadMainActivitySource()
+
+        assertTrue(source.contains("val splashScreen = installSplashScreen()"))
+        assertFalse(source.contains("SplashFlyoutTargetType"))
+        assertFalse(source.contains("shouldUseRealtimeSplashBlur"))
+        assertFalse(source.contains("clearSplashRealtimeBlur"))
     }
 
-    @Test
-    fun resolvesFallbackIconWhenSystemIconIsMissing() {
-        assertEquals(
-            SplashFlyoutTargetType.FALLBACK_ICON,
-            resolveSplashFlyoutTargetType(hasSystemIcon = false, hasFallbackIcon = true)
-        )
-    }
-
-    @Test
-    fun resolvesSplashRootWhenNoIconTargetExists() {
-        assertEquals(
-            SplashFlyoutTargetType.SPLASH_ROOT,
-            resolveSplashFlyoutTargetType(hasSystemIcon = false, hasFallbackIcon = false)
-        )
-    }
-
-    @Test
-    fun warmResumeLoggingEnabledOnlyAfterFirstResumeAndWithoutConfigChange() {
-        assertTrue(
-            shouldLogWarmResume(
-                hasCompletedInitialResume = true,
-                isChangingConfigurations = false
-            )
-        )
-        assertFalse(
-            shouldLogWarmResume(
-                hasCompletedInitialResume = false,
-                isChangingConfigurations = false
-            )
-        )
-        assertFalse(
-            shouldLogWarmResume(
-                hasCompletedInitialResume = true,
-                isChangingConfigurations = true
-            )
-        )
-    }
+    private fun loadMainActivitySource(): String = File(
+        "src/main/java/com/android/purebilibili/MainActivity.kt"
+    ).takeIf(File::exists)?.readText()
+        ?: File("app/src/main/java/com/android/purebilibili/MainActivity.kt").readText()
 }

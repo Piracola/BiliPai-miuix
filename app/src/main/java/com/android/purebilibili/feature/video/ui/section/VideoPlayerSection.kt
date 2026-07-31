@@ -49,7 +49,6 @@ import com.android.purebilibili.feature.video.ui.gesture.resolveTwoFingerGesture
 import com.android.purebilibili.feature.video.ui.gesture.resolveTwoFingerSpeedGestureMode
 import com.android.purebilibili.feature.video.playback.policy.resolveDisplayedQualityId
 import com.android.purebilibili.core.ui.motion.AppMotionEasing
-import com.android.purebilibili.core.ui.transition.LocalVideoCardTransitionBackgroundState
 import com.android.purebilibili.core.ui.components.AppButton
 import com.android.purebilibili.core.ui.components.AppSurface
 import com.android.purebilibili.core.ui.components.AppTextButton
@@ -3138,11 +3137,8 @@ fun VideoPlayerSection(
             )
         }
     }
-    val transitionSourceCornerDp =
-        LocalVideoCardTransitionBackgroundState.current.sourceCornerDpProvider()
     val videoSharedTransitionVisualSpec = remember(
         sourceRouteForSharedElement,
-        transitionSourceCornerDp,
         forceCoverDuringReturnAnimation,
         playerState.player.currentPosition,
         isFullscreen,
@@ -3152,8 +3148,7 @@ fun VideoPlayerSection(
     ) {
         resolveVideoSharedTransitionVisualSpec(
             sourceRoute = sourceRouteForSharedElement,
-            sourceCornerDp = transitionSourceCornerDp
-                ?: resolveVideoSharedTransitionSourceCornerDp(sourceRouteForSharedElement),
+            sourceCornerDp = resolveVideoSharedTransitionSourceCornerDp(sourceRouteForSharedElement),
             playbackIntent = videoSharedPlaybackIntent,
             fullscreen = isFullscreen && !isPortraitFullscreen,
             autoPortrait = isPortraitFullscreen || isVerticalVideo,

@@ -177,17 +177,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import com.android.purebilibili.core.ui.LocalPredictiveBackGestureEnabled
 import com.android.purebilibili.core.ui.LocalSharedTransitionScope
 import com.android.purebilibili.core.ui.LocalAnimatedVisibilityScope
-import com.android.purebilibili.core.ui.transition.LocalVideoCardTransitionBackgroundState
-import com.android.purebilibili.core.ui.transition.LocalTransitionPerformanceSnapshot
-import com.android.purebilibili.core.ui.transition.shouldUsePerformanceCoverTransition
 import com.android.purebilibili.core.ui.transition.LocalVideoSharedTransitionSpeedSettings
 import com.android.purebilibili.core.ui.transition.VideoSharedTransitionPlaybackIntent
 import com.android.purebilibili.core.ui.transition.resolveVideoCardSharedTransitionMotionSpec
 import com.android.purebilibili.core.ui.transition.resolveVideoCardSharedTransitionEnterEasing
 import com.android.purebilibili.core.ui.transition.resolveVideoCardSharedTransitionReturnEasing
 import com.android.purebilibili.core.ui.transition.resolveVideoDetailShellOverlayCornerDp
-import com.android.purebilibili.core.ui.transition.resolveVideoCardDetailChromeAlpha
-import com.android.purebilibili.core.ui.transition.resolveVideoCardSecondaryContentVisualFrame
 import com.android.purebilibili.core.ui.transition.resolveVideoSharedCoverCacheKey
 import com.android.purebilibili.core.ui.transition.resolveVideoSharedTransitionPlaybackIntent
 import com.android.purebilibili.core.ui.transition.resolveVideoSharedTransitionSourceCornerDp
@@ -677,25 +672,6 @@ internal fun VideoDetailScreenStateHolder(
     val entryVisualProgress = remember(entryVisualEnabled) {
         Animatable(if (entryVisualEnabled) 0f else 1f)
     }
-    val detailInfoRevealProgress = remember(transitionEnabled) {
-        Animatable(if (transitionEnabled) 0f else 1f)
-    }
-
-    LaunchedEffect(transitionEnabled, motionSpec.entryPhaseDurationMillis) {
-        if (!transitionEnabled) {
-            detailInfoRevealProgress.snapTo(1f)
-        } else {
-            detailInfoRevealProgress.animateTo(
-                targetValue = 1f,
-                animationSpec = tween(
-                    durationMillis = motionSpec.entryPhaseDurationMillis.coerceAtLeast(1),
-                    delayMillis = 48,
-                    easing = FastOutSlowInEasing,
-                ),
-            )
-        }
-    }
-
     LaunchedEffect(
         deferVideoDetailEntryLoad,
         entryTransitionFinished,
@@ -1564,27 +1540,9 @@ internal fun VideoDetailScreenStateHolder(
         forceCoverOnlyOnReturn = forceCoverOnlyForReturn,
         isCommittedCardReturn = isCommittedCardReturn,
     )
-    val videoCardDepthBackgroundState = LocalVideoCardTransitionBackgroundState.current
-    val transitionPerformanceSnapshot = LocalTransitionPerformanceSnapshot.current
-    val videoCardTransitionPhase = videoCardDepthBackgroundState.phaseProvider()
-    val performanceRequiresCoverTransition = shouldUsePerformanceCoverTransition(
-        snapshot = transitionPerformanceSnapshot,
-        phase = videoCardTransitionPhase,
-        isCommittedCardReturn = isCommittedCardReturn,
-    )
     val forceCoverOnlyForPerformanceTransition =
-        forceCoverOnlyForLiveSafeReturn || performanceRequiresCoverTransition
-    val videoCardTransitionDensity = LocalDensity.current
-    val videoCardDetailChromeAlphaProvider = remember(videoCardDepthBackgroundState) {
-        {
-            resolveVideoCardDetailChromeAlpha(
-                morphDepthProgress = videoCardDepthBackgroundState.progressProvider(),
-                phase = videoCardDepthBackgroundState.phaseProvider(),
-                isReturnGestureInProgress =
-                    videoCardDepthBackgroundState.isReturnGestureInProgressProvider(),
-            )
-        }
-    }
+        forceCoverOnlyForLiveSafeReturn
+    val videoCardDetailChromeAlphaProvider = remember { { 1f } }
     val routedCommentInteractionActive =
         openCommentRootRpidFromRoute > 0L &&
             (subReplyState.visible || subReplyState.isLoading)
@@ -3243,55 +3201,6 @@ internal fun VideoDetailScreenStateHolder(
                                         AppSurfaceTokens.background()
                                     }
                                 )
-                                .drawWithContent {
-                                    val reveal = detailInfoRevealProgress.value.coerceIn(0f, 1f)
-                                    clipRect(
-                                        left = 0f,
-                                        top = 0f,
-                                        right = size.width,
-                                        bottom = size.height * reveal,
-                                    ) {
-                                        this@drawWithContent.drawContent()
-                                    }
-                                }
-                                .graphicsLayer {
-                                    val reveal = detailInfoRevealProgress.value.coerceIn(0f, 1f)
-                                    val holdFullyOpaque =
-                                        suppressEnterFadeAfterBackPreview && !isLeaving
-                                    if (liveReturnMorph && !holdFullyOpaque) {
-                                        val frame = resolveVideoCardSecondaryContentVisualFrame(
-                                            morphDepthProgress =
-                                                videoCardDepthBackgroundState.progressProvider(),
-                                            phase = videoCardDepthBackgroundState.phaseProvider(),
-                                            isReturnGestureInProgress =
-                                                videoCardDepthBackgroundState
-                                                    .isReturnGestureInProgressProvider(),
-                                            motionTier =
-                                                videoCardDepthBackgroundState.motionTierProvider(),
-                                        )
-                                        alpha = if (
-                                            isLeaving && isQuickReturningFromDetail
-                                        ) {
-                                            0f
-                                        } else {
-                                            frame.alpha
-                                        }
-                                        translationY = with(videoCardTransitionDensity) {
-                                            (frame.translationYDp + (1f - reveal) * 12f).dp.toPx()
-                                        }
-                                    } else {
-                                        alpha = resolveVideoDetailReturnContentAlpha(
-                                            transitionProgress = detailTransitionProgress.value,
-                                            isCommittedCardReturn = isCommittedCardReturn,
-                                            holdFullyOpaqueAfterBackPreview = holdFullyOpaque,
-                                            liveReturnMorph = false,
-                                            isQuickReturn = isQuickReturningFromDetail,
-                                        )
-                                        translationY = with(videoCardTransitionDensity) {
-                                            ((1f - reveal) * 12f).dp.toPx()
-                                        }
-                                    }
-                                }
                                 // .nestedScroll(nestedScrollConnection) // [Remove] 移除嵌套滚动，确保 Tabs 正常滑动
                         ) {
                             // 「竖屏直达」morph 期间不绘制详情 body，避免先露出简介/评论再跳竖全屏。
