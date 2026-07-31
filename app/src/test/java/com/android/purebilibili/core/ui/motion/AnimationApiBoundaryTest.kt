@@ -139,6 +139,18 @@ class AnimationApiBoundaryTest {
         assertTrue(percentText.contains("shouldTriggerGesturePercentHaptic("))
     }
 
+    @Test
+    fun videoCommentSheetUsesStaticHostAndContentTransitions() {
+        val commentSheet = source("feature/video/ui/components/VideoCommentSheetHost.kt")
+
+        assertFalse(commentSheet.contains("animateFloatAsState("))
+        assertFalse(commentSheet.contains("rememberAppBottomSheetMotion("))
+        assertFalse(commentSheet.contains("slideInHorizontally("))
+        assertFalse(commentSheet.contains("slideOutHorizontally("))
+        assertFalse(commentSheet.contains("fadeIn(animationSpec = tween"))
+        assertTrue(commentSheet.contains("EnterTransition.None togetherWith ExitTransition.None"))
+    }
+
     private fun source(relativePath: String): String {
         return File("src/main/java/com/android/purebilibili/$relativePath").readText()
     }

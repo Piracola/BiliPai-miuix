@@ -4,16 +4,10 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -72,7 +66,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.layout.onSizeChanged
 import com.android.purebilibili.core.ui.rememberAppChevronUpIcon
-import com.android.purebilibili.core.ui.rememberAppBottomSheetMotion
 import com.android.purebilibili.core.ui.InteractiveOverlayProgressVisual
 import com.android.purebilibili.core.ui.InteractiveOverlaySurfaceType
 import com.android.purebilibili.core.ui.resolveInteractiveOverlayProgressVisual
@@ -335,35 +328,14 @@ fun VideoCommentSheetHost(
         mainSheetVisible = mainSheetVisible,
         topReservedPx = topReservedPx
     )
-    val motionSpec = rememberAppBottomSheetMotion()
     val appearance = rememberVideoCommentAppearance()
     var isDraggingSheet by remember { mutableStateOf(false) }
     var isDismissDragSettling by remember { mutableStateOf(false) }
     var isDragDismissExitPending by remember { mutableStateOf(false) }
     var sheetDragTargetOffsetPx by remember { mutableFloatStateOf(0f) }
     var mainSheetMeasuredHeightPx by remember { mutableFloatStateOf(0f) }
-    val hostVisibilityProgress by animateFloatAsState(
-        targetValue = if (hostVisible) 1f else 0f,
-        animationSpec = tween(
-            durationMillis = if (hostVisible) {
-                motionSpec.contentEnterFadeDurationMillis
-            } else {
-                motionSpec.contentExitFadeDurationMillis
-            }
-        ),
-        label = "video_comment_host_visibility_progress"
-    )
-    val sheetDragOffsetPx by animateFloatAsState(
-        targetValue = sheetDragTargetOffsetPx,
-        animationSpec = tween(
-            durationMillis = when {
-                isDraggingSheet -> 0
-                isDismissDragSettling -> motionSpec.contentExitFadeDurationMillis.coerceAtLeast(180)
-                else -> 180
-            }
-        ),
-        label = "video_comment_main_sheet_offset"
-    )
+    val hostVisibilityProgress = if (hostVisible) 1f else 0f
+    val sheetDragOffsetPx = sheetDragTargetOffsetPx
     val latestSheetDragOffsetPx = rememberUpdatedState(sheetDragOffsetPx)
     val sheetDragVisibilityProgress = resolveVideoCommentSheetDragVisibilityProgress(
         hostContent = hostContent,
@@ -530,8 +502,8 @@ fun VideoCommentSheetHost(
 
     AnimatedVisibility(
         visible = hostVisible,
-        enter = motionSpec.scrimEnter,
-        exit = motionSpec.scrimExit
+        enter = EnterTransition.None,
+        exit = ExitTransition.None
     ) {
         val interceptBackdropTap = shouldInterceptVideoCommentSheetHostBackdropTap(
             mainSheetVisible = mainSheetVisible
@@ -568,8 +540,8 @@ fun VideoCommentSheetHost(
             val sheetHeight = with(density) { sheetHeightPx.toDp() }
             AnimatedVisibility(
                 visible = hostVisible,
-                enter = motionSpec.contentEnter,
-                exit = motionSpec.contentExit,
+                enter = EnterTransition.None,
+                exit = ExitTransition.None,
                 modifier = Modifier.align(Alignment.BottomCenter)
             ) {
                 AppSurface(
@@ -642,34 +614,8 @@ fun VideoCommentSheetHost(
                     AnimatedContent(
                         targetState = hostContent,
                         transitionSpec = {
-                            val opensThreadDetail =
-                                initialState == VideoCommentSheetHostContent.MAIN_LIST &&
-                                    targetState == VideoCommentSheetHostContent.THREAD_DETAIL
-                            val closesThreadDetail =
-                                initialState == VideoCommentSheetHostContent.THREAD_DETAIL &&
-                                    targetState == VideoCommentSheetHostContent.MAIN_LIST
-                            val direction = when {
-                                opensThreadDetail -> 1
-                                closesThreadDetail -> -1
-                                else -> 0
-                            }
-                            val enter = fadeIn(animationSpec = tween(220)) +
-                                slideInHorizontally(animationSpec = tween(260)) { width ->
-                                    when {
-                                        direction > 0 -> width / 2
-                                        direction < 0 -> -width / 2
-                                        else -> 0
-                                    }
-                                }
-                            val exit = fadeOut(animationSpec = tween(200)) +
-                                slideOutHorizontally(animationSpec = tween(240)) { width ->
-                                    when {
-                                        direction > 0 -> -width / 3
-                                        direction < 0 -> width / 3
-                                        else -> 0
-                                    }
-                                }
-                            enter togetherWith exit using SizeTransform(clip = false)
+                            EnterTransition.None togetherWith ExitTransition.None using
+                                SizeTransform(clip = false)
                         },
                         modifier = Modifier.fillMaxSize(),
                         label = "video_comment_host_content"
@@ -888,8 +834,8 @@ private fun VideoCommentBackToTopButton(
     AnimatedVisibility(
         visible = visible,
         modifier = modifier,
-        enter = fadeIn(animationSpec = tween(180)) + scaleIn(initialScale = 0.92f),
-        exit = fadeOut(animationSpec = tween(140)) + scaleOut(targetScale = 0.92f)
+        enter = EnterTransition.None,
+        exit = ExitTransition.None,
     ) {
         AppSmallFloatingActionButton(
             onClick = onClick,
