@@ -521,12 +521,7 @@ private fun TripleLikeActionButton(
             isActive = isLiked
         )
         
-        // 投币图标 (只在长按时显示)
-        androidx.compose.animation.AnimatedVisibility(
-            visible = longPressProgress > 0.05f,
-            enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.scaleIn(),
-            exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.scaleOut()
-        ) {
+        if (longPressProgress > 0.05f) {
             TripleProgressIcon(
                 icon = AppIcons.BiliCoin,
                 text = coinCount,
@@ -536,12 +531,7 @@ private fun TripleLikeActionButton(
             )
         }
         
-        // 收藏图标 (只在长按时显示)
-        androidx.compose.animation.AnimatedVisibility(
-            visible = longPressProgress > 0.1f,
-            enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.scaleIn(),
-            exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.scaleOut()
-        ) {
+        if (longPressProgress > 0.1f) {
             TripleProgressIcon(
                 icon = if (isFavorited) CupertinoIcons.Filled.Bookmark else CupertinoIcons.Default.Bookmark,
                 text = favoriteCount,
@@ -654,34 +644,7 @@ private fun BiliActionButton(
     enableActivePulse: Boolean = false,
     horizontalPadding: Dp = 4.dp
 ) {
-    // Press animation
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.92f else 1f, // 略微减小缩放感
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "buttonScale"
-    )
-    
-    // Active state pulse animation
-    var shouldPulse by remember { mutableStateOf(false) }
-    val pulseScale by animateFloatAsState(
-        targetValue = if (enableActivePulse && shouldPulse) 1.2f else 1f,
-        animationSpec = spring(
-            dampingRatio = 0.4f,
-            stiffness = 400f
-        ),
-        label = "pulseScale",
-        finishedListener = { shouldPulse = false }
-    )
-    
-    LaunchedEffect(isActive, enableActivePulse) {
-        if (enableActivePulse && isActive) shouldPulse = true
-    }
     
     val inactiveTint = MaterialTheme.colorScheme.onSurfaceVariant
     val iconTint = resolveVideoActionTint(
@@ -701,10 +664,6 @@ private fun BiliActionButton(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 56.dp)
-            .graphicsLayer {
-                scaleX = scale * pulseScale
-                scaleY = scale * pulseScale
-            }
             .combinedClickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -751,47 +710,13 @@ fun ActionButton(
 ) {
     val isDark = isSystemInDarkTheme()
     
-    // Press animation state
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    
-    val pressScale by animateFloatAsState(
-        targetValue = if (isPressed) 0.85f else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        ),
-        label = "pressScale"
-    )
-    
-    // Heartbeat pulse animation - triggered when isActive becomes true
-    var shouldPulse by remember { mutableStateOf(false) }
-    val pulseScale by animateFloatAsState(
-        targetValue = if (shouldPulse) 1.3f else 1f,
-        animationSpec = spring(
-            dampingRatio = 0.35f,
-            stiffness = 300f
-        ),
-        label = "pulseScale",
-        finishedListener = { shouldPulse = false }
-    )
-    
-    // Listen for isActive changes
-    LaunchedEffect(isActive) {
-        if (isActive) {
-            shouldPulse = true
-        }
-    }
     
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .padding(vertical = 2.dp)
             .width(56.dp)
-            .graphicsLayer {
-                scaleX = pressScale
-                scaleY = pressScale
-            }
             .clickable(
                 interactionSource = interactionSource,
                 indication = null
@@ -801,10 +726,6 @@ fun ActionButton(
         Box(
             modifier = Modifier
                 .size(38.dp)
-                .graphicsLayer {
-                    scaleX = pulseScale
-                    scaleY = pulseScale
-                }
                 .clip(CircleShape)
                 .background(iconColor.copy(alpha = if (isDark) 0.15f else 0.1f)),
             contentAlignment = Alignment.Center
