@@ -25,39 +25,27 @@ class SettingsMiuixSimplificationStructureTest {
     }
 
     @Test
-    fun `animation settings expose independent glass toggles without duplicating global native control`() {
+    fun `animation settings expose only the retained static motion policy`() {
         val source = loadSource("app/src/main/java/com/android/purebilibili/feature/settings/screen/AnimationSettingsScreen.kt")
 
-        assertFalse(source.contains("previewLiquidGlassProgress"))
-        assertFalse(source.contains("通透到磨砂"))
-        assertTrue(source.contains("顶部 Dock 液态玻璃"))
-        assertTrue(source.contains("toggleTopBarLiquidGlass("))
-        assertTrue(source.contains("首页搜索框液态玻璃"))
-        assertTrue(source.contains("toggleHomeSearchLiquidGlass("))
-        assertTrue(source.contains("底栏液态玻璃"))
-        assertFalse(source.contains("title = \"安卓原生液态玻璃\""))
+        assertTrue(source.contains("页面切换使用系统默认行为"))
+        assertTrue(source.contains("应用仅保留播放器控制栏的短暂透明度反馈"))
+        assertFalse(source.contains("液态玻璃"))
+        assertFalse(source.contains("toggleTopBarLiquidGlass("))
+        assertFalse(source.contains("toggleHomeSearchLiquidGlass("))
+        assertFalse(source.contains("toggleBottomBarLiquidGlass("))
         assertFalse(source.contains("toggleAndroidNativeLiquidGlass("))
-        assertTrue(source.contains("过渡动画实时模糊"))
-        assertTrue(source.contains("toggleVideoTransitionRealtimeBlur("))
+        assertFalse(source.contains("toggleVideoTransitionRealtimeBlur("))
         assertTrue(source.contains("SettingsPageScaffold("))
     }
 
     @Test
-    fun `animation liquid glass section keeps independent top dock and bottom bar toggles`() {
+    fun `animation settings do not retain decorative glass controls`() {
         val source = loadSource("app/src/main/java/com/android/purebilibili/feature/settings/screen/AnimationSettingsScreen.kt")
 
-        assertTrue(
-            Regex("""icon = rememberSettingsSemanticIcon\(SettingsIconRole\.TOP_DOCK_GLASS\),\s*title = "顶部 Dock 液态玻璃"""")
-                .containsMatchIn(source)
-        )
-        assertTrue(
-            Regex("""icon = rememberSettingsSemanticIcon\(SettingsIconRole\.HOME_SEARCH_GLASS\),\s*title = "首页搜索框液态玻璃"""")
-                .containsMatchIn(source)
-        )
-        assertTrue(
-            Regex("""icon = rememberSettingsSemanticIcon\(SettingsIconRole\.BOTTOM_BAR_GLASS\),\s*title = "底栏液态玻璃"""")
-                .containsMatchIn(source)
-        )
+        assertFalse(source.contains("SettingsIconRole.TOP_DOCK_GLASS"))
+        assertFalse(source.contains("SettingsIconRole.HOME_SEARCH_GLASS"))
+        assertFalse(source.contains("SettingsIconRole.BOTTOM_BAR_GLASS"))
     }
 
     @Test

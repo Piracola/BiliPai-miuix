@@ -63,7 +63,8 @@ import com.android.purebilibili.feature.video.ui.components.VideoAspectRatio
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.core.tween
+import com.android.purebilibili.core.ui.motion.LocalAppMotionPolicy
+import com.android.purebilibili.core.ui.motion.resolveTransientVisibilitySpec
 import androidx.compose.ui.draw.clip
 import com.android.purebilibili.feature.video.subtitle.SubtitleDisplayMode
 import com.android.purebilibili.feature.video.subtitle.SubtitleTrackOption
@@ -1201,6 +1202,7 @@ private fun Anime4KMoreAction(
     onCheckedChange: (Boolean) -> Unit,
     onPresetChange: (Anime4KPreset) -> Unit
 ) {
+    val transientVisibilitySpec = LocalAppMotionPolicy.current.resolveTransientVisibilitySpec()
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -1228,8 +1230,8 @@ private fun Anime4KMoreAction(
         }
         AnimatedVisibility(
             visible = enabled,
-            enter = fadeIn(tween(100)),
-            exit = fadeOut(tween(100))
+            enter = fadeIn(transientVisibilitySpec),
+            exit = fadeOut(transientVisibilitySpec)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),

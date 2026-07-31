@@ -374,9 +374,12 @@ class SearchScreenPolicyTest {
     }
 
     @Test
-    fun bottomBarSearchEntry_usesDedicatedTopBarContinuityMotion() {
+    fun bottomBarSearchEntry_switchesDirectlyWithoutContinuityMotion() {
         val navigationSource = loadSource("app/src/main/java/com/android/purebilibili/navigation/AppNavigation.kt")
         val searchSource = loadSource("app/src/main/java/com/android/purebilibili/feature/search/SearchScreen.kt")
+        val searchTopBar = searchSource
+            .substringAfter("fun SearchTopBar(")
+            .substringBefore("fun HistoryChip")
 
         assertTrue(navigationSource.contains("fun navigateToSearchFromBottomBar()"))
         assertTrue(navigationSource.contains("fun requestSearchFromBottomBar()"))
@@ -387,45 +390,12 @@ class SearchScreenPolicyTest {
         assertTrue(navigationSource.contains("searchLaunchKey = bottomBarSearchLaunchKey"))
         assertFalse(navigationSource.contains("pendingBottomBarSearchLaunchKey"))
         assertFalse(navigationSource.contains("if (pendingBottomBarSearchLaunchKey == completedKey)"))
-        assertTrue(navigationSource.contains("searchEntryMotionSource = SearchEntryMotionSource.BOTTOM_BAR"))
-        assertTrue(navigationSource.contains("searchEntryMotionKey += 1"))
-        assertTrue(navigationSource.contains("entryMotionSource = searchEntryMotionSource"))
-        assertTrue(navigationSource.contains("entryMotionKey = searchEntryMotionKey"))
-
-        assertTrue(searchSource.contains("entryMotionSource: SearchEntryMotionSource = SearchEntryMotionSource.NONE"))
-        assertTrue(searchSource.contains("entryMotionSpec = resolveSearchEntryMotionSpec("))
-        assertTrue(searchSource.contains("entryMotionKey = entryMotionKey"))
-        assertTrue(searchSource.contains("graphicsLayer"))
-        assertTrue(searchSource.contains("TransformOrigin("))
-        assertTrue(searchSource.contains("spec.transformOriginPivotX"))
-        assertTrue(searchSource.contains("spec.transformOriginPivotY"))
-    }
-
-    @Test
-    fun searchEntryMotion_isDisabledForEveryEntrySource() {
-        assertEquals(
-            null,
-            resolveSearchEntryMotionSpec(
-                source = SearchEntryMotionSource.NONE,
-                reducedMotionBudget = false
-            )
-        )
-
-        assertEquals(
-            null,
-            resolveSearchEntryMotionSpec(
-                source = SearchEntryMotionSource.BOTTOM_BAR,
-                reducedMotionBudget = false
-            )
-        )
-
-        assertEquals(
-            null,
-            resolveSearchEntryMotionSpec(
-                source = SearchEntryMotionSource.BOTTOM_BAR,
-                reducedMotionBudget = true
-            )
-        )
+        assertFalse(navigationSource.contains("SearchEntryMotionSource"))
+        assertFalse(searchSource.contains("entryMotion"))
+        assertFalse(searchTopBar.contains("Animatable"))
+        assertFalse(searchTopBar.contains("animate"))
+        assertFalse(searchTopBar.contains("graphicsLayer"))
+        assertFalse(searchTopBar.contains("TransformOrigin"))
     }
 
     private fun loadSource(path: String): String {

@@ -53,7 +53,6 @@ import com.android.purebilibili.feature.login.LoginScreen
 import com.android.purebilibili.feature.profile.ProfileScreen
 import com.android.purebilibili.feature.search.ArticleNavigationTarget
 import com.android.purebilibili.feature.search.resolveArticleNavigationTarget
-import com.android.purebilibili.feature.search.SearchEntryMotionSource
 import com.android.purebilibili.feature.search.SearchScreen
 import com.android.purebilibili.feature.settings.SettingsScreen
 import com.android.purebilibili.feature.settings.resolveSettingsSearchNavigation
@@ -383,8 +382,6 @@ fun AppNavigation(
         canNav
     }
     var inAppSearchKeyword by remember { mutableStateOf<String?>(null) }
-    var searchEntryMotionSource by remember { mutableStateOf(SearchEntryMotionSource.NONE) }
-    var searchEntryMotionKey by remember { mutableIntStateOf(0) }
     var bottomBarSearchLaunchKey by remember { mutableIntStateOf(0) }
     var navigation3ReturnSession by remember { mutableStateOf(BiliPaiReturnSessionState()) }
     val effectiveInitialSearchKeyword = inAppSearchKeyword ?: initialSearchKeyword
@@ -725,10 +722,7 @@ fun AppNavigation(
             pushNavigation3Key(legacyRouteToBiliPaiNavKey(route), beforeNavigation)
         }
         fun navigateToSearchFromBottomBar() {
-            pushNavigation3Key(BiliPaiNavKey.Search) {
-                searchEntryMotionSource = SearchEntryMotionSource.BOTTOM_BAR
-                searchEntryMotionKey += 1
-            }
+            pushNavigation3Key(BiliPaiNavKey.Search)
         }
         fun requestSearchFromBottomBar() {
             bottomBarSearchLaunchKey += 1
@@ -1865,13 +1859,6 @@ fun AppNavigation(
                                 userFace = homeState.user.face,
                                 initialKeyword = effectiveInitialSearchKeyword.orEmpty(),
                                 onInitialKeywordConsumed = consumeInitialSearchKeyword,
-                                entryMotionSource = searchEntryMotionSource,
-                                entryMotionKey = searchEntryMotionKey,
-                                onEntryMotionConsumed = { consumedKey ->
-                                    if (consumedKey == searchEntryMotionKey) {
-                                        searchEntryMotionSource = SearchEntryMotionSource.NONE
-                                    }
-                                },
                                 isReturningFromVideoDetail = navigation3ReturnSession.isReturningFromDetail,
                                 isQuickReturningFromVideoDetail =
                                     navigation3ReturnSession.isQuickReturnFromDetail,

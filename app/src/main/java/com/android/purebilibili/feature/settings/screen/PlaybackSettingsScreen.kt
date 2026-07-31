@@ -1095,7 +1095,7 @@ private fun PlaybackInteractionSettingsSection(
         )
         AppPreferenceDivider()
         AppSwitchPreference(
-            icon = rememberSettingsSemanticIcon(SettingsIconRole.PLAYBACK),
+                            icon = rememberSettingsSemanticIcon(SettingsIconRole.HOME_UP_BADGES),
             title = "UP 主页看过视频定位提示",
             subtitle = if (spacePlayedVideoLocatePromptEnabled) {
                 "每次从视频进入该 UP 主页时显示，可一键定位到对应投稿"
@@ -1128,7 +1128,7 @@ private fun PlaybackInteractionSettingsSection(
         )
         AppPreferenceDivider()
 	        AppSwitchPreference(
-	            icon = rememberSettingsSemanticIcon(SettingsIconRole.PLAYBACK),
+                            icon = rememberSettingsSemanticIcon(SettingsIconRole.PLAYBACK),
             title = "列表/收藏夹连续播放",
             subtitle = "控制收藏夹、稍后再看、合集等列表播放完后是否继续下一条",
             checked = externalPlaylistAutoContinueEnabled,

@@ -544,9 +544,6 @@ fun SearchScreen(
     onTopicClick: (Long) -> Unit,
     onArticleClick: (Long, String) -> Unit,
     onAvatarClick: () -> Unit,
-    entryMotionSource: SearchEntryMotionSource = SearchEntryMotionSource.NONE,
-    entryMotionKey: Int = 0,
-    onEntryMotionConsumed: (Int) -> Unit = {},
     isReturningFromVideoDetail: Boolean = false,
     isQuickReturningFromVideoDetail: Boolean = false,
     onVideoDetailReturnAnimationConsumed: () -> Unit = {}
@@ -722,10 +719,6 @@ fun SearchScreen(
             baseBudget = searchMotionBudget
         )
     }
-    val entryMotionSpec = resolveSearchEntryMotionSpec(
-        source = entryMotionSource,
-        reducedMotionBudget = searchMotionBudget == SearchMotionBudget.REDUCED
-    )
     val searchHazeEnabled = shouldEnableSearchHazeSource(
         isSearching = state.isSearching,
         startupSettled = startupSettled
@@ -1606,9 +1599,6 @@ fun SearchScreen(
                     query = state.query
                 ),
                 reducedMotionBudget = effectiveSearchMotionBudget == SearchMotionBudget.REDUCED,
-                entryMotionSpec = entryMotionSpec,
-                entryMotionKey = entryMotionKey,
-                onEntryMotionFinished = onEntryMotionConsumed,
                 isScrollInProgressProvider = { isSearchResultsScrolling },
                 modifier = Modifier
                     .align(Alignment.TopCenter)
@@ -1687,9 +1677,6 @@ fun SearchTopBar(
     focusRequester: androidx.compose.ui.focus.FocusRequester = remember { androidx.compose.ui.focus.FocusRequester() },
     autoFocusEnabled: Boolean = true,
     reducedMotionBudget: Boolean = false,
-    entryMotionSpec: SearchEntryMotionSpec? = null,
-    entryMotionKey: Int = 0,
-    onEntryMotionFinished: (Int) -> Unit = {},
     isScrollInProgressProvider: () -> Boolean = { false },
     modifier: Modifier = Modifier
 ) {
@@ -1717,12 +1704,6 @@ fun SearchTopBar(
         )
     }
     val canSubmit = resolvedSubmitKeyword.isNotBlank()
-    LaunchedEffect(entryMotionKey, entryMotionSpec) {
-        if (entryMotionSpec != null) {
-            onEntryMotionFinished(entryMotionKey)
-        }
-    }
-
     AppSurface(
         modifier = modifier
             .fillMaxWidth(),

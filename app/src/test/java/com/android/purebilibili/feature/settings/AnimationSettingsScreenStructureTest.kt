@@ -8,15 +8,12 @@ import kotlin.test.assertTrue
 class AnimationSettingsScreenStructureTest {
 
     @Test
-    fun animationSettingsScreen_controlsGlobalPredictivePreviewIndependently() {
+    fun animationSettingsScreen_exposesOnlyTheRetainedMotionPolicy() {
         val source = animationSettingsSource()
 
-        assertTrue(source.contains("title = \"预测性返回手势\""))
-        assertTrue(source.contains("SettingsManager.setPredictiveBackEnabled(context, enabled)"))
-        val predictiveItem = source
-            .substringAfter("title = \"预测性返回手势\"")
-            .substringBefore("AppPreferenceDivider()")
-        assertFalse(predictiveItem.contains("enabled = state.cardTransitionEnabled"))
+        assertTrue(source.contains("页面切换使用系统默认行为"))
+        assertTrue(source.contains("应用仅保留播放器控制栏的短暂透明度反馈"))
+        assertFalse(source.contains("SettingsManager.setPredictiveBackEnabled"))
         assertFalse(source.contains("setPredictiveBackAnimationStyle"))
         assertFalse(source.contains("setPredictiveBackExitDirection"))
         assertFalse(source.contains("resolvePredictiveBackStyleOptions"))
@@ -24,12 +21,12 @@ class AnimationSettingsScreenStructureTest {
     }
 
     @Test
-    fun animationSettingsScreen_exposesRealtimeTransitionBlurToggle() {
+    fun animationSettingsScreen_doesNotExposeRemovedTransitionBlurToggle() {
         val source = animationSettingsSource()
 
-        assertTrue(source.contains("title = \"过渡动画实时模糊\""))
-        assertTrue(source.contains("checked = videoTransitionRealtimeBlurEnabled"))
-        assertTrue(source.contains("toggleVideoTransitionRealtimeBlur"))
+        assertFalse(source.contains("过渡动画实时模糊"))
+        assertFalse(source.contains("videoTransitionRealtimeBlurEnabled"))
+        assertFalse(source.contains("toggleVideoTransitionRealtimeBlur"))
     }
 
     @Test

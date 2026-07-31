@@ -55,11 +55,6 @@ class ReleasePlayerOverlayR8KeepRulesTest {
         )
         assertTrue(
             rules.contains(
-                "-keep class com.android.purebilibili.feature.search.SearchEntryMotionSource { *; }"
-            )
-        )
-        assertTrue(
-            rules.contains(
                 "-keep class com.android.purebilibili.navigation.AppNavigationKt { *; }"
             )
         )

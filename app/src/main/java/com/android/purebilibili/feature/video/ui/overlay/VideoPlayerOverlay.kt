@@ -124,6 +124,8 @@ import com.android.purebilibili.feature.cast.LocalProxyServer
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
+import com.android.purebilibili.core.ui.motion.LocalAppMotionPolicy
+import com.android.purebilibili.core.ui.motion.resolveTransientVisibilitySpec
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -644,6 +646,7 @@ fun VideoPlayerOverlay(
     onFavoritePlaylistClick: () -> Unit = {},
     drawerHazeState: HazeState? = null,
 ) {
+    val transientVisibilitySpec = LocalAppMotionPolicy.current.resolveTransientVisibilitySpec()
     var showQualityMenu by remember { mutableStateOf(false) }
     var showSpeedMenu by remember { mutableStateOf(false) }
     var showRatioMenu by remember { mutableStateOf(false) }
@@ -1202,8 +1205,8 @@ fun VideoPlayerOverlay(
         // --- 1. 顶部渐变遮罩 ---
         AnimatedVisibility(
             visible = isVisible,
-            enter = fadeIn(),
-            exit = fadeOut(),
+            enter = fadeIn(transientVisibilitySpec),
+            exit = fadeOut(transientVisibilitySpec),
             //  [修复] align 必须在 AnimatedVisibility 的 modifier 上，而不是内部 Box 上
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -1228,8 +1231,8 @@ fun VideoPlayerOverlay(
         // --- 2. 底部渐变遮罩 ---
         AnimatedVisibility(
             visible = isVisible,
-            enter = fadeIn(),
-            exit = fadeOut(),
+            enter = fadeIn(transientVisibilitySpec),
+            exit = fadeOut(transientVisibilitySpec),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(end = endDrawerReservedWidth)
@@ -1271,8 +1274,8 @@ fun VideoPlayerOverlay(
         val showPlayerChrome = (isVisible && !isScreenLocked) || danmakuComposerVisible
         AnimatedVisibility(
             visible = showPlayerChrome,
-            enter = fadeIn(tween(100)),
-            exit = fadeOut(tween(100)),
+            enter = fadeIn(transientVisibilitySpec),
+            exit = fadeOut(transientVisibilitySpec),
             //  [修复] 确保 AnimatedVisibility 填充整个父容器
             modifier = overlayContentModifier
         ) {
@@ -1436,8 +1439,8 @@ fun VideoPlayerOverlay(
         if (isFullscreen && showFullscreenLockButton) {
             AnimatedVisibility(
                 visible = isVisible,  // 锁定后按控制栏状态自动隐藏
-                enter = fadeIn(tween(100)),
-                exit = fadeOut(tween(100)),
+                enter = fadeIn(transientVisibilitySpec),
+                exit = fadeOut(transientVisibilitySpec),
                 modifier = Modifier
                     .align(Alignment.CenterStart)
                     .padding(start = overlayVisualPolicy.lockButtonEndPaddingDp.dp)
@@ -1470,8 +1473,8 @@ fun VideoPlayerOverlay(
         if (isFullscreen && showFullscreenScreenshotButton) {
             AnimatedVisibility(
                 visible = isVisible && !isScreenLocked,
-                enter = fadeIn(tween(100)),
-                exit = fadeOut(tween(100)),
+                enter = fadeIn(transientVisibilitySpec),
+                exit = fadeOut(transientVisibilitySpec),
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
                     .padding(end = overlayVisualPolicy.lockButtonEndPaddingDp.dp)
@@ -1660,8 +1663,8 @@ fun VideoPlayerOverlay(
                     hasPendingSeekResume
             ),
             modifier = Modifier.align(Alignment.Center),
-            enter = fadeIn(tween(100)),
-            exit = fadeOut(tween(100))
+            enter = fadeIn(transientVisibilitySpec),
+            exit = fadeOut(transientVisibilitySpec)
         ) {
             val resumeFromCenterButton = {
                 playPlayerFromUserAction(player)
@@ -1685,8 +1688,8 @@ fun VideoPlayerOverlay(
                 playWhenReady = player.playWhenReady
             ) && centerLoadingUiState == null,
             modifier = Modifier.align(Alignment.Center),
-            enter = fadeIn(tween(100)),
-            exit = fadeOut(tween(100))
+            enter = fadeIn(transientVisibilitySpec),
+            exit = fadeOut(transientVisibilitySpec)
         ) {
             AdaptiveLoadingIndicator(
                 color = centerLoadingVisualState.indicatorColor
@@ -1696,8 +1699,8 @@ fun VideoPlayerOverlay(
         AnimatedVisibility(
             visible = centerLoadingUiState != null,
             modifier = Modifier.align(Alignment.Center),
-            enter = fadeIn(tween(100)),
-            exit = fadeOut(tween(100))
+            enter = fadeIn(transientVisibilitySpec),
+            exit = fadeOut(transientVisibilitySpec)
         ) {
             val loadingState = centerLoadingUiState ?: return@AnimatedVisibility
             AppSurface(
@@ -1739,8 +1742,8 @@ fun VideoPlayerOverlay(
         AnimatedVisibility(
             visible = isQualitySwitching && centerLoadingUiState == null,
             modifier = Modifier.align(Alignment.Center),
-            enter = fadeIn(tween(100)),
-            exit = fadeOut(tween(100))
+            enter = fadeIn(transientVisibilitySpec),
+            exit = fadeOut(transientVisibilitySpec)
         ) {
             AppSurface(
                 color = Color.Black.copy(alpha = 0.7f),
@@ -2488,6 +2491,7 @@ fun LandscapeEndDrawer(
     hazeState: HazeState? = null,
     modifier: Modifier = Modifier
 ) {
+    val transientVisibilitySpec = LocalAppMotionPolicy.current.resolveTransientVisibilitySpec()
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
     val widthSizeClass = remember(configuration.screenWidthDp) {
@@ -2528,8 +2532,8 @@ fun LandscapeEndDrawer(
     }
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn(tween(100)),
-        exit = fadeOut(tween(100)),
+        enter = fadeIn(transientVisibilitySpec),
+        exit = fadeOut(transientVisibilitySpec),
         modifier = modifier
     ) {
         Row(modifier = Modifier.fillMaxSize()) {

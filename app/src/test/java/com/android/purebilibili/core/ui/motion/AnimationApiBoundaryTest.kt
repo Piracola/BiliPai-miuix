@@ -82,8 +82,9 @@ class AnimationApiBoundaryTest {
             .substringAfter("private fun Anime4KMoreAction(")
             .substringBefore("private fun Anime4KIntensityOption(")
 
-        assertTrue(anime4kAction.contains("enter = fadeIn(tween(100))"))
-        assertTrue(anime4kAction.contains("exit = fadeOut(tween(100))"))
+        assertTrue(anime4kAction.contains("LocalAppMotionPolicy.current.resolveTransientVisibilitySpec()"))
+        assertTrue(anime4kAction.contains("enter = fadeIn(transientVisibilitySpec)"))
+        assertTrue(anime4kAction.contains("exit = fadeOut(transientVisibilitySpec)"))
         assertFalse(anime4kAction.contains("expandIn("))
         assertFalse(anime4kAction.contains("expandVertically("))
     }
@@ -94,8 +95,9 @@ class AnimationApiBoundaryTest {
 
         assertFalse(portraitOverlay.contains("fadeIn()"))
         assertFalse(portraitOverlay.contains("fadeOut()"))
-        assertTrue(portraitOverlay.contains("fadeIn(tween(100))"))
-        assertTrue(portraitOverlay.contains("fadeOut(tween(100))"))
+        assertTrue(portraitOverlay.contains("LocalAppMotionPolicy.current.resolveTransientVisibilitySpec()"))
+        assertTrue(portraitOverlay.contains("fadeIn(transientVisibilitySpec)"))
+        assertTrue(portraitOverlay.contains("fadeOut(transientVisibilitySpec)"))
     }
 
     @Test
