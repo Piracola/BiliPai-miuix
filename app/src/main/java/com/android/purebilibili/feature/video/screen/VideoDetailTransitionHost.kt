@@ -62,6 +62,28 @@ internal fun rememberVideoDetailTransitionState(
     motionSpec: VideoSharedTransitionMotionSpec,
     routeSheetMotion: VideoDetailRouteSheetMotion,
 ): VideoDetailTransitionState {
+    val staticProgress = remember { mutableFloatStateOf(1f) }
+    return VideoDetailTransitionState(
+        animatedVisibilityScope = null,
+        sharedTransitionScope = null,
+        isExitTransitionInProgress = false,
+        detailShellSharedBoundsEnabled = false,
+        suppressEnterFadeAfterBackPreview = false,
+        progress = staticProgress,
+        detailChildTransitionEnabled = false,
+        coverSharedBoundsActive = false,
+        sharedBoundsActive = false,
+        routeSheetFrameProvider = {
+            VideoDetailRouteSheetFrame(
+                scale = 1f,
+                translationYDp = 0f,
+                cornerDp = 0f,
+                backgroundScrimAlpha = 0f,
+                settleProgress = 0f,
+            )
+        },
+    )
+
     val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
     val sharedTransitionScope = LocalSharedTransitionScope.current
     val videoCardClock = LocalVideoCardTransitionClock.current
