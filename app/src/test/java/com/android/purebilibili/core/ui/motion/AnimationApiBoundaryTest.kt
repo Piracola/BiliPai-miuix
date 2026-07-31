@@ -127,6 +127,18 @@ class AnimationApiBoundaryTest {
         assertFalse(waterfallReveal.contains("homeWaterfallExpandSpec("))
     }
 
+    @Test
+    fun gesturePercentTextTracksInputWithoutDecorativeMotion() {
+        val percentText = source("feature/video/ui/components/AnimatedGesturePercentText.kt")
+
+        assertFalse(percentText.contains("AnimatedContent("))
+        assertFalse(percentText.contains("Animatable("))
+        assertFalse(percentText.contains("slideInVertically("))
+        assertFalse(percentText.contains("slideOutVertically("))
+        assertFalse(percentText.contains(".blur("))
+        assertTrue(percentText.contains("shouldTriggerGesturePercentHaptic("))
+    }
+
     private fun source(relativePath: String): String {
         return File("src/main/java/com/android/purebilibili/$relativePath").readText()
     }
