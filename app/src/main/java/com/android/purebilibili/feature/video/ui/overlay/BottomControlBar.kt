@@ -61,6 +61,9 @@ import com.android.purebilibili.feature.video.ui.components.SeekPreviewBubblePla
 import com.android.purebilibili.feature.video.ui.components.SeekPreviewBubbleSimple
 import com.android.purebilibili.feature.video.ui.components.VideoAspectRatio
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.draw.clip
 import com.android.purebilibili.feature.video.subtitle.SubtitleDisplayMode
 import com.android.purebilibili.feature.video.subtitle.SubtitleTrackOption
@@ -1223,7 +1226,11 @@ private fun Anime4KMoreAction(
                 onCheckedChange = onCheckedChange
             )
         }
-        AnimatedVisibility(visible = enabled) {
+        AnimatedVisibility(
+            visible = enabled,
+            enter = fadeIn(tween(100)),
+            exit = fadeOut(tween(100))
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)

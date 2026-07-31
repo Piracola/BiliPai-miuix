@@ -76,6 +76,19 @@ class AnimationApiBoundaryTest {
     }
 
     @Test
+    fun playerControlOptionsUseOnlyShortAlphaVisibilityFeedback() {
+        val controlBar = source("feature/video/ui/overlay/BottomControlBar.kt")
+        val anime4kAction = controlBar
+            .substringAfter("private fun Anime4KMoreAction(")
+            .substringBefore("private fun Anime4KIntensityOption(")
+
+        assertTrue(anime4kAction.contains("enter = fadeIn(tween(100))"))
+        assertTrue(anime4kAction.contains("exit = fadeOut(tween(100))"))
+        assertFalse(anime4kAction.contains("expandIn("))
+        assertFalse(anime4kAction.contains("expandVertically("))
+    }
+
+    @Test
     fun simpleTopTabIndicatorTracksPositionWithoutDecorativeDeformation() {
         val indicator = source("feature/home/components/LiquidIndicator.kt")
         val simpleIndicator = indicator
