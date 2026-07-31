@@ -122,6 +122,16 @@ class AnimationApiBoundaryTest {
     }
 
     @Test
+    fun legacyLottieComponentsCannotRestoreDecorativePlayback() {
+        val lottieComponents = source("core/ui/LottieComponents.kt")
+
+        assertFalse(lottieComponents.contains("animateLottieCompositionAsState"))
+        assertFalse(lottieComponents.contains("rememberLottieComposition"))
+        assertFalse(lottieComponents.contains("com.airbnb.lottie"))
+        assertTrue(lottieComponents.contains("AdaptiveLoadingIndicator("))
+    }
+
+    @Test
     fun simpleTopTabIndicatorTracksPositionWithoutDecorativeDeformation() {
         val indicator = source("feature/home/components/LiquidIndicator.kt")
         val simpleIndicator = indicator

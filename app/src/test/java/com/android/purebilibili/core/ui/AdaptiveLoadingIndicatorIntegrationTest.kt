@@ -38,17 +38,14 @@ class AdaptiveLoadingIndicatorIntegrationTest {
     }
 
     @Test
-    fun emptyStateUsesCuteRemoteTelegramRawAnimation() {
+    fun emptyStateUsesStaticIconWithoutRemoteLottieAnimation() {
         val source = loadSource(
             "app/src/main/java/com/android/purebilibili/core/ui/LottieComponents.kt"
         )
 
-        assertTrue(
-            source.contains(
-                "const val EMPTY = \"https://raw.githubusercontent.com/DrKLO/Telegram/master/TMessagesProj/src/main/res/raw/utyan_empty2.json\""
-            )
-        )
-        assertFalse(source.contains("lf20_wnqlfojb.json"))
+        assertTrue(source.contains("imageVector = Icons.Outlined.Inbox"))
+        assertFalse(source.contains("com.airbnb.lottie"))
+        assertFalse(source.contains("https://"))
     }
 
     private fun loadSource(path: String): String {
