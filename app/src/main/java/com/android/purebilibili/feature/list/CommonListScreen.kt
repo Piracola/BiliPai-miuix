@@ -1976,18 +1976,7 @@ private fun HistoryArticleCard(
     val baseCoverModifier = Modifier
         .fillMaxWidth()
         .aspectRatio(resolveHistoryArticleCoverAspectRatio())
-    val coverModifier = if (transitionEnabled && sharedTransitionScope != null && animatedVisibilityScope != null && articleId > 0L) {
-        with(sharedTransitionScope) {
-            baseCoverModifier.sharedBounds(
-                sharedContentState = rememberSharedContentState(key = coverTransitionKey),
-                animatedVisibilityScope = animatedVisibilityScope,
-                boundsTransform = { _, _ -> commonListSharedBoundsMotionSpec() },
-                clipInOverlayDuringTransition = OverlayClip(AppShapes.container(ContainerLevel.Sheet))
-            )
-        }
-    } else {
-        baseCoverModifier
-    }
+    val coverModifier = baseCoverModifier
     AppCard(
         modifier = modifier
             .fillMaxWidth()
@@ -2208,34 +2197,7 @@ private fun Modifier.favoriteCollectionSharedBounds(
     route: FavoriteCollectionRoute?,
     transitionEnabled: Boolean
 ): Modifier {
-    val sharedTransitionScope = LocalSharedTransitionScope.current
-    val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
-    val sharedElementId = remember(route?.type, route?.id) {
-        route?.let { resolveFavoriteCollectionSharedElementId(it.type, it.id) }
-    }
-    if (
-        !transitionEnabled ||
-        route?.sharedElementTransition != true ||
-        sharedElementId == null ||
-        sharedTransitionScope == null ||
-        animatedVisibilityScope == null
-    ) {
-        return this
-    }
-    val sharedElementKey = remember(sharedElementId) {
-        BiliPaiSharedElementKey.Raw(
-            namespace = "favorite_collection",
-            id = sharedElementId
-        )
-    }
-    return with(sharedTransitionScope) {
-        this@favoriteCollectionSharedBounds.sharedBounds(
-            sharedContentState = rememberSharedContentState(key = sharedElementKey),
-            animatedVisibilityScope = animatedVisibilityScope,
-            boundsTransform = { _, _ -> commonListSharedBoundsMotionSpec() },
-            clipInOverlayDuringTransition = OverlayClip(AppShapes.container(ContainerLevel.Dialog))
-        )
-    }
+    return this
 }
 
 @Composable

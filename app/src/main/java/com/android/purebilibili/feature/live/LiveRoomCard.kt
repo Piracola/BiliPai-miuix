@@ -71,25 +71,7 @@ internal fun LiveRoomCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(metrics.coverAspectRatio)
-                    .then(
-                        if (
-                            enableSharedCoverTransition &&
-                            sharedTransitionScope != null &&
-                            animatedVisibilityScope != null
-                        ) {
-                            with(sharedTransitionScope) {
-                                Modifier.sharedElement(
-                                    sharedContentState = rememberSharedContentState(
-                                        key = liveCoverSharedElementKey(model.roomId),
-                                    ),
-                                    animatedVisibilityScope = animatedVisibilityScope,
-                                )
-                            }
-                        } else {
-                            Modifier
-                        },
-                    ),
+                    .aspectRatio(metrics.coverAspectRatio),
             ) {
                 AsyncImage(
                     model = model.coverUrl,

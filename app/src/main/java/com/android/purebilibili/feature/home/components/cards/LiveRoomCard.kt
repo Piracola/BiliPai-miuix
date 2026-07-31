@@ -104,16 +104,6 @@ fun LiveRoomCard(
                     clip = true // [Optimization] Combine shadow and clip
                 )
                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                .then(
-                    if (sharedTransitionScope != null && animatedVisibilityScope != null) {
-                        with(sharedTransitionScope) {
-                            Modifier.sharedElement(
-                                sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.liveCoverSharedElementKey(room.roomid)),
-                                animatedVisibilityScope = animatedVisibilityScope
-                            )
-                        }
-                    } else Modifier
-                )
         ) {
             // 封面图 -  优化
             AsyncImage(

@@ -228,18 +228,7 @@ private fun ArticleDetailContent(
                 sourceCornerRadiusDp = ARTICLE_BANNER_CORNER_RADIUS_DP
             )
         }
-    val bannerModifier = if (sharedTransitionEnabled && !article.bannerUrl.isNullOrBlank()) {
-        with(requireNotNull(sharedTransitionScope)) {
-            baseBannerModifier.sharedBounds(
-                sharedContentState = rememberSharedContentState(key = coverTransitionKey),
-                animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
-                boundsTransform = { _, _ -> spring(dampingRatio = 0.82f, stiffness = 260f) },
-                clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(20.dp))
-            )
-        }
-    } else {
-        baseBannerModifier
-    }
+    val bannerModifier = baseBannerModifier
     LaunchedEffect(sharedReturnReady) {
         onSharedReturnReadyChange(sharedReturnReady)
     }

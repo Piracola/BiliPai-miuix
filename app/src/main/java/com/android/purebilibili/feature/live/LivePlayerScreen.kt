@@ -704,16 +704,6 @@ fun LivePlayerScreen(
                     .fillMaxSize()
                     .background(roomColorTokens.baseBackgroundColor)
                     .hazeSourceCompat(state = hazeState)
-                .then(
-                    if (sharedTransitionScope != null && animatedVisibilityScope != null) {
-                        with(sharedTransitionScope) {
-                            Modifier.sharedElement(
-                                sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.liveCoverSharedElementKey(bilibiliRoomId)),
-                                animatedVisibilityScope = animatedVisibilityScope
-                            )
-                        }
-                    } else Modifier
-                )
         ) {
             // Video View
             BoxWithConstraints(

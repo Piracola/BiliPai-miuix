@@ -2805,15 +2805,7 @@ internal fun UpSearchResultCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // 头像
-            val avatarModifier = if (sharedTransitionScope != null && animatedVisibilityScope != null) {
-                with(sharedTransitionScope) {
-                    Modifier.sharedBounds(
-                        rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.avatarSharedElementKey(cleanedItem.mid)),
-                        animatedVisibilityScope = animatedVisibilityScope,
-                        clipInOverlayDuringTransition = OverlayClip(CircleShape)
-                    )
-                }
-            } else Modifier
+            val avatarModifier = Modifier
 
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)

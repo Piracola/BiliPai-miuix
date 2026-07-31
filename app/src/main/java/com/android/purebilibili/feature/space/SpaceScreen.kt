@@ -2057,17 +2057,7 @@ private fun SpaceHeader(
                     .padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.Bottom
             ) {
-                    val avatarModifier = if (sharedTransitionScope != null && animatedVisibilityScope != null) {
-                        with(sharedTransitionScope) {
-                            Modifier.sharedBounds(
-                                rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.avatarSharedElementKey(userInfo.mid)),
-                                animatedVisibilityScope = animatedVisibilityScope,
-                                clipInOverlayDuringTransition = OverlayClip(CircleShape)
-                            )
-                        }
-                    } else {
-                        Modifier
-                    }
+                    val avatarModifier = Modifier
 
                     Box(
                         modifier = Modifier
@@ -2795,46 +2785,7 @@ private fun Modifier.spaceVideoCoverSharedBounds(
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedVisibilityScope: AnimatedVisibilityScope? = null
 ): Modifier {
-    val sourceRoute = LocalVideoCardSharedElementSourceRoute.current
-    val sharedTransitionSpeedSettings = LocalVideoSharedTransitionSpeedSettings.current
-    val cardSharedTransitionMotionSpec = remember(
-        sourceRoute,
-        sharedTransitionKey,
-        sharedTransitionSpeedSettings
-    ) {
-        resolveVideoCardSharedTransitionMotionSpec(
-            sourceRoute = sourceRoute,
-            transitionEnabled = sharedTransitionKey != null,
-            speedSettings = sharedTransitionSpeedSettings
-        )
-    }
-    val sharedTransitionReady = sharedTransitionKey != null &&
-        sharedTransitionScope != null &&
-        animatedVisibilityScope != null
-    if (!sharedTransitionReady) return this
-    return with(requireNotNull(sharedTransitionScope)) {
-        this@spaceVideoCoverSharedBounds.sharedBounds(
-            sharedContentState = rememberSharedContentState(
-                key = videoCoverSharedElementKey(
-                    bvid = requireNotNull(sharedTransitionKey),
-                    sourceRoute = sourceRoute
-                )
-            ),
-            animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
-            boundsTransform = { initialBounds, targetBounds ->
-                if (cardSharedTransitionMotionSpec.enabled) {
-                    videoSharedElementBoundsTransformSpec(
-                        motion = cardSharedTransitionMotionSpec,
-                        initialBounds = initialBounds,
-                        targetBounds = targetBounds
-                    )
-                } else {
-                    com.android.purebilibili.core.ui.motion.AppMotionTokens.spatialSpec()
-                }
-            },
-            clipInOverlayDuringTransition = OverlayClip(coverShape)
-        )
-    }
+    return this
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
