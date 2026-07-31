@@ -164,6 +164,70 @@ class VideoLoadRequestPolicyTest {
     }
 
     @Test
+    fun `halts playback when loading a different bvid`() {
+        assertTrue(
+            shouldHaltPlaybackForPendingMediaSwitch(
+                force = false,
+                skipPlayerPrepare = false,
+                requestBvid = "BV_NEXT",
+                requestCid = 200L,
+                currentBvid = "BV_CUR",
+                currentCid = 100L,
+                uiBvid = "BV_CUR",
+                uiCid = 100L
+            )
+        )
+    }
+
+    @Test
+    fun `does not halt playback when reusing same media identity`() {
+        assertFalse(
+            shouldHaltPlaybackForPendingMediaSwitch(
+                force = false,
+                skipPlayerPrepare = false,
+                requestBvid = "BV_CUR",
+                requestCid = 100L,
+                currentBvid = "BV_CUR",
+                currentCid = 100L,
+                uiBvid = "BV_CUR",
+                uiCid = 100L
+            )
+        )
+    }
+
+    @Test
+    fun `does not halt playback when skip player prepare is active`() {
+        assertFalse(
+            shouldHaltPlaybackForPendingMediaSwitch(
+                force = false,
+                skipPlayerPrepare = true,
+                requestBvid = "BV_CUR",
+                requestCid = 100L,
+                currentBvid = "BV_CUR",
+                currentCid = 100L,
+                uiBvid = "BV_CUR",
+                uiCid = 100L
+            )
+        )
+    }
+
+    @Test
+    fun `halts playback on forced cid switch for same bvid`() {
+        assertTrue(
+            shouldHaltPlaybackForPendingMediaSwitch(
+                force = true,
+                skipPlayerPrepare = false,
+                requestBvid = "BV_CUR",
+                requestCid = 200L,
+                currentBvid = "BV_CUR",
+                currentCid = 100L,
+                uiBvid = "BV_CUR",
+                uiCid = 100L
+            )
+        )
+    }
+
+    @Test
     fun `requested start position prefers local cache before route resume fallback`() {
         assertEquals(
             36_000L,

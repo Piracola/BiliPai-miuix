@@ -394,6 +394,8 @@ internal fun VideoDetailScreenStateHolder(
     // 🔄 [Seamless Playback] Internal BVID state to support seamless switching in portrait mode
     var currentBvid by presentationState.currentBvidState
     var currentBvidCid by presentationState.currentCidState
+    // Episode cover captured at collection/playlist in-page switch (survives Loading.Initial).
+    var pendingInPageSwitchCoverUrl by rememberSaveable { mutableStateOf("") }
     var isPipMode by presentationState.pipModeState
     var isPortraitFullscreen by presentationState.portraitFullscreenState
     var selectedVideoContentTabIndex by presentationState.selectedTabIndexState
@@ -451,10 +453,21 @@ internal fun VideoDetailScreenStateHolder(
         if (success?.info?.bvid == normalizedBvid && (safeCid <= 0L || success.info.cid == safeCid)) {
             return
         }
+        // Capture episode cover before Success is replaced by Loading.
+        val switchedCover = resolveUgcSeasonEpisodeCoverUrl(
+            ugcSeason = success?.info?.ugc_season,
+            targetBvid = normalizedBvid,
+            targetCid = safeCid
+        )
+        if (switchedCover.isNotBlank()) {
+            pendingInPageSwitchCoverUrl = switchedCover
+        }
         presentationState.switchVideo(normalizedBvid, safeCid)
+        // force=true: always full-reload media for in-page collection/playlist switches.
         viewModel.loadVideo(
             bvid = normalizedBvid,
             cid = safeCid,
+            force = true,
             autoPlay = autoPlay
         )
     }
@@ -1929,11 +1942,44 @@ internal fun VideoDetailScreenStateHolder(
     )
 
     val uiSuccessState = uiState as? VideoPlaybackUiState.Success
-    val videoPlayerSectionTarget = remember(bvid, coverUrl, currentBvid) {
+    LaunchedEffect(uiSuccessState?.info?.bvid, currentBvid) {
+        // Loaded target matched; drop transitional cover.
+        if (
+            pendingInPageSwitchCoverUrl.isNotBlank() &&
+            uiSuccessState?.info?.bvid == currentBvid
+        ) {
+            pendingInPageSwitchCoverUrl = ""
+        }
+    }
+    val videoPlayerSectionTarget = remember(
+        bvid,
+        coverUrl,
+        currentBvid,
+        currentBvidCid,
+        pendingInPageSwitchCoverUrl,
+        uiSuccessState?.info?.ugc_season,
+        uiSuccessState?.info?.pic,
+        uiSuccessState?.info?.bvid
+    ) {
+        val successCover = uiSuccessState
+            ?.takeIf { it.info.bvid == currentBvid }
+            ?.info
+            ?.pic
+            .orEmpty()
+        val seasonCover = resolveUgcSeasonEpisodeCoverUrl(
+            ugcSeason = uiSuccessState?.info?.ugc_season,
+            targetBvid = currentBvid,
+            targetCid = currentBvidCid
+        )
         resolveVideoPlayerSectionTarget(
             routeBvid = bvid,
             routeCoverUrl = coverUrl,
-            currentBvid = currentBvid
+            currentBvid = currentBvid,
+            switchedCoverUrl = listOf(
+                pendingInPageSwitchCoverUrl,
+                seasonCover,
+                successCover
+            ).firstOrNull { it.isNotBlank() }.orEmpty()
         )
     }
     val shouldSuppressSubtitleOverlay = useSharedPortraitPlayer &&
@@ -2112,6 +2158,7 @@ internal fun VideoDetailScreenStateHolder(
                     // 🔗 [新增] 分享功能
                     bvid = videoPlayerSectionTarget.bvid,
                     coverUrl = videoPlayerSectionTarget.entryCoverUrl,
+                    sharedElementBvid = videoPlayerSectionTarget.sharedElementBvid,
                     //  实验性功能：双击点赞
                     onDoubleTapLike = { engagementViewModel.toggleLike() },
                     sponsorSegment = sponsorSegment,

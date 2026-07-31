@@ -46,6 +46,22 @@ class VideoDetailScreenPolicyTest {
 
         assertEquals("BV_PORTRAIT_NEXT", resolved.bvid)
         assertEquals("", resolved.entryCoverUrl)
+        // Shared-element key stays on route entry so in-page switch does not rekey the surface.
+        assertEquals("BV_ROUTE", resolved.sharedElementBvid)
+    }
+
+    @Test
+    fun portraitExitPlayerTarget_usesSwitchedCoverWhenInternalBvidDiffers() {
+        val resolved = resolveVideoPlayerSectionTarget(
+            routeBvid = "BV_ROUTE",
+            routeCoverUrl = "https://img/route.jpg",
+            currentBvid = "BV_COLLECTION_NEXT",
+            switchedCoverUrl = "https://img/episode.jpg"
+        )
+
+        assertEquals("BV_COLLECTION_NEXT", resolved.bvid)
+        assertEquals("https://img/episode.jpg", resolved.entryCoverUrl)
+        assertEquals("BV_ROUTE", resolved.sharedElementBvid)
     }
 
     @Test
@@ -58,6 +74,7 @@ class VideoDetailScreenPolicyTest {
 
         assertEquals("BV_ROUTE", resolved.bvid)
         assertEquals("https://img/route.jpg", resolved.entryCoverUrl)
+        assertEquals("BV_ROUTE", resolved.sharedElementBvid)
     }
 
     @Test
@@ -70,6 +87,50 @@ class VideoDetailScreenPolicyTest {
 
         assertEquals("BV_ROUTE", resolved.bvid)
         assertEquals("https://img/route.jpg", resolved.entryCoverUrl)
+        assertEquals("BV_ROUTE", resolved.sharedElementBvid)
+    }
+
+    @Test
+    fun ugcSeasonEpisodeCover_prefersExactCidMatch() {
+        val season = UgcSeason(
+            sections = listOf(
+                UgcSection(
+                    episodes = listOf(
+                        UgcEpisode(
+                            bvid = "BV1",
+                            cid = 11L,
+                            arc = com.android.purebilibili.data.model.response.UgcEpisodeArc(
+                                pic = "https://img/ep1.jpg"
+                            )
+                        ),
+                        UgcEpisode(
+                            bvid = "BV1",
+                            cid = 22L,
+                            arc = com.android.purebilibili.data.model.response.UgcEpisodeArc(
+                                pic = "https://img/ep2.jpg"
+                            )
+                        )
+                    )
+                )
+            )
+        )
+
+        assertEquals(
+            "https://img/ep2.jpg",
+            resolveUgcSeasonEpisodeCoverUrl(
+                ugcSeason = season,
+                targetBvid = "BV1",
+                targetCid = 22L
+            )
+        )
+        assertEquals(
+            "https://img/ep1.jpg",
+            resolveUgcSeasonEpisodeCoverUrl(
+                ugcSeason = season,
+                targetBvid = "BV1",
+                targetCid = 0L
+            )
+        )
     }
 
     @Test
@@ -109,6 +170,12 @@ class VideoDetailScreenPolicyTest {
             source.contains("presentationState.switchVideo(normalizedBvid, safeCid)") &&
                 source.contains("viewModel.loadVideo(")
         )
+        // In-page collection switch must force full reload and capture transitional cover.
+        val switchSource = source.substringAfter("fun switchVideoInCurrentDetailPage")
+            .substringBefore("val relatedNavigationScope")
+        assertTrue(switchSource.contains("force = true"))
+        assertTrue(switchSource.contains("resolveUgcSeasonEpisodeCoverUrl("))
+        assertTrue(switchSource.contains("pendingInPageSwitchCoverUrl"))
     }
 
     @Test

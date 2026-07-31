@@ -395,6 +395,11 @@ fun VideoPlayerSection(
     // 🔗 [新增] 分享功能
     bvid: String = "",
     coverUrl: String = "",
+    /**
+     * Shared-element key identity. Prefer route-entry bvid during in-page collection switches so
+     * SharedTransition does not rekey the live player surface into a black frame.
+     */
+    sharedElementBvid: String = "",
     //  实验性功能：双击点赞
     onDoubleTapLike: () -> Unit = {},
     //  空降助手
@@ -1424,6 +1429,7 @@ fun VideoPlayerSection(
             hasAnimatedVisibilityScope = animatedVisibilityScope != null,
             forceCoverDuringReturnAnimation = forceCoverDuringReturnAnimation
         )
+
     Box(
         modifier = rootModifier
             //  [新增] 处理双指缩放/平移，并在全屏时支持双指调倍速
@@ -2335,6 +2341,37 @@ fun VideoPlayerSection(
                         "🎬 Foreground surface rebind applied to avoid audio-only resume"
                     }
                 }
+            }
+        }
+
+        // 合集/页内换片：bvid 或 Success 媒体就绪后强制重绑 surface，避免只听声音、画面黑屏。
+        val successPlaybackIdentity = (uiState as? VideoPlaybackUiState.Success)?.let { success ->
+            "${success.info.bvid}_${success.info.cid}_${success.playUrl.hashCode()}"
+        }
+        LaunchedEffect(
+            bvid,
+            successPlaybackIdentity,
+            playerViewRef,
+            shouldBindInlinePlayerView,
+            isInPipMode
+        ) {
+            if (successPlaybackIdentity.isNullOrBlank()) return@LaunchedEffect
+            if (!shouldBindInlinePlayerView || isInPipMode) return@LaunchedEffect
+            val player = playerState.player
+            if (playerViewRef == null || player.mediaItemCount <= 0) return@LaunchedEffect
+            videoOutputRouter.rebindDirectSurfaceIfNeeded()
+            if (
+                shouldKickPlaybackAfterSurfaceRecovery(
+                    playWhenReady = player.playWhenReady,
+                    isPlaying = player.isPlaying,
+                    playbackState = player.playbackState,
+                    hasPlaybackResumeIntent = player.playWhenReady
+                )
+            ) {
+                player.play()
+            }
+            Logger.d("VideoPlayerSection") {
+                "🎬 In-page media switch surface rebind: bvid=$bvid identity=$successPlaybackIdentity"
             }
         }
 

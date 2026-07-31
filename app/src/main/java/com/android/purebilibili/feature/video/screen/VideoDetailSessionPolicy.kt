@@ -319,26 +319,60 @@ internal fun shouldSwitchCollectionVideoInsideCurrentDetailPage(
         .any { episode -> episode.bvid == normalizedTargetBvid } == true
 }
 
+/**
+ * Prefer episode cover when switching collection items in-page.
+ * Falls back to empty so callers can keep a previous cover if needed.
+ */
+internal fun resolveUgcSeasonEpisodeCoverUrl(
+    ugcSeason: UgcSeason?,
+    targetBvid: String,
+    targetCid: Long = 0L
+): String {
+    val normalizedBvid = targetBvid.trim()
+    if (normalizedBvid.isBlank()) return ""
+    val episodes = ugcSeason
+        ?.sections
+        .orEmpty()
+        .flatMap { section -> section.episodes }
+    val matched = if (targetCid > 0L) {
+        episodes.firstOrNull { episode ->
+            episode.bvid == normalizedBvid && episode.cid == targetCid
+        } ?: episodes.firstOrNull { episode -> episode.bvid == normalizedBvid }
+    } else {
+        episodes.firstOrNull { episode -> episode.bvid == normalizedBvid }
+    }
+    return matched?.arc?.pic?.trim().orEmpty()
+}
+
 internal data class VideoPlayerSectionTarget(
     val bvid: String,
-    val entryCoverUrl: String
+    val entryCoverUrl: String,
+    /**
+     * Shared-element identity for the player shell. Keep route-entry bvid stable during in-page
+     * collection switches so SharedTransition does not rekey the live surface into a black hole.
+     */
+    val sharedElementBvid: String
 )
 
 internal fun resolveVideoPlayerSectionTarget(
     routeBvid: String,
     routeCoverUrl: String,
-    currentBvid: String
+    currentBvid: String,
+    switchedCoverUrl: String = ""
 ): VideoPlayerSectionTarget {
     val normalizedCurrentBvid = currentBvid.trim()
     val normalizedRouteBvid = routeBvid.trim()
     val resolvedBvid = normalizedCurrentBvid.ifBlank { normalizedRouteBvid }
-    val resolvedCoverUrl = if (resolvedBvid == normalizedRouteBvid) {
-        routeCoverUrl
-    } else {
-        ""
+    val normalizedSwitchedCover = switchedCoverUrl.trim()
+    val resolvedCoverUrl = when {
+        resolvedBvid == normalizedRouteBvid -> routeCoverUrl
+        normalizedSwitchedCover.isNotEmpty() -> normalizedSwitchedCover
+        else -> ""
     }
+    val sharedElementBvid = normalizedRouteBvid.ifBlank { resolvedBvid }
     return VideoPlayerSectionTarget(
         bvid = resolvedBvid,
-        entryCoverUrl = resolvedCoverUrl
+        entryCoverUrl = resolvedCoverUrl,
+        sharedElementBvid = sharedElementBvid
     )
 }

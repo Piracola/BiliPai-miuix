@@ -608,6 +608,36 @@ internal fun shouldApplyVideoLoadResult(
     return activeRequestToken == resultRequestToken && expectedBvid == currentBvid
 }
 
+/**
+ * When loading a different media identity, halt the attached player immediately so the previous
+ * video's audio cannot keep playing under a black/loading surface (collection in-page switch).
+ */
+internal fun shouldHaltPlaybackForPendingMediaSwitch(
+    force: Boolean,
+    skipPlayerPrepare: Boolean,
+    requestBvid: String,
+    requestCid: Long,
+    currentBvid: String,
+    currentCid: Long,
+    uiBvid: String?,
+    uiCid: Long
+): Boolean {
+    if (skipPlayerPrepare) return false
+    val effectiveBvid = currentBvid.takeIf { it.isNotBlank() }
+        ?: uiBvid?.takeIf { it.isNotBlank() }
+        ?: return false
+    if (effectiveBvid != requestBvid) return true
+    if (force && requestCid > 0L) {
+        val effectiveCid = when {
+            currentCid > 0L -> currentCid
+            uiCid > 0L -> uiCid
+            else -> 0L
+        }
+        if (effectiveCid > 0L && effectiveCid != requestCid) return true
+    }
+    return false
+}
+
 internal fun resolveRequestedStartPositionMs(
     cachedPositionMs: Long,
     fallbackResumePositionMs: Long
@@ -2000,6 +2030,19 @@ class VideoPlaybackViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Stop audio immediately when a different video is requested.
+     * Keep the last frame if the surface still has content; media is replaced when load succeeds.
+     */
+    private fun haltPlaybackForPendingMediaSwitch() {
+        val player = exoPlayer ?: return
+        player.playWhenReady = false
+        if (player.isPlaying) {
+            player.pause()
+        }
+        Logger.d("PlayerVM", "Halt playback for pending media switch: current=$currentBvid/$currentCid")
+    }
+
     private fun bootstrapContextIfNeeded() {
         val globalContext = com.android.purebilibili.core.network.NetworkModule.appContext
         if (shouldBootstrapPlayerContext(
@@ -2858,6 +2901,22 @@ class VideoPlaybackViewModel : ViewModel() {
             flushPlaybackHeartbeatSnapshot(reason = "switch_video")
             recordCreatorWatchProgressSnapshot()
             saveCurrentPosition()
+        }
+
+        // 合集/页内换片：在异步 load 完成前立刻停掉旧音频，避免黑屏仍播上一集声音。
+        if (
+            shouldHaltPlaybackForPendingMediaSwitch(
+                force = playbackRequest.force,
+                skipPlayerPrepare = shouldSkipPlayerPrepare,
+                requestBvid = playbackRequest.bvid,
+                requestCid = playbackRequest.cid,
+                currentBvid = currentBvid,
+                currentCid = currentCid,
+                uiBvid = currentSuccess?.info?.bvid,
+                uiCid = currentSuccess?.info?.cid ?: 0L
+            )
+        ) {
+            haltPlaybackForPendingMediaSwitch()
         }
         
         // 🛡️ [修复] 加载新视频时重置标志

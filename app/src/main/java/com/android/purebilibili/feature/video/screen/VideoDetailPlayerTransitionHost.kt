@@ -171,6 +171,7 @@ internal fun PortraitInlineVideoPlayerHost(
                 ?: { _, _, _ -> },
             bvid = videoPlayerSectionTarget.bvid,
             coverUrl = videoPlayerSectionTarget.entryCoverUrl,
+            sharedElementBvid = videoPlayerSectionTarget.sharedElementBvid,
             onDoubleTapLike = onDoubleTapLike,
             sponsorSegment = sponsorSegment,
             showSponsorSkipButton = showSponsorSkipButton,
