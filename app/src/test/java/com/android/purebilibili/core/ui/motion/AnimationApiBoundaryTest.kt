@@ -228,6 +228,7 @@ class AnimationApiBoundaryTest {
         val dynamicScreen = source("feature/dynamic/DynamicScreen.kt")
         val spaceScreen = source("feature/space/SpaceScreen.kt")
         val searchScreen = source("feature/search/SearchScreen.kt")
+        val videoInfoSection = source("feature/video/ui/section/VideoInfoSection.kt")
 
         assertFalse(following.contains("AnimatedContent("))
         assertFalse(following.contains("Animatable("))
@@ -250,6 +251,9 @@ class AnimationApiBoundaryTest {
         assertFalse(searchScreen.contains("AnimatedVisibility("))
         assertFalse(searchScreen.contains("Animatable("))
         assertFalse(searchScreen.contains("animateColorAsState("))
+        assertFalse(videoInfoSection.contains("animateContentSize("))
+        assertFalse(videoInfoSection.contains("AnimatedVisibility("))
+        assertFalse(videoInfoSection.contains("animateFloatAsState("))
     }
 
     private fun source(relativePath: String): String {

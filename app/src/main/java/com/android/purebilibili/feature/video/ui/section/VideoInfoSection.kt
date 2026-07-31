@@ -220,7 +220,6 @@ fun VideoTitleSection(
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .weight(1f)
-                    .then(if (animateLayout) Modifier.animateContentSize() else Modifier)
                     .copyOnLongPress(info.title, "视频标题")
             )
             Spacer(Modifier.width(4.dp))
@@ -370,7 +369,7 @@ fun VideoTitleWithDesc(
             verticalAlignment = Alignment.Top
         ) {
             //  共享元素过渡 - 标题
-            var titleModifier = if (animateLayout) Modifier.animateContentSize() else Modifier
+            val titleModifier = Modifier
 
             //  注意：使用 ExperimentalSharedTransitionApi 注解需要上下文
 
@@ -387,17 +386,11 @@ fun VideoTitleWithDesc(
                 modifier = titleModifier.weight(1f)
             )
 
-            val rotateAngle by animateFloatAsState(
-                targetValue = if (expanded) 180f else 0f, // 展开时旋转180度
-                animationSpec = tween(durationMillis = 300), // 设置动画时长和曲线
-                label = "IconRotation"
-            )
             AppIcon(
-                imageVector = CupertinoIcons.Default.ChevronDown,
+                imageVector = if (expanded) CupertinoIcons.Default.ChevronUp else CupertinoIcons.Default.ChevronDown,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                 modifier = Modifier
-                    .rotate(rotateAngle)
                     .size(20.dp)
                     .padding(4.dp)
             )
@@ -511,19 +504,7 @@ fun VideoTitleWithDesc(
         }
         
         //  Description - 默认隐藏，展开后显示
-        androidx.compose.animation.AnimatedVisibility(
-            visible = expanded && info.desc.isNotBlank(),
-            enter = if (animateLayout) {
-                androidx.compose.animation.expandVertically() + androidx.compose.animation.fadeIn()
-            } else {
-                androidx.compose.animation.EnterTransition.None
-            },
-            exit = if (animateLayout) {
-                androidx.compose.animation.shrinkVertically() + androidx.compose.animation.fadeOut()
-            } else {
-                androidx.compose.animation.ExitTransition.None
-            }
-        ) {
+        if (expanded && info.desc.isNotBlank()) {
             Column {
                 Spacer(Modifier.height(6.dp))
                 val descriptionUrlColor = MaterialTheme.colorScheme.primary
@@ -563,27 +544,14 @@ fun VideoTitleWithDesc(
                         ),
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                         onTextLayout = { descriptionTextLayout = it },
-                        modifier = (if (animateLayout) Modifier.animateContentSize() else Modifier)
-                            .then(descriptionModifier)
+                        modifier = Modifier.then(descriptionModifier)
                     )
                 }
             }
         }
         
         //  Tags - 默认隐藏，展开后显示
-        androidx.compose.animation.AnimatedVisibility(
-            visible = expanded && videoTags.isNotEmpty(),
-            enter = if (animateLayout) {
-                androidx.compose.animation.expandVertically() + androidx.compose.animation.fadeIn()
-            } else {
-                androidx.compose.animation.EnterTransition.None
-            },
-            exit = if (animateLayout) {
-                androidx.compose.animation.shrinkVertically() + androidx.compose.animation.fadeOut()
-            } else {
-                androidx.compose.animation.ExitTransition.None
-            }
-        ) {
+        if (expanded && videoTags.isNotEmpty()) {
             Column {
                 Spacer(Modifier.height(8.dp))
                 androidx.compose.foundation.layout.FlowRow(
@@ -980,7 +948,6 @@ fun DescriptionSection(desc: String) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 12.dp)
-                .animateContentSize()
         ) {
             AppText(
                 text = desc,
@@ -1080,11 +1047,7 @@ fun BgmInfoRow(
     showIndicator: Boolean = false,
     onClick: () -> Unit = {}
 ) {
-    val indicatorRotation by animateFloatAsState(
-        targetValue = if (expanded) 180f else 0f,
-        animationSpec = tween(durationMillis = 220),
-        label = "BgmExpandIndicator"
-    )
+    val indicatorRotation = if (expanded) 180f else 0f
 
     AppSurface(
         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
