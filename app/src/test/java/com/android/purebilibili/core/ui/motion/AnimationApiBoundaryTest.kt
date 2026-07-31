@@ -227,6 +227,7 @@ class AnimationApiBoundaryTest {
         val dynamicSidebar = source("feature/dynamic/components/DynamicSidebar.kt")
         val dynamicScreen = source("feature/dynamic/DynamicScreen.kt")
         val spaceScreen = source("feature/space/SpaceScreen.kt")
+        val searchScreen = source("feature/search/SearchScreen.kt")
 
         assertFalse(following.contains("AnimatedContent("))
         assertFalse(following.contains("Animatable("))
@@ -246,6 +247,9 @@ class AnimationApiBoundaryTest {
         assertFalse(dynamicScreen.contains("slideInHorizontally("))
         assertFalse(spaceScreen.contains("AnimatedVisibility("))
         assertFalse(spaceScreen.contains("animateColorAsState("))
+        assertFalse(searchScreen.contains("AnimatedVisibility("))
+        assertFalse(searchScreen.contains("Animatable("))
+        assertFalse(searchScreen.contains("animateColorAsState("))
     }
 
     private fun source(relativePath: String): String {

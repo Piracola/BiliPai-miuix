@@ -896,11 +896,7 @@ fun SearchScreen(
                                 currentType = state.searchType,
                                 currentUpOrder = state.upOrder
                             ).isNotEmpty()
-                            AnimatedVisibility(
-                                visible = showStableFilterBar,
-                                enter = fadeIn(animationSpec = tween(90)),
-                                exit = fadeOut(animationSpec = tween(70))
-                            ) {
+                            if (showStableFilterBar) {
                                 SearchFilterBar(
                                     currentType = state.searchType,
                                     currentOrder = state.searchOrder,
@@ -1631,17 +1627,7 @@ fun SearchScreen(
                     .background(searchTopBarHeaderColor)
             )
 
-            AnimatedVisibility(
-                visible = shouldShowBackToTop,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(
-                        end = 20.dp,
-                        bottom = resultBottomPadding + 12.dp
-                    ),
-                enter = fadeIn(animationSpec = tween(180)) + scaleIn(initialScale = 0.92f),
-                exit = fadeOut(animationSpec = tween(140)) + scaleOut(targetScale = 0.92f)
-            ) {
+            if (shouldShowBackToTop) {
                 AppSmallFloatingActionButton(
                     onClick = {
                         scope.launch {
@@ -1652,6 +1638,12 @@ fun SearchScreen(
                             }
                         }
                     },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(
+                            end = 20.dp,
+                            bottom = resultBottomPadding + 12.dp
+                        ),
                     containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp),
                     contentColor = MaterialTheme.colorScheme.primary
                 ) {
@@ -1711,14 +1703,11 @@ fun SearchTopBar(
     val backIcon = rememberAppBackIcon()
     val searchIcon = rememberAppSearchIcon()
     val clearIcon = rememberAppClearIcon()
-    val density = LocalDensity.current
-    val entryMotionProgress = remember { Animatable(1f) }
-    //  搜索图标颜色动画
-    val searchIconColor by animateColorAsState(
-        targetValue = if (isSearchFieldFocused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-        animationSpec = if (reducedMotionBudget) snap() else tween(durationMillis = 200),
-        label = "iconColor"
-    )
+    val searchIconColor = if (isSearchFieldFocused) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+    }
     val backLabel = stringResource(R.string.common_back)
     val searchLabel = stringResource(R.string.common_search)
     val resolvedSubmitKeyword = remember(query, suggestedKeyword) {
@@ -1729,48 +1718,14 @@ fun SearchTopBar(
     }
     val canSubmit = resolvedSubmitKeyword.isNotBlank()
     LaunchedEffect(entryMotionKey, entryMotionSpec) {
-        val spec = entryMotionSpec
-        if (spec == null) {
-            entryMotionProgress.snapTo(1f)
-            return@LaunchedEffect
+        if (entryMotionSpec != null) {
+            onEntryMotionFinished(entryMotionKey)
         }
-        entryMotionProgress.snapTo(0f)
-        if (spec.durationMillis <= 0) {
-            entryMotionProgress.snapTo(1f)
-        } else {
-            entryMotionProgress.animateTo(
-                targetValue = 1f,
-                animationSpec = tween(
-                    durationMillis = spec.durationMillis,
-                    easing = AppMotionEasing.Continuity
-                )
-            )
-        }
-        onEntryMotionFinished(entryMotionKey)
-    }
-    val entryMotionModifier = if (entryMotionSpec != null) {
-        Modifier.graphicsLayer {
-            val progress = entryMotionProgress.value
-            val spec = entryMotionSpec
-            alpha = lerp(spec.initialAlpha, 1f, progress)
-            scaleX = lerp(spec.initialScale, 1f, progress)
-            scaleY = lerp(spec.initialScale, 1f, progress)
-            translationY = with(density) {
-                spec.initialTranslationYDp.dp.toPx()
-            } * (1f - progress)
-            transformOrigin = TransformOrigin(
-                spec.transformOriginPivotX,
-                spec.transformOriginPivotY
-            )
-        }
-    } else {
-        Modifier
     }
 
     AppSurface(
         modifier = modifier
-            .fillMaxWidth()
-            .then(entryMotionModifier),
+            .fillMaxWidth(),
         color = Color.Transparent,
         shadowElevation = 0.dp
     ) {
