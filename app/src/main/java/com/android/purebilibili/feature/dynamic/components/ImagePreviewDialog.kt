@@ -21,12 +21,8 @@ import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -87,8 +83,6 @@ import com.android.purebilibili.core.ui.rememberAppVisibilityOffIcon
 import com.android.purebilibili.core.ui.rememberAppVisibilityOnIcon
 import com.android.purebilibili.core.ui.AdaptiveLoadingIndicator
 import com.android.purebilibili.core.ui.motion.continuityTween
-import com.android.purebilibili.core.ui.motion.emphasizedEnterTween
-import com.android.purebilibili.core.ui.motion.emphasizedExitTween
 import com.android.purebilibili.core.ui.motion.indicatorSpring
 import com.android.purebilibili.core.ui.motion.interactiveSnapSpring
 import com.android.purebilibili.core.ui.motion.softLandingSpring
@@ -822,14 +816,7 @@ private fun ImagePreviewOverlayContent(
                         ) {
                             AnimatedContent(
                                 targetState = pagerState.currentPage,
-                                transitionSpec = {
-                                    (fadeIn(animationSpec = emphasizedEnterTween(250)) + slideInVertically(
-                                        animationSpec = emphasizedEnterTween(250)
-                                    ) { it / 3 }) togetherWith
-                                        (fadeOut(animationSpec = emphasizedExitTween(180)) + slideOutVertically(
-                                            animationSpec = emphasizedExitTween(180)
-                                        ) { -it / 4 })
-                                },
+                                transitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
                                 label = "imagePreviewTextSwitch"
                             ) { page ->
                                 val currentText = resolveImagePreviewText(
@@ -997,17 +984,7 @@ private fun ImagePreviewOverlayContent(
                                 ) {
                                     AnimatedContent(
                                         targetState = pagerState.currentPage,
-                                        transitionSpec = {
-                                            val isForward = targetState > initialState
-                                            (fadeIn(animationSpec = emphasizedEnterTween(220)) +
-                                                slideInHorizontally { fullWidth ->
-                                                    if (isForward) fullWidth / 3 else -fullWidth / 3
-                                                }) togetherWith
-                                                (fadeOut(animationSpec = emphasizedExitTween(160)) +
-                                                    slideOutHorizontally { fullWidth ->
-                                                        if (isForward) -fullWidth / 4 else fullWidth / 4
-                                                    })
-                                        },
+                                        transitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
                                         label = "imagePreviewTopBarTextSwitch"
                                     ) { page ->
                                         val pageText = resolveImagePreviewText(

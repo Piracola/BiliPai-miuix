@@ -109,6 +109,19 @@ class AnimationApiBoundaryTest {
     }
 
     @Test
+    fun imagePreviewTextChangesUseNoOpContentTransforms() {
+        val imagePreview = source("feature/dynamic/components/ImagePreviewDialog.kt")
+
+        assertFalse(imagePreview.contains("slideInVertically("))
+        assertFalse(imagePreview.contains("slideOutVertically("))
+        assertFalse(imagePreview.contains("slideInHorizontally("))
+        assertFalse(imagePreview.contains("slideOutHorizontally("))
+        assertTrue(
+            imagePreview.contains("EnterTransition.None togetherWith ExitTransition.None")
+        )
+    }
+
+    @Test
     fun simpleTopTabIndicatorTracksPositionWithoutDecorativeDeformation() {
         val indicator = source("feature/home/components/LiquidIndicator.kt")
         val simpleIndicator = indicator
