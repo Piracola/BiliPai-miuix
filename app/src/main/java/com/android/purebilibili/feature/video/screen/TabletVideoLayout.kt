@@ -165,26 +165,7 @@ internal fun TabletVideoLayout(
                 val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
                 
                 //  为播放器容器添加共享元素标记（受开关控制）
-                val playerContainerModifier = if (
-                    transitionEnabled &&
-                    sharedTransitionScope != null &&
-                    animatedVisibilityScope != null &&
-                    !forceCoverOnlyOnReturn
-                ) {
-                    with(sharedTransitionScope) {
-                        Modifier
-                            .sharedBounds(
-                                sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.videoCoverSharedElementKey(bvid)),
-                                animatedVisibilityScope = animatedVisibilityScope,
-                                boundsTransform = { _, _ -> com.android.purebilibili.core.ui.motion.AppMotionTokens.spatialSpec() },
-                                clipInOverlayDuringTransition = OverlayClip(
-                                    RoundedCornerShape(12.dp)
-                                )
-                            )
-                    }
-                } else {
-                    Modifier
-                }
+                val playerContainerModifier = Modifier
 
                 BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
                     val playerWidth = minOf(maxWidth, layoutPolicy.playerMaxWidthDp.dp)

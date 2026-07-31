@@ -755,35 +755,7 @@ internal fun ElegantVideoCard(
             }
         }
 
-        val coverSharedBoundsEnabled = shouldEnableVideoCoverSharedTransition(
-            transitionEnabled = sharedTransitionOwnership.useCoverSharedBounds,
-            hasSharedTransitionScope = sharedTransitionScope != null,
-            hasAnimatedVisibilityScope = animatedVisibilityScope != null,
-        ) && !useCardShellSharedBounds
-        val coverSharedBoundsModifier = if (coverSharedBoundsEnabled) {
-            with(requireNotNull(sharedTransitionScope)) {
-                Modifier.sharedBounds(
-                    sharedContentState = rememberSharedContentState(
-                        key = videoCoverSharedElementKey(
-                            bvid = video.bvid,
-                            sourceRoute = effectiveSharedElementSourceRoute,
-                        )
-                    ),
-                    animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
-                    boundsTransform = { initialBounds, targetBounds ->
-                        videoSharedElementBoundsTransformSpec(
-                            motion = homeSharedTransitionMotionSpec,
-                            initialBounds = initialBounds,
-                            targetBounds = targetBounds,
-                        )
-                    },
-                    resizeMode = scaleToBounds(ContentScale.Crop, Alignment.Center),
-                    clipInOverlayDuringTransition = OverlayClip(coverShape),
-                )
-            }
-        } else {
-            Modifier
-        }
+        val coverSharedBoundsModifier = Modifier
 
         Box(
             modifier = coverSharedBoundsModifier

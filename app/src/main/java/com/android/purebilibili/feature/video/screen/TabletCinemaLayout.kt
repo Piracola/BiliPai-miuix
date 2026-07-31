@@ -420,25 +420,7 @@ private fun CinemaStagePlayer(
     val success = uiState as? VideoPlaybackUiState.Success
     val sharedTransitionScope = LocalSharedTransitionScope.current
     val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
-    val playerContainerModifier = if (
-        shouldEnableVideoCoverSharedTransition(
-            transitionEnabled = transitionEnabled,
-            hasSharedTransitionScope = sharedTransitionScope != null,
-            hasAnimatedVisibilityScope = animatedVisibilityScope != null
-        ) && !forceCoverOnlyOnReturn
-    ) {
-        with(requireNotNull(sharedTransitionScope)) {
-            Modifier.sharedBounds(
-                sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.videoCoverSharedElementKey(bvid)),
-                animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
-                clipInOverlayDuringTransition = OverlayClip(
-                    RoundedCornerShape(12.dp)
-                )
-            )
-        }
-    } else {
-        Modifier
-    }
+    val playerContainerModifier = Modifier
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
