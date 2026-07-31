@@ -2,6 +2,7 @@ package com.android.purebilibili.navigation3
 
 import java.io.File
 import kotlin.test.Test
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class BiliPaiNavDisplayHostNativeTransitionStructureTest {
@@ -12,20 +13,22 @@ class BiliPaiNavDisplayHostNativeTransitionStructureTest {
 
         assertTrue(source.contains("onNativeVideoBackProgress:"))
         assertTrue(source.contains("NavigationEventTransitionState.InProgress"))
-        assertTrue(source.contains("latestEvent?.progress"))
+        assertTrue(source.contains("?.latestEvent"))
+        assertTrue(source.contains("?.progress"))
         assertTrue(source.contains("onNativeVideoBackCancelled("))
     }
 
     @Test
-    fun scopedEntryContentRefreshesItsExposureProviderBeforePredictiveBack() {
+    fun scopedEntryContentDoesNotRetainVideoTransitionExposureProvider() {
         val source = loadSource()
         val scopedContentRememberKeys = source
             .substringAfter("val scopedContent:")
             .substringAfter("remember(")
             .substringBefore(") {")
 
-        assertTrue(scopedContentRememberKeys.contains("videoCardExposureProvider"))
-        assertTrue(scopedContentRememberKeys.contains("sourceMetadata"))
+        assertFalse(scopedContentRememberKeys.contains("videoCardExposureProvider"))
+        assertFalse(scopedContentRememberKeys.contains("videoCardClock"))
+        assertTrue(scopedContentRememberKeys.contains("application"))
     }
 
     private fun loadSource(): String {

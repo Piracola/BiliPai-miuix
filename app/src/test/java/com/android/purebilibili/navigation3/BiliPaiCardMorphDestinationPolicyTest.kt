@@ -77,12 +77,12 @@ class BiliPaiCardMorphDestinationPolicyTest {
                 cardFullyVisible = true
             )
         )
-        assertEquals(BiliPaiNavRouteTransition.FALLBACK, transitions.forward)
-        assertEquals(BiliPaiNavRouteTransition.FALLBACK, transitions.pop)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transitions.forward)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transitions.pop)
     }
 
     @Test
-    fun navDisplayPop_storyReturn_usesFallbackNotSharedNoOp() {
+    fun navDisplayPop_storyReturn_usesNoOp() {
         val transition = resolveBiliPaiNavDisplayPopRouteTransition(
             cardTransitionEnabled = true,
             sourceMetadata = BiliPaiNavSourceMetadata(
@@ -94,7 +94,7 @@ class BiliPaiCardMorphDestinationPolicyTest {
             fromKey = BiliPaiNavKey.Story(seedBvid = "BV1", sourceRoute = "home"),
             toKey = BiliPaiNavKey.MainHost
         )
-        assertEquals(BiliPaiNavRouteTransition.FALLBACK, transition)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transition)
     }
 
     @Test

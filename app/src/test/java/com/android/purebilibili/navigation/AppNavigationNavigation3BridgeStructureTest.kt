@@ -149,7 +149,7 @@ class AppNavigationNavigation3BridgeStructureTest {
     }
 
     @Test
-    fun homeVideoUsesComposeCardShellContainerTransformWithoutNativeBackgroundPreview() {
+    fun homeVideoUsesStaticDetailRouteWithoutNativeBackgroundPreview() {
         val source = appNavigationSource()
         val videoDetailBranch = source
             .substringAfter("BiliPaiNavEntryContentRole.VIDEO_DETAIL ->")
@@ -169,8 +169,8 @@ class AppNavigationNavigation3BridgeStructureTest {
         assertFalse(source.contains("&&\n                            !intent.isVerticalVideo"))
         assertFalse(videoDetailBranch.contains("!shouldUseNativeVideoCardTransition(videoKey)"))
         assertFalse(videoDetailBranch.contains("!shouldUseNativeVideoBackgroundReturnEffect(videoKey)"))
-        assertTrue(videoDetailBranch.contains("transitionEnabled = shouldEnableVideoDetailSharedTransition("))
-        assertTrue(videoDetailBranch.contains("shouldEnableVideoDetailSharedTransition("))
+        assertTrue(videoDetailBranch.contains("transitionEnabled = false"))
+        assertFalse(videoDetailBranch.contains("shouldEnableVideoDetailSharedTransition("))
         assertFalse(videoDetailBranch.contains("nativeVideoBackPreviewVideoKey == videoKey.bvid"))
         assertFalse(videoDetailBranch.contains("hideVideoDetailForNativeBackPreview"))
         assertFalse(source.contains("previewNativeVideoBackProgress("))

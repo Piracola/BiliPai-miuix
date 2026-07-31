@@ -990,7 +990,7 @@ class VideoDetailReturnCoverPolicyTest {
             .substringBefore("val handleBack =")
 
         assertFalse(actionBlock.contains("forceCoverOnlyOnReturn = true"))
-        assertTrue(source.contains("useTextureSurfaceForNavigation = transitionEnabled"))
+        assertFalse(source.contains("useTextureSurfaceForNavigation = transitionEnabled"))
     }
 
     @Test

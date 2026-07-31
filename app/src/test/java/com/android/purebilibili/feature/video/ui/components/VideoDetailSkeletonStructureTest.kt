@@ -8,14 +8,13 @@ import kotlin.test.assertTrue
 class VideoDetailSkeletonStructureTest {
 
     @Test
-    fun detailSkeletonUsesSynchronizedPulseInsteadOfSweepShimmer() {
+    fun detailSkeletonIsStaticInsteadOfPulseOrSweepShimmer() {
         val source = loadSource(
             "app/src/main/java/com/android/purebilibili/feature/video/ui/components/SkeletonComponents.kt"
         )
 
-        assertTrue(source.contains("rememberVideoSkeletonPulse()"))
-        assertTrue(source.contains("RepeatMode.Reverse"))
-        assertTrue(source.contains("VIDEO_SKELETON_PULSE_DURATION_MILLIS"))
+        assertFalse(source.contains("rememberInfiniteTransition("))
+        assertFalse(source.contains("infiniteRepeatable("))
         assertFalse(source.contains("com.valentinilk.shimmer.shimmer"))
         assertFalse(source.contains("modifier.shimmer()"))
     }

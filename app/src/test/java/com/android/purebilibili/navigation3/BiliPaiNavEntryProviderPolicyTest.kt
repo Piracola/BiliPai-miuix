@@ -34,8 +34,8 @@ class BiliPaiNavEntryProviderPolicyTest {
         )
 
         assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transitions.forward)
-        assertEquals(BiliPaiNavRouteTransition.LIGHT_SIBLING_POP, transitions.pop)
-        assertEquals(BiliPaiNavRouteTransition.LIGHT_SIBLING_POP, transitions.predictivePop)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transitions.pop)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transitions.predictivePop)
     }
 
     @Test
@@ -51,8 +51,8 @@ class BiliPaiNavEntryProviderPolicyTest {
             sourceMetadata = BiliPaiNavSourceMetadata()
         )
 
-        assertEquals(BiliPaiNavRouteTransition.FALLBACK, transitions.forward)
-        assertEquals(BiliPaiNavRouteTransition.FALLBACK, transitions.pop)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transitions.forward)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transitions.pop)
     }
 
     @Test
@@ -66,7 +66,7 @@ class BiliPaiNavEntryProviderPolicyTest {
             sourceMetadata = BiliPaiNavSourceMetadata()
         )
 
-        assertEquals(BiliPaiNavRouteTransition.LIGHT_SIBLING_POP, transition)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transition)
     }
 
     @Test
@@ -81,9 +81,9 @@ class BiliPaiNavEntryProviderPolicyTest {
             )
         )
 
-        assertEquals(BiliPaiNavRouteTransition.FALLBACK, transitions.forward)
-        assertEquals(BiliPaiNavRouteTransition.FALLBACK, transitions.pop)
-        assertEquals(BiliPaiNavRouteTransition.FALLBACK, transitions.predictivePop)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transitions.forward)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transitions.pop)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transitions.predictivePop)
     }
 
     @Test
@@ -168,9 +168,9 @@ class BiliPaiNavEntryProviderPolicyTest {
             )
         )
 
-        assertEquals(BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_FORWARD_FROM_LEFT, transitions.forward)
-        assertEquals(BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_RETURN_TO_LEFT, transitions.pop)
-        assertEquals(BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_RETURN_TO_LEFT, transitions.predictivePop)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transitions.forward)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transitions.pop)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transitions.predictivePop)
     }
 
     @Test
@@ -187,9 +187,9 @@ class BiliPaiNavEntryProviderPolicyTest {
             )
         )
 
-        assertEquals(BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_FORWARD_FROM_RIGHT, transitions.forward)
-        assertEquals(BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_RETURN_TO_RIGHT, transitions.pop)
-        assertEquals(BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_RETURN_TO_RIGHT, transitions.predictivePop)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transitions.forward)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transitions.pop)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transitions.predictivePop)
     }
 
     @Test
@@ -206,9 +206,9 @@ class BiliPaiNavEntryProviderPolicyTest {
             )
         )
 
-        assertEquals(BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_FORWARD_FROM_LEFT, transitions.forward)
-        assertEquals(BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_RETURN_TO_LEFT, transitions.pop)
-        assertEquals(BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_RETURN_TO_LEFT, transitions.predictivePop)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transitions.forward)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transitions.pop)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transitions.predictivePop)
     }
 
     @Test
@@ -326,7 +326,7 @@ class BiliPaiNavEntryProviderPolicyTest {
     @Test
     fun settingsHierarchyPopUsesIosPushTransition() {
         assertEquals(
-            BiliPaiNavRouteTransition.SETTINGS_IOS_PUSH_POP,
+            BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT,
             resolveBiliPaiNavEntryPopRouteTransition(
                 defaultTransition = BiliPaiNavRouteTransition.FALLBACK,
                 fromRoute = "appearance_settings",
@@ -403,10 +403,10 @@ class BiliPaiNavEntryProviderPolicyTest {
     @Test
     fun lightSiblingPopReturnsFromChildToDomainRoot() {
         val cases = listOf(
-            Triple("appearance_settings", "settings_category", BiliPaiNavRouteTransition.SETTINGS_IOS_PUSH_POP),
-            Triple("message/reply_me", ScreenRoutes.Inbox.route, BiliPaiNavRouteTransition.LIGHT_SIBLING_POP),
-            Triple("live_area", ScreenRoutes.LiveList.route, BiliPaiNavRouteTransition.LIGHT_SIBLING_POP),
-            Triple("topic", ScreenRoutes.Search.route, BiliPaiNavRouteTransition.LIGHT_SIBLING_POP)
+            Triple("appearance_settings", "settings_category", BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT),
+            Triple("message/reply_me", ScreenRoutes.Inbox.route, BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT),
+            Triple("live_area", ScreenRoutes.LiveList.route, BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT),
+            Triple("topic", ScreenRoutes.Search.route, BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT)
         )
 
         cases.forEach { (fromRoute, toRoute, expectedTransition) ->
@@ -436,10 +436,9 @@ class BiliPaiNavEntryProviderPolicyTest {
             )
         )
 
-        // Direction alone is enough for card-disabled motion (no strict key match required).
-        assertEquals(BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_FORWARD_FROM_LEFT, transitions.forward)
-        assertEquals(BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_RETURN_TO_LEFT, transitions.pop)
-        assertEquals(BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_RETURN_TO_LEFT, transitions.predictivePop)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transitions.forward)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transitions.pop)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transitions.predictivePop)
     }
 
     @Test
@@ -456,9 +455,9 @@ class BiliPaiNavEntryProviderPolicyTest {
             )
         )
 
-        assertEquals(BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_FORWARD_FROM_LEFT, transitions.forward)
-        assertEquals(BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_RETURN_TO_LEFT, transitions.pop)
-        assertEquals(BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_RETURN_TO_LEFT, transitions.predictivePop)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transitions.forward)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transitions.pop)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transitions.predictivePop)
     }
 
     @Test
@@ -519,7 +518,7 @@ class BiliPaiNavEntryProviderPolicyTest {
             )
         )
 
-        assertEquals(BiliPaiNavRouteTransition.FALLBACK, transition)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transition)
     }
 
     @Test
@@ -599,7 +598,7 @@ class BiliPaiNavEntryProviderPolicyTest {
             )
         )
 
-        assertEquals(BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_RETURN_TO_LEFT, transition)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transition)
     }
 
     @Test
@@ -618,7 +617,7 @@ class BiliPaiNavEntryProviderPolicyTest {
             )
         )
 
-        assertEquals(BiliPaiNavRouteTransition.LIGHT_SIBLING_POP, transition)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transition)
     }
 
     @Test
@@ -637,7 +636,7 @@ class BiliPaiNavEntryProviderPolicyTest {
             )
         )
 
-        assertEquals(BiliPaiNavRouteTransition.LIGHT_SIBLING_POP, transition)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transition)
     }
 
     @Test
@@ -657,7 +656,7 @@ class BiliPaiNavEntryProviderPolicyTest {
             )
         )
 
-        assertEquals(BiliPaiNavRouteTransition.LIGHT_SIBLING_POP, transition)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transition)
     }
 
     @Test
@@ -677,7 +676,7 @@ class BiliPaiNavEntryProviderPolicyTest {
             )
         )
 
-        assertEquals(BiliPaiNavRouteTransition.LIGHT_SIBLING_POP, transition)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transition)
     }
 
     @Test
@@ -697,7 +696,7 @@ class BiliPaiNavEntryProviderPolicyTest {
             )
         )
 
-        assertEquals(BiliPaiNavRouteTransition.FALLBACK, transition)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, transition)
     }
 
     @Test
@@ -729,8 +728,8 @@ class BiliPaiNavEntryProviderPolicyTest {
             )
         )
 
-        assertEquals(BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_RETURN_TO_LEFT, leftTransition)
-        assertEquals(BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_RETURN_TO_RIGHT, rightTransition)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, leftTransition)
+        assertEquals(BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT, rightTransition)
     }
 
     @Test

@@ -2,22 +2,21 @@ package com.android.purebilibili.feature.list
 
 import java.io.File
 import kotlin.test.Test
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class FavoriteSubscribedFolderSharedTransitionStructureTest {
 
     @Test
-    fun subscribedFolderRowAndDetailTopBarShareCollectionBounds() {
+    fun subscribedFolderRowAndDetailTopBarDoNotShareCollectionBounds() {
         val source = loadSource()
 
         assertTrue(source.contains("FavoriteSubscribedFolderRow("))
         assertTrue(source.contains("FavoriteSubscribedFolderPreview("))
         assertTrue(source.contains("model = FormatUtils.fixImageUrl(coverUrl)"))
         assertTrue(source.contains(".aspectRatio(16f / 9f)"))
-        assertTrue(source.contains(".favoriteCollectionSharedBounds("))
-        assertTrue(source.contains("namespace = \"favorite_collection\""))
-        assertTrue(source.contains("modifier = Modifier.favoriteCollectionSharedBounds("))
-        assertTrue(source.contains("route = favoriteCollectionSharedElementRoute"))
+        assertFalse(source.contains(".sharedBounds("))
+        assertFalse(source.contains(".sharedElement("))
     }
 
     @Test

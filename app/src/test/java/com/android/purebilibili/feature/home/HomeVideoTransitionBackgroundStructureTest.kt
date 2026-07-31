@@ -17,14 +17,13 @@ class HomeVideoTransitionBackgroundStructureTest {
     }
 
     @Test
-    fun navigationHostOnlyProvidesVideoTransitionBackgroundState() {
+    fun navigationHostDoesNotProvideVideoTransitionBackgroundState() {
         val source = navDisplayHostSource()
 
-        assertTrue(source.contains("VideoCardTransitionBackgroundPhase.OPENING"))
-        assertTrue(source.contains("VideoCardTransitionBackgroundPhase.RETURNING"))
-        assertTrue(source.contains("LocalVideoCardTransitionBackgroundState provides"))
-        assertTrue(source.contains("resolveVideoCardTransitionMotionTier(reduceMotion)"))
-        assertFalse(source.contains("runtimeGuardDecision.effectiveMotionTier"))
+        assertTrue(source.contains("NavDisplay("))
+        assertFalse(source.contains("VideoCardTransitionBackgroundPhase"))
+        assertFalse(source.contains("LocalVideoCardTransitionBackgroundState provides"))
+        assertFalse(source.contains("resolveVideoCardTransitionMotionTier"))
         assertFalse(source.contains("videoCardTransitionBackgroundEffect("))
     }
 
@@ -88,21 +87,11 @@ class HomeVideoTransitionBackgroundStructureTest {
     }
 
     @Test
-    fun navDisplayHostOwnsSessionDepthLayerUnderNavDisplay() {
+    fun navDisplayHostDoesNotOwnSessionDepthLayer() {
         val source = navDisplayHostSource()
-        assertTrue(source.contains("VideoCardTransitionHostDepthLayer("))
-        assertTrue(source.contains("shouldReleaseHostOwnedDepthLayer("))
-        assertTrue(source.contains("videoCardSnapshotHandle.releaseSession()"))
-        // SettledHidden 不得再 clear 糊层，否则预测手势无满糊起点
-        assertFalse(
-            source.contains(
-                "effectiveVideoCardExposure == VideoCardTransitionExposure.SettledHidden ||",
-            ),
-        )
-        val boxBlock = source
-            .substringAfter("Box(modifier = modifier.fillMaxSize())")
-            .substringBefore("private fun ProvideNavigation3ViewModelApplicationExtras")
-        assertTrue(boxBlock.indexOf("VideoCardTransitionHostDepthLayer") < boxBlock.indexOf("NavDisplay("))
+        assertFalse(source.contains("VideoCardTransitionHostDepthLayer("))
+        assertFalse(source.contains("shouldReleaseHostOwnedDepthLayer("))
+        assertFalse(source.contains("videoCardSnapshotHandle"))
     }
 
     private fun homeScreenSource(): String {

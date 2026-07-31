@@ -407,13 +407,13 @@ class VideoCardTransitionBackgroundPolicyTest {
     }
 
     @Test
-    fun sharedShellDoesNotApplyBackgroundScale() {
+    fun legacySharedShellDoesNotRegisterSharedBounds() {
         val source = File(
             "src/main/java/com/android/purebilibili/core/ui/transition/" +
                 "VideoCardShellSharedBounds.kt"
         ).readText()
 
-        assertTrue(source.contains("OverlayClip(clipShape)"))
+        assertFalse(source.contains(".sharedBounds("))
         assertFalse(source.contains("resolveVideoCardSiblingDepthScale("))
         assertFalse(source.contains(".graphicsLayer {"))
         assertFalse(source.contains("scaleX = scale"))
