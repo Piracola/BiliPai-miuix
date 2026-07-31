@@ -1,16 +1,9 @@
 package com.android.purebilibili.feature.space
 import com.android.purebilibili.core.ui.components.AppHorizontalDivider
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -697,19 +690,9 @@ private fun SpacePlayedVideoLocatePrompt(
     onConfirm: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    AnimatedVisibility(
-        visible = visible,
-        modifier = modifier,
-        enter = fadeIn(animationSpec = tween(160)) + scaleIn(
-            initialScale = 0.92f,
-            animationSpec = tween(160)
-        ),
-        exit = fadeOut(animationSpec = tween(120)) + scaleOut(
-            targetScale = 0.92f,
-            animationSpec = tween(120)
-        )
-    ) {
+    if (visible) {
         AppSurface(
+            modifier = modifier,
             shape = RoundedCornerShape(18.dp),
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
             tonalElevation = 6.dp,
@@ -2801,15 +2784,11 @@ private fun SpaceHomeVideoCard(
     animatedVisibilityScope: AnimatedVisibilityScope? = null,
     modifier: Modifier = Modifier
 ) {
-    val locateHighlightColor by animateColorAsState(
-        targetValue = if (isLocateHighlight) {
+    val locateHighlightColor = if (isLocateHighlight) {
             MaterialTheme.colorScheme.primary
         } else {
             Color.Transparent
-        },
-        animationSpec = tween(120),
-        label = "space-video-locate-highlight"
-    )
+        }
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
     val screenWidthPx = remember(configuration.screenWidthDp, density) {
@@ -3285,15 +3264,11 @@ private fun SpaceArchiveListItemRow(
     animatedVisibilityScope: AnimatedVisibilityScope? = null,
     modifier: Modifier = Modifier
 ) {
-    val locateHighlightColor by animateColorAsState(
-        targetValue = if (isLocateHighlight) {
+    val locateHighlightColor = if (isLocateHighlight) {
             MaterialTheme.colorScheme.primary
         } else {
             Color.Transparent
-        },
-        animationSpec = tween(120),
-        label = "space-video-locate-highlight"
-    )
+        }
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
     val screenWidthPx = remember(configuration.screenWidthDp, density) {

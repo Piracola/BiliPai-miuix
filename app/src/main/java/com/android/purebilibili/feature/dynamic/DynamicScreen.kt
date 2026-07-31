@@ -4,19 +4,7 @@ import com.android.purebilibili.core.ui.components.AppHorizontalDivider
 
 import com.android.purebilibili.core.ui.AppSpacingTokens
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideInHorizontally
 import kotlinx.coroutines.flow.distinctUntilChanged // [Fix] Missing import
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -528,28 +516,8 @@ fun DynamicScreen(
                  // 移除光晕 Canvas，保持纯净背景
             }
 
-            //  [新增] 模式切换动画
-            val modeEnterFadeSpec = AppMotionTokens.emphasizedSpec<Float>()
-            val modeExitFadeSpec = AppMotionTokens.standardSpec<Float>()
-            AnimatedContent(
-                targetState = displayMode,
-                transitionSpec = {
-                    //  根据切换方向使用不同动画
-                    val slideDirection = if (targetState == DynamicDisplayMode.HORIZONTAL) {
-                        // 从侧边栏切换到横向：向左滑出+淡出，向左滑入+淡入
-                        (slideInHorizontally { -it / 4 } + fadeIn(animationSpec = modeEnterFadeSpec)) togetherWith
-                        (slideOutHorizontally { it / 4 } + fadeOut(animationSpec = modeExitFadeSpec))
-                    } else {
-                        // 从横向切换到侧边栏：向右滑出+淡出，向右滑入+淡入
-                        (slideInHorizontally { it / 4 } + fadeIn(animationSpec = modeEnterFadeSpec)) togetherWith
-                        (slideOutHorizontally { -it / 4 } + fadeOut(animationSpec = modeExitFadeSpec))
-                    }
-                    slideDirection.using(SizeTransform(clip = false))
-                },
-                label = "displayModeTransition"
-            ) { targetMode ->
+            when (displayMode) {
                 //  根据布局模式选择不同布局
-                when (targetMode) {
                     DynamicDisplayMode.SIDEBAR -> {
                         // 侧边栏模式
                         Row(
@@ -850,11 +818,7 @@ fun DynamicScreen(
                                         )
                                     }
 
-                                    AnimatedVisibility(
-                                        visible = shouldShowHorizontalUserList && !shouldCollapseHorizontalUserList,
-                                        enter = expandVertically(animationSpec = AppMotionTokens.standardSpec()) + fadeIn(animationSpec = AppMotionTokens.standardSpec()),
-                                        exit = shrinkVertically(animationSpec = AppMotionTokens.standardSpec()) + fadeOut(animationSpec = AppMotionTokens.standardSpec())
-                                    ) {
+                                    if (shouldShowHorizontalUserList && !shouldCollapseHorizontalUserList) {
                                         HorizontalUserList(
                                             users = followedUsers,
                                             selectedUserId = selectedUserId,
@@ -886,24 +850,19 @@ fun DynamicScreen(
                             modifier = Modifier.align(Alignment.Center)
                         )
                     }
-                    }
                 }
             }
 
-            AnimatedVisibility(
-                visible = shouldShowBackToTop,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = AppSpacingTokens.Large + AppSpacingTokens.ExtraSmall, bottom = dynamicListBottomPadding + AppSpacingTokens.Medium),
-                enter = fadeIn(animationSpec = AppMotionTokens.standardSpec()) + scaleIn(initialScale = 0.92f),
-                exit = fadeOut(animationSpec = AppMotionTokens.standardSpec()) + scaleOut(targetScale = 0.92f)
-            ) {
+            if (shouldShowBackToTop) {
                 AppSmallFloatingActionButton(
                     onClick = {
                         scope.launch {
                             scrollDynamicFeedToTop(refreshWhenAlreadyAtTop = false)
                         }
                     },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = AppSpacingTokens.Large + AppSpacingTokens.ExtraSmall, bottom = dynamicListBottomPadding + AppSpacingTokens.Medium),
                     containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(AppSpacingTokens.ExtraSmall - AppSpacingTokens.Micro / 2),
                     contentColor = MaterialTheme.colorScheme.primary
                 ) {

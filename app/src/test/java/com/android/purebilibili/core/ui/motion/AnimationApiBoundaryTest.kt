@@ -225,6 +225,8 @@ class AnimationApiBoundaryTest {
         val commonList = source("feature/list/CommonListScreen.kt")
         val actionButton = source("feature/dynamic/components/ActionButton.kt")
         val dynamicSidebar = source("feature/dynamic/components/DynamicSidebar.kt")
+        val dynamicScreen = source("feature/dynamic/DynamicScreen.kt")
+        val spaceScreen = source("feature/space/SpaceScreen.kt")
 
         assertFalse(following.contains("AnimatedContent("))
         assertFalse(following.contains("Animatable("))
@@ -239,6 +241,11 @@ class AnimationApiBoundaryTest {
         assertFalse(actionButton.contains(".scale("))
         assertFalse(dynamicSidebar.contains("animateFloatAsState("))
         assertFalse(dynamicSidebar.contains("CascadeSidebarItem("))
+        assertFalse(dynamicScreen.contains("AnimatedContent("))
+        assertFalse(dynamicScreen.contains("AnimatedVisibility("))
+        assertFalse(dynamicScreen.contains("slideInHorizontally("))
+        assertFalse(spaceScreen.contains("AnimatedVisibility("))
+        assertFalse(spaceScreen.contains("animateColorAsState("))
     }
 
     private fun source(relativePath: String): String {
