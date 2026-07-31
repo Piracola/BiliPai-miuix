@@ -127,6 +127,17 @@ class CacheClearUiPolicyTest {
         )
     }
 
+    @Test
+    fun cacheClearProgress_usesDirectStateWithoutDecorativeMotion() {
+        val source = loadCacheClearAnimationSource()
+
+        assertFalse(source.contains("DataDissolveParticles"))
+        assertFalse(source.contains("LaunchedEffect"))
+        assertFalse(source.contains("kotlinx.coroutines.delay"))
+        assertFalse(source.contains("animate"))
+        assertTrue(source.contains("TextButton(onClick = onDismiss)"))
+    }
+
     private fun loadCacheClearAnimationSource(): String {
         val candidates = listOf(
             File("app/src/main/java/com/android/purebilibili/feature/settings/ui/CacheClearAnimation.kt"),
