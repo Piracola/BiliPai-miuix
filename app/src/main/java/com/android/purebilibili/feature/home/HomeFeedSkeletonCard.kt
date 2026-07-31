@@ -2,12 +2,6 @@ package com.android.purebilibili.feature.home
 
 import com.android.purebilibili.core.ui.AppSpacingTokens
 
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -43,20 +37,7 @@ import com.android.purebilibili.core.ui.transition.VIDEO_SHARED_COVER_ASPECT_RAT
 
 @Composable
 internal fun rememberHomeFeedSkeletonPulse(): Float {
-    val transition = rememberInfiniteTransition(label = "homeFeedSkeletonPulse")
-    val pulse by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = HOME_FEED_SKELETON_PULSE_DURATION_MILLIS,
-                easing = FastOutSlowInEasing
-            ),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "homeFeedSkeletonPulseAlpha"
-    )
-    return pulse
+    return 0f
 }
 
 @Composable
@@ -215,18 +196,9 @@ private fun rememberHomeFeedSkeletonBlockColor(
     pulse: Float,
     isDarkTheme: Boolean
 ): Color {
-    val alpha = if (isDarkTheme) {
-        HOME_FEED_SKELETON_DARK_MIN_ALPHA +
-            (HOME_FEED_SKELETON_DARK_MAX_ALPHA - HOME_FEED_SKELETON_DARK_MIN_ALPHA) * pulse
-    } else {
-        HOME_FEED_SKELETON_LIGHT_MIN_ALPHA +
-            (HOME_FEED_SKELETON_LIGHT_MAX_ALPHA - HOME_FEED_SKELETON_LIGHT_MIN_ALPHA) * pulse
-    }
+    val alpha = if (isDarkTheme) HOME_FEED_SKELETON_DARK_MIN_ALPHA else HOME_FEED_SKELETON_LIGHT_MIN_ALPHA
     return MaterialTheme.colorScheme.onSurface.copy(alpha = alpha)
 }
 
-private const val HOME_FEED_SKELETON_PULSE_DURATION_MILLIS = 2_000
 private const val HOME_FEED_SKELETON_LIGHT_MIN_ALPHA = 0.06f
-private const val HOME_FEED_SKELETON_LIGHT_MAX_ALPHA = 0.11f
 private const val HOME_FEED_SKELETON_DARK_MIN_ALPHA = 0.10f
-private const val HOME_FEED_SKELETON_DARK_MAX_ALPHA = 0.16f

@@ -17,11 +17,7 @@ internal fun resolveHomeCardEnterAnimationEnabledAtMount(
     isSwitchingCategory: Boolean,
     isScrollInProgress: Boolean = false
 ): Boolean {
-    if (!baseAnimationEnabled) return false
-    if (isReturningFromDetail) return false
-    if (isSwitchingCategory) return false
-    if (isScrollInProgress) return false
-    return true
+    return false
 }
 
 /**
@@ -31,4 +27,4 @@ internal fun resolveHomeCardEnterAnimationEnabledAtMount(
 internal fun shouldCoordinateCardEnterWithSharedTransition(
     cardAnimationEnabled: Boolean,
     cardTransitionEnabled: Boolean
-): Boolean = cardAnimationEnabled && cardTransitionEnabled
+): Boolean = false

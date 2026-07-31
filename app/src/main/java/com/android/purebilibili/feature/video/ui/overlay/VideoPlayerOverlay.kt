@@ -1271,8 +1271,8 @@ fun VideoPlayerOverlay(
         val showPlayerChrome = (isVisible && !isScreenLocked) || danmakuComposerVisible
         AnimatedVisibility(
             visible = showPlayerChrome,
-            enter = fadeIn(tween(300)),
-            exit = fadeOut(tween(300)),
+            enter = fadeIn(tween(100)),
+            exit = fadeOut(tween(100)),
             //  [修复] 确保 AnimatedVisibility 填充整个父容器
             modifier = overlayContentModifier
         ) {
@@ -1436,8 +1436,8 @@ fun VideoPlayerOverlay(
         if (isFullscreen && showFullscreenLockButton) {
             AnimatedVisibility(
                 visible = isVisible,  // 锁定后按控制栏状态自动隐藏
-                enter = fadeIn(tween(200)),
-                exit = fadeOut(tween(200)),
+                enter = fadeIn(tween(100)),
+                exit = fadeOut(tween(100)),
                 modifier = Modifier
                     .align(Alignment.CenterStart)
                     .padding(start = overlayVisualPolicy.lockButtonEndPaddingDp.dp)
@@ -1470,8 +1470,8 @@ fun VideoPlayerOverlay(
         if (isFullscreen && showFullscreenScreenshotButton) {
             AnimatedVisibility(
                 visible = isVisible && !isScreenLocked,
-                enter = fadeIn(tween(200)),
-                exit = fadeOut(tween(200)),
+                enter = fadeIn(tween(100)),
+                exit = fadeOut(tween(100)),
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
                     .padding(end = overlayVisualPolicy.lockButtonEndPaddingDp.dp)
@@ -1660,8 +1660,8 @@ fun VideoPlayerOverlay(
                     hasPendingSeekResume
             ),
             modifier = Modifier.align(Alignment.Center),
-            enter = scaleIn(tween(250)) + fadeIn(tween(200)),
-            exit = scaleOut(tween(200)) + fadeOut(tween(200))
+            enter = fadeIn(tween(100)),
+            exit = fadeOut(tween(100))
         ) {
             val resumeFromCenterButton = {
                 playPlayerFromUserAction(player)
@@ -1685,8 +1685,8 @@ fun VideoPlayerOverlay(
                 playWhenReady = player.playWhenReady
             ) && centerLoadingUiState == null,
             modifier = Modifier.align(Alignment.Center),
-            enter = fadeIn(tween(200)),
-            exit = fadeOut(tween(200))
+            enter = fadeIn(tween(100)),
+            exit = fadeOut(tween(100))
         ) {
             AdaptiveLoadingIndicator(
                 color = centerLoadingVisualState.indicatorColor
@@ -1696,8 +1696,8 @@ fun VideoPlayerOverlay(
         AnimatedVisibility(
             visible = centerLoadingUiState != null,
             modifier = Modifier.align(Alignment.Center),
-            enter = fadeIn(tween(200)),
-            exit = fadeOut(tween(200))
+            enter = fadeIn(tween(100)),
+            exit = fadeOut(tween(100))
         ) {
             val loadingState = centerLoadingUiState ?: return@AnimatedVisibility
             AppSurface(
@@ -1739,8 +1739,8 @@ fun VideoPlayerOverlay(
         AnimatedVisibility(
             visible = isQualitySwitching && centerLoadingUiState == null,
             modifier = Modifier.align(Alignment.Center),
-            enter = fadeIn(tween(200)),
-            exit = fadeOut(tween(200))
+            enter = fadeIn(tween(100)),
+            exit = fadeOut(tween(100))
         ) {
             AppSurface(
                 color = Color.Black.copy(alpha = 0.7f),
@@ -2528,8 +2528,8 @@ fun LandscapeEndDrawer(
     }
     AnimatedVisibility(
         visible = visible,
-        enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
-        exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
+        enter = fadeIn(tween(100)),
+        exit = fadeOut(tween(100)),
         modifier = modifier
     ) {
         Row(modifier = Modifier.fillMaxSize()) {

@@ -939,8 +939,8 @@ fun FullscreenPlayerOverlay(
         // 控制层
         AnimatedVisibility(
             visible = showControls && gestureMode == FullscreenGestureMode.None,
-            enter = fadeIn(tween(200)),
-            exit = fadeOut(tween(300))
+            enter = fadeIn(tween(100)),
+            exit = fadeOut(tween(100))
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 // 顶部渐变 + 返回按钮和标题

@@ -22,11 +22,11 @@ class HomeFeedSkeletonCardStructureTest {
     }
 
     @Test
-    fun featureSkeletonUsesSharedHomeGeometryAndReversePulse() {
+    fun featureSkeletonUsesSharedHomeGeometryWithoutContinuousPulse() {
         val source = loadSource("app/src/main/java/com/android/purebilibili/feature/home/HomeFeedSkeletonCard.kt")
 
-        assertTrue(source.contains("RepeatMode.Reverse"))
-        assertTrue(source.contains("durationMillis = HOME_FEED_SKELETON_PULSE_DURATION_MILLIS"))
+        assertTrue(source.contains("return 0f"))
+        assertFalse(source.contains("rememberInfiniteTransition"))
         assertTrue(source.contains("VIDEO_SHARED_COVER_ASPECT_RATIO"))
         assertTrue(source.contains("AppShapes.containerCornerDp(ContainerLevel.Card)"))
         assertTrue(source.contains("AppShapes.container(ContainerLevel.Card)"))
