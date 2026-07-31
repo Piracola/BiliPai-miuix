@@ -223,6 +223,8 @@ class AnimationApiBoundaryTest {
         val following = source("feature/following/FollowingListScreen.kt")
         val bangumi = source("feature/bangumi/BangumiScreen.kt")
         val commonList = source("feature/list/CommonListScreen.kt")
+        val actionButton = source("feature/dynamic/components/ActionButton.kt")
+        val dynamicSidebar = source("feature/dynamic/components/DynamicSidebar.kt")
 
         assertFalse(following.contains("AnimatedContent("))
         assertFalse(following.contains("Animatable("))
@@ -233,6 +235,10 @@ class AnimationApiBoundaryTest {
         assertFalse(bangumi.contains("scaleIn("))
         assertFalse(commonList.contains("AnimatedVisibility("))
         assertTrue(commonList.contains("if (shouldShowBackToTop)"))
+        assertFalse(actionButton.contains("animateFloatAsState("))
+        assertFalse(actionButton.contains(".scale("))
+        assertFalse(dynamicSidebar.contains("animateFloatAsState("))
+        assertFalse(dynamicSidebar.contains("CascadeSidebarItem("))
     }
 
     private fun source(relativePath: String): String {

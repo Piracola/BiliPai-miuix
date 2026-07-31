@@ -11,23 +11,17 @@ import com.android.purebilibili.core.ui.ContainerLevel
 import com.android.purebilibili.core.ui.AppTypographyTokens
 import com.android.purebilibili.feature.dynamic.DynamicStatusPalette
 
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
@@ -61,17 +55,7 @@ fun ActionButton(
     val isForward = label == "转发"
     val isComment = label == "评论"
     
-    //  iOS 风格按压动画
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.92f else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "actionButtonScale"
-    )
     
     //  统一主题颜色 - 根据激活状态调整
     val buttonColor = when {
@@ -107,7 +91,6 @@ fun ActionButton(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = AppChromeSizeTokens.MinimumTouchTarget)
-                .scale(scale)
                 .clip(AppShapes.container(ContainerLevel.Pill))
                 .background(
                     color = buttonColor.copy(alpha = if (isActive && isLike) 0.15f else 0.08f)

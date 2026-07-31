@@ -7,9 +7,6 @@ import com.android.purebilibili.core.ui.AppSpacingTokens
 import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.ui.ContainerLevel
-import com.android.purebilibili.core.ui.motion.AppMotionTokens
-
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,7 +24,6 @@ import com.android.purebilibili.core.ui.components.AppText
 import com.android.purebilibili.core.ui.components.AppDropdownMenu
 import com.android.purebilibili.core.ui.components.AppDropdownMenuItem
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,7 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -122,10 +117,6 @@ fun DynamicSidebar(
     onBackClick: () -> Unit, // 新增：返回按钮回调
     modifier: Modifier = Modifier
 ) {
-    val animatedWidth by animateFloatAsState(
-        targetValue = resolveDynamicSidebarWidth(isExpanded).value,
-        label = "sidebarWidth"
-    )
     
     // 模糊状态
     val sidebarHazeState = rememberRecoverableHazeState()
@@ -148,7 +139,7 @@ fun DynamicSidebar(
     // 侧边栏容器 - Glassmorphism 升级版
     Box(
         modifier = modifier
-            .width(animatedWidth.dp)
+            .width(resolveDynamicSidebarWidth(isExpanded))
             .fillMaxHeight()
             .clip(androidx.compose.ui.graphics.RectangleShape) // [修复] 直角
             .background(
@@ -201,20 +192,14 @@ fun DynamicSidebar(
                     }
                 }
 
-                // 关注的UP主列表 - 带瀑布入场动画
-                itemsIndexed(users, key = { _, u -> "sidebar_${u.uid}" }) { index, user ->
-                    CascadeSidebarItem(
-                        index = index,
-                        content = {
-                            SidebarUserItem(
-                                user = user,
-                                isSelected = selectedUserId == user.uid,
-                                showLabel = isExpanded,
-                                onClick = { onUserClick(user.uid) },
-                                onTogglePin = { onTogglePin(user.uid) },
-                                onToggleHidden = { onToggleHidden(user.uid) }
-                            )
-                        }
+                itemsIndexed(users, key = { _, u -> "sidebar_${u.uid}" }) { _, user ->
+                    SidebarUserItem(
+                        user = user,
+                        isSelected = selectedUserId == user.uid,
+                        showLabel = isExpanded,
+                        onClick = { onUserClick(user.uid) },
+                        onTogglePin = { onTogglePin(user.uid) },
+                        onToggleHidden = { onToggleHidden(user.uid) }
                     )
                 }
             }
@@ -255,46 +240,6 @@ fun DynamicSidebar(
                 .width(AppSpacingTokens.Micro / 4)
                 .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
         )
-    }
-}
-
-/**
- *  [新增] 瀑布入场动画包装器
- * 每个项目有递增的延迟，形成瀑布展开效果
- */
-@Composable
-private fun CascadeSidebarItem(
-    index: Int,
-    content: @Composable () -> Unit
-) {
-    var visible by remember { mutableStateOf(false) }
-    val delay = 30 * index  // 每个项目延迟 30ms
-    
-    LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(delay.toLong())
-        visible = true
-    }
-    
-    val offsetY by animateFloatAsState(
-        targetValue = if (visible) 0f else 20f,
-        animationSpec = AppMotionTokens.emphasizedSpec(),
-        label = "cascadeOffsetY"
-    )
-    
-    val alpha by animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
-        animationSpec = AppMotionTokens.standardSpec(),
-        label = "cascadeAlpha"
-    )
-    
-    Box(
-        modifier = Modifier
-            .graphicsLayer {
-                translationY = offsetY
-                this.alpha = alpha
-            }
-    ) {
-        content()
     }
 }
 
