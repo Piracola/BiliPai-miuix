@@ -99,6 +99,16 @@ class AnimationApiBoundaryTest {
     }
 
     @Test
+    fun imagePreviewOpenCloseAndDragSettlementUseDirectState() {
+        val imagePreview = source("feature/dynamic/components/ImagePreviewDialog.kt")
+
+        assertFalse(imagePreview.contains("animateTo("))
+        assertTrue(imagePreview.contains("animateTrigger.snapTo(1f)"))
+        assertTrue(imagePreview.contains("animateTrigger.snapTo(0f)"))
+        assertTrue(imagePreview.contains("verticalDismissOffsetYPx = 0f"))
+    }
+
+    @Test
     fun simpleTopTabIndicatorTracksPositionWithoutDecorativeDeformation() {
         val indicator = source("feature/home/components/LiquidIndicator.kt")
         val simpleIndicator = indicator

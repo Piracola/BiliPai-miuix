@@ -439,13 +439,7 @@ private fun ImagePreviewOverlayContent(
             }
 
             LaunchedEffect(Unit) {
-                val openMotion = imagePreviewDismissMotion()
-                animateTrigger.snapTo(0f)
-                // 进场与退场同系 Continuity，一镜对称。
-                animateTrigger.animateTo(
-                    targetValue = 1f,
-                    animationSpec = continuityTween(durationMillis = openMotion.openDurationMillis)
-                )
+                animateTrigger.snapTo(1f)
             }
 
             fun triggerDismiss(
@@ -463,14 +457,7 @@ private fun ImagePreviewOverlayContent(
                 scope.launch {
                     verticalDismissOffsetYPx = 0f
                     verticalDismissSnapAnim.snapTo(0f)
-                    val dismissMotion = imagePreviewDismissMotion()
-                    // 单段 morph：几何线性 + Continuity 速度曲线，无 overshoot / spring 二次落点。
-                    animateTrigger.animateTo(
-                        targetValue = dismissMotion.settleTarget,
-                        animationSpec = continuityTween(
-                            durationMillis = dismissMotion.collapseDurationMillis
-                        )
-                    )
+                    animateTrigger.snapTo(0f)
                     onDismiss()
                 }
             }
@@ -497,13 +484,7 @@ private fun ImagePreviewOverlayContent(
                 reportPredictiveProgress = predictiveBackGestureEnabled,
                 onBackCancelled = { commitTransition: () -> Unit ->
                     scope.launch {
-                        val dismissMotion = imagePreviewDismissMotion()
-                        animateTrigger.animateTo(
-                            targetValue = 1f,
-                            animationSpec = emphasizedEnterTween(
-                                durationMillis = dismissMotion.cancelRecoverDurationMillis
-                            ),
-                        )
+                        animateTrigger.snapTo(1f)
                         commitTransition()
                     }
                 },
@@ -724,12 +705,8 @@ private fun ImagePreviewOverlayContent(
                                         ImagePreviewVerticalDismissDecision.SNAP_BACK -> {
                                             scope.launch {
                                                 verticalDismissSnapAnim.snapTo(verticalDismissOffsetYPx)
-                                                verticalDismissSnapAnim.animateTo(
-                                                    targetValue = 0f,
-                                                    animationSpec = interactiveSnapSpring()
-                                                ) {
-                                                    verticalDismissOffsetYPx = value
-                                                }
+                                                verticalDismissSnapAnim.snapTo(0f)
+                                                verticalDismissOffsetYPx = 0f
                                             }
                                         }
                                     }
@@ -740,12 +717,8 @@ private fun ImagePreviewOverlayContent(
                                     isVerticalDismissDragging = false
                                     scope.launch {
                                         verticalDismissSnapAnim.snapTo(verticalDismissOffsetYPx)
-                                        verticalDismissSnapAnim.animateTo(
-                                            targetValue = 0f,
-                                            animationSpec = interactiveSnapSpring()
-                                        ) {
-                                            verticalDismissOffsetYPx = value
-                                        }
+                                        verticalDismissSnapAnim.snapTo(0f)
+                                        verticalDismissOffsetYPx = 0f
                                     }
                                 }
                             },
