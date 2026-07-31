@@ -1,6 +1,6 @@
 plugins {
     id("com.android.test")
-    id("org.jetbrains.kotlin.android")
+    // AGP 9+ built-in Kotlin
 }
 
 android {

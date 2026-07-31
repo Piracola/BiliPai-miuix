@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import com.android.purebilibili.core.ui.LocalAnimatedVisibilityScope
 import com.android.purebilibili.core.ui.LocalSharedTransitionScope
 import com.android.purebilibili.core.ui.transition.LocalVideoCardMorphProgressReporter
+import com.android.purebilibili.core.ui.transition.LocalVideoCardTransitionClock
 import com.android.purebilibili.core.ui.transition.VideoSharedTransitionMotionSpec
 import com.android.purebilibili.core.ui.transition.shouldEnableVideoCoverSharedTransition
 import com.android.purebilibili.core.ui.transition.shouldUseVideoCardShellContainerTransform
@@ -63,8 +64,14 @@ internal fun rememberVideoDetailTransitionState(
 ): VideoDetailTransitionState {
     val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
     val sharedTransitionScope = LocalSharedTransitionScope.current
-    val isExitTransitionInProgress =
-        animatedVisibilityScope?.transition?.targetState == EnterExitState.PostExit
+    val videoCardClock = LocalVideoCardTransitionClock.current
+    // Nav3 1.2 + ExitTransition.None can finish AnimatedContent before PostExit is observed.
+    // Also treat card-clock RETURNING as exit so secondary chrome / live morph stay in sync.
+    val isExitTransitionInProgress = shouldTreatVideoDetailExitTransitionInProgress(
+        animatedVisibilityTargetIsPostExit =
+            animatedVisibilityScope?.transition?.targetState == EnterExitState.PostExit,
+        videoCardBackgroundPhase = videoCardClock?.phase,
+    )
     val detailShellSharedBoundsEnabled = shouldUseVideoCardShellContainerTransform(
         sourceRoute = sourceRoute,
         transitionEnabled = transitionEnabled,

@@ -42,10 +42,6 @@ import coil.compose.AsyncImage
 import com.android.purebilibili.R
 import com.android.purebilibili.core.ui.blur.unifiedBlur
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.haze
-import dev.chrisbanes.haze.hazeChild
-import dev.chrisbanes.haze.HazeStyle
-import dev.chrisbanes.haze.HazeTint
 import io.github.alexzhirkevich.cupertino.icons.CupertinoIcons
 import io.github.alexzhirkevich.cupertino.icons.outlined.*
 import kotlinx.coroutines.delay

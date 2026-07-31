@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Shape
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeInputScale
 import dev.chrisbanes.haze.ExperimentalHazeApi
+import dev.chrisbanes.haze.blur.blurEffect
 import dev.chrisbanes.haze.hazeEffect
 
 private val LocalUnifiedBlurIntensity = staticCompositionLocalOf<BlurIntensity?> { null }
@@ -106,14 +107,17 @@ fun Modifier.unifiedBlur(
         resolveBlurInputScale(budget = budget, surfaceType = surfaceType)
     }
 
-    //  [修复] HazeEffect 不支持 shape 参数，需使用 clip 修饰符
-    //  仅当提供了 shape 时才应用 clip，避免破坏现有圆角组件 (如 BottomBar)
+    // Haze 2: style/blurEnabled/blurredEdgeTreatment live on BlurVisualEffect via blurEffect {}.
+    // Shape still applied with clip; recoverable background gate is per-effect blurEnabled.
+    val recoverableEnabled = recoverableBlurEnabled(hazeState)
     return (if (shape != null) this.clip(shape) else this).hazeEffect(
         state = hazeState,
-        style = blurStyle
     ) {
-        blurEnabled = true
-        blurredEdgeTreatment = edgeTreatment
+        blurEffect {
+            style = blurStyle
+            blurEnabled = recoverableEnabled
+            blurredEdgeTreatment = edgeTreatment
+        }
         @OptIn(ExperimentalHazeApi::class)
         run {
             inputScale = if (inputScaleFactor >= 1f) {

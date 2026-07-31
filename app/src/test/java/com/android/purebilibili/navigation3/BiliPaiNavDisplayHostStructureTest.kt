@@ -21,12 +21,18 @@ class BiliPaiNavDisplayHostStructureTest {
         assertFalse(source.contains("videoCardTransitionController"))
         assertFalse(source.contains("LocalVideoCardTransitionSession"))
         assertTrue(source.contains("predictivePopTransitionSpec"))
-        val transitionEffects = source
-            .substringAfter("transitionEffects = NavDisplayTransitionEffects(")
-            .substringBefore("),")
-        assertTrue(transitionEffects.contains("enableCornerClip = false"))
-        assertTrue(transitionEffects.contains("dimAmount = 0f"))
-        assertTrue(transitionEffects.contains("blockInputDuringTransition = false"))
+        assertFalse(source.contains("NavDisplayTransitionEffects"))
+        assertFalse(source.contains("transitionEffects ="))
+    }
+
+    @Test
+    fun navigation3RuntimeAndUiUseTheSameOfficialAlpha07Version() {
+        val buildFile = buildFileSource()
+
+        assertTrue(buildFile.contains("val navigation3Version = \"1.2.0-alpha07\""))
+        assertTrue(buildFile.contains("androidx.navigation3:navigation3-runtime:\$navigation3Version"))
+        assertTrue(buildFile.contains("androidx.navigation3:navigation3-ui:\$navigation3Version"))
+        assertFalse(buildFile.contains("miuix-navigation3-ui-android"))
     }
 
     @Test
@@ -52,6 +58,7 @@ class BiliPaiNavDisplayHostStructureTest {
         val source = navDisplayHostSource()
 
         assertTrue(source.contains("rememberNavigationEventState("))
+        assertTrue(source.contains("rememberNavigationEventState(sceneState)"))
         assertTrue(source.contains("NavigationBackHandler("))
         assertTrue(source.contains("onBackCompleted = performBack"))
         assertTrue(source.contains("onBackCancelled"))
@@ -113,18 +120,43 @@ class BiliPaiNavDisplayHostStructureTest {
             .substringAfter("returnedFromVideoDetail -> {")
             .substringBefore("!isCardMorphDestinationNavKey(currentTop)")
 
-        // 单时钟：open/return 走 clock.begin* + fallback，shared morph 回灌优先。
+        // 单时钟：open/return 走 clock.begin* + fallback；返回不因 shared 跳过消糊。
         assertTrue(openingBranch.contains("beginOpening("))
         assertTrue(openingBranch.contains("animateFallbackTo("))
         assertTrue(openingBranch.contains("markHeld()"))
+        assertTrue(openingBranch.contains("hasActiveSharedMorphProgress()"))
         assertTrue(returnBranch.contains("beginReturning("))
+        assertTrue(returnBranch.contains("startDepth = startDepth"))
         assertTrue(returnBranch.contains("resolveMorphAlignedFallbackDurationMs"))
         assertTrue(returnBranch.contains("timelineSpec.returnEasing"))
         assertTrue(returnBranch.contains("parentSourceRoute"))
+        assertTrue(returnBranch.contains("snapFallback(startDepth)"))
+        assertTrue(returnBranch.contains("animateFallbackTo("))
+        // 返回路径不得再「有 shared 就跳过 fallback」（会丢掉模糊→清晰）。
+        assertFalse(
+            returnBranch.contains(
+                "videoCardClock.phase != VideoCardTransitionBackgroundPhase.RETURNING ||\n" +
+                    "                                videoCardClock.hasActiveSharedMorphProgress()",
+            ),
+        )
         assertTrue(source.contains("safeBackStack.size > previousStack.size"))
         assertTrue(source.contains("safeBackStack.size < previousStack.size"))
         assertTrue(source.contains("isCardMorphDestinationNavKey("))
         assertTrue(source.contains("reportSharedMorphProgress"))
+    }
+
+    @Test
+    fun navDisplayHostReadsLivePredictiveProgressForVideoCardDepth() {
+        val source = navDisplayHostSource()
+        val progressProviderBlock = source
+            .substringAfter("val videoCardBackgroundProgressProvider = remember(")
+            .substringBefore("val videoCardTransitionJankState")
+
+        assertTrue(progressProviderBlock.contains("resolveVideoCardPredictiveGestureDepthProgress("))
+        assertTrue(progressProviderBlock.contains("NavigationEventTransitionState.InProgress"))
+        assertTrue(progressProviderBlock.contains("isVideoCardTransitionBackgroundGesturePhase"))
+        assertTrue(progressProviderBlock.contains("latestEvent"))
+        assertTrue(progressProviderBlock.contains("videoCardClock.depthProgress()"))
     }
 
     @Test
@@ -208,7 +240,9 @@ class BiliPaiNavDisplayHostStructureTest {
         assertTrue(preOnBack.contains("VideoCardTransitionBackgroundPhase.OPENING"))
         assertTrue(preOnBack.contains("beginReturning("))
         assertTrue(preOnBack.contains("resolveMorphAlignedFallbackDurationMs"))
+        assertTrue(preOnBack.contains("resolveVideoCardReturnClearStartDepth("))
         assertTrue(preOnBack.contains("shouldSnapClearVideoCardDepthBlurOnQuickReturn("))
+        // OPENING 打断仍可 snap；HELD/RETURNING 快速返回走 beginReturning + 连续消糊。
         assertTrue(preOnBack.contains("snapClearAndIdle()"))
     }
 
@@ -248,14 +282,15 @@ class BiliPaiNavDisplayHostStructureTest {
             .substringAfter("val videoCardTransitionJankState =")
             .substringBefore("TrackJankStateValue(")
 
-        assertTrue(source.contains("AppRuntimeVisualGuardTracker.decision.collectAsStateWithLifecycle()"))
+        assertFalse(source.contains("AppRuntimeVisualGuardTracker.decision.collectAsStateWithLifecycle()"))
         assertTrue(source.contains("stateName = VIDEO_CARD_TRANSITION_JANK_STATE"))
         assertTrue(trackingBlock.contains("PredictiveReturn"))
         assertTrue(trackingBlock.contains("GestureRestore"))
         assertTrue(trackingBlock.contains("VideoCardTransitionBackgroundPhase.OPENING"))
         assertTrue(trackingBlock.contains("VideoCardTransitionBackgroundPhase.RETURNING"))
         assertFalse(trackingBlock.contains("VideoCardTransitionBackgroundPhase.HELD"))
-        assertTrue(source.contains("runtimeGuardDecision.effectiveMotionTier"))
+        assertTrue(source.contains("resolveVideoCardTransitionMotionTier(reduceMotion)"))
+        assertFalse(source.contains("runtimeGuardDecision.effectiveMotionTier"))
         assertTrue(source.contains("stateValue = videoCardTransitionJankState"))
     }
 

@@ -9,7 +9,7 @@ import com.android.purebilibili.core.network.policy.resolveHomeFeedCookieAnonymi
 import com.android.purebilibili.core.network.policy.shouldEnableTrustAllCertificates
 import com.android.purebilibili.core.store.TokenManager
 import com.android.purebilibili.data.model.response.*
-import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
+import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient

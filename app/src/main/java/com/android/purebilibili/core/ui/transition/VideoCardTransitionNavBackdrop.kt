@@ -32,6 +32,7 @@ internal fun VideoCardTransitionNavBackdrop(
                     frame = frame,
                 )
                 drawRect(backdropColor)
+                VideoCardTransitionDiagnostics.onNavBackdropDrawn()
             },
     )
 }

@@ -101,9 +101,6 @@ import com.android.purebilibili.feature.video.ui.components.VideoAspectRatio
 import com.android.purebilibili.feature.video.ui.components.resolveVideoViewportLayout
 import dev.chrisbanes.haze.HazeState
 import com.android.purebilibili.core.ui.blur.hazeSourceCompat
-import dev.chrisbanes.haze.hazeEffect
-import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
-import dev.chrisbanes.haze.materials.HazeMaterials
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import com.android.purebilibili.core.ui.LocalSharedTransitionScope
 import com.android.purebilibili.core.ui.LocalAnimatedVisibilityScope
@@ -131,7 +128,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 private const val TAG = "LivePlayerScreen"
 
-@OptIn(UnstableApi::class, ExperimentalHazeMaterialsApi::class, ExperimentalSharedTransitionApi::class)
+@OptIn(UnstableApi::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun LivePlayerScreen(
     roomId: String,

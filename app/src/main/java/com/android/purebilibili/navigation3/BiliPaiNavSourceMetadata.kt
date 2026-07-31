@@ -11,7 +11,9 @@ internal data class BiliPaiNavSourceMetadata(
     val sourceRoute: String? = null,
     val clickedBoundsRecorded: Boolean = false,
     val cardFullyVisible: Boolean = false,
-    val cardSourceDirection: BiliPaiNavCardSourceDirection = BiliPaiNavCardSourceDirection.NONE
+    val cardSourceDirection: BiliPaiNavCardSourceDirection = BiliPaiNavCardSourceDirection.NONE,
+    val sourceCornerDp: Int? = null,
+    val coverIdentity: String? = null,
 ) {
     val sharedTransitionEntryReady: Boolean
         get() = clickedBoundsRecorded
@@ -86,13 +88,17 @@ internal fun resolveBiliPaiNavSourceMetadata(
     sourceRoute: String? = null,
     clickedBoundsRecorded: Boolean,
     cardFullyVisible: Boolean,
-    cardSourceDirection: BiliPaiNavCardSourceDirection = BiliPaiNavCardSourceDirection.NONE
+    cardSourceDirection: BiliPaiNavCardSourceDirection = BiliPaiNavCardSourceDirection.NONE,
+    sourceCornerDp: Int? = null,
+    coverIdentity: String? = null,
 ): BiliPaiNavSourceMetadata {
     return BiliPaiNavSourceMetadata(
         sourceKey = sourceKey,
         sourceRoute = normalizeBiliPaiVideoSourceRoute(sourceRoute),
         clickedBoundsRecorded = clickedBoundsRecorded,
         cardFullyVisible = cardFullyVisible,
-        cardSourceDirection = cardSourceDirection
+        cardSourceDirection = cardSourceDirection,
+        sourceCornerDp = sourceCornerDp?.coerceAtLeast(0),
+        coverIdentity = coverIdentity?.trim()?.takeIf(String::isNotEmpty),
     )
 }

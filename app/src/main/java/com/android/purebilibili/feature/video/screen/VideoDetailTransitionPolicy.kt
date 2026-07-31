@@ -1,5 +1,7 @@
 package com.android.purebilibili.feature.video.screen
 
+import com.android.purebilibili.core.ui.transition.VideoCardTransitionBackgroundPhase
+
 import androidx.compose.animation.core.Easing
 import com.android.purebilibili.core.ui.transition.VIDEO_CARD_RETURN_LIVE_CONTENT_YIELD_START
 import com.android.purebilibili.core.ui.transition.VideoCardReturnCoverOwnership
@@ -175,6 +177,7 @@ internal fun resolveVideoDetailReturnCoverAlpha(
     liveReturnMorph: Boolean = false,
 ): Float {
     if (!hasResidentCover) return 0f
+    // 一镜到底：仅 settle 末段抬封面，禁止一点返回就盖住实时播放器。
     if (liveReturnMorph) {
         return resolveVideoDetailLiveReturnLandingHandoffAlpha(
             transitionProgress = transitionProgress,
@@ -182,6 +185,7 @@ internal fun resolveVideoDetailReturnCoverAlpha(
         )
     }
     val progress = transitionProgress.coerceIn(0f, 1f)
+    // CoverFirst / 无 live 帧：提交后封面立即接管，避免黑壳。
     return if (isCommittedCardReturn) 1f else 1f - progress
 }
 
@@ -260,6 +264,21 @@ internal fun shouldTreatVideoDetailCardExitAsReturning(
     return isExitTransitionInProgress &&
         sharedBoundsActive &&
         !keepLoadedContentForBackPreview
+}
+
+/**
+ * Whether the detail page should treat the current frame as an exit/return morph.
+ *
+ * Primary signal: AnimatedVisibility [EnterExitState.PostExit].
+ * Fallback for Navigation3 1.2 + [ExitTransition.None]: AVS may settle without a durable
+ * PostExit observation, while [VideoCardTransitionBackgroundPhase.RETURNING] is still true.
+ */
+internal fun shouldTreatVideoDetailExitTransitionInProgress(
+    animatedVisibilityTargetIsPostExit: Boolean,
+    videoCardBackgroundPhase: VideoCardTransitionBackgroundPhase?,
+): Boolean {
+    if (animatedVisibilityTargetIsPostExit) return true
+    return videoCardBackgroundPhase == VideoCardTransitionBackgroundPhase.RETURNING
 }
 
 /**

@@ -1,6 +1,6 @@
 # AI Source Map / AI 事实导航
 
-最后核对：2026-07-28。本文只提供仓库路径与事实优先级，不替代源码检查。
+最后核对：2026-07-31。本文只提供仓库路径与事实优先级，不替代源码检查。
 
 ## 推荐入口
 
@@ -8,6 +8,7 @@
 | --- | --- |
 | 项目总览 | [`../../README.md`](../../README.md) / [`../../README_EN.md`](../../README_EN.md) |
 | 最新完整发布记录 | [`../../CHANGELOG.md`](../../CHANGELOG.md) |
+| 当前开发优先级 | [`ROADMAP.md`](ROADMAP.md) |
 | 架构 | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
 | 功能状态 | [`FEATURE_MATRIX.md`](FEATURE_MATRIX.md) |
 | QA 与回归 | [`QA.md`](QA.md) |
@@ -21,7 +22,7 @@
 
 | 路径 | 职责 |
 | --- | --- |
-| `app/` | Android 主应用、功能界面、播放器、导航和测试 |
+| `app/` | Android 主应用、功能界面、播放器、Navigation3 编排和测试 |
 | `design-system/` | iOS、Material 3、Miuix 共用的主题、组件与视觉策略 |
 | `settings-core/` | 可复用设置与偏好逻辑 |
 | `network-core/` | 网络策略与底层网络支持 |
@@ -37,7 +38,7 @@
 - `data/`：数据模型与仓库实现。
 - `domain/`：稳定业务规则与 UseCase。
 - `feature/`：按业务场景组织的界面与交互。
-- `navigation/`、`navigation3/`：当前并存的导航实现。
+- `navigation/`：路由兼容、入口策略与顶层导航装配；`navigation3/`：当前 NavKey、返回栈、Entry/Scene、预测返回与整卡会话实现。
 
 ## 事实优先级
 
@@ -45,9 +46,12 @@
 
 1. 当前源码和构建配置。
 2. `CHANGELOG.md` 与 GitHub Releases。
-3. Wiki 与插件开发文档。
-4. `README.md` / `README_EN.md`。
+3. `docs/wiki/ROADMAP.md`（仅用于优先级和状态，不代表已发布）。
+4. Wiki 与插件开发文档。
+5. `README.md` / `README_EN.md`。
 
 当前 `app/build.gradle.kts` 声明开发构建 `9.9.9.1 / versionCode 266`；`CHANGELOG.md` 最新完整发布记录为 `v9.9.8.9`。开发版本号领先发布记录时，不代表该版本已经公开发布。
+
+当前构建基线为 AGP 9.3.1、Gradle 9.5、Kotlin 2.4、compileSdk 37；Navigation3 runtime/UI 使用官方同版 `1.2.0-alpha07`，Miuix `0.9.3` 继续用于主题与视觉组件，不再提供 NavDisplay 实现。
 
 `AI.txt` 与 `llm.txt` 是兼容入口，主入口为 [`../../llms.txt`](../../llms.txt)。

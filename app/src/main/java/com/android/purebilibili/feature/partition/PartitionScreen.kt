@@ -111,9 +111,11 @@ import com.android.purebilibili.feature.home.resolveHomeFeedCardLayout
 import com.android.purebilibili.feature.home.components.BottomBarIndicatorLayerTransform
 import com.android.purebilibili.feature.home.components.BottomBarLiquidOrientation
 import com.android.purebilibili.feature.home.components.BottomBarMatchedLiquidIndicator
+import com.android.purebilibili.feature.home.components.bottomBarMatchedCaptureOverflow
 import com.android.purebilibili.feature.home.components.rememberBottomBarMatchedLiquidChromeState
 import com.android.purebilibili.feature.home.components.resolveAndroidNativeIdleIndicatorSurfaceColor
 import com.android.purebilibili.feature.home.components.resolveBottomBarBackdropPresetIndicatorLens
+import com.android.purebilibili.feature.home.components.resolveBottomBarCaptureSafeInsetDp
 import com.android.purebilibili.feature.home.components.resolveBottomBarBackdropPresetProgress
 import com.android.purebilibili.feature.home.components.resolveBottomBarIndicatorGlowAlpha
 import com.android.purebilibili.feature.home.components.resolveBottomBarLiquidGlassHighlightAlpha
@@ -604,7 +606,7 @@ private fun PartitionSideRail(
         dragState.updateIndex(selectedIndex)
     }
 
-    Box(modifier = modifier.fillMaxHeight()) {
+    BoxWithConstraints(modifier = modifier.fillMaxHeight()) {
         val itemHeightPx = with(density) { PartitionSideRailItemHeight.toPx() }
         val itemSlotHeightPx = with(density) { (PartitionSideRailItemHeight + PartitionSideRailItemSpacing).toPx() }
         val contentTopPaddingPx = with(density) { contentPadding.calculateTopPadding().toPx() }
@@ -622,15 +624,24 @@ private fun PartitionSideRail(
                 itemSlotHeightPx = itemSlotHeightPx
             )
         }
-        val railContentBackdrop = rememberLayerBackdrop()
+        val indicatorWidth = (maxWidth - indicatorHorizontalPadding.start - indicatorHorizontalPadding.end)
+            .coerceAtLeast(0.dp)
+        val fullIndicatorLensSpec = resolveBottomBarBackdropPresetIndicatorLens(progress = 1f)
+        val captureSafeInset = resolveBottomBarCaptureSafeInsetDp(
+            indicatorWidthDp = indicatorWidth.value,
+            refractionHeightDp = fullIndicatorLensSpec.refractionHeightDp,
+            refractionAmountDp = fullIndicatorLensSpec.refractionAmountDp,
+            panelOffsetDp = 0f
+        ).dp
         val railPageBackdrop = rememberLayerBackdrop()
 
-        // Keep the page sample outside both the moving capsule and the scrollable list.
-        // Reusing the LazyColumn backdrop for both sides produces a transient empty sample while
-        // it moves, which the native liquid renderer displays as a black capsule.
+        // The vertical indicator renders above the visible labels, so it only needs a stable page
+        // sample. Sampling the scrolling LazyColumn becomes invalid while the long-press layer is
+        // translated and scaled. The overflow keeps the 88/56 drag scale and lens inside capture.
         Box(
             modifier = Modifier
                 .matchParentSize()
+                .bottomBarMatchedCaptureOverflow(captureSafeInset)
                 .alpha(0f)
                 .layerBackdrop(railPageBackdrop)
                 .background(AppSurfaceTokens.background())
@@ -640,20 +651,20 @@ private fun PartitionSideRail(
             dragState = dragState,
             itemSlotHeightPx = itemSlotHeightPx,
             indicatorOffsetPxProvider = currentIndicatorOffsetPxProvider,
+            indicatorWidth = indicatorWidth,
             liquidGlassIndicatorEnabled = liquidGlassIndicatorEnabled,
             liquidGlassPreset = liquidGlassPreset,
-            contentBackdrop = railContentBackdrop,
             backdrop = railPageBackdrop,
             maxVideoPushPx = maxVideoPushPx,
             horizontalPadding = indicatorHorizontalPadding,
-            onVideoListPushChanged = onVideoListPushChanged
+            onVideoListPushChanged = onVideoListPushChanged,
+            modifier = Modifier.matchParentSize()
         )
 
         LazyColumn(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
-                .layerBackdrop(railContentBackdrop)
                 .partitionSideRailIndicatorLongPressDrag(
                     dragState = dragState,
                     itemHeightPx = itemHeightPx,
@@ -690,13 +701,14 @@ private fun PartitionSideRailMovingIndicator(
     dragState: DampedDragAnimationState,
     itemSlotHeightPx: Float,
     indicatorOffsetPxProvider: () -> Float,
+    indicatorWidth: androidx.compose.ui.unit.Dp,
     liquidGlassIndicatorEnabled: Boolean,
     liquidGlassPreset: BottomBarLiquidGlassPreset,
-    contentBackdrop: top.yukonga.miuix.kmp.blur.Backdrop,
     backdrop: top.yukonga.miuix.kmp.blur.Backdrop,
     maxVideoPushPx: Float,
     horizontalPadding: PartitionSideRailIndicatorHorizontalPadding,
-    onVideoListPushChanged: (Float) -> Unit
+    onVideoListPushChanged: (Float) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val shape = resolveSharedBottomBarCapsuleShape()
     val isDarkTheme = isSystemInDarkTheme()
@@ -733,10 +745,8 @@ private fun PartitionSideRailMovingIndicator(
         progress = pressProgress
     )
 
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = modifier) {
         val density = LocalDensity.current
-        val indicatorWidth = (maxWidth - horizontalPadding.start - horizontalPadding.end)
-            .coerceAtLeast(0.dp)
         BottomBarMatchedLiquidIndicator(
             visible = true,
             dockContentAlpha = 1f,
@@ -747,7 +757,7 @@ private fun PartitionSideRailMovingIndicator(
             indicatorHeight = PartitionSideRailItemHeight,
             shellShape = shape,
             liquidGlassPreset = liquidGlassPreset,
-            contentBackdrop = contentBackdrop,
+            contentBackdrop = backdrop,
             backdrop = backdrop,
             indicatorLensSpec = indicatorLensSpec,
             effectivePressProgress = pressProgress,

@@ -1,11 +1,15 @@
 # Miuix 对齐记录
 
-最后更新：2026-07-19
+最后更新：2026-07-31
 
 ## 背景
 
 本仓库通过 Maven Central 引入 `top.yukonga.miuix.kmp`（当前钉扎 **0.9.3**），并在
 `AndroidNativeVariant.MIUIX` 下经由 `PresetPrimitiveRenderer.MIUIX_BRIDGED` 分发到官方组件。
+
+Navigation3 需单独看待：Miuix 0.9.3 的 `miuix-navigation3-ui` 编译于 Navigation3 runtime
+1.1.4，而当前应用使用官方 runtime/UI 1.2.0-alpha07。为避免 SceneState 与预测返回版本错配，
+当前只保留 Miuix 主题/组件/blur/shader/squircle/icons，不使用 Miuix NavDisplay 实现。
 
 上游发布说明：<https://github.com/compose-miuix-ui/miuix/releases/tag/v0.9.3>
 

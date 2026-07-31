@@ -1,6 +1,6 @@
 plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+    // AGP 9+ built-in Kotlin
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
@@ -33,7 +33,6 @@ android {
     }
 
     lint {
-        textReport = true
         abortOnError = true
     }
 }
@@ -45,14 +44,15 @@ kotlin {
 }
 
 dependencies {
-    api(platform("androidx.compose:compose-bom:2026.03.01"))
+    api(platform("androidx.compose:compose-bom:2026.06.01"))
     api("androidx.compose.ui:ui")
     api("androidx.compose.foundation:foundation")
     api("androidx.compose.animation:animation")
     api("androidx.compose.material:material-icons-extended")
-    api("androidx.compose.material3:material3:1.5.0-alpha18")
-    api("dev.chrisbanes.haze:haze:1.7.2")
-    implementation("dev.chrisbanes.haze:haze-materials:1.7.2")
+    api("androidx.compose.material3:material3:1.5.0-alpha25")
+    api("dev.chrisbanes.haze:haze:2.0.0-alpha03")
+    api("dev.chrisbanes.haze:haze-blur:2.0.0-alpha03")
+    implementation("dev.chrisbanes.haze:haze-blur-materials:2.0.0-alpha03")
     implementation("io.github.alexzhirkevich:cupertino:0.1.0-alpha04")
     api("io.github.alexzhirkevich:cupertino-icons-extended:0.1.0-alpha04")
     api("top.yukonga.miuix.kmp:miuix-ui-android:0.9.3")

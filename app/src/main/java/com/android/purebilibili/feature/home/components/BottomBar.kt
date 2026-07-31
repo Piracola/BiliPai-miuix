@@ -118,8 +118,6 @@ import com.android.purebilibili.core.ui.adaptive.MotionTier
 import com.android.purebilibili.core.ui.LocalGlobalWallpaperBackdropVisible
 import com.android.purebilibili.core.ui.resolveGlobalWallpaperProtectiveColor
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
-import dev.chrisbanes.haze.materials.HazeMaterials
 import com.android.purebilibili.core.util.HapticType
 import com.android.purebilibili.core.util.rememberHapticFeedback
 import com.android.purebilibili.core.theme.iOSSystemGray
@@ -147,8 +145,6 @@ import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.ui.ContainerLevel
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import dev.chrisbanes.haze.hazeEffect // [New]
-import dev.chrisbanes.haze.HazeStyle   // [New]
 // [LayerBackdrop] AndroidLiquidGlass library for real background refraction
 import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.rememberCombinedBackdrop
@@ -2212,7 +2208,6 @@ internal fun resolveBottomBarLayoutPolicy(
  * - 自动适配深色/浅色模式
  * -  点击触觉反馈
  */
-@OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
 fun FrostedBottomBar(
     currentItem: BottomNavItem = BottomNavItem.HOME,

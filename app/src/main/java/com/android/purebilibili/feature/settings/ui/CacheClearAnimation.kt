@@ -37,9 +37,8 @@ import com.android.purebilibili.core.ui.blur.shouldAllowRuntimeShaderBackedHazeE
 import kotlin.math.*
 import kotlin.random.Random
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeEffect
-import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
-import dev.chrisbanes.haze.materials.HazeMaterials
+import com.android.purebilibili.core.ui.blur.hazeEffectCompat
+import dev.chrisbanes.haze.blur.materials.HazeMaterials
 
 /**
  *  缓存清理进度数据
@@ -727,7 +726,7 @@ internal fun CacheClearConfirmDialog(
  * - 细腻的粒子消散效果
  * - 柔和的渐变色彩
  */
-@OptIn(ExperimentalHazeMaterialsApi::class)
+
 @Composable
 fun CacheClearAnimationDialog(
     progress: CacheClearProgress,
@@ -785,7 +784,7 @@ fun CacheClearAnimationDialog(
                     )
                     .then(
                         if (useHazeEffect) {
-                            Modifier.hazeEffect(
+                            Modifier.hazeEffectCompat(
                                 state = hazeState,
                                 style = HazeMaterials.thin(MaterialTheme.colorScheme.surface)
                             )

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -104,7 +105,7 @@ fun AdaptivePullToRefreshBox(
  *   screen does not supply a custom Cupertino indicator.
  * - Miuix: unused — the Miuix branch mounts native [MiuixPullToRefresh] instead.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun BoxScope.AdaptivePullToRefreshDefaultIndicator(
     isRefreshing: Boolean,

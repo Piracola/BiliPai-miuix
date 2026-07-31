@@ -829,7 +829,7 @@ class VideoSharedTransitionPolicyTest {
     }
 
     @Test
-    fun sharedTransitionVisualSpec_returnConvergesToRecordedCardCorner() {
+    fun sharedTransitionVisualSpec_returnKeepsPlayerCornerNotListCardCorner() {
         val spec = resolveVideoSharedTransitionVisualSpec(
             sourceRoute = "watch_later",
             sourceCornerDp = 8,
@@ -842,9 +842,18 @@ class VideoSharedTransitionPolicyTest {
         )
 
         assertEquals(VideoSharedTransitionTargetMode.InlineCover, spec.targetMode)
-        assertEquals(8, spec.targetCornerDp)
+        // 详情壳飞行用播放器圆角，不是列表卡 8dp
+        assertEquals(12, spec.targetCornerDp)
         assertFalse(spec.fillTargetViewport)
         assertTrue(spec.suppressCoverFade)
+        assertEquals(
+            0,
+            resolveVideoDetailShellOverlayCornerDp(
+                visualSpec = spec,
+                liveReturnMorph = true,
+                isReturningVisualState = true,
+            ),
+        )
     }
 
     @Test

@@ -67,13 +67,23 @@ fun FavoriteFolderSheet(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
-                AppText(
-                    text = "添加到收藏夹",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-                
+                Column(
+                    modifier = Modifier.align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    AppText(
+                        text = "添加到收藏夹",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    AppText(
+                        text = "可勾选一个或多个收藏夹，将视频收藏到自己的收藏夹",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
                 // [新增] 新建文件夹按钮
                 AppTextButton(
                     onClick = { showCreateDialog = true },

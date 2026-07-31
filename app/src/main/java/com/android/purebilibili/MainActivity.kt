@@ -145,7 +145,6 @@ import com.android.purebilibili.feature.video.ui.overlay.MiniPlayerOverlay
 import com.android.purebilibili.navigation.AppNavigation
 import com.android.purebilibili.navigation.ScreenRoutes
 import com.android.purebilibili.navigation.VideoRoute
-import dev.chrisbanes.haze.haze
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first

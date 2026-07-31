@@ -122,18 +122,25 @@ class VideoCardReturnTimelineTest {
                 forceCoverOnlyOnReturn = true,
             )
         )
-        assertTrue(
+        // 非 live 也不得仅因 returning 就 forceCover（会一返回掐 player）
+        assertFalse(
             shouldForceCoverOnlyForReturnOwnership(
                 ownership = VideoCardReturnCoverOwnership.RESIDENT_COVER,
                 useReturningVisualState = true,
                 forceCoverOnlyOnReturn = false,
             )
         )
+        assertTrue(
+            shouldForceCoverOnlyForReturnOwnership(
+                ownership = VideoCardReturnCoverOwnership.RESIDENT_COVER,
+                useReturningVisualState = true,
+                forceCoverOnlyOnReturn = true,
+            )
+        )
     }
 
     @Test
-    fun forceCoverOnly_requiresCommittedReturnNotJustLeavingVisual() {
-        // 预测 seek：离开态 true 但未提交 → 不得 forceCover
+    fun forceCoverOnly_onlyWhenExplicitlyRequestedNotOnCommitAlone() {
         assertFalse(
             shouldForceCoverOnlyForReturnOwnership(
                 ownership = VideoCardReturnCoverOwnership.RESIDENT_COVER,
@@ -142,7 +149,7 @@ class VideoCardReturnTimelineTest {
                 isCommittedCardReturn = false,
             )
         )
-        assertTrue(
+        assertFalse(
             shouldForceCoverOnlyForReturnOwnership(
                 ownership = VideoCardReturnCoverOwnership.RESIDENT_COVER,
                 useReturningVisualState = true,
@@ -150,7 +157,6 @@ class VideoCardReturnTimelineTest {
                 isCommittedCardReturn = true,
             )
         )
-        // live 仍永远不 forceCover
         assertFalse(
             shouldForceCoverOnlyForReturnOwnership(
                 ownership = VideoCardReturnCoverOwnership.LIVE_SURFACE,

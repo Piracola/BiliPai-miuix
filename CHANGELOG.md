@@ -1,5 +1,155 @@
 # Changelog
 
+## v9.9.9.6 (2026-07-31)
+
+### 版本信息
+
+- 版本号从 `9.9.9.5` 升级到 `9.9.9.6`，`versionCode` 从 `270` 升级到 `271`。
+- 更新范围：自最近已发布基线 **`v9.9.8.9`** 至本版本（含中间 `9.9.9.1` 等未单独发版迭代）。
+- 提交规模：约 **184** 个非合并提交；主要作者 **@piracola（约 106）**、**@Jay3-yy（约 79）**。
+
+### 特别致谢：UI 系统重构（Piracola / BiliPai-miuix）
+
+**衷心感谢 [Piracola/BiliPai-miuix](https://github.com/Piracola/BiliPai-miuix)（@piracola）对本期 UI 体系的大体量重构与持续贡献。**
+
+本周期 UI 重构是主线最大体量变更，覆盖 design-system 模块建立、中性组件门面、全 feature 迁移与合入，并在主仓通过多次 merge 落地：
+
+- `merge: integrate Piracola UI enhancements`
+- `merge: integrate Piracola component facade migration`
+- `merge: integrate Piracola facade completion`
+- `merge: integrate UI enhancements` / 与上游 `v9.9.9.1` 同步合入
+
+#### 重构做了什么（完整摘要）
+
+1. **新建 design-system 模块**  
+   将主题 primitive、语义视觉、共享 chrome 几何、动效 / 交互 policy、运行时视觉 profile、分段控件、pull-refresh、自适应加载 / tooltip、导航视觉 policy 等从 app 散落实现抽到独立模块。
+
+2. **中性组件 facade（App* 控件）**  
+   统一并集中：
+   - 按钮：Primary / Text / Icon / Outlined  
+   - 表面与卡片、Chip / SuggestionChip、Badge、FAB  
+   - Tab、进度指示、滑条、Checkbox / 选择控件  
+   - OutlinedTextField、下拉菜单、对话框、BottomSheet、导航抽屉  
+   - 自适应 Loading、首页刷新指示器、视频重试按钮等  
+
+3. **按模块完成 feature facade 迁移**  
+   bangumi、dynamic、settings、profile、video（含播放器与 overlay）、home / list、messaging、collection、download、live、onboarding、story / article 等逐步迁到中性 API；移除遗留 brand button、过时 preference renderer 与无效 style 入参。
+
+4. **Chrome / 导航 / 设置能力边界**  
+   Scaffold、TopBar、侧栏、分段设置、drawer、pull-refresh 等收敛到共享 capability / semantic policy；设置页 pilot 与 preference 模型统一。
+
+5. **液态玻璃（liquid glass）复用**  
+   底栏 liquid chrome 抽取共享；顶栏 dock 图标对齐、折射与指示器 parity；分段玻璃中心伪影与复用面渲染修复；文档约定与 parity 测试门禁。
+
+6. **质量门禁**  
+   架构边界、迁移阶段、颜色 / 间距 / 字号 / 已迁移模块检查进入 CI / PR 门禁；补齐 final architecture 与 stage gate 测试。
+
+没有上述工作，主题变体（Material / Miuix / iOS）、跨页视觉一致与后续动效优化将难以维持。**再次向 Piracola 与 [BiliPai-miuix](https://github.com/Piracola/BiliPai-miuix) 致谢。**  
+README 致谢表已加入该仓库链接。
+
+---
+
+### 相对 v9.9.8.9 的完整更新
+
+#### 1. 构建、工程与导航运行时
+
+- 升级 **AGP 9.3.1 / Gradle 9.5**，移除过时 R8 钉扎与随 Shimmer 废弃的 ProGuard keep。
+- 修复 release APK 重命名在 configuration-cache 下的安全性。
+- Navigation3 对齐 **1.2.0-alpha07** 运行时；预测返回目标 scene 解析与 NO_OP shared 路径加固。
+- CI：恢复 quality / Compose report 守卫；颜色、间距、字号与已迁移模块检查纳入 PR 门禁。
+- 文档：清理过时文档、同步项目现状、发布路线图 / wiki 基线；补充液态玻璃复用 parity 约定与性能静态审计说明。
+
+#### 2. 视频卡片过渡、景深、预测返回与一镜到底
+
+- **进场**：卡片 sharedBounds / 壳 morph、封面预加载、进场播放意图与封面层级修正；首页过渡景深缩放与源页缩小分层。
+- **单时钟与景深 Host**：景深冻结层由 Host 持有，与 SinglePane 源 dispose 解耦；settled 隐藏层策略、帧同步与 release 采样加固。
+- **预测返回**：live progress 驱动景深糊↔清；源页在预测返回时重新露出；始终优先 live surface 预览；可选 live return preview 开关。
+- **提交返回**：deferred 停播、live surface 保活至提交落位；末段封面接管；settled 播放态返回运动预算（弹幕/次要内容减负）。
+- **问题修复轮次**：返回黑屏、空冻结层、HELD 满糊预热丢失（「中断开场有糊、看完再返回无糊」）、返回壳直角/播放器圆角、shared morph 提前清糊、hero 轮播统计文案与返回模糊曲线等。
+- **连续播放器 morph** 能力合入与加固；尊重首页视频过渡设置。
+
+#### 3. 液态玻璃与首页 / 导航 chrome
+
+- 共享底栏 liquid chrome，并推广到可复用表面。
+- 顶栏 dock：图标对齐、折射、指示器与底栏 parity。
+- 分段 liquid glass 中心伪影、复用渲染伪影修复。
+- 分区页液态玻璃背景修复。
+- 底栏玻璃在页面切换时保持连续。
+- 首页导航 motion 精简；过渡帧成本与导航转场性能优化。
+
+#### 4. 播放器、详情与列表
+
+- 全屏 FILL 滑动强制视口重测；全屏切换刷新视口；切换全屏保留当前帧。
+- 预测返回 / 提交返回过程中保留实时画面，直至 committed landing。
+- 收藏夹：打开视频不再等待完整队列加载完成；点击收藏统一打开收藏夹选择面板，可多选到自己的收藏夹（本版提示文案）。
+- 稍后再看：morph 过程 crossfade 卡片；Miuix 顶栏标题可见与标题区域保留。
+- 列表体验：稍后再看与收藏列表改进（`feat(lists)`）。
+- 听视频导航图标增强与字重修正。
+
+#### 5. 空间、动态、搜索与其它功能
+
+- 空间：按请求定位最近观看的投稿；卡片高亮动画 import 修正；已播定位提示修复。
+- 动态：表情图渲染；转发动态从正文打开原文；重新打开时重载转发评论。
+- 搜索：顶部搜索框保持固定高度。
+- 播放与推荐稳定性修复（`fix(video): stabilize playback and recommendations`）。
+
+#### 6. 性能与可观测
+
+- 首页滚动路径去掉未使用的全屏层；去掉主线程阻塞读与被压制的性能债。
+- 启用 Compose stability 配置、metrics 门禁与 strict mode；运行时 visual guard 接到模糊管线。
+- 统一 feed / live design tokens；减少过渡帧成本。
+- 增加 release 首页滚动 / 卡片过渡采样脚本与输出说明；部分 Baseline Profile 接线曾因未验证回退。
+- 动画 / 过渡相关 unit 与 perf 门禁扩展（frozen session、transition gates 等）。
+
+#### 7. 本版（9.9.9.6）用户可见小改动
+
+- 点击收藏 → 打开「添加到收藏夹」面板，并提示：  
+  **「可勾选一个或多个收藏夹，将视频收藏到自己的收藏夹」**。
+- 版本号与发布说明更新。
+
+---
+
+### 作者与提交线索
+
+#### @piracola（约 106 个提交；UI 系统重构主力）
+
+代表提交（节选，完整列表见 `git log v9.9.8.9..HEAD --author=piracola`）：
+
+- `0bfe0c0cc` introduce neutral primitive controls  
+- `41587fa12` route feature surfaces through design system  
+- `ee51b6f2a` / `c6b87fd23` scaffolds & top bars through app chrome  
+- `48aaf1640`…`bd581e06d` 将 preference / motion / interaction / navigation / chrome 等 policy 迁入 design-system  
+- `d1c8f6ccf`…`e69411095` 各 feature facade 迁移与收尾抛光  
+- 以及对话框、Sheet、Chip、Tab、按钮族、播放器 surface 等数十次 `refactor(ui): centralize / migrate …`
+
+#### @Jay3-yy（约 79 个提交；主线整合、动画、导航、发布）
+
+代表方向：
+
+- 视频卡片 / 景深 / 预测返回 / 一镜到底多轮修复与性能预算  
+- 液态玻璃底栏 / 顶栏 dock 与复用 parity  
+- Navigation3 alpha07、AGP/Gradle 升级与工程修复  
+- 空间已播定位、动态表情、搜索栏、收藏/稍后再看细节  
+- 与 Piracola fork 的 merge 整合、文档与发布（含 9.9.9.1 / 9.9.9.6）
+
+#### 合并记录（节选）
+
+- `3e4cc3170` merge: integrate Piracola UI enhancements  
+- `8a7f80bb3` merge: integrate Piracola component facade migration  
+- `c3b767395` merge: integrate Piracola facade completion  
+- `9e7d66107` merge: integrate UI enhancements  
+- `fc43907fa` merge: sync upstream v9.9.9.1  
+- `5805d68b4` merge: harden continuous player morph  
+
+### 说明
+
+- 中间版本号 `9.9.9.1` 曾在主线 bump，但 CHANGELOG 以 **`v9.9.8.9` 标签** 为上一正式发版基线做完整汇总。  
+- 更细的逐提交列表可用：  
+  `git log v9.9.8.9..v9.9.9.6 --oneline`  
+  （若尚未打 `v9.9.9.6` 标签，则用 `v9.9.8.9..HEAD`。）
+
+---
+
 ## v9.9.8.9 (2026-07-26)
 
 ### 版本信息

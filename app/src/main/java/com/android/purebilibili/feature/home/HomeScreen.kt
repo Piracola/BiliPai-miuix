@@ -2340,10 +2340,18 @@ fun HomeScreen(
 
     //  [性能优化] 图片预加载 - 提前加载即将显示的视频封面
     // 📉 [省流量] 省流量模式下禁用预加载
-    LaunchedEffect(currentCategory, popularSubCategory, isDataSaverActive, preloadAheadCount) {
+    LaunchedEffect(
+        currentCategory,
+        popularSubCategory,
+        isDataSaverActive,
+        preloadAheadCount,
+        isReturningFromVideoDetail,
+    ) {
         // 📉 省流量模式下跳过预加载
         if (isDataSaverActive) return@LaunchedEffect
         if (preloadAheadCount <= 0) return@LaunchedEffect
+        // 详情返回 morph 窗口：延后封面预加载，避免与 live surface + 景深抢 IO/主线程。
+        if (isReturningFromVideoDetail) return@LaunchedEffect
         
         val currentGridState = if (currentCategory == HomeCategory.POPULAR) {
             popularGridStates[popularSubCategory]

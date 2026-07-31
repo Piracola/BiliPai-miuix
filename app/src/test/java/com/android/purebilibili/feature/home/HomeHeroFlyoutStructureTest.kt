@@ -76,6 +76,18 @@ class HomeHeroFlyoutStructureTest {
     }
 
     @Test
+    fun homeHeroCarouselStatsTextUsesValidChineseUnits() {
+        val source = loadSource("app/src/main/java/com/android/purebilibili/feature/home/components/HomeHeroCarousel.kt")
+        // 可见统计文案：分隔符 · + 单位「播放」「弹幕」，禁止损坏字面量。
+        assertTrue(source.contains("\" · \""))
+        assertTrue(source.contains("formatStat(video.stat.view.toLong()) + \"播放\""))
+        assertTrue(source.contains("formatStat(video.stat.danmaku.toLong()) + \"弹幕\""))
+        assertFalse(source.contains("formatStat(video.stat.view.toLong()) + \"??\""))
+        assertFalse(source.contains("formatStat(video.stat.danmaku.toLong()) + \"??\""))
+        assertFalse(source.contains("\" \uFFFD \""))
+    }
+
+    @Test
     fun inlinePartitionPageKeepsPartitionVideoSourceInsteadOfHomeFeed() {
         val source = loadSource("app/src/main/java/com/android/purebilibili/feature/home/HomeScreen.kt")
         val partitionPageSource = source

@@ -355,9 +355,13 @@ internal fun shouldForceCoverOnlyForReturnOwnership(
     isCommittedCardReturn: Boolean = useReturningVisualState,
 ): Boolean {
     if (isVideoCardLiveReturnMorphOwnership(ownership)) return false
-    if (forceCoverOnlyOnReturn) return true
-    return isCommittedCardReturn &&
-        ownership != VideoCardReturnCoverOwnership.LIVE_SURFACE
+    // 仅显式 forceCover；禁止「一点返回就 forceCover」掐掉 player surface。
+    // CoverFirst 的视觉交接靠 cover/player alpha，不靠 forceCoverOnly 布局折叠。
+    @Suppress("UNUSED_PARAMETER")
+    val ignoredCommitted = isCommittedCardReturn
+    @Suppress("UNUSED_PARAMETER")
+    val ignoredReturning = useReturningVisualState
+    return forceCoverOnlyOnReturn
 }
 
 /**

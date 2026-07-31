@@ -3,6 +3,8 @@ package com.android.purebilibili.core.ui
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.LoadingIndicatorDefaults
 import androidx.compose.material3.MaterialTheme
@@ -128,6 +130,7 @@ private fun resolveAdaptiveLoadingDefaultColor(visual: AdaptiveLoadingVisual): C
  * Its layout hard-codes a 48.dp container; scale when a different [size] is requested
  * so full-page slots (e.g. 80.dp) still look intentional under dynamic color.
  */
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun Material3PageLoadingIndicator(
     modifier: Modifier,

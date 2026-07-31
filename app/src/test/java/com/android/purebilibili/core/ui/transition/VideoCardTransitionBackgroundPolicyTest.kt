@@ -10,24 +10,76 @@ import kotlin.test.assertTrue
 class VideoCardTransitionBackgroundPolicyTest {
 
     @Test
+    fun detachedSourceInvalidatesRecordedSnapshotBeforeBackPreview() {
+        val state = VideoCardTransitionSnapshotLayerState().apply {
+            freezeRecording = true
+            hasRecordedContent = true
+            lastBlurRadiusPx = 12f
+            lastCornerRadiusPx = 24f
+        }
+
+        state.invalidateRecordedContent()
+
+        assertFalse(state.freezeRecording)
+        assertFalse(state.hasRecordedContent)
+        assertTrue(state.lastBlurRadiusPx.isNaN())
+        assertTrue(state.lastCornerRadiusPx.isNaN())
+    }
+
+    @Test
+    fun hostOwnedSnapshotMustNotInvalidateWhenSourceDetaches() {
+        assertFalse(shouldInvalidateSnapshotOnSourceDispose(isHostOwnedSnapshot = true))
+        assertTrue(shouldInvalidateSnapshotOnSourceDispose(isHostOwnedSnapshot = false))
+    }
+
+    @Test
+    fun hostOwnedSourceDetachMarksDisplayListStaleForRerecord() {
+        val state = VideoCardTransitionSnapshotLayerState().apply {
+            freezeRecording = true
+            hasRecordedContent = true
+            displayListStale = false
+            lastBlurRadiusPx = 12f
+        }
+        state.markDisplayListStale()
+        assertTrue(state.displayListStale)
+        assertTrue(state.hasRecordedContent)
+        assertFalse(
+            isVideoCardTransitionSnapshotDrawable(
+                hasRecordedContent = state.hasRecordedContent,
+                displayListStale = state.displayListStale,
+            ),
+        )
+        state.markDisplayListFresh()
+        assertFalse(state.displayListStale)
+        assertTrue(state.hasRecordedContent)
+        assertTrue(state.freezeRecording)
+    }
+
+    @Test
+    fun transitionMotionTierOnlyReducesForSystemReduceMotion() {
+        assertEquals(MotionTier.Normal, resolveVideoCardTransitionMotionTier(reduceMotion = false))
+        assertEquals(MotionTier.Reduced, resolveVideoCardTransitionMotionTier(reduceMotion = true))
+    }
+
+    @Test
     fun snapshotBlur_isEnabledForActivePhasesOnApi31Plus() {
         assertTrue(
             shouldUseVideoCardTransitionSnapshotBlur(
-                phase = VideoCardTransitionBackgroundPhase.OPENING,
+                exposure = VideoCardTransitionExposure.Opening,
                 motionTier = MotionTier.Normal,
                 sdkInt = 35,
             )
         )
         assertTrue(
             shouldUseVideoCardTransitionSnapshotBlur(
-                phase = VideoCardTransitionBackgroundPhase.HELD,
+                exposure = VideoCardTransitionExposure.BackPreview,
                 motionTier = MotionTier.Normal,
                 sdkInt = 31,
             )
         )
         assertTrue(
             shouldUseVideoCardTransitionSnapshotBlur(
-                phase = VideoCardTransitionBackgroundPhase.RETURNING,
+                exposure = VideoCardTransitionExposure.Returning,
                 motionTier = MotionTier.Normal,
                 sdkInt = 35,
             )
@@ -38,21 +90,21 @@ class VideoCardTransitionBackgroundPolicyTest {
     fun snapshotBlur_isDisabledForIdleReducedOrLegacyApi() {
         assertFalse(
             shouldUseVideoCardTransitionSnapshotBlur(
-                phase = VideoCardTransitionBackgroundPhase.IDLE,
+                exposure = VideoCardTransitionExposure.Idle,
                 motionTier = MotionTier.Normal,
                 sdkInt = 35,
             )
         )
         assertFalse(
             shouldUseVideoCardTransitionSnapshotBlur(
-                phase = VideoCardTransitionBackgroundPhase.OPENING,
+                exposure = VideoCardTransitionExposure.Opening,
                 motionTier = MotionTier.Reduced,
                 sdkInt = 35,
             )
         )
         assertFalse(
             shouldUseVideoCardTransitionSnapshotBlur(
-                phase = VideoCardTransitionBackgroundPhase.OPENING,
+                exposure = VideoCardTransitionExposure.Opening,
                 motionTier = MotionTier.Normal,
                 sdkInt = 30,
             )
@@ -63,7 +115,7 @@ class VideoCardTransitionBackgroundPolicyTest {
     fun snapshotBlur_respectsRealtimeBlurSetting() {
         assertFalse(
             shouldUseVideoCardTransitionSnapshotBlur(
-                phase = VideoCardTransitionBackgroundPhase.OPENING,
+                exposure = VideoCardTransitionExposure.Opening,
                 motionTier = MotionTier.Normal,
                 realtimeBlurEnabled = false,
                 sdkInt = 35,
@@ -72,11 +124,76 @@ class VideoCardTransitionBackgroundPolicyTest {
     }
 
     @Test
+    fun settledHiddenRetainsSnapshotWithoutAnyRenderWork() {
+        val exposure = resolveVideoCardTransitionExposure(
+            phase = VideoCardTransitionBackgroundPhase.HELD,
+            predictiveBackInProgress = false,
+            gestureRestoreInProgress = false,
+        )
+        val decision = resolveVideoCardTransitionRenderDecision(exposure)
+
+        assertEquals(VideoCardTransitionExposure.SettledHidden, exposure)
+        assertTrue(decision.retainSourceSnapshot)
+        assertFalse(decision.drawSourceNormally)
+        assertFalse(decision.drawTransitionBackground)
+        assertFalse(decision.updateBlurEffect)
+        assertFalse(decision.drawNavBackdrop)
+        // When the source is the sole composed scene under HELD, draw path still paints
+        // the retained layer (or live fallback) to avoid pure black under shared overlay.
+        assertTrue(shouldPaintRetainedSourceWithoutTransitionBackground(decision))
+        assertFalse(
+            shouldUseVideoCardTransitionSnapshotBlur(
+                exposure = exposure,
+                motionTier = MotionTier.Normal,
+                realtimeBlurEnabled = true,
+                sdkInt = 35,
+            )
+        )
+    }
+
+    @Test
+    fun paintRetainedSourceOnlyWhenSettledHiddenStyleDecision() {
+        val idle = resolveVideoCardTransitionRenderDecision(VideoCardTransitionExposure.Idle)
+        val returning = resolveVideoCardTransitionRenderDecision(VideoCardTransitionExposure.Returning)
+        val settled = resolveVideoCardTransitionRenderDecision(VideoCardTransitionExposure.SettledHidden)
+
+        assertFalse(shouldPaintRetainedSourceWithoutTransitionBackground(idle))
+        assertFalse(shouldPaintRetainedSourceWithoutTransitionBackground(returning))
+        assertTrue(shouldPaintRetainedSourceWithoutTransitionBackground(settled))
+    }
+
+    @Test
+    fun predictiveBackAndCancellationResolveToExposedThenHiddenStates() {
+        val preview = resolveVideoCardTransitionExposure(
+            phase = VideoCardTransitionBackgroundPhase.HELD,
+            predictiveBackInProgress = true,
+            gestureRestoreInProgress = false,
+        )
+        val restoring = resolveVideoCardTransitionExposure(
+            phase = VideoCardTransitionBackgroundPhase.HELD,
+            predictiveBackInProgress = false,
+            gestureRestoreInProgress = true,
+        )
+        val settled = resolveVideoCardTransitionExposure(
+            phase = VideoCardTransitionBackgroundPhase.HELD,
+            predictiveBackInProgress = false,
+            gestureRestoreInProgress = false,
+        )
+
+        assertEquals(VideoCardTransitionExposure.BackPreview, preview)
+        assertEquals(VideoCardTransitionExposure.Restoring, restoring)
+        assertEquals(VideoCardTransitionExposure.SettledHidden, settled)
+        assertTrue(resolveVideoCardTransitionRenderDecision(preview).drawNavBackdrop)
+        assertFalse(resolveVideoCardTransitionRenderDecision(restoring).drawNavBackdrop)
+        assertTrue(resolveVideoCardTransitionRenderDecision(restoring).drawTransitionBackground)
+    }
+
+    @Test
     fun navBackdrop_isHiddenWhenPredictiveReturnTargetsAnotherVideoDetail() {
         assertFalse(
             shouldShowVideoCardTransitionNavBackdrop(
                 cardTransitionEnabled = true,
-                phase = VideoCardTransitionBackgroundPhase.HELD,
+                exposure = VideoCardTransitionExposure.SettledHidden,
                 isVideoDetailOnStack = true,
                 isReturningToVideoDetail = true,
             )
@@ -447,8 +564,8 @@ class VideoCardTransitionBackgroundPolicyTest {
         )
 
         assertEquals(12f, start.blurRadiusPx)
-        // 同源时间线轻微滞后建立，progress=0.5 仍约为 6px（density1）。
-        assertEquals(6f, middle.blurRadiusPx, 1f)
+        // RETURNING 使用 4px 量化：progress=0.5 → raw≈6 → quantize 到 4 或 8。
+        assertTrue(middle.blurRadiusPx in setOf(4f, 8f))
         assertTrue(middle.blurRadiusPx in 1f..<start.blurRadiusPx)
         assertEquals(0f, end.blurRadiusPx)
         assertTrue(start.scrimAlpha > middle.scrimAlpha)
@@ -601,6 +718,20 @@ class VideoCardTransitionBackgroundPolicyTest {
                 entryRoute = "main_host",
                 sourceRoute = "home",
                 activeMainHostRoute = "dynamic"
+            )
+        )
+        assertFalse(
+            shouldApplyVideoCardTransitionBackgroundToRoute(
+                entryRoute = "main_host",
+                sourceRoute = "home",
+                activeMainHostRoute = "video/BV1"
+            )
+        )
+        assertTrue(
+            shouldApplyVideoCardTransitionBackgroundToRoute(
+                entryRoute = "home",
+                sourceRoute = "home",
+                activeMainHostRoute = "video/BV1"
             )
         )
         assertTrue(
@@ -791,7 +922,20 @@ class VideoCardTransitionBackgroundPolicyTest {
         assertTrue(
             shouldSnapClearVideoCardDepthBlurOnQuickReturn(
                 isQuickReturnFromDetail = true,
+                phase = VideoCardTransitionBackgroundPhase.OPENING,
+            )
+        )
+        // HELD / RETURNING（含快速返回）必须走连续消糊，禁止 snap 瞬间清晰。
+        assertFalse(
+            shouldSnapClearVideoCardDepthBlurOnQuickReturn(
+                isQuickReturnFromDetail = true,
                 phase = VideoCardTransitionBackgroundPhase.HELD,
+            )
+        )
+        assertFalse(
+            shouldSnapClearVideoCardDepthBlurOnQuickReturn(
+                isQuickReturnFromDetail = true,
+                phase = VideoCardTransitionBackgroundPhase.RETURNING,
             )
         )
         assertFalse(
@@ -809,46 +953,46 @@ class VideoCardTransitionBackgroundPolicyTest {
     }
 
     @Test
-    fun navBackdropStaysVisibleThroughTheWholeVideoCardTransition() {
-        assertTrue(
+    fun navBackdropIsRemovedAtSettledHiddenAndVisibleOnlyWhileExposed() {
+        assertFalse(
             shouldShowVideoCardTransitionNavBackdrop(
                 cardTransitionEnabled = true,
-                phase = VideoCardTransitionBackgroundPhase.HELD,
+                exposure = VideoCardTransitionExposure.SettledHidden,
                 isVideoDetailOnStack = true,
             )
         )
         assertTrue(
             shouldShowVideoCardTransitionNavBackdrop(
                 cardTransitionEnabled = true,
-                phase = VideoCardTransitionBackgroundPhase.OPENING,
+                exposure = VideoCardTransitionExposure.Opening,
                 isVideoDetailOnStack = true,
             )
         )
         assertTrue(
             shouldShowVideoCardTransitionNavBackdrop(
                 cardTransitionEnabled = true,
-                phase = VideoCardTransitionBackgroundPhase.RETURNING,
+                exposure = VideoCardTransitionExposure.BackPreview,
                 isVideoDetailOnStack = true,
             )
         )
         assertTrue(
             shouldShowVideoCardTransitionNavBackdrop(
                 cardTransitionEnabled = true,
-                phase = VideoCardTransitionBackgroundPhase.RETURNING,
+                exposure = VideoCardTransitionExposure.Returning,
                 isVideoDetailOnStack = false,
             )
         )
         assertFalse(
             shouldShowVideoCardTransitionNavBackdrop(
                 cardTransitionEnabled = false,
-                phase = VideoCardTransitionBackgroundPhase.HELD,
+                exposure = VideoCardTransitionExposure.BackPreview,
                 isVideoDetailOnStack = true,
             )
         )
         assertFalse(
             shouldShowVideoCardTransitionNavBackdrop(
                 cardTransitionEnabled = true,
-                phase = VideoCardTransitionBackgroundPhase.HELD,
+                exposure = VideoCardTransitionExposure.SettledHidden,
                 isVideoDetailOnStack = false,
             )
         )
@@ -941,5 +1085,28 @@ class VideoCardTransitionBackgroundPolicyTest {
 
         assertEquals(gapFill, lowProgress)
         assertTrue(lowProgress.red < 0.92f)
+    }
+
+    @Test
+    fun hostOwnedSourceDetachRequestsRefreshWithoutMarkingStale() {
+        val state = VideoCardTransitionSnapshotLayerState().apply {
+            freezeRecording = true
+            hasRecordedContent = true
+            displayListStale = false
+            lastBlurRadiusPx = 12f
+        }
+        state.markSourceDetachedForRefresh()
+        assertTrue(state.needsSourceRefresh)
+        assertTrue(state.hasRecordedContent)
+        assertFalse(state.displayListStale)
+        // Host 仍可认为 OPENING 帧 drawable，SettledHidden 能预热满糊
+        assertTrue(
+            isVideoCardTransitionSnapshotDrawable(
+                hasRecordedContent = state.hasRecordedContent,
+                displayListStale = state.displayListStale,
+            ),
+        )
+        state.markDisplayListFresh()
+        assertFalse(state.needsSourceRefresh)
     }
 }

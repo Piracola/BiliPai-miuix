@@ -295,7 +295,8 @@ internal fun resolveVideoSharedTransitionVisualSpec(
         else -> VideoSharedTransitionTargetMode.InlinePlayer
     }
     val targetCornerDp = when {
-        isReturning -> safeSourceCornerDp
+        // 返回：详情壳保持播放器圆角（直角/小圆角），列表卡圆角在源卡 shell。
+        isReturning -> playerCornerDp.coerceAtLeast(0)
         targetMode == VideoSharedTransitionTargetMode.LandscapeFullscreen -> 0
         targetMode == VideoSharedTransitionTargetMode.PortraitFullscreen -> 0
         else -> playerCornerDp.coerceAtLeast(0)
@@ -311,6 +312,26 @@ internal fun resolveVideoSharedTransitionVisualSpec(
             !shouldSkipVideoCardSharedBoundsMorph(normalizedSourceRoute),
         suppressCoverFade = isReturning
     )
+}
+
+
+
+/**
+ * 详情壳 sharedBounds OverlayClip 圆角。
+ * 一镜到底返回：飞行中用直角/播放器圆角，避免中途变成「首页列表圆角卡」。
+ * 列表卡圆角由源卡 shell 自己承担落位。
+ */
+internal fun resolveVideoDetailShellOverlayCornerDp(
+    visualSpec: VideoSharedTransitionVisualSpec,
+    liveReturnMorph: Boolean,
+    isReturningVisualState: Boolean,
+    playerCornerDp: Int = DEFAULT_VIDEO_PLAYER_CORNER_DP,
+): Int {
+    // 返回飞行：直角播放器壳（0），列表卡圆角由源卡 shell 落位承担。
+    if (isReturningVisualState) {
+        return if (liveReturnMorph) 0 else playerCornerDp.coerceAtLeast(0)
+    }
+    return visualSpec.targetCornerDp.coerceAtLeast(0)
 }
 
 private fun resolveVideoSharedTransitionProfile(sourceRoute: String?): VideoSharedTransitionProfile {

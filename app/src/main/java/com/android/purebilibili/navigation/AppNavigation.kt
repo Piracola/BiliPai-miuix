@@ -168,16 +168,16 @@ import com.android.purebilibili.navigation3.BiliPaiNavCardSourceDirection
 import com.android.purebilibili.navigation3.BiliPaiNavEntryContentRole
 import com.android.purebilibili.navigation3.BiliPaiNavKey
 import com.android.purebilibili.navigation3.BiliPaiReturnSessionState
+import com.android.purebilibili.navigation3.BiliPaiVideoSource
+import com.android.purebilibili.navigation3.VideoCardTransitionSession
 import com.android.purebilibili.navigation3.legacyRouteToBiliPaiNavKey
 import com.android.purebilibili.navigation3.popBiliPaiNavKey
 import com.android.purebilibili.navigation3.popBiliPaiNavKeyToRoot
 import com.android.purebilibili.navigation3.pushBiliPaiNavKey
 import com.android.purebilibili.navigation3.pushOrReplaceSettingsCategoryNavKey
 import com.android.purebilibili.navigation3.resolveBiliPaiBackGestureDecision
-import com.android.purebilibili.navigation3.areVideoSourceKeysCompatible
 import com.android.purebilibili.navigation3.resolveBiliPaiNavCardSourceDirection
 import com.android.purebilibili.navigation3.resolveBiliPaiNavEntryContentRole
-import com.android.purebilibili.navigation3.resolveEffectiveCardSourceDirection
 import com.android.purebilibili.navigation3.resolveNavigation3SaveableStateKey
 import com.android.purebilibili.navigation3.resolveBiliPaiNavSourceMetadata
 import com.android.purebilibili.navigation3.shouldBindVideoDetailBackPreviewPlayer
@@ -621,25 +621,21 @@ fun AppNavigation(
             )
         }
         fun currentNavigation3SourceMetadata() = resolveBiliPaiNavSourceMetadata(
-            sourceKey = navigation3ReturnSession.lastVideoSourceKey,
-            sourceRoute = navigation3ReturnSession.lastVideoSourceRoute,
-            // Shared-element still wants key compatibility; geometry alone is enough for L/R direction.
-            clickedBoundsRecorded = CardPositionManager.lastClickedCardBounds != null &&
-                areVideoSourceKeysCompatible(
-                    cardKey = CardPositionManager.lastClickedVideoSourceKey,
-                    sessionKey = navigation3ReturnSession.lastVideoSourceKey
-                ),
-            cardFullyVisible = CardPositionManager.isCardFullyVisible,
-            cardSourceDirection = resolveEffectiveCardSourceDirection(
-                liveDirection = resolveBiliPaiNavCardSourceDirection(
-                    // Direction only needs click geometry, not strict key equality.
-                    clickedBoundsRecorded = CardPositionManager.lastClickedCardBounds != null,
-                    cardFullyVisible = CardPositionManager.isCardFullyVisible,
-                    isSingleColumnCard = CardPositionManager.isSingleColumnCard,
-                    normalizedCenterX = CardPositionManager.lastClickedCardCenter?.x
-                ),
-                sessionDirection = navigation3ReturnSession.lastCardSourceDirection
-            )
+            sourceKey = navigation3ReturnSession.transitionSession?.sourceKey
+                ?: navigation3ReturnSession.lastVideoSourceKey,
+            sourceRoute = navigation3ReturnSession.transitionSession?.sourceRoute
+                ?: navigation3ReturnSession.lastVideoSourceRoute,
+            clickedBoundsRecorded = navigation3ReturnSession.transitionSession
+                ?.hasUsableSourceGeometry
+                ?: false,
+            cardFullyVisible = navigation3ReturnSession.transitionSession
+                ?.cardFullyVisible
+                ?: false,
+            cardSourceDirection = navigation3ReturnSession.transitionSession
+                ?.cardSourceDirection
+                ?: navigation3ReturnSession.lastCardSourceDirection,
+            sourceCornerDp = navigation3ReturnSession.transitionSession?.sourceCornerDp,
+            coverIdentity = navigation3ReturnSession.transitionSession?.coverIdentity,
         )
         fun captureCardSourceDirectionForSession(): BiliPaiNavCardSourceDirection {
             return resolveBiliPaiNavCardSourceDirection(
@@ -649,6 +645,20 @@ fun AppNavigation(
                 normalizedCenterX = CardPositionManager.lastClickedCardCenter?.x
             )
         }
+        fun captureVideoCardTransitionSession(
+            bvid: String,
+            source: BiliPaiVideoSource,
+            coverIdentity: String?,
+        ) = VideoCardTransitionSession.create(
+            bvid = bvid,
+            source = source,
+            cardBounds = CardPositionManager.lastClickedCardBounds,
+            sourceCornerDp = CardPositionManager.lastClickedVideoSourceCornerDp,
+            cardSourceDirection = captureCardSourceDirectionForSession(),
+            coverIdentity = coverIdentity,
+            cardFullyVisible = CardPositionManager.isCardFullyVisible,
+            isSingleColumnCard = CardPositionManager.isSingleColumnCard,
+        )
         fun pushNavigation3KeyDirect(key: BiliPaiNavKey) {
             navigation3BackStack = when (key) {
                 is BiliPaiNavKey.SettingsCategory -> pushOrReplaceSettingsCategoryNavKey(
@@ -766,8 +776,13 @@ fun AppNavigation(
             )
             if (source.route != null) {
                 navigation3ReturnSession = navigation3ReturnSession
-                    .recordVideoSource(source)
-                    .recordCardSourceDirection(captureCardSourceDirectionForSession())
+                    .recordTransitionSession(
+                        captureVideoCardTransitionSession(
+                            bvid = seed.bvid,
+                            source = source,
+                            coverIdentity = seed.coverUrl,
+                        )
+                    )
                     .markDetailEntered(SystemClock.uptimeMillis())
             }
             pushNavigation3Key(
@@ -862,8 +877,13 @@ fun AppNavigation(
                 previousSourceRoute = navigation3ReturnSession.lastVideoSourceRoute
             )
             navigation3ReturnSession = navigation3ReturnSession
-                .recordVideoSource(source)
-                .recordCardSourceDirection(captureCardSourceDirectionForSession())
+                .recordTransitionSession(
+                    captureVideoCardTransitionSession(
+                        bvid = videoBvid,
+                        source = source,
+                        coverIdentity = videoKey?.coverUrl,
+                    )
+                )
                 .markDetailEntered(SystemClock.uptimeMillis())
             miniPlayerManager?.isNavigatingToVideo = true
             miniPlayerManager?.exitMiniMode(animate = false)
@@ -1031,13 +1051,17 @@ fun AppNavigation(
             currentKey = currentNavigation3Key,
             currentBottomItem = currentBottomNavItem
         )
+        // `activeBottomTabRoute` follows the top-most destination (for example `video/...`)
+        // and is intentionally used by bottom-bar visibility. Shared-card return matching needs
+        // the page retained inside MainHost instead, even while VideoDetail is on top.
+        val activeMainHostRoute = currentBottomNavItem.route
         val backGestureDecision = remember(
             cardTransitionEnabled,
             systemBackAction,
             currentNavigation3Key,
             previousNavigation3Key,
             navigation3SourceMetadata,
-            activeBottomTabRoute,
+            activeMainHostRoute,
         ) {
             resolveBiliPaiBackGestureDecision(
                 cardTransitionEnabled = sharedVideoCardTransitionEnabled,
@@ -1045,7 +1069,7 @@ fun AppNavigation(
                 currentKey = currentNavigation3Key,
                 previousKey = previousNavigation3Key,
                 sourceMetadata = navigation3SourceMetadata,
-                activeMainHostRoute = activeBottomTabRoute,
+                activeMainHostRoute = activeMainHostRoute,
             )
         }
         val predictiveBackEnabled = appNavigationSettings.predictiveBackEnabled
@@ -1417,8 +1441,11 @@ fun AppNavigation(
                     // 卡片过渡开启时延后停播：完整进入后再返回需要 live surface 跟壳缩。
                     manager.markLeavingByNavigation(
                         expectedBvid = videoKey.bvid,
-                        deferPlaybackStop = cardTransitionEnabled &&
-                            !videoKey.sourceRoute.isNullOrBlank(),
+                        deferPlaybackStop = com.android.purebilibili.feature.video.screen
+                            .shouldDeferPlaybackStopForSharedLiveReturn(
+                                cardTransitionEnabled = cardTransitionEnabled,
+                                hasSourceRoute = !videoKey.sourceRoute.isNullOrBlank(),
+                            ),
                     )
                 }
             }
@@ -1595,7 +1622,7 @@ fun AppNavigation(
                         shouldApplyVideoCardTransitionBackgroundToRoute(
                             entryRoute = entryRoute,
                             sourceRoute = backgroundState.sourceRouteProvider(),
-                            activeMainHostRoute = activeBottomTabRoute
+                            activeMainHostRoute = activeMainHostRoute
                         )
                     val shouldApplyPredictiveBlur = shouldApplyPredictiveBackBlurToRoute(
                         entryKey = key,
@@ -1612,6 +1639,7 @@ fun AppNavigation(
                                             .videoCardTransitionBackgroundEffect(
                                             progressProvider = backgroundState.progressProvider,
                                             phaseProvider = backgroundState.phaseProvider,
+                                            exposureProvider = backgroundState.exposureProvider,
                                             isGestureRestoreInProgressProvider = backgroundState.isGestureRestoreInProgressProvider,
                                             motionTierProvider = backgroundState.motionTierProvider,
                                             isLightBackgroundProvider = backgroundState.isLightBackgroundProvider,
@@ -1621,6 +1649,7 @@ fun AppNavigation(
                                             scaleReductionProvider = {
                                                 backgroundScaleReduction
                                             },
+                                            snapshotHandle = backgroundState.snapshotHandle,
                                         )
                                     } else {
                                         modifier
@@ -1664,46 +1693,49 @@ fun AppNavigation(
                             CompositionLocalProvider(
                                 LocalBottomBarVisible provides resolveMainHostBottomBarVisible()
                             ) {
-                                VideoCardTransitionBackgroundRouteContent(bottomPagerNavKeyForItem(currentBottomNavItem)) {
-                                    Box(modifier = Modifier.fillMaxSize()) {
-                                        HorizontalPager(
-                                            modifier = Modifier.fillMaxSize(),
-                                            state = bottomPagerState,
-                                            beyondViewportPageCount = resolveBottomPagerBeyondViewportPageCount(
-                                                pageCount = visibleBottomBarItems.size,
+                                // MainHost 已由 NavDisplay entry 外层的
+                                // VideoCardTransitionBackgroundRouteContent 持有唯一冻结层。
+                                // 此处不能再给 Pager 页挂同一个 snapshotHandle：嵌套
+                                // GraphicsLayer.record 会递归录制自身，返回时只剩 shared 卡片、
+                                // 来源页变黑。页面路由仍通过 Local source route 提供给卡片匹配。
+                                Box(modifier = Modifier.fillMaxSize()) {
+                                    HorizontalPager(
+                                        modifier = Modifier.fillMaxSize(),
+                                        state = bottomPagerState,
+                                        beyondViewportPageCount = resolveBottomPagerBeyondViewportPageCount(
+                                            pageCount = visibleBottomBarItems.size,
+                                            contentReady = bottomPagerContentReady
+                                        ).coerceAtMost(BOTTOM_PAGER_MAX_PRELOAD_DISTANCE),
+                                        userScrollEnabled = shouldEnableBottomPagerUserScroll()
+                                    ) { page ->
+                                        val slotItem = visibleBottomBarItems.getOrNull(page) ?: BottomNavItem.HOME
+                                        if (
+                                            shouldComposeBottomPagerPage(
+                                                item = slotItem,
+                                                page = page,
+                                                currentPage = bottomPagerState.currentPage,
+                                                selectedPage = mainBottomPagerState.selectedPage,
+                                                isNavigating = mainBottomPagerState.isNavigating,
+                                                navigationStartPage = mainBottomPagerState.navigationStartPage,
                                                 contentReady = bottomPagerContentReady
-                                            ).coerceAtMost(BOTTOM_PAGER_MAX_PRELOAD_DISTANCE),
-                                            userScrollEnabled = shouldEnableBottomPagerUserScroll()
-                                        ) { page ->
-                                            val slotItem = visibleBottomBarItems.getOrNull(page) ?: BottomNavItem.HOME
-                                            if (
-                                                shouldComposeBottomPagerPage(
-                                                    item = slotItem,
-                                                    page = page,
-                                                    currentPage = bottomPagerState.currentPage,
-                                                    selectedPage = mainBottomPagerState.selectedPage,
-                                                    isNavigating = mainBottomPagerState.isNavigating,
-                                                    navigationStartPage = mainBottomPagerState.navigationStartPage,
-                                                    contentReady = bottomPagerContentReady
-                                                )
+                                            )
+                                        ) {
+                                            val pageKey = bottomPagerNavKeyForItem(slotItem)
+                                            bottomPagerSaveableStateHolder.SaveableStateProvider(
+                                                resolveBottomPagerSaveableStateKey(slotItem)
                                             ) {
-                                                val pageKey = bottomPagerNavKeyForItem(slotItem)
-                                                bottomPagerSaveableStateHolder.SaveableStateProvider(
-                                                    resolveBottomPagerSaveableStateKey(slotItem)
+                                                CompositionLocalProvider(
+                                                    LocalVideoCardSharedElementSourceRoute provides pageKey.toLegacyRoute()
                                                 ) {
-                                                    CompositionLocalProvider(
-                                                        LocalVideoCardSharedElementSourceRoute provides pageKey.toLegacyRoute()
-                                                    ) {
-                                                        RenderNavigationContent(
-                                                            key = pageKey,
-                                                            isBottomPagerPageActive = page == bottomPagerState.settledPage,
-                                                            isBottomPagerHosted = true,
-                                                        )
-                                                    }
+                                                    RenderNavigationContent(
+                                                        key = pageKey,
+                                                        isBottomPagerPageActive = page == bottomPagerState.settledPage,
+                                                        isBottomPagerHosted = true,
+                                                    )
                                                 }
-                                            } else {
-                                                Box(modifier = Modifier.fillMaxSize())
                                             }
+                                        } else {
+                                            Box(modifier = Modifier.fillMaxSize())
                                         }
                                     }
                                 }
@@ -3097,7 +3129,7 @@ fun AppNavigation(
                     modifier = Modifier.fillMaxSize(),
                     sharedTransitionScope = LocalSharedTransitionScope.current,
                     visibleBottomBarRoutes = visibleBottomBarRoutes,
-                    activeMainHostRoute = activeBottomTabRoute,
+                    activeMainHostRoute = activeMainHostRoute,
                     isLightBackground = isLightBackground,
                 ) { key ->
                     navigation3SaveableStateHolder.SaveableStateProvider(

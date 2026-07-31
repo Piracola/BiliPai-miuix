@@ -1,6 +1,6 @@
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
+    // AGP 9+ provides built-in Kotlin; do not apply org.jetbrains.kotlin.android
     // Compose 编译器插件
     id("org.jetbrains.kotlin.plugin.compose")
     // JSON 序列化插件
@@ -80,8 +80,8 @@ android {
         targetSdk = 35  // 保持35以避免Android 16的新运行时行为
         // 🔥🔥 [版本号] 发布新版前记得更新！格式：versionCode +1, versionName 递增
         // 更新日志：CHANGELOG.md
-        versionCode = 266
-        versionName = "9.9.9.1"
+        versionCode = 271
+        versionName = "9.9.9.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -177,6 +177,8 @@ android {
         compose = true
         buildConfig = true
         aidl = true
+        // AGP 9 defaults this off; buildTypes use resValue("string", "app_name", ...)
+        resValues = true
     }
 
     packaging {
@@ -205,17 +207,31 @@ android {
 
     lint {
         baseline = file("lint-baseline.xml")
-        textReport = true
         abortOnError = true
     }
-    
-    // 🔥 自定义 APK 输出文件名
-    applicationVariants.configureEach {
-        val variant = this
-        outputs.configureEach {
-            val output = this as com.android.build.gradle.internal.api.ApkVariantOutputImpl
-            output.outputFileName = "BiliPai-${variant.name}-${variant.versionName}.apk"
-        }
+}
+
+// AGP 9 removed applicationVariants / outputFileName.
+// Rename only PackageApplication outputs; keep values configuration-cache friendly
+// (no Project/android extension captured inside task actions).
+val biliApkVersionName: String = android.defaultConfig.versionName ?: "0"
+val biliApkOutputsDir = layout.buildDirectory.dir("outputs/apk")
+tasks.withType(com.android.build.gradle.tasks.PackageApplication::class.java).configureEach {
+    val versionName = biliApkVersionName
+    val apkOutputs = biliApkOutputsDir
+    doLast {
+        val outputsDir = apkOutputs.get().asFile
+        if (!outputsDir.exists()) return@doLast
+        outputsDir.walkTopDown()
+            .filter { it.isFile && it.extension == "apk" && !it.name.startsWith("BiliPai-") }
+            .forEach { apk ->
+                val variantFolder = apk.parentFile.name
+                val target = File(apk.parentFile, "BiliPai-$variantFolder-$versionName.apk")
+                if (apk.absolutePath != target.absolutePath) {
+                    if (target.exists()) target.delete()
+                    apk.renameTo(target)
+                }
+            }
     }
 }
 
@@ -277,10 +293,13 @@ composeCompiler {
 
 dependencies {
     val miuixVersion = "0.9.3"
-    val material3Version = "1.5.0-alpha18"
-    val media3Version = "1.10.0"
-    val lifecycleVersion = "2.10.0"
+    val navigation3Version = "1.2.0-alpha07"
+    val navigationEventVersion = "1.2.0-alpha03"
+    val material3Version = "1.5.0-alpha25"
+    val media3Version = "1.10.1"
+    val lifecycleVersion = "2.11.0"
     val roomVersion = "2.8.4"
+    val hazeVersion = "2.0.0-alpha03"
 
     implementation(project(":settings-core"))
     implementation(project(":network-core"))
@@ -289,7 +308,7 @@ dependencies {
     baselineProfile(project(":baselineprofile"))
 
     // --- 1. Compose UI ---
-    implementation(platform("androidx.compose:compose-bom:2026.03.01"))  // 🔥 更新到最新版本
+    implementation(platform("androidx.compose:compose-bom:2026.06.01"))
     implementation("androidx.activity:activity-compose:1.13.0")
     implementation("androidx.appcompat:appcompat:1.7.1")  // 🚀 For AppCompatDelegate night mode
     implementation("androidx.biometric:biometric:1.1.0")
@@ -312,8 +331,9 @@ dependencies {
     implementation("com.mohamedrejeb.richeditor:richeditor-compose:1.0.0-rc14")
 
     // --- 2. Network (网络请求) ---
-    implementation("com.squareup.retrofit2:retrofit:2.12.0")
-    implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
+    implementation("com.squareup.retrofit2:retrofit:3.0.0")
+    // Official converter since Retrofit 2.10; binary-compatible with Retrofit 3
+    implementation("com.squareup.retrofit2:converter-kotlinx-serialization:3.0.0")
     implementation("com.squareup.okhttp3:okhttp:5.3.2")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
     implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.4.0")
@@ -332,9 +352,10 @@ dependencies {
     // --- 3.2 Lottie (动画效果) ---
     implementation("com.airbnb.android:lottie-compose:6.7.1")
     
-    // --- 3.3 Haze (毛玻璃效果) ---
-    implementation("dev.chrisbanes.haze:haze:1.7.2")
-    implementation("dev.chrisbanes.haze:haze-materials:1.7.2")
+    // --- 3.3 Haze 2 (毛玻璃：core + blur + materials) ---
+    implementation("dev.chrisbanes.haze:haze:$hazeVersion")
+    implementation("dev.chrisbanes.haze:haze-blur:$hazeVersion")
+    implementation("dev.chrisbanes.haze:haze-blur-materials:$hazeVersion")
 
     // --- 3.4 骨架屏加载 ---
     // compose-shimmer 已移除：全仓 0 处 import，骨架屏早已改用自研的
@@ -350,27 +371,26 @@ dependencies {
     implementation("io.github.alexzhirkevich:cupertino-icons-extended:0.1.0-alpha04")
     
     // --- 3.6 Navigation3 (Compose 自有返回栈与预测性返回迁移层) ---
-    implementation("androidx.navigation3:navigation3-runtime:1.1.4")
-    // navigation3-ui 使用 Miuix fork：在 androidx 同包名下提供 NavDisplayTransitionEffects
-    // (blockInputDuringTransition / enableCornerClip / dimAmount)，与 InstallerX 对齐，
-    // 在转场期间屏蔽触摸拦截以消除预测性返回手势冲突。runtime/event 仍用 androidx 1.1.3/1.1.2。
-    implementation("top.yukonga.miuix.kmp:miuix-navigation3-ui-android:$miuixVersion") {
+    // Navigation3 runtime 与 UI 属于 atomic group，必须严格同版。Miuix 0.9.3 的 Nav3 UI
+    // 仍编译于 runtime 1.1.4，不能与 1.2.0-alpha07 混装；使用官方同版 UI 以获得
+    // alpha07 的 SceneState.previousScenes 修复，确保预测返回目标 Scene 被正确绘制。
+    implementation("androidx.navigation3:navigation3-runtime:$navigation3Version")
+    implementation("androidx.navigation3:navigation3-ui:$navigation3Version") {
         exclude(group = "androidx.navigationevent", module = "navigationevent-compose")
-        exclude(group = "org.jetbrains.androidx.navigationevent", module = "navigationevent-compose")
     }
     // 预测式返回：使用本地 vendored 版 androidx.navigationevent.compose（位于
     // app/src/main/java/androidx/navigationevent/compose/），以便在 onBackCompleted 里
     // 把 transitionState 的提交延迟到用户回调内执行，保证 scale/aosp 退出动画能在
     // InProgress 状态下读取到最新手势数据。下面排除上游同 group 的 compose 产物，避免与
     // 本地源码冲突。
-    implementation("androidx.navigationevent:navigationevent:1.1.2")
+    implementation("androidx.navigationevent:navigationevent:$navigationEventVersion")
     
     // --- 3.7 Startup (应用初始化) ---
     implementation("androidx.startup:startup-runtime:1.2.0")
     
     // --- 3.8 Backdrop (液态玻璃效果) ---
     // 提供透镜折射、玻璃高光、连续圆角等 iOS/visionOS 风格视觉效果
-    implementation("io.github.kyant0:backdrop:2.0.0-alpha03")
+    implementation("io.github.kyant0:backdrop:2.0.0")
 
 
     // --- 4. Player (视频播放器 Media3) ---
@@ -402,14 +422,14 @@ dependencies {
     // Pinyin 拼音转换 (用于模糊搜索)
     implementation("com.belerweb:pinyin4j:2.5.0")
     // Core KTX
-    implementation("androidx.core:core-ktx:1.18.0")
+    implementation("androidx.core:core-ktx:1.19.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycleVersion")
     implementation("androidx.lifecycle:lifecycle-viewmodel-navigation3:$lifecycleVersion")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:$lifecycleVersion")
     implementation("androidx.lifecycle:lifecycle-process:$lifecycleVersion")  // 🔋 ProcessLifecycleOwner 后台检测
     implementation("androidx.metrics:metrics-performance:1.0.0")
-    implementation("androidx.window:window")
+    implementation("androidx.window:window:1.5.1")
 
     // --- 8.1 WorkManager (后台下载任务) ---
     implementation("androidx.work:work-runtime-ktx:2.11.2")
@@ -451,8 +471,9 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.2")
     // JUnit 4 兼容层 (允许 JUnit 5 运行 JUnit 4 测试)
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.10.2")
-    // Kotlin Test (提供 assertEquals, assertTrue 等断言)
-    testImplementation("org.jetbrains.kotlin:kotlin-test:1.9.22")
+    // AGP 9 使用内建 Kotlin 2.4；JUnit Platform 下必须使用同版本的 JUnit 5
+    // 适配层，否则 kotlin.test.Test 不会落到 JVM 测试注解。
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:2.4.0")
     // MockK for Kotlin mocking
     testImplementation("io.mockk:mockk:1.13.9")
     // Coroutines testing
@@ -463,7 +484,7 @@ dependencies {
     // --- 13. Android Instrumented Tests ---
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
-    androidTestImplementation(platform("androidx.compose:compose-bom:2026.03.01"))
+    androidTestImplementation(platform("androidx.compose:compose-bom:2026.06.01"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
 }
 

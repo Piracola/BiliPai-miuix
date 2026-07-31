@@ -1,13 +1,8 @@
 package com.android.purebilibili.core.ui.blur
 
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import dev.chrisbanes.haze.HazeStyle
-import dev.chrisbanes.haze.HazeTint
-import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
-import dev.chrisbanes.haze.materials.HazeMaterials
+import dev.chrisbanes.haze.blur.HazeBlurStyle
+import dev.chrisbanes.haze.blur.materials.HazeMaterials
 
 /**
  *  模糊样式管理
@@ -16,9 +11,8 @@ import dev.chrisbanes.haze.materials.HazeMaterials
  */
 object BlurStyles {
     
-    @OptIn(ExperimentalHazeMaterialsApi::class)
     @Composable
-    fun getBlurStyle(intensity: BlurIntensity): HazeStyle {
+    fun getBlurStyle(intensity: BlurIntensity): HazeBlurStyle {
         return when (resolveBlurHazeMaterial(intensity)) {
             BlurHazeMaterial.THIN -> HazeMaterials.thin()
             BlurHazeMaterial.ULTRA_THIN -> HazeMaterials.ultraThin()
@@ -26,12 +20,11 @@ object BlurStyles {
         }
     }
 
-    @OptIn(ExperimentalHazeMaterialsApi::class)
     @Composable
     fun getBlurStyle(
         intensity: BlurIntensity,
         budget: BlurBudget?
-    ): HazeStyle {
+    ): HazeBlurStyle {
         val effectiveIntensity = if (budget != null) {
             resolveBudgetedBlurIntensity(intensity, budget)
         } else {

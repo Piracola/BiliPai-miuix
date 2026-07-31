@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <sub>Last updated: 2026-07-28 · Development build: 9.9.9.1 · Latest documented release: v9.9.8.9</sub>
+  <sub>Last updated: 2026-07-31 · Development build: 9.9.9.1 · Latest documented release: v9.9.8.9</sub>
 </p>
 
 <p align="center">
@@ -32,7 +32,7 @@
 | Category | Entry |
 | --- | --- |
 | Get Started | [Download Releases](https://github.com/jay3-yy/BiliPai/releases) · [Changelog](CHANGELOG.md) |
-| Docs | [Wiki Home](docs/wiki/README.md) · [User FAQ](docs/wiki/FAQ.md) · [AI / LLM Entry](llms.txt) · [AI Navigation Guide](docs/wiki/AI.md) |
+| Docs | [Roadmap](docs/wiki/ROADMAP.md) · [Wiki Home](docs/wiki/README.md) · [User FAQ](docs/wiki/FAQ.md) · [AI / LLM Entry](llms.txt) |
 | Developer Reference | [JSON Plugin Guide](docs/PLUGIN_DEVELOPMENT.md) · [Native Plugin Guide](docs/NATIVE_PLUGIN_DEVELOPMENT.md) |
 
 > [!CAUTION]
@@ -300,9 +300,9 @@ A lightweight plugin format requiring **no coding**, just a simple JSON file to 
 
 | Feature | Description |
 |-----|-----|
-| **Dual Login** | QR Code / Web Login |
+| **Login Methods** | TV QR, phone/password, SMS verification, and cookie import |
 | **Info** | Avatar, nickname, level, coin display |
-| **History** | Auto-record watch history with cloud sync support |
+| **History** | Local history browsing, deletion, and article-aware navigation; cloud synchronization remains planned |
 | **Favorites** | Manage favorites and playlists |
 | **Following** | Browse following/fans list |
 
@@ -336,8 +336,33 @@ A lightweight plugin format requiring **no coding**, just a simple JSON file to 
 
 1. Download the latest APK from [Releases](https://github.com/jay3-yy/BiliPai/releases)
 2. Install on your device (Unknown Sources permission may be required)
-3. Open app, login via QR code or Web
+3. Open the app and sign in with TV QR, phone/password, SMS verification, or cookie import
 4. Enjoy the pure Bilibili experience!
+
+---
+
+## 🧱 Project Structure
+
+```text
+BiliPai/
+├── app/                         # App shell, product features, navigation, player, state and tests
+│   └── src/main/java/com/android/purebilibili/
+│       ├── app/                 # Application startup and top-level assembly
+│       ├── core/                # Shared network, storage, player, plugin, theme and UI capabilities
+│       ├── data/                # API/database models and repositories
+│       ├── domain/              # Reusable use cases and business policies
+│       ├── feature/             # Home, video, dynamic, live, settings and other product areas
+│       ├── navigation/          # Route compatibility and top-level navigation policies
+│       └── navigation3/         # NavKey, back stack, entries/scenes and predictive back
+├── design-system/               # Shared MD3, Miuix and iOS visual primitives and policies
+├── settings-core/               # Reusable settings policies
+├── network-core/                # Reusable network fallback and feed policies
+├── plugin-sdk/                  # Recommendation, player and danmaku plugin contracts
+├── baselineprofile/             # Startup and frame-timing benchmarks/profiles
+├── docs/                        # Wiki, plugin guides and image assets
+├── plugins/                     # SDK docs, JSON/source samples, skins and community index
+└── scripts/                     # CI, release, profiling and device collection tools
+```
 
 ---
 
@@ -347,8 +372,10 @@ A lightweight plugin format requiring **no coding**, just a simple JSON file to 
 
 | Category | Technology | Description |
 |-----|-----|-----|
-| **Language** | Kotlin 1.9+ | 100% Kotlin |
-| **UI** | Jetpack Compose | Declarative UI, Material 3 |
+| **Language** | Kotlin 2.4 | AGP built-in Kotlin toolchain |
+| **Build Baseline** | AGP 9.3.1 / Gradle 9.5 / Kotlin 2.4 / JDK 21 | compileSdk 37, minSdk 26 |
+| **UI** | Jetpack Compose | Material 3, Miuix, Compose Cupertino |
+| **Navigation** | Navigation3 1.2.0-alpha07 | App-owned back stack, scenes and predictive back |
 | **Architecture** | MVVM + Clean Architecture | Clear separation, maintainable |
 
 ### Network & Data
@@ -365,22 +392,23 @@ A lightweight plugin format requiring **no coding**, just a simple JSON file to 
 | Category | Technology | Description |
 |-----|-----|-----|
 | **Player** | ExoPlayer (Media3) | DASH / HLS / MP4 |
-| **Danmaku** | DanmakuFlameMaster | Official Bilibili engine |
+| **Danmaku** | DanmakuRenderEngine + app policies | GPU rendering, filtering, layout, and live-overlay integration |
 | **Decoding** | MediaCodec | Hardware acceleration |
 
 ### UI Enhancements
 
 | Category | Technology | Description |
 |-----|-----|-----|
-| **Animation** | Lottie Compose | High quality vector animations |
-| **Blur** | Haze | iOS style frosted glass |
-| **Theming** | Material 3 | Dynamic color extraction |
+| **Animation** | Compose Animation / SharedTransition + Lottie | Card morphs, predictive back and vector motion |
+| **Blur** | Haze 2 + Backdrop + Miuix blur | Frosted and liquid-glass surfaces with fallbacks |
+| **Theming** | Material 3 + Miuix + iOS preset | Dynamic color, dark mode and adaptive components |
 
 ---
 
 ## 📚 Wiki
 
 - AI / LLM Entry: [`llms.txt`](llms.txt)
+- Current Roadmap: [`docs/wiki/ROADMAP.md`](docs/wiki/ROADMAP.md)
 - Compatibility aliases: `AI.txt` / `llm.txt`
 - AI Navigation Guide: [`docs/wiki/AI.md`](docs/wiki/AI.md)
 - Wiki Home: [`docs/wiki/README.md`](docs/wiki/README.md)
@@ -396,40 +424,13 @@ A lightweight plugin format requiring **no coding**, just a simple JSON file to 
 > [!TIP]
 > This summary reflects the current direction. For implemented behavior and release status, prefer the code, `CHANGELOG.md`, and GitHub Releases.
 
-### ✅ Completed
+| Status | Direction |
+| --- | --- |
+| Product baseline | Home, playback, bangumi, live, dynamic feed, messages, offline/audio mode, video notes, casting, WebDAV, account sessions, plugins, large-screen layouts and three visual presets |
+| Current P0 | End-to-end video-card/predictive-return acceptance, transition steady-state performance, Navigation3 1.2 device regression, and restoration of the AGP 9 unit-test pipeline |
+| Next | Controlled external-plugin execution, per-account data isolation, favorites management, complete localization, and evaluation of history cloud sync |
 
-- [x] Home Waterfall Feed
-- [x] Video Player + Danmaku + Gestures + PiP + Background Play
-- [x] Audio Mode + Favorites/Watch Later playlist + Sequential/Shuffle/Repeat-one
-- [x] Anime/Movie Playback
-- [x] Live Streaming
-- [x] Dynamic Feed (with fast-switch stability improvements)
-- [x] Offline Download + current-video batch caching
-- [x] Search + History (including single-item and batch deletion)
-- [x] Native article search + article detail + article-aware history navigation
-- [x] Material You + Dark Mode
-- [x] TV Login + first-play quality auth fixes for logged-in non-premium users
-- [x] Landscape player controls upgrade (subtitle panel + more panel + play-order quick switch)
-- [x] Shared Element Transitions + return-to-home animation optimization
-- [x] Tablet/Foldable Support (sidebar + bottom bar layout)
-- [x] In-app update flow (manual + auto-check + startup prompt + in-app download/install)
-- [x] Plugin System Core
-- [x] Built-in Plugins
-- [x] Saved Account Sessions + Account Switching
-- [x] Message Center category pages (Replies / Mentions / Likes / System Notices) with deep-link routing
-- [x] Portrait video like/favorite interaction fixes with favorite-folder sync
-- [x] Seek preview redraw optimization and cross-tab bottom-bar switching polish
-
-### 🚧 WIP
-
-- [ ] Wiki and module-level documentation expansion
-
-### 📋 Planned
-
-- [ ] History Cloud Sync
-- [ ] Favorites Management Improvements
-- [ ] Per-account Data Isolation Improvements
-- [ ] Complete English/Traditional Chinese Coverage
+See the [current roadmap](docs/wiki/ROADMAP.md) for priorities, completion criteria, guardrails, and non-goals.
 
 ---
 
@@ -476,6 +477,7 @@ Issues and Pull Requests are welcome!
 | [PiliPlus](https://github.com/bggRGjQaUbCoE/PiliPlus) | Playback flow, comment presentation, and mobile UX reference |
 | [biliSendCommAntifraud](https://github.com/freedom-introvert/biliSendCommAntifraud) | Reference implementation for comment anti-fraud detection |
 | [BilibiliSponsorBlock](https://github.com/hanydd/BilibiliSponsorBlock) | Sponsor skip segment data and API reference |
+| [DanmakuRenderEngine](https://github.com/bytedance/DanmakuRenderEngine) | High-performance danmaku rendering engine |
 | [Miuix](https://github.com/compose-miuix-ui/miuix) | Miuix-style Compose Multiplatform components |
 | [AndroidLiquidGlass](https://github.com/Kyant0/AndroidLiquidGlass) | Liquid glass visual effect reference |
 | [Haze](https://github.com/chrisbanes/haze) | Blur and frosted-glass effects |

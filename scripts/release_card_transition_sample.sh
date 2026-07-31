@@ -14,7 +14,7 @@ Usage:
 
 Workflow:
   1) On the release app, open Home and wait for a video card to be ready.
-  2) Run start, then repeat card -> detail -> back 6–8 times.
+  2) Run start, then repeat card -> detail -> back exactly 8 times.
   3) Return to the card source screen and run stop.
 
 Notes:
@@ -88,7 +88,7 @@ if [[ "$MODE" == "start" ]]; then
   printf 'STAMP=%s\nMEM_BEFORE_FILE=%s\n' "$STAMP" "$MEM_BEFORE_FILE" > "$STATE_FILE"
 
   echo "[release-transition] started: device=$DEVICE package=$PKG"
-  echo "[release-transition] now repeat card -> detail -> back 6–8 times, then run:"
+  echo "[release-transition] now repeat card -> detail -> back exactly 8 times, then run:"
   echo "  ./scripts/release_card_transition_sample.sh stop --device $DEVICE"
   exit 0
 fi
@@ -118,10 +118,14 @@ rm -f "$STATE_FILE"
 
 python3 - "$GFX_FILE" "$MEM_BEFORE_FILE" "$MEM_AFTER_FILE" <<'PY'
 from pathlib import Path
-import math, re, statistics, sys
+import math, os, re, statistics, sys
 
 gfx_path, mem_before_path, mem_after_path = map(Path, sys.argv[1:4])
 text = gfx_path.read_text(errors="ignore")
+failures = []
+max_over_budget_percent = float(os.environ.get("MAX_OVER_BUDGET_PERCENT", "5"))
+max_over_two_budgets_percent = float(os.environ.get("MAX_OVER_TWO_BUDGETS_PERCENT", "1"))
+max_pss_delta_mib = float(os.environ.get("MAX_PSS_DELTA_MIB", "16"))
 
 print("[release-transition] platform summary:")
 patterns = (
@@ -191,6 +195,13 @@ if frames:
         return ordered[max(0, math.ceil(len(ordered) * fraction) - 1)]
 
     over_budget = sum(duration > budget for duration, budget in zip(durations, budgets))
+    over_two_budgets = sum(
+        duration > budget * 2 for duration, budget in zip(durations, budgets)
+    )
+    p90 = percentile(durations, .90)
+    median_budget = statistics.median(budgets)
+    over_budget_percent = over_budget / len(frames) * 100
+    over_two_budgets_percent = over_two_budgets / len(frames) * 100
     print("[release-transition] recent framestats:")
     print(
         f"  valid_frames={len(frames)} target_refresh≈{1_000_000_000 / interval_ns:.1f}Hz "
@@ -203,9 +214,25 @@ if frames:
         f"p95 {percentile(durations, .95):.2f}ms / "
         f"p99 {percentile(durations, .99):.2f}ms"
     )
-    print(f"  over_frame_budget={over_budget} ({over_budget / len(frames) * 100:.2f}%)")
+    print(
+        f"  over_frame_budget={over_budget} ({over_budget_percent:.2f}%) "
+        f"over_2x_budget={over_two_budgets} ({over_two_budgets_percent:.2f}%) "
+        f"median_workload_target={median_budget:.2f}ms"
+    )
+    if over_budget_percent > max_over_budget_percent:
+        failures.append(
+            f"over-budget {over_budget_percent:.2f}% > {max_over_budget_percent:.2f}%"
+        )
+    if over_two_budgets_percent > max_over_two_budgets_percent:
+        failures.append(
+            "over-2x-budget "
+            f"{over_two_budgets_percent:.2f}% > {max_over_two_budgets_percent:.2f}%"
+        )
+    if p90 > median_budget:
+        failures.append(f"p90 {p90:.2f}ms > one workload target {median_budget:.2f}ms")
 else:
     print("[release-transition] framestats: no valid PROFILEDATA rows")
+    failures.append("no valid framestats")
 
 def total_pss_kb(path):
     match = re.search(r"TOTAL PSS:\s*([0-9,]+)", path.read_text(errors="ignore"))
@@ -213,7 +240,19 @@ def total_pss_kb(path):
 
 before, after = total_pss_kb(mem_before_path), total_pss_kb(mem_after_path)
 if before is not None and after is not None:
-    print(f"[release-transition] memory: total_pss={before / 1024:.1f}->{after / 1024:.1f}MiB delta={(after - before) / 1024:+.1f}MiB")
+    pss_delta_mib = (after - before) / 1024
+    print(f"[release-transition] memory: total_pss={before / 1024:.1f}->{after / 1024:.1f}MiB delta={pss_delta_mib:+.1f}MiB")
+    if pss_delta_mib > max_pss_delta_mib:
+        failures.append(f"PSS delta {pss_delta_mib:.1f}MiB > {max_pss_delta_mib:.1f}MiB")
+else:
+    failures.append("TOTAL PSS unavailable")
+
+if failures:
+    print("[release-transition] HARD GATE FAILED:")
+    for failure in failures:
+        print(f"  - {failure}")
+    raise SystemExit(2)
+print("[release-transition] HARD GATE PASSED")
 PY
 
 echo "[release-transition] raw: $GFX_FILE"

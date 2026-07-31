@@ -198,7 +198,7 @@ private fun HomeHeroCarouselCard(
         }
     }
 
-    // �� ???????? ��
+    // 整卡 sharedBounds：横幅卡片与详情 shell 同源。
     val sharedTransitionScope = LocalSharedTransitionScope.current
     val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
     val sourceRoute = LocalVideoCardSharedElementSourceRoute.current
@@ -220,7 +220,7 @@ private fun HomeHeroCarouselCard(
         )
     }
 
-    // ??????? CardPositionManager ????????
+    // 点击前写入 CardPositionManager，供返回 morph 对齐源卡 bounds。
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
     val screenWidthPx: Float
@@ -238,12 +238,12 @@ private fun HomeHeroCarouselCard(
         densityValue = d
     }
 
-    // ????????????????????
+    // 卡片坐标句柄：onGloballyPositioned 写入，点击时读取。
     val cardCoordsRef = remember { object { var value: LayoutCoordinates? = null } }
 
     val cardShape = AppShapes.container(ContainerLevel.Card)
 
-    // ????????????????
+    // 记录源卡位置后进入详情。
     val clickAction: () -> Unit = {
         cardCoordsRef.value?.takeIf { it.isAttached }?.boundsInRoot()?.let { bounds ->
             CardPositionManager.recordVideoCardPosition(
@@ -346,7 +346,7 @@ private fun HomeHeroCarouselCard(
                         )
                     )
             )
-            // ????????????????????
+            // 底部标题与统计（时长 · 播放 · 弹幕）
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
@@ -358,7 +358,7 @@ private fun HomeHeroCarouselCard(
                         sourceRoute = sourceRoute,
                     )
             ) {
-                // ??
+                // 标题行（预览播放中显示播放图标）
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -381,7 +381,7 @@ private fun HomeHeroCarouselCard(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-                // ???????????
+                // 统计信息：时长 · 播放量 · 弹幕
                 if (video.duration > 0 || video.stat.view > 0 || video.stat.danmaku > 0) {
                     Spacer(modifier = Modifier.height(AppSpacingTokens.ExtraSmall))
                     Row(
@@ -390,7 +390,7 @@ private fun HomeHeroCarouselCard(
                         horizontalArrangement = Arrangement.End
                     ) {
                     var separatorNeeded = false
-                    // ??
+                    // 时长
                     if (video.duration > 0) {
                         AppText(
                             text = FormatUtils.formatDuration(video.duration),
@@ -402,15 +402,15 @@ private fun HomeHeroCarouselCard(
                         )
                         separatorNeeded = true
                     }
-                    // ???
+                    // 播放量
                     if (video.stat.view > 0) {
                         if (separatorNeeded) AppText(
-                            " � ",
+                            " · ",
                             color = MediaContrastPalette.Foreground.copy(alpha = 0.5f),
                             fontSize = MaterialTheme.typography.labelSmall.fontSize
                         )
                         AppText(
-                            text = FormatUtils.formatStat(video.stat.view.toLong()) + "??",
+                            text = FormatUtils.formatStat(video.stat.view.toLong()) + "播放",
                             color = MediaContrastPalette.Foreground.copy(alpha = 0.65f),
                             fontSize = MaterialTheme.typography.labelSmall.fontSize,
                             fontWeight = FontWeight.Normal,
@@ -419,15 +419,15 @@ private fun HomeHeroCarouselCard(
                         )
                         separatorNeeded = true
                     }
-                    // ??
+                    // 弹幕
                     if (video.stat.danmaku > 0) {
                         if (separatorNeeded) AppText(
-                            " � ",
+                            " · ",
                             color = MediaContrastPalette.Foreground.copy(alpha = 0.5f),
                             fontSize = MaterialTheme.typography.labelSmall.fontSize
                         )
                         AppText(
-                            text = FormatUtils.formatStat(video.stat.danmaku.toLong()) + "??",
+                            text = FormatUtils.formatStat(video.stat.danmaku.toLong()) + "弹幕",
                             color = MediaContrastPalette.Foreground.copy(alpha = 0.65f),
                             fontSize = MaterialTheme.typography.labelSmall.fontSize,
                             fontWeight = FontWeight.Normal,

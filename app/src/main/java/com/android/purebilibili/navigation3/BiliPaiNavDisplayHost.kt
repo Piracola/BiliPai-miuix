@@ -29,7 +29,6 @@ import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.compose.animation.SharedTransitionScope
 import androidx.navigation3.runtime.NavEntryDecorator
@@ -37,18 +36,16 @@ import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import androidx.navigation3.ui.NavDisplay
-import androidx.navigation3.ui.NavDisplayTransitionEffects
 import androidx.navigation3.scene.SceneInfo
 import androidx.navigation3.scene.SinglePaneSceneStrategy
+import androidx.navigation3.scene.rememberNavigationEventState
 import androidx.navigation3.scene.rememberSceneState
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.NavigationEventState
-import androidx.navigationevent.compose.rememberNavigationEventState
 import androidx.navigationevent.NavigationEventTransitionState
 import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.ui.ProvideAnimatedVisibilityScope
 import com.android.purebilibili.core.ui.adaptive.MotionTier
-import com.android.purebilibili.core.ui.performance.AppRuntimeVisualGuardTracker
 import com.android.purebilibili.core.ui.performance.TrackJankStateValue
 import com.android.purebilibili.core.ui.performance.VIDEO_CARD_TRANSITION_JANK_STATE
 import com.android.purebilibili.core.ui.transition.LocalPredictiveBackBackgroundState
@@ -56,28 +53,32 @@ import com.android.purebilibili.core.ui.transition.LocalVideoCardMorphProgressRe
 import com.android.purebilibili.core.ui.transition.LocalVideoCardSharedElementSourceRoute
 import com.android.purebilibili.core.ui.transition.LocalVideoCardTransitionBackgroundState
 import com.android.purebilibili.core.ui.transition.LocalVideoCardTransitionClock
-import com.android.purebilibili.core.ui.transition.LocalTransitionPerformanceSnapshot
 import com.android.purebilibili.core.ui.transition.PREDICTIVE_BACK_BACKGROUND_CANCEL_DURATION_MS
-import com.android.purebilibili.core.ui.transition.PREDICTIVE_BACK_EXIT_SETTLE_DURATION_MS
 import com.android.purebilibili.core.ui.transition.PredictiveBackBackgroundState
 import com.android.purebilibili.core.ui.transition.VIDEO_CARD_TRANSITION_BACKGROUND_CANCEL_DURATION_MS
 import com.android.purebilibili.core.ui.transition.VideoCardMorphProgressReporter
 import com.android.purebilibili.core.ui.transition.VideoCardTransitionBackgroundPhase
 import com.android.purebilibili.core.ui.transition.VideoCardTransitionBackgroundState
 import com.android.purebilibili.core.ui.transition.VideoCardTransitionClock
+import com.android.purebilibili.core.ui.transition.VideoCardTransitionExposure
+import com.android.purebilibili.core.ui.transition.VideoCardTransitionDiagnostics
 import com.android.purebilibili.core.ui.transition.resolveMorphAlignedFallbackDurationMs
 import com.android.purebilibili.core.ui.transition.resolvePredictiveBackCommitBlurDurationMs
 import com.android.purebilibili.core.ui.transition.resolvePredictiveBackGestureBlurProgress
+import com.android.purebilibili.core.ui.transition.resolveVideoCardPredictiveGestureDepthProgress
+import com.android.purebilibili.core.ui.transition.resolveVideoCardReturnClearStartDepth
 import com.android.purebilibili.core.ui.transition.resolveVideoCardTimelineSpec
+import com.android.purebilibili.core.ui.transition.resolveVideoCardTransitionExposure
+import com.android.purebilibili.core.ui.transition.resolveVideoCardTransitionMotionTier
+import com.android.purebilibili.core.ui.transition.rememberVideoCardTransitionSnapshotHandle
 import com.android.purebilibili.core.ui.transition.resolveVideoCardTransitionReturnFullDurationMillis
 import com.android.purebilibili.core.ui.transition.resolveVideoCardSharedMorphRemainingDurationMs
-import com.android.purebilibili.core.ui.transition.TransitionPerformanceInputs
-import com.android.purebilibili.core.ui.transition.TransitionThermalLevel
-import com.android.purebilibili.core.ui.transition.resolveTransitionPerformanceSnapshot
 import com.android.purebilibili.core.ui.transition.isVideoCardTransitionBackgroundGesturePhase
 import com.android.purebilibili.core.ui.transition.shouldApplyPredictiveBackGestureBlur
+import com.android.purebilibili.core.ui.transition.shouldReleaseHostOwnedDepthLayer
 import com.android.purebilibili.core.ui.transition.shouldShowVideoCardTransitionNavBackdrop
 import com.android.purebilibili.core.ui.transition.shouldSnapClearVideoCardDepthBlurOnQuickReturn
+import com.android.purebilibili.core.ui.transition.VideoCardTransitionHostDepthLayer
 import com.android.purebilibili.core.ui.transition.VideoCardTransitionNavBackdrop
 import com.android.purebilibili.feature.settings.isSettingsSubtreeNavKey
 import com.android.purebilibili.navigation.isVideoCardReturnTargetRoute
@@ -87,11 +88,7 @@ import com.android.purebilibili.navigation3.predictiveback.resolveBiliPaiAutoPre
 import com.android.purebilibili.navigation3.predictiveback.resolveBiliPaiPredictiveBackAnimationHandler
 import com.android.purebilibili.navigation3.predictiveback.resolveBiliPaiPredictiveBackExitDirection
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import android.content.Context
-import android.os.Build
-import android.os.PowerManager
 
 internal class BiliPaiProgrammaticBackDispatcher {
     private var callback: (() -> Unit)? = null
@@ -162,6 +159,7 @@ internal fun BiliPaiNavDisplayHost(
         resolveVideoCardTimelineSpec(videoSharedTransitionDurationMillis)
     }
     val predictiveBackBackgroundProgress = remember { Animatable(0f) }
+    val videoCardSnapshotHandle = rememberVideoCardTransitionSnapshotHandle()
     val isQuickReturnFromDetailUpdated by rememberUpdatedState(isQuickReturnFromDetail)
     var videoCardReturnGestureInProgress by remember { mutableStateOf(false) }
     // fallback Animatable 唯一 owner：OPENING / RETURNING / cancel 互斥。
@@ -175,9 +173,11 @@ internal fun BiliPaiNavDisplayHost(
         cancelVideoCardDepthAnimation()
         var job: Job? = null
         job = navigationScope.launch {
+            VideoCardTransitionDiagnostics.onDepthAnimationJobChanged(active = true)
             try {
                 block()
             } finally {
+                VideoCardTransitionDiagnostics.onDepthAnimationJobChanged(active = false)
                 if (videoCardDepthAnimationJob === job) {
                     videoCardDepthAnimationJob = null
                 }
@@ -193,11 +193,32 @@ internal fun BiliPaiNavDisplayHost(
             )
         }
     }
-    val videoCardBackgroundProgressProvider = remember(videoCardClock) {
-        { videoCardClock.depthProgress() }
+    // 景深读口：预测手势帧优先读 NavigationEvent 的 live progress，保证跟手糊↔清；
+    // 不依赖 SideEffect→beginGesture 的写入时序（否则拖动时可能整段 depth 停在 HELD=1）。
+    val videoCardBackgroundProgressProvider = remember(
+        videoCardClock,
+        videoCardDepthEffectEnabled,
+    ) {
+        {
+            val liveBackProgress =
+                (navigationEventState?.transitionState as? NavigationEventTransitionState.InProgress)
+                    ?.latestEvent
+                    ?.progress
+            if (
+                videoCardDepthEffectEnabled &&
+                liveBackProgress != null &&
+                isVideoCardTransitionBackgroundGesturePhase(videoCardClock.phase)
+            ) {
+                resolveVideoCardPredictiveGestureDepthProgress(
+                    phase = videoCardClock.phase,
+                    backProgress = liveBackProgress,
+                    gestureStartDepth = videoCardClock.gestureStartDepth,
+                )
+            } else {
+                videoCardClock.depthProgress()
+            }
+        }
     }
-    val runtimeGuardDecision by
-        AppRuntimeVisualGuardTracker.decision.collectAsStateWithLifecycle()
     val videoCardTransitionJankState = if (!videoCardDepthEffectEnabled) {
         null
     } else {
@@ -213,46 +234,11 @@ internal fun BiliPaiNavDisplayHost(
         stateName = VIDEO_CARD_TRANSITION_JANK_STATE,
         stateValue = videoCardTransitionJankState,
     )
-    // 默认保留完整 12dp 景深；系统减弱动画或连续转场掉帧时降为 scrim-only。
-    val transitionBackgroundMotionTier =
-        if (reduceMotion) MotionTier.Reduced else runtimeGuardDecision.effectiveMotionTier
-    val powerManager = remember(application) {
-        application.getSystemService(Context.POWER_SERVICE) as? PowerManager
-    }
-    fun captureTransitionPerformanceSnapshot() = resolveTransitionPerformanceSnapshot(
-        TransitionPerformanceInputs(
-            motionTier = transitionBackgroundMotionTier,
-            systemAnimationsEnabled = !reduceMotion,
-            powerSaveMode = powerManager?.isPowerSaveMode == true,
-            thermalLevel = when {
-                Build.VERSION.SDK_INT < Build.VERSION_CODES.Q -> TransitionThermalLevel.NONE
-                (powerManager?.currentThermalStatus ?: PowerManager.THERMAL_STATUS_NONE) >=
-                    PowerManager.THERMAL_STATUS_CRITICAL -> TransitionThermalLevel.CRITICAL
-                (powerManager?.currentThermalStatus ?: PowerManager.THERMAL_STATUS_NONE) >=
-                    PowerManager.THERMAL_STATUS_SEVERE -> TransitionThermalLevel.SEVERE
-                (powerManager?.currentThermalStatus ?: PowerManager.THERMAL_STATUS_NONE) >=
-                    PowerManager.THERMAL_STATUS_MODERATE -> TransitionThermalLevel.MODERATE
-                (powerManager?.currentThermalStatus ?: PowerManager.THERMAL_STATUS_NONE) >=
-                    PowerManager.THERMAL_STATUS_LIGHT -> TransitionThermalLevel.LIGHT
-                else -> TransitionThermalLevel.NONE
-            },
-            runtimeGuardDowngraded = runtimeGuardDecision.effectiveMotionTier == MotionTier.Reduced ||
-                runtimeGuardDecision.forceLowBlurBudget,
-        )
-    )
+    // 用户开启实时模糊时稳定保留完整 12dp 景深；仅系统“减少动态效果”降为 scrim-only。
+    // 来源页采用一次冻结录制，不能再由运行时掉帧记忆永久关掉后续开合模糊。
+    val transitionBackgroundMotionTier = resolveVideoCardTransitionMotionTier(reduceMotion)
     var previousVideoCardTransitionBackStack by remember {
         mutableStateOf(safeBackStack)
-    }
-    // Back-stack changes are observed by composition before LaunchedEffect runs. Prepare the
-    // opening decision for that first composition so the detail entry never renders one frame
-    // with the default output policy and then switches to the locked policy.
-    val pendingOpeningPerformanceSnapshot = if (
-        isCardMorphDestinationNavKey(safeBackStack.lastOrNull()) &&
-            safeBackStack.size > previousVideoCardTransitionBackStack.size
-    ) {
-        captureTransitionPerformanceSnapshot()
-    } else {
-        null
     }
     LaunchedEffect(
         safeBackStack,
@@ -280,11 +266,7 @@ internal fun BiliPaiNavDisplayHost(
 
         when {
             openedVideoDetail -> {
-                videoCardClock.beginOpening(
-                    sourceRoute = openingSourceRoute,
-                    snapshot = pendingOpeningPerformanceSnapshot
-                        ?: captureTransitionPerformanceSnapshot(),
-                )
+                videoCardClock.beginOpening(openingSourceRoute)
                 // 先给详情 AVS 一个 frame 建立 shared 回灌。已建立时不能再启动
                 // fallback Animatable，否则两条曲线在中段交接会让背景顿一下再追卡片。
                 launchVideoCardDepthAnimation {
@@ -328,20 +310,25 @@ internal fun BiliPaiNavDisplayHost(
                         cancelVideoCardDepthAnimation()
                         videoCardClock.snapClearAndIdle()
                     } else {
+                        // HELD 稳态 depth 合同为 1，但 fallback Animatable 常为 0。
+                        // beginReturning(startDepth) 同步钉 floor，避免首帧清晰、无模糊过程。
+                        val startDepth = resolveVideoCardReturnClearStartDepth(
+                            phase = videoCardClock.phase,
+                            currentDepth = videoCardClock.depthProgress(),
+                        )
                         videoCardClock.beginReturning(
                             sourceRoute = returningSourceRoute,
-                            snapshot = videoCardClock.performanceSnapshot
-                                ?: captureTransitionPerformanceSnapshot(),
+                            startDepth = startDepth,
                         )
                         launchVideoCardDepthAnimation {
-                            withFrameNanos { }
+                            // 返回必须始终跑 fallback 消糊：shared 在 Exit.None 下常瞬间
+                            // fraction=0 或 dispose，若仍「有 shared 就跳过」会完全没有模糊过程。
+                            // depth 读口对 RETURNING 取 max(shared, fallback, floor)。
                             if (
-                                videoCardClock.phase != VideoCardTransitionBackgroundPhase.RETURNING ||
-                                videoCardClock.hasActiveSharedMorphProgress()
+                                videoCardClock.phase != VideoCardTransitionBackgroundPhase.RETURNING
                             ) {
                                 return@launchVideoCardDepthAnimation
                             }
-                            val startDepth = videoCardClock.depthProgress()
                             val fullDurationMs = resolveVideoCardTransitionReturnFullDurationMillis(
                                 baseDurationMillis = timelineSpec.durationMillis,
                             )
@@ -355,7 +342,7 @@ internal fun BiliPaiNavDisplayHost(
                                 targetDepth = 0f,
                             )
                             videoCardClock.snapFallback(startDepth)
-                            // 无 shared 对端时才使用 fallback；返回曲线固定 Linear。
+                            // 返回曲线固定 Linear，与 shared morph 同墙钟。
                             videoCardClock.animateFallbackTo(
                                 target = 0f,
                                 durationMillis = clearDurationMs,
@@ -475,7 +462,9 @@ internal fun BiliPaiNavDisplayHost(
     }
     val performBack: (() -> Unit) -> Unit = { commitTransitionCallBack ->
         if (navigationBackJob?.isActive != true) {
-            navigationBackJob = navigationScope.launch {
+            val newBackJob = navigationScope.launch(start = kotlinx.coroutines.CoroutineStart.LAZY) {
+            VideoCardTransitionDiagnostics.onNavigationBackJobChanged(active = true)
+            try {
             val predictiveBlurAtCommit = predictiveBackBackgroundProgressProvider()
             val shouldFadePredictiveBlur = shouldApplyPredictiveBackGestureBlur(
                 routeTransition = popRouteTransition,
@@ -483,7 +472,7 @@ internal fun BiliPaiNavDisplayHost(
                 gestureReturningVideoCard = false,
                 motionTier = transitionBackgroundMotionTier,
             ) && predictiveBlurAtCommit > 0f
-            if (shouldFadePredictiveBlur) {
+            val predictiveBlurFadeJob = if (shouldFadePredictiveBlur) {
                 launch {
                     predictiveBackBackgroundProgress.snapTo(predictiveBlurAtCommit)
                     predictiveBackBackgroundProgress.animateTo(
@@ -496,11 +485,14 @@ internal fun BiliPaiNavDisplayHost(
                         ),
                     )
                 }
+            } else {
+                null
             }
             predictiveBackHandler.onBackPressed(
                 transitionState = navigationEventState?.transitionState,
                 currentPageKey = safeBackStack.lastOrNull(),
             )
+            predictiveBlurFadeJob?.join()
             val isVideoCardActiveReturn = videoCardDepthEffectEnabled &&
                 (
                     videoCardClock.phase == VideoCardTransitionBackgroundPhase.HELD ||
@@ -510,7 +502,7 @@ internal fun BiliPaiNavDisplayHost(
             if (isVideoCardActiveReturn) {
                 cancelVideoCardDepthAnimation()
             }
-            if (isVideoCardActiveReturn) {
+            val videoBlurFadeJob = if (isVideoCardActiveReturn) {
                 val morphSource = resolveCardMorphDestinationSourceRoute(currentBackKey)
                 val quickReturnForDepthClear = onPrepareVideoCardSharedReturn()
                 if (
@@ -520,10 +512,18 @@ internal fun BiliPaiNavDisplayHost(
                     )
                 ) {
                     videoCardClock.snapClearAndIdle()
+                    null
                 } else {
                     val gestureFractionAtCommit = videoCardClock.gestureBackProgress
-                    val blurAtCommit = videoCardClock.depthProgress()
-                    videoCardClock.beginReturning(morphSource)
+                    // 锁定起点须在 beginReturning 之前：手势 depth / HELD 满糊都在此刻有效。
+                    val blurAtCommit = resolveVideoCardReturnClearStartDepth(
+                        phase = videoCardClock.phase,
+                        currentDepth = videoCardClock.depthProgress(),
+                    )
+                    videoCardClock.beginReturning(
+                        sourceRoute = morphSource,
+                        startDepth = blurAtCommit,
+                    )
                     val fullDurationMs = resolveVideoCardTransitionReturnFullDurationMillis(
                         baseDurationMillis = timelineSpec.durationMillis,
                     )
@@ -556,16 +556,24 @@ internal fun BiliPaiNavDisplayHost(
                             videoCardClock.markIdle()
                         }
                     }
+                    videoCardDepthAnimationJob
                 }
+            } else {
+                null
             }
             videoCardReturnGestureInProgress = false
             videoCardClock.endGesture()
             commitTransitionCallBack()
             onBack()
-            // 模糊清理、当前页退出和目标页稳定从这里同时开始；不串行等待模糊动画。
-            delay(PREDICTIVE_BACK_EXIT_SETTLE_DURATION_MS.toLong())
+            videoBlurFadeJob?.join()
             predictiveBackBackgroundProgress.snapTo(0f)
+            } finally {
+                VideoCardTransitionDiagnostics.onNavigationBackJobChanged(active = false)
+                navigationBackJob = null
             }
+            }
+            navigationBackJob = newBackJob
+            newBackJob.start()
         }
     }
     val latestProgrammaticBackAction = rememberUpdatedState<() -> Unit> {
@@ -583,6 +591,20 @@ internal fun BiliPaiNavDisplayHost(
     val quickReturnFromDetailProvider = remember {
         { isQuickReturnFromDetailUpdated }
     }
+    val videoCardExposureProvider = remember(
+        videoCardClock,
+        gestureReturningVideoCard,
+    ) {
+        {
+            val nativeGestureActive = gestureReturningVideoCard &&
+                navigationEventState?.transitionState is NavigationEventTransitionState.InProgress
+            resolveVideoCardTransitionExposure(
+                phase = videoCardClock.phase,
+                predictiveBackInProgress = nativeGestureActive,
+                gestureRestoreInProgress = videoCardClock.gestureRestoreInProgress,
+            )
+        }
+    }
     val preferWholeCardReturnProvider = rememberUpdatedState(preferWholeCardReturn)
     val scopedContent: @Composable (BiliPaiNavKey) -> Unit = remember(
         content,
@@ -590,13 +612,14 @@ internal fun BiliPaiNavDisplayHost(
         safeBackStack,
         videoCardClock,
         videoCardBackgroundProgressProvider,
-        pendingOpeningPerformanceSnapshot,
         predictiveBackBackgroundProgressProvider,
         transitionBackgroundMotionTier,
         isLightBackground,
         quickReturnFromDetailProvider,
         preferWholeCardReturnProvider,
         morphProgressReporter,
+        videoCardExposureProvider,
+        sourceMetadata,
     ) {
         { key ->
             val entryRoute = key.toLegacyRoute()
@@ -607,10 +630,6 @@ internal fun BiliPaiNavDisplayHost(
                     CompositionLocalProvider(
                         LocalVideoCardSharedElementSourceRoute provides entryRoute,
                         LocalVideoCardTransitionClock provides videoCardClock,
-                        LocalTransitionPerformanceSnapshot provides (
-                            videoCardClock.performanceSnapshot
-                                ?: pendingOpeningPerformanceSnapshot
-                            ),
                         LocalVideoCardMorphProgressReporter provides morphProgressReporter,
                         LocalVideoCardTransitionBackgroundState provides VideoCardTransitionBackgroundState(
                             progressProvider = videoCardBackgroundProgressProvider,
@@ -620,6 +639,11 @@ internal fun BiliPaiNavDisplayHost(
                             phaseProvider = {
                                 videoCardClock.phase
                             },
+                            exposureProvider = videoCardExposureProvider,
+                            sourceCornerDpProvider = {
+                                sourceMetadata.sourceCornerDp
+                            },
+                            snapshotHandle = videoCardSnapshotHandle,
                             isReturnGestureInProgressProvider = {
                                 videoCardReturnGestureInProgress
                             },
@@ -711,12 +735,10 @@ internal fun BiliPaiNavDisplayHost(
         onBack = { performBack { } }
     )
     val scene = sceneState.currentScene
-    val currentInfo = SceneInfo(scene)
-    val previousSceneInfos = sceneState.previousScenes.map { SceneInfo(it) }
-    navigationEventState = rememberNavigationEventState(
-        currentInfo = currentInfo,
-        backInfo = previousSceneInfos
-    )
+    // Navigation3 1.2.0-alpha07 owns SceneInfo projection from the corrected previousScenes list.
+    // Do not reconstruct it manually: alpha07 specifically fixes the predictive target lookup to
+    // start at the top-most non-overlay scene, which keeps the real source page behind the return.
+    navigationEventState = rememberNavigationEventState(sceneState)
     val transitionState = navigationEventState.transitionState
     val inProgressState = transitionState as? NavigationEventTransitionState.InProgress
     val nativeVideoBackProgress = inProgressState?.latestEvent?.progress
@@ -726,12 +748,13 @@ internal fun BiliPaiNavDisplayHost(
         }
     }
 
-    // 预测手势：最高优先级写入 clock，与 shared seek 同一 depth 读口。
+    // 预测手势：写入 clock（cancel/restore 与 chrome 依赖 gesture 状态）；
+    // 景深绘制另见 progressProvider 对 live progress 的直读，避免仅信 SideEffect 时序。
     SideEffect {
         val gestureProgress = nativeVideoBackProgress
         val gestureActive = gestureReturningVideoCard && gestureProgress != null
-        if (gestureActive && gestureProgress != null) {
-            videoCardClock.beginGesture(gestureProgress)
+        if (gestureActive) {
+            videoCardClock.beginGesture(requireNotNull(gestureProgress))
         } else if (videoCardReturnGestureInProgress) {
             videoCardClock.endGesture()
         }
@@ -786,14 +809,27 @@ internal fun BiliPaiNavDisplayHost(
         },
     )
 
+    val effectiveVideoCardExposure = videoCardExposureProvider()
+    LaunchedEffect(effectiveVideoCardExposure) {
+        VideoCardTransitionDiagnostics.onExposureChanged(effectiveVideoCardExposure)
+        // 仅 IDLE 释放 Host 冻结景深层。SettledHidden 必须保留满糊层，供预测手势首帧使用。
+        if (shouldReleaseHostOwnedDepthLayer(effectiveVideoCardExposure)) {
+            videoCardSnapshotHandle.releaseSession()
+        }
+    }
     val showVideoCardNavBackdrop = shouldShowVideoCardTransitionNavBackdrop(
         cardTransitionEnabled = videoCardDepthEffectEnabled,
-        phase = videoCardClock.phase,
+        exposure = effectiveVideoCardExposure,
         isVideoDetailOnStack = isCardMorphDestinationNavKey(currentBackKey),
         isReturningToVideoDetail = isCardMorphDestinationNavKey(targetBackKey),
     )
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            // 转场中途若冻结层 stale / 源页尚未重录，避免窗口默认黑底「无真实背景」。
+            .background(AppSurfaceTokens.groupedListContainer()),
+    ) {
         val settingsSubtreeBackdrop =
             (currentBackKey != null && isSettingsSubtreeNavKey(currentBackKey)) ||
                 (targetBackKey != null && isSettingsSubtreeNavKey(targetBackKey))
@@ -804,6 +840,18 @@ internal fun BiliPaiNavDisplayHost(
                     .background(AppSurfaceTokens.groupedListContainer()),
             )
         }
+        // 会话级景深：在 NavDisplay 之下持有 OPENING 录制的冻结层；HELD/预测/返回只改半径。
+        VideoCardTransitionHostDepthLayer(
+            enabled = videoCardDepthEffectEnabled,
+            snapshotHandle = videoCardSnapshotHandle,
+            progressProvider = videoCardBackgroundProgressProvider,
+            phaseProvider = { videoCardClock.phase },
+            exposureProvider = videoCardExposureProvider,
+            isGestureRestoreInProgressProvider = { videoCardClock.gestureRestoreInProgress },
+            motionTierProvider = { transitionBackgroundMotionTier },
+            isLightBackgroundProvider = { isLightBackground },
+            realtimeBlurEnabledProvider = { true },
+        )
         VideoCardTransitionNavBackdrop(
             visible = showVideoCardNavBackdrop,
             progressProvider = videoCardBackgroundProgressProvider,
@@ -816,13 +864,8 @@ internal fun BiliPaiNavDisplayHost(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.TopStart,
             sizeTransform = null,
-            // 页面自身已经提供了方向、淡入和预测返回效果。关闭 Navigation3 默认的
-            // 圆角裁剪与 dim，可避免转场期间额外的离屏层和整页重绘。
-            transitionEffects = NavDisplayTransitionEffects(
-                enableCornerClip = false,
-                dimAmount = 0f,
-                blockInputDuringTransition = false,
-            ),
+            // 页面自身提供方向、淡入和预测返回效果。官方 Nav3 UI 不额外添加 Miuix
+            // 的圆角裁剪、dim 或输入拦截，因此与此前三项全部关闭的视觉配置等价。
             transitionSpec = {
                 with(predictiveBackHandler) {
                     onTransitionSpec()

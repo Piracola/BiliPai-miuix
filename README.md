@@ -42,7 +42,7 @@
   </a>
 </p>
 
-<sub>README 更新：2026-07-28 · 当前构建版本以 app/build.gradle.kts 为准 · 已发布版本以 <a href="CHANGELOG.md">CHANGELOG.md</a> 为准</sub>
+<sub>README 更新：2026-07-31 · 当前构建版本以 app/build.gradle.kts 为准 · 已发布版本以 <a href="CHANGELOG.md">CHANGELOG.md</a> 为准</sub>
 
 </div>
 
@@ -84,7 +84,7 @@ BiliPai 是一个基于 Kotlin 与 Jetpack Compose 的第三方 Bilibili Android
 | 系统要求 | Android 8.0+ / API 26+ |
 | 推荐系统 | Android 12+，可获得更完整的 Material You 与动态取色体验 |
 | CPU 架构 | 以 Release 实际产物为准，优先面向 64 位设备 |
-| 登录方式 | 扫码登录 |
+| 登录方式 | TV 扫码、手机号密码、短信验证码、Cookie 导入 |
 
 安装 APK 时可能需要允许“安装未知来源应用”。如果遇到播放画质、登录状态或缓存问题，请先确认当前版本、网络环境和账号权限。
 
@@ -101,6 +101,7 @@ BiliPai 是一个基于 Kotlin 与 Jetpack Compose 的第三方 Bilibili Android
 | 搜索空间 | 视频 / UP 主 / 番剧检索，UP 空间搜索，历史记录与实时建议 |
 | 离线缓存 | 清晰度选择、断点续传、本地播放管理、音视频合并 |
 | 插件系统 | 内置插件、JSON 规则插件、源码级原生插件、外部包格式预览 |
+| 投屏与备份 | DLNA、Google Cast、WebDAV 设置备份与恢复 |
 | 大屏适配 | 平板/折叠屏侧边栏、影院布局、横竖屏方向策略 |
 
 ## 体验设计
@@ -132,13 +133,15 @@ BiliPai 的界面围绕“内容优先、控制轻量、动效克制”调整。
 | 类别 | 选型 |
 | --- | --- |
 | 语言 | Kotlin |
-| UI | Jetpack Compose、Material 3、Miuix、MVVM |
+| 构建基线 | AGP 9.3.1、Gradle 9.5、Kotlin 2.4、JDK 21、compileSdk 37 |
+| UI | Jetpack Compose、Material 3、Miuix、Compose Cupertino、MVVM |
+| 导航 | Navigation3 runtime/UI 1.2.0-alpha07、NavigationEvent 1.2.0-alpha03 |
 | 网络 | Retrofit、OkHttp、Kotlinx Serialization |
 | 存储 | Room、DataStore |
 | 媒体 | AndroidX Media3 / ExoPlayer、MediaCodec |
-| 弹幕 | DanmakuFlameMaster、DanmakuRenderEngine |
-| 视觉 | Haze、AndroidLiquidGlass、Compose Cupertino、Miuix |
-| 动画 | Lottie Compose、Orbital、Compose Shimmer |
+| 弹幕 | DanmakuRenderEngine、自研弹幕策略与覆盖层 |
+| 视觉 | Haze 2、Backdrop / AndroidLiquidGlass、Miuix |
+| 动画 | Compose Animation / SharedTransition、Lottie、自研 shimmer 与粒子效果 |
 | 图片 | Coil Compose |
 | 后台任务 | WorkManager |
 
@@ -146,15 +149,23 @@ BiliPai 的界面围绕“内容优先、控制轻量、动效克制”调整。
 
 ```text
 BiliPai/
-├── app/                 # 主应用、功能 UI、播放器、导航、ViewModel、策略与测试
-├── design-system/       # 三套界面风格共用的主题、组件、图标、动效与视觉策略
-├── settings-core/       # 可复用设置与偏好存储逻辑
-├── network-core/        # 网络策略与底层网络支持
-├── plugin-sdk/          # 外部插件可使用的稳定接口与能力声明
-├── baselineprofile/     # Macrobenchmark 与 Baseline Profile
-├── docs/                # Wiki、开发文档、截图资源
-├── plugins/             # 插件 SDK、示例、社区目录
-└── scripts/             # 发布、性能和辅助脚本
+├── app/                         # Android 应用壳、业务功能与绝大多数运行时代码
+│   └── src/main/java/com/android/purebilibili/
+│       ├── app/                 # Application、启动初始化与顶层装配
+│       ├── core/                # 网络、存储、播放器、插件、主题和 UI 公共能力
+│       ├── data/                # API/数据库模型与 Repository
+│       ├── domain/              # 可复用 UseCase 与纯业务规则
+│       ├── feature/             # 视频、首页、动态、直播、设置等业务场景
+│       ├── navigation/          # 路由兼容、入口策略与顶层导航装配
+│       └── navigation3/         # NavKey、返回栈、Entry/Scene 与预测返回
+├── design-system/               # 三套风格共享的主题、组件、动效、模糊与适配策略
+├── settings-core/               # 可复用设置策略
+├── network-core/                # 可复用网络回退与推荐策略
+├── plugin-sdk/                  # 推荐、播放器、弹幕插件接口与能力声明
+├── baselineprofile/             # 启动、首页、设置和视频详情性能基准
+├── docs/                        # Wiki、插件开发文档与截图资源
+├── plugins/                     # SDK 文档、JSON/源码示例、皮肤示例与社区索引
+└── scripts/                     # CI、发布、性能采集与 Baseline Profile 工具
 ```
 
 ## 构建
@@ -165,7 +176,7 @@ cd BiliPai
 ./gradlew :app:compileDebugKotlin
 ```
 
-本地开发建议使用 JDK 21+ 与 Android Studio 2024.1+。如需生成可安装的本地测试 APK，可运行：
+本地开发使用 JDK 21；Android Studio、Android SDK 与 Gradle 环境需兼容 AGP 9.3.1 和 compileSdk 37。如需生成可安装的本地测试 APK，可运行：
 
 ```bash
 ./gradlew :app:assembleDev
@@ -178,6 +189,7 @@ cd BiliPai
 | 内容 | 链接 |
 | --- | --- |
 | Wiki 首页 | [docs/wiki/README.md](docs/wiki/README.md) |
+| 当前路线图 | [docs/wiki/ROADMAP.md](docs/wiki/ROADMAP.md) |
 | AI / LLM 入口 | [llms.txt](llms.txt) · [docs/wiki/AI.md](docs/wiki/AI.md) |
 | 功能矩阵 | [docs/wiki/FEATURE_MATRIX.md](docs/wiki/FEATURE_MATRIX.md) |
 | 架构说明 | [docs/wiki/ARCHITECTURE.md](docs/wiki/ARCHITECTURE.md) |
@@ -190,18 +202,21 @@ cd BiliPai
 
 当前开发构建为 `9.9.9.1 / versionCode 266`；最新有完整发布记录的版本为 `v9.9.8.9`。公开发布状态与下载请以 [GitHub Releases](https://github.com/jay3-yy/BiliPai/releases) 和 [CHANGELOG.md](CHANGELOG.md) 为准：
 
-- 新增 Anime4K CNN 视频增强插件，并补齐帧预算、切换、预设与版本升级。
-- 新增严格自定义 CDN 模式；修复 HDR TextureView、HEVC/hvc1 与 DASH 编码选择。
-- 首页改进封面加载、过渡状态隔离、单列视频列表与详情返回分区恢复。
-- 空间资料支持复制简介、名称、UID 和空间链接；动态评论分页与转发评论目标修复。
+- 构建基线升级至 AGP 9.3.1 / Gradle 9.5 / Compose BOM 2026.06.01。
+- Navigation3 runtime/UI 对齐至官方 `1.2.0-alpha07`，继续收敛预测返回真实来源页与整卡稳定性。
+- 视频详情整卡过渡新增冻结会话、稳态隐藏景深层和连续播放器返回策略，并扩展性能门槛。
+- 首页顶部、底部、分段控件和详情操作区复用同源液态玻璃 chrome。
+- 动态转发文本支持表情图片和原动态跳转；搜索顶栏与全屏 FILL 视口稳定性继续修复。
 
 ## 路线图
 
 | 状态 | 方向 |
 | --- | --- |
-| 已完成 | 首页推荐、视频播放、番剧、直播、动态、消息、个人中心、多账号会话切换、离线缓存、插件系统、大屏适配、视频笔记、听视频模式、液态玻璃视觉、预测返回与共享元素过渡 |
-| 进行中 | 滑动与过渡性能持续优化、iOS/Material 3/Miuix 风格统一、插件 SDK 与外部包能力细化、Wiki 文档站与回归清单完善 |
-| 计划中 | 观看历史云同步、收藏夹管理、多账户隔离增强、英文/繁体中文完整覆盖、外部 Dex 插件正式化 |
+| 已完成基线 | 首页、播放、番剧、直播、动态、消息、离线、听视频、视频笔记、投屏、WebDAV、多账号会话、插件、大屏与三套视觉风格 |
+| 当前 P0 | 视频整卡/预测返回全入口验收、转场稳态性能、Navigation3 1.2 真机回归、AGP 9 单元测试链路恢复 |
+| 后续 | 外部插件可控执行、多账户数据隔离、收藏夹管理、完整本地化与历史云同步评估 |
+
+完整优先级、完成条件与非目标见 [路线图](docs/wiki/ROADMAP.md)。
 
 ## 参与贡献
 
@@ -222,7 +237,6 @@ BiliPai 依赖并参考了多个优秀开源项目：
 | --- | --- |
 | [Jetpack Compose](https://developer.android.com/jetpack/compose) | 声明式 UI 框架 |
 | [AndroidX Media](https://github.com/androidx/media) | Media3 / ExoPlayer 播放引擎 |
-| [DanmakuFlameMaster](https://github.com/bilibili/DanmakuFlameMaster) | B 站弹幕渲染能力 |
 | [DanmakuRenderEngine](https://github.com/bytedance/DanmakuRenderEngine) | 高性能弹幕渲染参考 |
 | [bilibili-API-collect](https://github.com/SocialSisterYi/bilibili-API-collect) | B 站 API 文档 |
 | [PiliPlus](https://github.com/bggRGjQaUbCoE/PiliPlus) | 播放链路与移动端体验参考 |
@@ -231,9 +245,9 @@ BiliPai 依赖并参考了多个优秀开源项目：
 | [AndroidLiquidGlass](https://github.com/Kyant0/AndroidLiquidGlass) | 液态玻璃效果 |
 | [Compose Cupertino](https://github.com/alexzhirkevich/compose-cupertino) | iOS 风格组件 |
 | [Miuix](https://github.com/compose-miuix-ui/miuix) | Miuix 风格组件 |
+| [BiliPai-miuix](https://github.com/Piracola/BiliPai-miuix) | UI 组件 facade / design-system 重构贡献（@piracola） |
 | [Lottie](https://github.com/airbnb/lottie-android) | 矢量动画 |
 | [Coil](https://github.com/coil-kt/coil) | 图片加载 |
-| [Orbital](https://github.com/skydoves/Orbital) | 共享元素过渡 |
 | [Retrofit](https://github.com/square/retrofit) / [OkHttp](https://github.com/square/okhttp) | 网络请求 |
 | [Room](https://developer.android.com/training/data-storage/room) / [DataStore](https://developer.android.com/topic/libraries/architecture/datastore) | 本地数据与偏好存储 |
 

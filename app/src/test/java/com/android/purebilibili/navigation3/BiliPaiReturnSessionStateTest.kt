@@ -1,11 +1,28 @@
 package com.android.purebilibili.navigation3
 
+import androidx.compose.ui.geometry.Rect
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class BiliPaiReturnSessionStateTest {
+
+    private fun transitionSession(
+        bvid: String,
+        sourceRoute: String,
+        sourceKey: String,
+        left: Float = 10f,
+    ) = VideoCardTransitionSession.create(
+        bvid = bvid,
+        source = BiliPaiVideoSource(route = sourceRoute, key = sourceKey),
+        cardBounds = Rect(left, 20f, left + 100f, 180f),
+        sourceCornerDp = 12,
+        cardSourceDirection = BiliPaiNavCardSourceDirection.SOURCE_LEFT,
+        coverIdentity = "cover-$bvid",
+        cardFullyVisible = true,
+        isSingleColumnCard = false,
+    )
 
     @Test
     fun videoSourceRouteIsStoredOutsideCardPositionManager() {
@@ -93,5 +110,68 @@ class BiliPaiReturnSessionStateTest {
         assertEquals("home:BV_A", restored.lastVideoSourceKey)
         assertEquals(null, restored.previousListVideoSourceRoute)
         assertEquals(null, restored.previousListVideoSourceKey)
+    }
+
+    @Test
+    fun immutableTransitionSessionKeepsClickGeometryAfterLiveSourceChanges() {
+        val clicked = transitionSession(
+            bvid = "BV_A",
+            sourceRoute = "home",
+            sourceKey = "home:BV_A",
+            left = 20f,
+        )
+        val state = BiliPaiReturnSessionState().recordTransitionSession(clicked)
+
+        val originalBounds = clicked.cardBounds
+        val unrelatedLaterCard = transitionSession(
+            bvid = "BV_B",
+            sourceRoute = "home",
+            sourceKey = "home:BV_B",
+            left = 500f,
+        )
+
+        assertEquals(originalBounds, state.transitionSession?.cardBounds)
+        assertFalse(state.transitionSession?.cardBounds == unrelatedLaterCard.cardBounds)
+        assertEquals("cover-BV_A", state.transitionSession?.coverIdentity)
+        assertEquals(12, state.transitionSession?.sourceCornerDp)
+    }
+
+    @Test
+    fun staleOrAdjacentCardGeometryIsRejectedByBvidOwnership() {
+        val session = VideoCardTransitionSession.create(
+            bvid = "BV_TARGET",
+            source = BiliPaiVideoSource(route = "home", key = "home:BV_ADJACENT"),
+            cardBounds = Rect(0f, 0f, 100f, 100f),
+            sourceCornerDp = 12,
+            cardSourceDirection = BiliPaiNavCardSourceDirection.SOURCE_RIGHT,
+            coverIdentity = "target-cover",
+            cardFullyVisible = true,
+            isSingleColumnCard = false,
+        )
+
+        assertEquals(null, session.cardBounds)
+        assertEquals(null, session.sourceCornerDp)
+        assertEquals(BiliPaiNavCardSourceDirection.NONE, session.cardSourceDirection)
+        assertFalse(session.hasUsableSourceGeometry)
+    }
+
+    @Test
+    fun relatedReturnRestoresTheCompleteListTransitionSession() {
+        val listSession = transitionSession("BV_A", "home", "home:BV_A")
+        val relatedSession = transitionSession(
+            "BV_B",
+            "video/BV_A",
+            "video/BV_A:BV_B",
+            left = 300f,
+        )
+        val restored = BiliPaiReturnSessionState()
+            .recordTransitionSession(listSession)
+            .recordTransitionSession(relatedSession)
+            .restoreListVideoSourceAfterRelatedReturn()
+
+        assertEquals(listSession, restored.transitionSession)
+        assertEquals("home", restored.lastVideoSourceRoute)
+        assertEquals("home:BV_A", restored.lastVideoSourceKey)
+        assertEquals(null, restored.previousListTransitionSession)
     }
 }

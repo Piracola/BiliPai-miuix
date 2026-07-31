@@ -1,5 +1,6 @@
 package com.android.purebilibili.feature.video.screen
 
+import com.android.purebilibili.core.ui.transition.VideoCardTransitionBackgroundPhase
 import com.android.purebilibili.core.ui.transition.VideoCardTransitionVisualTimeline
 import com.android.purebilibili.core.ui.transition.VideoSharedTransitionPlaybackIntent
 import org.junit.Assert.assertEquals
@@ -9,6 +10,34 @@ import org.junit.Test
 import java.io.File
 
 class VideoDetailReturnCoverPolicyTest {
+
+    @Test
+    fun exitTransitionInProgressFallsBackToCardClockReturning() {
+        assertTrue(
+            shouldTreatVideoDetailExitTransitionInProgress(
+                animatedVisibilityTargetIsPostExit = true,
+                videoCardBackgroundPhase = VideoCardTransitionBackgroundPhase.HELD,
+            )
+        )
+        assertTrue(
+            shouldTreatVideoDetailExitTransitionInProgress(
+                animatedVisibilityTargetIsPostExit = false,
+                videoCardBackgroundPhase = VideoCardTransitionBackgroundPhase.RETURNING,
+            )
+        )
+        assertFalse(
+            shouldTreatVideoDetailExitTransitionInProgress(
+                animatedVisibilityTargetIsPostExit = false,
+                videoCardBackgroundPhase = VideoCardTransitionBackgroundPhase.HELD,
+            )
+        )
+        assertFalse(
+            shouldTreatVideoDetailExitTransitionInProgress(
+                animatedVisibilityTargetIsPostExit = false,
+                videoCardBackgroundPhase = null,
+            )
+        )
+    }
 
     @Test
     fun `immediate video back target keeps secondary content visible`() {
@@ -355,7 +384,7 @@ class VideoDetailReturnCoverPolicyTest {
     }
 
     @Test
-    fun `forceCoverOnly stays off during uncommitted leaving for resident path`() {
+    fun `forceCoverOnly stays off unless explicitly requested for resident path`() {
         assertFalse(
             com.android.purebilibili.core.ui.transition.shouldForceCoverOnlyForReturnOwnership(
                 ownership = com.android.purebilibili.core.ui.transition.VideoCardReturnCoverOwnership.RESIDENT_COVER,
@@ -364,7 +393,8 @@ class VideoDetailReturnCoverPolicyTest {
                 isCommittedCardReturn = false,
             )
         )
-        assertTrue(
+        // 提交返回也不得自动 forceCover，否则一点返回就掐 player
+        assertFalse(
             com.android.purebilibili.core.ui.transition.shouldForceCoverOnlyForReturnOwnership(
                 ownership = com.android.purebilibili.core.ui.transition.VideoCardReturnCoverOwnership.RESIDENT_COVER,
                 useReturningVisualState = true,
@@ -1003,5 +1033,59 @@ class VideoDetailReturnCoverPolicyTest {
                 isSharedTransitionActive = true,
             )
         )
+    }
+
+    @Test
+    fun committedReturn_doesNotCoverPlayerUntilHandoff() {
+        // transitionProgress 1 = 详情全屏 settle 0；cover 必须为 0
+        assertEquals(
+            0f,
+            resolveVideoDetailReturnCoverAlpha(
+                transitionProgress = 1f,
+                isCommittedCardReturn = true,
+                hasResidentCover = true,
+                liveReturnMorph = true,
+            ),
+            0.0001f,
+        )
+        assertEquals(
+            1f,
+            resolveVideoDetailReturnPlayerAlpha(
+                transitionProgress = 1f,
+                isCommittedCardReturn = true,
+                hasResidentCover = true,
+                liveReturnMorph = true,
+            ),
+            0.0001f,
+        )
+        // 非 live / CoverFirst：提交后封面立即接管，避免无帧黑壳
+        assertEquals(
+            1f,
+            resolveVideoDetailReturnCoverAlpha(
+                transitionProgress = 1f,
+                isCommittedCardReturn = true,
+                hasResidentCover = true,
+                liveReturnMorph = false,
+            ),
+            0.0001f,
+        )
+        assertEquals(
+            0f,
+            resolveVideoDetailReturnPlayerAlpha(
+                transitionProgress = 1f,
+                isCommittedCardReturn = true,
+                hasResidentCover = true,
+                liveReturnMorph = false,
+            ),
+            0.0001f,
+        )
+        // settle 过 handoff 后才抬封面（progress 约 0.05 → settle 0.95）
+        val coverNearEnd = resolveVideoDetailReturnCoverAlpha(
+            transitionProgress = 0.05f,
+            isCommittedCardReturn = true,
+            hasResidentCover = true,
+            liveReturnMorph = true,
+        )
+        assertTrue(coverNearEnd > 0.5f)
     }
 }

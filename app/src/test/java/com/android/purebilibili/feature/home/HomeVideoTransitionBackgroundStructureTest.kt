@@ -23,6 +23,8 @@ class HomeVideoTransitionBackgroundStructureTest {
         assertTrue(source.contains("VideoCardTransitionBackgroundPhase.OPENING"))
         assertTrue(source.contains("VideoCardTransitionBackgroundPhase.RETURNING"))
         assertTrue(source.contains("LocalVideoCardTransitionBackgroundState provides"))
+        assertTrue(source.contains("resolveVideoCardTransitionMotionTier(reduceMotion)"))
+        assertFalse(source.contains("runtimeGuardDecision.effectiveMotionTier"))
         assertFalse(source.contains("videoCardTransitionBackgroundEffect("))
     }
 
@@ -40,6 +42,32 @@ class HomeVideoTransitionBackgroundStructureTest {
     }
 
     @Test
+    fun mainHostOwnsExactlyOneVideoTransitionBackgroundLayer() {
+        val source = appNavigationSource()
+        val mainHostBranch = source
+            .substringAfter("BiliPaiNavEntryContentRole.MAIN_HOST -> {")
+            .substringBefore("BiliPaiNavEntryContentRole.HOME ->")
+
+        assertFalse(
+            mainHostBranch.contains("VideoCardTransitionBackgroundRouteContent("),
+            "MainHost Pager must not recursively record the root snapshot GraphicsLayer",
+        )
+        assertTrue(
+            source.substringAfter("BiliPaiNavDisplayHost(")
+                .contains("VideoCardTransitionBackgroundRouteContent(key)"),
+            "NavDisplay entry shell must remain the single transition background owner",
+        )
+        assertTrue(
+            source.contains("val activeMainHostRoute = currentBottomNavItem.route"),
+            "MainHost transition matching must retain the selected pager route while VideoDetail is top-most",
+        )
+        assertFalse(
+            source.contains("activeMainHostRoute = activeBottomTabRoute"),
+            "The top-most video route cannot be reused as the retained MainHost page identity",
+        )
+    }
+
+    @Test
     fun videoCardTransitionBackgroundUsesFrozenSnapshotLayerForDynamicBlur() {
         val source = listOf(
             File("app/src/main/java/com/android/purebilibili/core/ui/transition/VideoCardTransitionBackgroundPolicy.kt"),
@@ -51,9 +79,30 @@ class HomeVideoTransitionBackgroundStructureTest {
         assertTrue(source.contains("freezeRecording"))
         assertTrue(source.contains("contentLayer.record"))
         assertTrue(source.contains("BlurEffect("))
+        assertTrue(source.contains("DisposableEffect(snapshotState, contentLayer, isHostOwnedSnapshot)"))
+        assertTrue(source.contains("shouldInvalidateSnapshotOnSourceDispose"))
+        assertTrue(source.contains("snapshotState.invalidateRecordedContent()"))
         // 冻结后不得每帧对 live content 再挂 android RenderEffect
         assertFalse(source.contains("android.graphics.RenderEffect"))
         assertFalse(source.contains("createBlurEffect("))
+    }
+
+    @Test
+    fun navDisplayHostOwnsSessionDepthLayerUnderNavDisplay() {
+        val source = navDisplayHostSource()
+        assertTrue(source.contains("VideoCardTransitionHostDepthLayer("))
+        assertTrue(source.contains("shouldReleaseHostOwnedDepthLayer("))
+        assertTrue(source.contains("videoCardSnapshotHandle.releaseSession()"))
+        // SettledHidden 不得再 clear 糊层，否则预测手势无满糊起点
+        assertFalse(
+            source.contains(
+                "effectiveVideoCardExposure == VideoCardTransitionExposure.SettledHidden ||",
+            ),
+        )
+        val boxBlock = source
+            .substringAfter("Box(modifier = modifier.fillMaxSize())")
+            .substringBefore("private fun ProvideNavigation3ViewModelApplicationExtras")
+        assertTrue(boxBlock.indexOf("VideoCardTransitionHostDepthLayer") < boxBlock.indexOf("NavDisplay("))
     }
 
     private fun homeScreenSource(): String {

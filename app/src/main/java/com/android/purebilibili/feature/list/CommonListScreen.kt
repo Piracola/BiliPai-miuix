@@ -20,9 +20,6 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.animate
 import dev.chrisbanes.haze.HazeState
 import com.android.purebilibili.core.ui.blur.hazeSourceCompat
-import dev.chrisbanes.haze.hazeEffect
-import dev.chrisbanes.haze.HazeStyle
-import dev.chrisbanes.haze.HazeTint
 import com.android.purebilibili.core.ui.blur.unifiedBlur
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection

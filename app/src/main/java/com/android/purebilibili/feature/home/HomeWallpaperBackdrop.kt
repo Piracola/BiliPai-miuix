@@ -22,6 +22,7 @@ import coil.size.Scale
 import com.android.purebilibili.core.ui.adaptive.MotionTier
 import com.android.purebilibili.core.ui.motion.rememberSystemReduceMotion
 import com.android.purebilibili.core.ui.transition.VideoCardTransitionBackgroundPhase
+import com.android.purebilibili.core.ui.transition.resolveVideoCardTransitionExposure
 import com.android.purebilibili.core.ui.transition.videoCardTransitionBackgroundEffect
 
 /**
@@ -56,6 +57,13 @@ internal fun DepthSyncedGlobalHomeWallpaperBackdrop(
                     Modifier.videoCardTransitionBackgroundEffect(
                         progressProvider = depthProgressProvider,
                         phaseProvider = depthPhaseProvider,
+                        exposureProvider = {
+                            resolveVideoCardTransitionExposure(
+                                phase = depthPhaseProvider(),
+                                predictiveBackInProgress = false,
+                                gestureRestoreInProgress = depthGestureRestoreProvider(),
+                            )
+                        },
                         isGestureRestoreInProgressProvider = depthGestureRestoreProvider,
                         motionTierProvider = { motionTier },
                         isLightBackgroundProvider = { isLightBackground },

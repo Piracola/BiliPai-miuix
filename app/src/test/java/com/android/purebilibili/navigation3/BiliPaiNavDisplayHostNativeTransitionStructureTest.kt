@@ -16,6 +16,18 @@ class BiliPaiNavDisplayHostNativeTransitionStructureTest {
         assertTrue(source.contains("onNativeVideoBackCancelled("))
     }
 
+    @Test
+    fun scopedEntryContentRefreshesItsExposureProviderBeforePredictiveBack() {
+        val source = loadSource()
+        val scopedContentRememberKeys = source
+            .substringAfter("val scopedContent:")
+            .substringAfter("remember(")
+            .substringBefore(") {")
+
+        assertTrue(scopedContentRememberKeys.contains("videoCardExposureProvider"))
+        assertTrue(scopedContentRememberKeys.contains("sourceMetadata"))
+    }
+
     private fun loadSource(): String {
         return listOf(
             File("app/src/main/java/com/android/purebilibili/navigation3/BiliPaiNavDisplayHost.kt"),

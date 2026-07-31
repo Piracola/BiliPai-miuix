@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import com.android.purebilibili.core.theme.AndroidNativeVariant
@@ -63,7 +64,7 @@ internal fun resolveAppPullRefreshIndicatorRenderer(
     PresetPrimitiveRenderer.MIUIX_BRIDGED -> AppPullRefreshIndicatorRenderer.MIUIX
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AppPullRefreshLoadingIndicator(
     state: PullToRefreshState,
