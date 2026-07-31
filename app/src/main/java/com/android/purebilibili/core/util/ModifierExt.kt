@@ -30,32 +30,7 @@ import com.android.purebilibili.core.theme.UiPreset
 /**
  * 骨架屏闪光特效 Modifier
  */
-fun Modifier.shimmerEffect(): Modifier = composed {
-    var size by remember { mutableStateOf(IntSize.Zero) }
-    val transition = rememberInfiniteTransition(label = "shimmer")
-    val startOffsetX by transition.animateFloat(
-        initialValue = -2 * size.width.toFloat(),
-        targetValue = 2 * size.width.toFloat(),
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000)
-        ),
-        label = "shimmer_offset"
-    )
-
-    background(
-        brush = Brush.linearGradient(
-            colors = listOf(
-                Color(0xFFE0E0E0), // 浅灰
-                Color(0xFFF5F5F5), // 亮灰 (高光)
-                Color(0xFFE0E0E0), // 浅灰
-            ),
-            start = Offset(startOffsetX, 0f),
-            end = Offset(startOffsetX + size.width.toFloat(), size.height.toFloat())
-        )
-    ).onGloballyPositioned {
-        size = it.size
-    }
-}
+fun Modifier.shimmerEffect(): Modifier = this
 
 // =============================================================================
 //  [问题2修复] 防抖点击 - 防止快速点击导致双重导航
@@ -241,32 +216,11 @@ fun Modifier.bouncyClickable(
     enabled: Boolean = true,
     onClick: () -> Unit
 ): Modifier = composed {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
     val haptic = rememberHapticFeedback()
-    
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.95f else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "bounce_scale"
-    )
-    
-    this
-        .graphicsLayer {
-            scaleX = scale
-            scaleY = scale
-        }
-        .clickable(
-            interactionSource = interactionSource,
-            indication = null,
-            enabled = enabled
-        ) {
+    this.clickable(enabled = enabled) {
             haptic(hapticType)
             onClick()
-        }
+    }
 }
 
 /**
@@ -344,29 +298,7 @@ fun Modifier.iOSTapEffect(
  */
 fun Modifier.iOSTapScale(
     scale: Float = 0.96f
-): Modifier = composed {
-    val uiPreset = LocalUiPreset.current
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    
-    val animatedScale by animateFloatAsState(
-        targetValue = if (isPressed) {
-            if (uiPreset == UiPreset.MD3) 0.985f else scale
-        } else {
-            1f
-        },
-        animationSpec = spring(
-            dampingRatio = if (uiPreset == UiPreset.MD3) 0.9f else 0.6f,
-            stiffness = if (uiPreset == UiPreset.MD3) 650f else 400f
-        ),
-        label = "ios_tap_scale_only"
-    )
-    
-    this.graphicsLayer {
-        scaleX = animatedScale
-        scaleY = animatedScale
-    }
-}
+): Modifier = this
 
 /**
  *  iOS 风格卡片点击效果 Modifier（增强版）

@@ -95,14 +95,7 @@ fun EntranceGroup(
     startWhen: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val spec = rememberEffectiveEntranceMotionSpec()
-    val controller = remember(spec) { AppEntranceController(spec) }
-    LaunchedEffect(controller, startWhen) {
-        if (startWhen) controller.start()
-    }
-    CompositionLocalProvider(LocalAppEntrance provides controller) {
-        content()
-    }
+    content()
 }
 
 /**
@@ -110,7 +103,7 @@ fun EntranceGroup(
  *
  * 用单个 spring 驱动的 progress 非线性派生 alpha/位移/缩放,只在 layer 阶段生效,零重组。
  */
-fun Modifier.entrance(): Modifier = this then EntranceElement
+fun Modifier.entrance(): Modifier = this
 
 private object EntranceElement : ModifierNodeElement<EntranceNode>() {
     override fun create(): EntranceNode = EntranceNode()

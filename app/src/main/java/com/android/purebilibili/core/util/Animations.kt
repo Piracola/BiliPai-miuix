@@ -96,47 +96,7 @@ fun Modifier.animateEnter(
     motionTier: MotionTier = MotionTier.Normal,
     coordinateWithSharedTransition: Boolean = false
 ): Modifier = composed {
-    if (!animationEnabled) {
-        return@composed this
-    }
-
-    val motionPolicy = remember(motionTier, coordinateWithSharedTransition) {
-        resolveEnterMotionPolicy(
-            motionTier = motionTier,
-            coordinateWithSharedTransition = coordinateWithSharedTransition
-        )
-    }
-    val progress = remember(key) { Animatable(0f) }
-
-    LaunchedEffect(key, motionPolicy) {
-        // 挂载时若已是终态（例如配置热切换后的重组），不再倒播
-        if (progress.value >= 0.999f) return@LaunchedEffect
-        progress.snapTo(0f)
-        val delayMs = (index * motionPolicy.staggerStepMs).coerceAtMost(motionPolicy.maxStaggerMs)
-        if (delayMs > 0) delay(delayMs.toLong())
-        progress.animateTo(
-            targetValue = 1f,
-            animationSpec = spring(
-                dampingRatio = motionPolicy.dampingRatio,
-                stiffness = motionPolicy.stiffness
-            )
-        )
-    }
-
-    this.graphicsLayer {
-        val p = progress.value
-        alpha = p
-        val translateFactor = motionPolicy.translationFactor
-        if (translateFactor != 0f) {
-            translationY = (initialOffsetY * translateFactor) * (1f - p)
-        }
-        val startScale = motionPolicy.initialScale
-        if (startScale != 1f) {
-            val scale = startScale + (1f - startScale) * p
-            scaleX = scale
-            scaleY = scale
-        }
-    }
+    this
 }
 
 /**
@@ -146,27 +106,5 @@ fun Modifier.bouncyClickable(
     scaleDown: Float = 0.90f,
     onClick: () -> Unit
 ): Modifier = composed {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-
-    val scale = androidx.compose.animation.core.animateFloatAsState(
-        targetValue = if (isPressed) scaleDown else 1f,
-        animationSpec = spring(
-            dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
-            stiffness = androidx.compose.animation.core.Spring.StiffnessMedium
-        ),
-        label = "BouncyScale"
-    )
-
-    this
-        .graphicsLayer {
-            val s = scale.value
-            scaleX = s
-            scaleY = s
-        }
-        .clickable(
-            interactionSource = interactionSource,
-            indication = null,
-            onClick = onClick
-        )
+    this.clickable(onClick = onClick)
 }
