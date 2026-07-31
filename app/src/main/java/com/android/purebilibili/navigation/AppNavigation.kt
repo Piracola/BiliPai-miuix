@@ -373,10 +373,9 @@ fun AppNavigation(
             homeSettings = homeSettings,
         )
     }
-    val cardTransitionEnabled = appearance.cardTransitionEnabled
-    val videoTransitionRealtimeBlurEnabled by SettingsManager
-        .getVideoTransitionRealtimeBlurEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = true)
+    // Legacy animation preferences remain readable for migration only.
+    val cardTransitionEnabled = false
+    val videoTransitionRealtimeBlurEnabled = false
     val isBottomBarBlurEnabled = appearance.bottomBarBlurEnabled
     val bottomBarLabelMode = appearance.bottomBarLabelMode
     val isBottomBarFloating = appearance.bottomBarFloating
@@ -438,18 +437,8 @@ fun AppNavigation(
     // 缓存缺失时等待 DataStore 首值；先用 false 建栈会让恢复备份后的本次启动进错首页。
     val launchToPortraitFeedOnStartupAtInit = resolvedPortraitStartupRoute ?: return
 
-    val videoSharedTransitionSpeedSettings = remember(
-        homeSettings.videoSharedTransitionSpeed,
-        homeSettings.videoSharedTransitionCustomDurationMillis,
-    ) {
-        VideoSharedTransitionSpeedSettings(
-            speed = homeSettings.videoSharedTransitionSpeed,
-            customDurationMillis = homeSettings.videoSharedTransitionCustomDurationMillis,
-        )
-    }
-    val videoSharedTransitionDurationMillis = remember(videoSharedTransitionSpeedSettings) {
-        resolveVideoSharedTransitionDurationMillis(videoSharedTransitionSpeedSettings)
-    }
+    val videoSharedTransitionSpeedSettings = remember { VideoSharedTransitionSpeedSettings() }
+    val videoSharedTransitionDurationMillis = 0
     val videoCardTransitionClock = rememberVideoCardTransitionClock()
     val systemReduceMotion = rememberSystemReduceMotion()
     val appMotionPolicy = remember(systemReduceMotion) {
@@ -459,11 +448,7 @@ fun AppNavigation(
     }
     // 页面导航统一硬切。旧设置值只保留读取兼容，不能再重新开启共享元素路径。
     val sharedVideoCardTransitionEnabled = false
-    val effectiveVideoCardTransitionDurationMillis = if (systemReduceMotion) {
-        VideoCardTransitionVisualTimeline.REDUCED_MOTION_DURATION_MILLIS
-    } else {
-        videoSharedTransitionDurationMillis
-    }
+    val effectiveVideoCardTransitionDurationMillis = 0
     SharedTransitionProvider(enabled = sharedVideoCardTransitionEnabled) {
         CompositionLocalProvider(
             LocalVideoSharedTransitionSpeedSettings provides videoSharedTransitionSpeedSettings,

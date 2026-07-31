@@ -204,6 +204,8 @@ private fun LegacyAnimationSettingsContent(
         modifier = modifier.fillMaxSize(),
         contentPadding = WindowInsets.navigationBars.asPaddingValues()
     ) {
+        // Deprecated animation controls stay hidden while their persisted values migrate safely.
+        if (false) {
 
             //  界面动效（全 App 入场）
             item {
@@ -376,6 +378,8 @@ private fun LegacyAnimationSettingsContent(
                     }
                 }
             }
+
+        }
 
             // ✨ 视觉效果
             item {
