@@ -384,17 +384,11 @@ internal fun resolveVideoDetailSecondaryContentTiming(
     contentDelayMillis: Int,
     contentDurationMillis: Int,
 ): VideoDetailSecondaryContentTiming {
-    val safeDuration = fullDurationMillis.coerceAtLeast(0)
-    val safeEnterDelay = contentDelayMillis.coerceIn(0, safeDuration)
-    val safeEnterDuration = contentDurationMillis
-        .coerceAtLeast(0)
-        .coerceAtMost(safeDuration - safeEnterDelay)
-    val safeReturnDuration = contentDurationMillis.coerceIn(0, safeDuration)
     return VideoDetailSecondaryContentTiming(
-        enterDelayMillis = safeEnterDelay,
-        enterDurationMillis = safeEnterDuration,
+        enterDelayMillis = 0,
+        enterDurationMillis = 0,
         returnDelayMillis = 0,
-        returnDurationMillis = safeReturnDuration
+        returnDurationMillis = 0
     )
 }
 

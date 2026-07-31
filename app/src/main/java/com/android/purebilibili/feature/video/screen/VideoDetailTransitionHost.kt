@@ -220,73 +220,14 @@ internal fun rememberVideoDetailRouteSheetFrameProvider(
     // shell sharedBounds 接管整张详情壳的 morph 时，sheet 自身的 scale/translation/corner/scrim
     // 必须全部停摆——否则会与共享元素同时形变导致撕裂。等价于 motion.enabled = false。
     // 详情路由壳不再参与页面转场；保留该兼容入口只为不影响播放器和返回栈生命周期。
-    val effectiveMotion = motion.copy(enabled = false)
-    val routeSheetProgress = remember(effectiveMotion.enabled) {
-        Animatable(if (effectiveMotion.enabled) 0f else 1f)
-    }
-    val routeSheetSettleProgress = remember(effectiveMotion.enabled) {
-        Animatable(0f)
-    }
-    var settleDirection by remember {
-        mutableStateOf(VideoDetailRouteSheetSettleDirection.None)
-    }
-
-    LaunchedEffect(
-        effectiveMotion.enabled,
-        effectiveMotion.mainDurationMillis,
-        effectiveMotion.settleDurationMillis,
-        effectiveMotion.enterEasing,
-        effectiveMotion.returnEasing,
-        isExitTransitionInProgress
-    ) {
-        if (!effectiveMotion.enabled) {
-            settleDirection = VideoDetailRouteSheetSettleDirection.None
-            routeSheetSettleProgress.snapTo(0f)
-            routeSheetProgress.snapTo(1f)
-            return@LaunchedEffect
-        }
-
-        settleDirection = VideoDetailRouteSheetSettleDirection.None
-        routeSheetSettleProgress.snapTo(0f)
-        val targetProgress = if (isExitTransitionInProgress) 0f else 1f
-        routeSheetProgress.animateTo(
-            targetValue = targetProgress,
-            animationSpec = tween(
-                durationMillis = effectiveMotion.mainDurationMillis,
-                easing = if (isExitTransitionInProgress) {
-                    effectiveMotion.returnEasing
-                } else {
-                    effectiveMotion.enterEasing
-                }
-            )
-        )
-        settleDirection = if (isExitTransitionInProgress) {
-            VideoDetailRouteSheetSettleDirection.Return
-        } else {
-            VideoDetailRouteSheetSettleDirection.Enter
-        }
-        routeSheetSettleProgress.snapTo(1f)
-        routeSheetSettleProgress.animateTo(
-            targetValue = 0f,
-            animationSpec = tween(
-                durationMillis = effectiveMotion.settleDurationMillis,
-                easing = if (isExitTransitionInProgress) {
-                    effectiveMotion.returnEasing
-                } else {
-                    effectiveMotion.enterEasing
-                }
-            )
-        )
-        settleDirection = VideoDetailRouteSheetSettleDirection.None
-    }
-
-    return remember(effectiveMotion, routeSheetProgress, routeSheetSettleProgress) {
+    return remember {
         {
-            resolveVideoDetailRouteSheetFrame(
-                rawProgress = routeSheetProgress.value,
-                settleProgress = routeSheetSettleProgress.value,
-                settleDirection = settleDirection,
-                motion = effectiveMotion
+            VideoDetailRouteSheetFrame(
+                scale = 1f,
+                translationYDp = 0f,
+                cornerDp = 0f,
+                backgroundScrimAlpha = 0f,
+                settleProgress = 0f,
             )
         }
     }
