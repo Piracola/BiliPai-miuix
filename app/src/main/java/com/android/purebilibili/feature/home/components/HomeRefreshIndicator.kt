@@ -6,10 +6,6 @@ import com.android.purebilibili.core.ui.AppSpacingTokens
 import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.ContainerLevel
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -33,8 +29,8 @@ import com.android.purebilibili.core.ui.AdaptiveLoadingIndicator
 import com.android.purebilibili.feature.home.resolvePullRefreshHintText
 
 /**
- * Renderer kind for [HomeRefreshIndicator]. iOS keeps its Cupertino spinner with
- * the rubber-band overshoot; MD3 uses the official morphing loading indicator;
+ * Renderer kind for [HomeRefreshIndicator]. iOS keeps its Cupertino spinner;
+ * MD3 uses the official loading indicator;
  * the shared App indicator chooses the native loading control for each style
  * when this composable is still mounted (home Miuix uses native pull-to-refresh).
  */
@@ -52,20 +48,8 @@ fun Md3ScreenshotRefreshIndicator(
         isRefreshing = isRefreshing,
         isStateAnimating = state.isAnimating
     )
-    val alpha by animateFloatAsState(
-        targetValue = if (progress > 0.08f || isRefreshing) 1f else 0f,
-        animationSpec = md3RefreshAlphaMotionSpec(),
-        label = "md3_screenshot_pull_alpha"
-    )
-    val indicatorScale by animateFloatAsState(
-        targetValue = when {
-            isRefreshing -> 1f
-            progress >= 1f && !state.isAnimating -> 1.04f
-            else -> (0.86f + progress.coerceIn(0f, 1f) * 0.14f)
-        },
-        animationSpec = md3RefreshScaleMotionSpec(),
-        label = "md3_screenshot_pull_scale"
-    )
+    val alpha = if (progress > 0.08f || isRefreshing) 1f else 0f
+    val indicatorScale = 1f
     val strokeColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.72f)
     val textColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.74f)
 
@@ -123,7 +107,7 @@ fun Md3ScreenshotRefreshIndicator(
  * 特点：
  * - 下拉时显示"下拉刷新..."
  * - 达到阈值时显示"松手刷新"  
- * - 刷新中显示 iOS 风格旋转动画
+ * - 刷新中显示加载指示器
  * - 刷新完成显示"刷新成功"
  */
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
@@ -146,30 +130,14 @@ fun HomeRefreshIndicator(
         isStateAnimating = state.isAnimating
     )
     
-    //  箭头只表达阈值状态，使用高阻尼避免松手前后出现夸张回弹。
-    val arrowRotation by animateFloatAsState(
-        targetValue = if (isOverThreshold) 180f else 0f,
-        animationSpec = iosRefreshArrowMotionSpec(),
-        label = "arrow_rotation"
-    )
+    //  箭头仅表达阈值状态，状态变化时立即切换。
+    val arrowRotation = if (isOverThreshold) 180f else 0f
     
-    //  透明度动画
-    val alpha by animateFloatAsState(
-        targetValue = if (progress > 0.1f || isRefreshing) 1f else 0f,
-        animationSpec = iosRefreshAlphaMotionSpec(),
-        label = "alpha"
-    )
+    //  透明度直接跟随可见状态。
+    val alpha = if (progress > 0.1f || isRefreshing) 1f else 0f
     
-    //  缩放跟随手势强度，阈值态只做轻强调，不制造果冻感。
-    val scale by animateFloatAsState(
-        targetValue = when {
-            isRefreshing -> 1f
-            isOverThreshold -> 1.03f
-            else -> (progress.coerceIn(0f, 1f) * 0.28f + 0.72f).coerceAtMost(1f)
-        },
-        animationSpec = iosRefreshScaleMotionSpec(),
-        label = "scale"
-    )
+    //  固定尺寸，避免手势过程中的缩放。
+    val scale = 1f
     
     Box(
         modifier = modifier

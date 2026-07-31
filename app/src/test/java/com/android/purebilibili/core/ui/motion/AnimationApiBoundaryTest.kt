@@ -99,6 +99,20 @@ class AnimationApiBoundaryTest {
         assertFalse(dragScale.contains("animateTo("))
     }
 
+    @Test
+    fun pullRefreshIndicatorsChangeStateWithoutTweenedScaleOrAlpha() {
+        val refreshIndicator = source("feature/home/components/HomeRefreshIndicator.kt")
+
+        assertFalse(refreshIndicator.contains("animateFloatAsState("))
+        assertFalse(refreshIndicator.contains("iosRefreshArrowMotionSpec("))
+        assertFalse(refreshIndicator.contains("iosRefreshAlphaMotionSpec("))
+        assertFalse(refreshIndicator.contains("iosRefreshScaleMotionSpec("))
+        assertFalse(refreshIndicator.contains("md3RefreshAlphaMotionSpec("))
+        assertFalse(refreshIndicator.contains("md3RefreshScaleMotionSpec("))
+        assertTrue(refreshIndicator.contains("AppPullRefreshLoadingIndicator("))
+        assertTrue(refreshIndicator.contains("AdaptiveLoadingIndicator("))
+    }
+
     private fun source(relativePath: String): String {
         return File("src/main/java/com/android/purebilibili/$relativePath").readText()
     }
