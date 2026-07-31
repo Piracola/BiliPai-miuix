@@ -7,7 +7,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.*
@@ -54,7 +53,6 @@ import com.android.purebilibili.feature.home.components.cards.StoryVideoCard
 import androidx.compose.ui.Alignment
 import coil.compose.AsyncImage
 import java.io.File
-import kotlinx.coroutines.yield
 import androidx.compose.runtime.snapshots.Snapshot
 
 internal fun resolveHomeCategoryVideoGridKey(
@@ -625,23 +623,6 @@ private fun TodayWatchPlanCard(
     onUpClick: (Long) -> Unit,
     onVideoClick: (VideoItem) -> Unit
 ) {
-    var revealContent by remember(plan?.generatedAt, isLoading, cardConfig.enableWaterfallAnimation) {
-        mutableStateOf(!cardConfig.enableWaterfallAnimation)
-    }
-    LaunchedEffect(plan?.generatedAt, isLoading, cardConfig.enableWaterfallAnimation) {
-        if (!cardConfig.enableWaterfallAnimation) {
-            revealContent = true
-            return@LaunchedEffect
-        }
-        if (isLoading) {
-            revealContent = false
-            return@LaunchedEffect
-        }
-        revealContent = false
-        yield()
-        revealContent = true
-    }
-
     AppCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
@@ -742,15 +723,8 @@ private fun TodayWatchPlanCard(
             }
 
             val activePlan = plan ?: return@Column
-            var revealIndex = 0
-
             if (cardConfig.showReasonHint) {
-                val hintOrder = revealIndex++
                 WaterfallReveal(
-                    enabled = cardConfig.enableWaterfallAnimation,
-                    visible = revealContent,
-                    index = hintOrder,
-                    exponent = cardConfig.waterfallExponent
                 ) {
                     AppText(
                         text = if (activePlan.nightSignalUsed) {
@@ -765,21 +739,11 @@ private fun TodayWatchPlanCard(
             }
 
             if (cardConfig.showUpRank && activePlan.upRanks.isNotEmpty()) {
-                val titleOrder = revealIndex++
                 WaterfallReveal(
-                    enabled = cardConfig.enableWaterfallAnimation,
-                    visible = revealContent,
-                    index = titleOrder,
-                    exponent = cardConfig.waterfallExponent
                 ) {
                     AppText("UP主榜", style = MaterialTheme.typography.labelLarge)
                 }
-                val ranksOrder = revealIndex++
                 WaterfallReveal(
-                    enabled = cardConfig.enableWaterfallAnimation,
-                    visible = revealContent,
-                    index = ranksOrder,
-                    exponent = cardConfig.waterfallExponent
                 ) {
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(AppSpacingTokens.Small),
@@ -805,24 +769,14 @@ private fun TodayWatchPlanCard(
             }
 
             if (activePlan.videoQueue.isNotEmpty()) {
-                val queueTitleOrder = revealIndex++
                 WaterfallReveal(
-                    enabled = cardConfig.enableWaterfallAnimation,
-                    visible = revealContent,
-                    index = queueTitleOrder,
-                    exponent = cardConfig.waterfallExponent
                 ) {
                     AppText("视频队列", style = MaterialTheme.typography.labelLarge)
                 }
                 activePlan.videoQueue
                     .take(cardConfig.queuePreviewLimit.coerceAtLeast(1))
                     .forEachIndexed { index, video ->
-                        val rowOrder = revealIndex++
                         WaterfallReveal(
-                            enabled = cardConfig.enableWaterfallAnimation,
-                            visible = revealContent,
-                            index = rowOrder,
-                            exponent = cardConfig.waterfallExponent
                         ) {
                             Row(
                                 modifier = Modifier
@@ -902,32 +856,9 @@ private fun TodayWatchPlanCard(
 
 @Composable
 private fun WaterfallReveal(
-    enabled: Boolean,
-    visible: Boolean,
-    index: Int,
-    exponent: Float,
     content: @Composable () -> Unit
 ) {
-    if (!enabled) {
-        content()
-        return
-    }
-    val delay = nonLinearWaterfallDelayMillis(
-        index = index,
-        exponent = exponent,
-    )
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn(
-            animationSpec = homeWaterfallFadeInSpec(delay)
-        ) + expandVertically(
-            expandFrom = Alignment.Top,
-            animationSpec = homeWaterfallExpandSpec(delay)
-        ),
-        exit = fadeOut(animationSpec = homeWaterfallFadeOutSpec())
-    ) {
-        content()
-    }
+    content()
 }
 
 @Composable

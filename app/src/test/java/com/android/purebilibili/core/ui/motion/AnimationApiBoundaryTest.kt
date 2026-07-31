@@ -113,6 +113,20 @@ class AnimationApiBoundaryTest {
         assertTrue(refreshIndicator.contains("AdaptiveLoadingIndicator("))
     }
 
+    @Test
+    fun homeTodayWatchContentDoesNotRestoreWaterfallEntranceMotion() {
+        val categoryPage = source("feature/home/HomeCategoryPage.kt")
+        val waterfallReveal = categoryPage
+            .substringAfter("private fun WaterfallReveal(")
+            .substringBefore("private fun OldContentDivider()")
+
+        assertTrue(waterfallReveal.contains("content()"))
+        assertFalse(waterfallReveal.contains("AnimatedVisibility("))
+        assertFalse(waterfallReveal.contains("nonLinearWaterfallDelayMillis("))
+        assertFalse(waterfallReveal.contains("homeWaterfallFadeInSpec("))
+        assertFalse(waterfallReveal.contains("homeWaterfallExpandSpec("))
+    }
+
     private fun source(relativePath: String): String {
         return File("src/main/java/com/android/purebilibili/$relativePath").readText()
     }
