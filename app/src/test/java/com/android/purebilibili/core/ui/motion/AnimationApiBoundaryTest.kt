@@ -151,6 +151,17 @@ class AnimationApiBoundaryTest {
         assertTrue(commentSheet.contains("EnterTransition.None togetherWith ExitTransition.None"))
     }
 
+    @Test
+    fun onboardingBottomSheetUsesStaticVisibilityAndDirectPageChanges() {
+        val onboardingSheet = source("feature/onboarding/OnboardingBottomSheet.kt")
+
+        assertFalse(onboardingSheet.contains("AnimatedVisibility("))
+        assertFalse(onboardingSheet.contains("rememberAppBottomSheetMotion("))
+        assertFalse(onboardingSheet.contains("Animatable("))
+        assertFalse(onboardingSheet.contains("animateScrollToPage("))
+        assertTrue(onboardingSheet.contains("pagerState.scrollToPage("))
+    }
+
     private fun source(relativePath: String): String {
         return File("src/main/java/com/android/purebilibili/$relativePath").readText()
     }

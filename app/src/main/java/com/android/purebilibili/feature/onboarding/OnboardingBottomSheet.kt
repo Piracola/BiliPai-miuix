@@ -2,12 +2,6 @@
 package com.android.purebilibili.feature.onboarding
 import com.android.purebilibili.core.ui.components.AppText
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -42,13 +36,15 @@ import com.android.purebilibili.core.ui.blur.unifiedBlur
 import dev.chrisbanes.haze.HazeState
 import io.github.alexzhirkevich.cupertino.icons.CupertinoIcons
 import io.github.alexzhirkevich.cupertino.icons.outlined.*
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.android.purebilibili.core.util.responsiveContentWidth
-import com.android.purebilibili.core.ui.rememberAppBottomSheetMotion
 import com.android.purebilibili.core.ui.components.AppButton
 import com.android.purebilibili.core.ui.components.AppOutlinedButton
 import com.android.purebilibili.core.ui.components.AppSurface
+
+private data object StaticOnboardingValue {
+    const val value = 1f
+}
 
 /**
  *  iOS 风格新手引导底部弹窗
@@ -69,7 +65,6 @@ fun OnboardingBottomSheet(
 ) {
     val scope = rememberCoroutineScope()
     val uriHandler = LocalUriHandler.current
-    val sheetMotion = rememberAppBottomSheetMotion()
     
     // 3 页引导
     val pagerState = rememberPagerState(pageCount = { 3 })
@@ -78,11 +73,7 @@ fun OnboardingBottomSheet(
     val localHazeState = com.android.purebilibili.core.ui.blur.rememberRecoverableHazeState()
     
     //  控制进出场动画
-    androidx.compose.animation.AnimatedVisibility(
-        visible = visible,
-        enter = sheetMotion.scrimEnter,
-        exit = sheetMotion.scrimExit
-    ) {
+    if (visible) {
         //  1. 半透明遮罩层 (点击关闭)
         Box(
             modifier = Modifier
@@ -96,11 +87,7 @@ fun OnboardingBottomSheet(
         )
     }
 
-    androidx.compose.animation.AnimatedVisibility(
-        visible = visible,
-        enter = sheetMotion.contentEnter,
-        exit = sheetMotion.contentExit
-    ) {
+    if (visible) {
         //  2. 内容层 (点击透传)
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -184,10 +171,7 @@ fun OnboardingBottomSheet(
                     ) {
                         repeat(3) { index ->
                             val isSelected = pagerState.currentPage == index
-                            val width by animateFloatAsState(
-                                targetValue = if (isSelected) 24f else 8f,
-                                animationSpec = spring()
-                            )
+                            val width = if (isSelected) 24f else 8f
                             Box(
                                 modifier = Modifier
                                     .padding(horizontal = 4.dp)
@@ -231,7 +215,7 @@ fun OnboardingBottomSheet(
                             AppButton(
                                 onClick = {
                                     scope.launch {
-                                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                        pagerState.scrollToPage(pagerState.currentPage + 1)
                                     }
                                 },
                                 modifier = Modifier.weight(1f),
@@ -285,7 +269,7 @@ fun OnboardingBottomSheet(
 @Composable
 private fun WelcomePage(hazeState: HazeState) {
     //  iOS 风格交错入场动画
-    val animatedItems = remember { List(6) { Animatable(1f) } }
+    val animatedItems = List(6) { StaticOnboardingValue }
     
     
     Column(
@@ -409,7 +393,7 @@ private fun WelcomePage(hazeState: HazeState) {
 @Composable
 private fun AppearanceSettingsPage(hazeState: HazeState) {
     //  iOS 风格交错入场动画
-    val animatedItems = remember { List(7) { Animatable(1f) } }
+    val animatedItems = List(7) { StaticOnboardingValue }
     
     //  图标呼吸动画
     val iconScale = 1f
@@ -520,7 +504,7 @@ private fun AppearanceSettingsPage(hazeState: HazeState) {
 @Composable
 private fun PlaybackSettingsPage(hazeState: HazeState) {
     //  iOS 风格交错入场动画
-    val animatedItems = remember { List(7) { Animatable(1f) } }
+    val animatedItems = List(7) { StaticOnboardingValue }
     
     //  图标呼吸动画
     val iconScale = 1f
