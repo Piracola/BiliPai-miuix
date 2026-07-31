@@ -162,22 +162,22 @@ class SearchMotionBudgetPolicyTest {
     }
 
     @Test
-    fun searchCardTransition_followsGlobalSettingRegardlessOfBudget() {
-        assertTrue(
+    fun searchCardTransition_isDisabledRegardlessOfLegacySettingsOrBudget() {
+        assertFalse(
             resolveEffectiveSearchCardTransitionEnabled(
                 cardTransitionEnabled = true,
                 motionBudget = SearchMotionBudget.FULL,
                 isReturningFromVideoDetail = false
             )
         )
-        assertTrue(
+        assertFalse(
             resolveEffectiveSearchCardTransitionEnabled(
                 cardTransitionEnabled = true,
                 motionBudget = SearchMotionBudget.REDUCED,
                 isReturningFromVideoDetail = false
             )
         )
-        assertTrue(
+        assertFalse(
             resolveEffectiveSearchCardTransitionEnabled(
                 cardTransitionEnabled = true,
                 motionBudget = SearchMotionBudget.REDUCED,
