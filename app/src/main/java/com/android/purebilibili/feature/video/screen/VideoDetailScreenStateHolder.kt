@@ -178,7 +178,7 @@ import com.android.purebilibili.core.ui.LocalSharedTransitionScope
 import com.android.purebilibili.core.ui.LocalAnimatedVisibilityScope
 import com.android.purebilibili.core.ui.transition.LocalVideoCardTransitionBackgroundState
 import com.android.purebilibili.core.ui.transition.LocalTransitionPerformanceSnapshot
-import com.android.purebilibili.core.ui.transition.TransitionReturnOutputMode
+import com.android.purebilibili.core.ui.transition.shouldUsePerformanceCoverTransition
 import com.android.purebilibili.core.ui.transition.LocalVideoSharedTransitionSpeedSettings
 import com.android.purebilibili.core.ui.transition.VideoSharedTransitionPlaybackIntent
 import com.android.purebilibili.core.ui.transition.resolveVideoCardSharedTransitionMotionSpec
@@ -1560,13 +1560,16 @@ internal fun VideoDetailScreenStateHolder(
         forceCoverOnlyOnReturn = forceCoverOnlyForReturn,
         isCommittedCardReturn = isCommittedCardReturn,
     )
-    val transitionPerformanceSnapshot = LocalTransitionPerformanceSnapshot.current
-    val performanceRequiresCoverReturn = isCommittedCardReturn &&
-        transitionPerformanceSnapshot?.returnOutputMode != null &&
-        transitionPerformanceSnapshot.returnOutputMode != TransitionReturnOutputMode.LIVE_SURFACE
-    val forceCoverOnlyForPerformanceReturn =
-        forceCoverOnlyForLiveSafeReturn || performanceRequiresCoverReturn
     val videoCardDepthBackgroundState = LocalVideoCardTransitionBackgroundState.current
+    val transitionPerformanceSnapshot = LocalTransitionPerformanceSnapshot.current
+    val videoCardTransitionPhase = videoCardDepthBackgroundState.phaseProvider()
+    val performanceRequiresCoverTransition = shouldUsePerformanceCoverTransition(
+        snapshot = transitionPerformanceSnapshot,
+        phase = videoCardTransitionPhase,
+        isCommittedCardReturn = isCommittedCardReturn,
+    )
+    val forceCoverOnlyForPerformanceTransition =
+        forceCoverOnlyForLiveSafeReturn || performanceRequiresCoverTransition
     val videoCardTransitionDensity = LocalDensity.current
     val videoCardDetailChromeAlphaProvider = remember(videoCardDepthBackgroundState) {
         {
@@ -2452,7 +2455,7 @@ internal fun VideoDetailScreenStateHolder(
                 presentationState.markNavigatingToAudioMode()
                 onNavigateToAudioMode()
             },
-            forceCoverOnly = forceCoverOnlyForPerformanceReturn ||
+            forceCoverOnly = forceCoverOnlyForPerformanceTransition ||
                 shouldForceBackPreviewPlayerCover(
                     keepLoadedContentForBackPreview = keepLoadedContentForBackPreview,
                     bindLivePlayerForBackPreview = bindLivePlayerForBackPreview,
@@ -2672,7 +2675,7 @@ internal fun VideoDetailScreenStateHolder(
                     onFavoritePlaylistClick = {
                         showExternalPlaylistQueueSheet = true
                     },
-                    forceCoverOnly = forceCoverOnlyForPerformanceReturn,
+                    forceCoverOnly = forceCoverOnlyForPerformanceTransition,
                     preserveCurrentFrameOnFullscreenChange = preserveCurrentFrameOnFullscreenChange,
                     useTextureSurfaceForNavigation = transitionEnabled,
                     predictiveBackCancelRecoveryGeneration = predictiveBackCancelRecoveryGeneration,
@@ -2750,7 +2753,7 @@ internal fun VideoDetailScreenStateHolder(
                             // 🔁 [新增] 播放模式
                             currentPlayMode = currentPlayMode,
                             onPlayModeClick = { com.android.purebilibili.feature.video.player.PlaylistManager.togglePlayMode() },
-                            forceCoverOnlyOnReturn = forceCoverOnlyForPerformanceReturn,
+                            forceCoverOnlyOnReturn = forceCoverOnlyForPerformanceTransition,
                             predictiveBackCancelRecoveryGeneration = predictiveBackCancelRecoveryGeneration
                         )
                     } else {
@@ -3180,7 +3183,7 @@ internal fun VideoDetailScreenStateHolder(
                                     presentationState.markNavigatingToAudioMode()
                                     onNavigateToAudioMode()
                                 },
-                                forceCoverOnly = forceCoverOnlyForPerformanceReturn ||
+                                forceCoverOnly = forceCoverOnlyForPerformanceTransition ||
                                     shouldForceBackPreviewPlayerCover(
                                         keepLoadedContentForBackPreview = keepLoadedContentForBackPreview,
                                         bindLivePlayerForBackPreview = bindLivePlayerForBackPreview

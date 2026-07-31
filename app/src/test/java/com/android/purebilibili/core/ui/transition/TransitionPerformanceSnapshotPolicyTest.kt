@@ -76,4 +76,74 @@ class TransitionPerformanceSnapshotPolicyTest {
             )
         )
     }
+
+    @Test
+    fun `balanced transition owns the cover from the first detail composition through return`() {
+        val snapshot = resolveTransitionPerformanceSnapshot(
+            TransitionPerformanceInputs(
+                motionTier = MotionTier.Normal,
+                systemAnimationsEnabled = true,
+                powerSaveMode = false,
+                thermalLevel = TransitionThermalLevel.NONE,
+                runtimeGuardDowngraded = false,
+            )
+        )
+
+        assertTrue(
+            shouldUsePerformanceCoverTransition(
+                snapshot = snapshot,
+                phase = VideoCardTransitionBackgroundPhase.IDLE,
+                isCommittedCardReturn = false,
+            )
+        )
+        assertTrue(
+            shouldUsePerformanceCoverTransition(
+                snapshot = snapshot,
+                phase = VideoCardTransitionBackgroundPhase.OPENING,
+                isCommittedCardReturn = false,
+            )
+        )
+        assertFalse(
+            shouldUsePerformanceCoverTransition(
+                snapshot = snapshot,
+                phase = VideoCardTransitionBackgroundPhase.HELD,
+                isCommittedCardReturn = false,
+            )
+        )
+        assertTrue(
+            shouldUsePerformanceCoverTransition(
+                snapshot = snapshot,
+                phase = VideoCardTransitionBackgroundPhase.HELD,
+                isCommittedCardReturn = true,
+            )
+        )
+    }
+
+    @Test
+    fun `full transition keeps live output during entry and return`() {
+        val snapshot = resolveTransitionPerformanceSnapshot(
+            TransitionPerformanceInputs(
+                motionTier = MotionTier.Enhanced,
+                systemAnimationsEnabled = true,
+                powerSaveMode = false,
+                thermalLevel = TransitionThermalLevel.NONE,
+                runtimeGuardDowngraded = false,
+            )
+        )
+
+        assertFalse(
+            shouldUsePerformanceCoverTransition(
+                snapshot = snapshot,
+                phase = VideoCardTransitionBackgroundPhase.OPENING,
+                isCommittedCardReturn = false,
+            )
+        )
+        assertFalse(
+            shouldUsePerformanceCoverTransition(
+                snapshot = snapshot,
+                phase = VideoCardTransitionBackgroundPhase.HELD,
+                isCommittedCardReturn = true,
+            )
+        )
+    }
 }

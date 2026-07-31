@@ -110,3 +110,24 @@ internal fun shouldDetachVideoOutputAfterCoverReady(
     mode: TransitionReturnOutputMode,
     coverReady: Boolean,
 ): Boolean = mode == TransitionReturnOutputMode.DETACH_AFTER_COVER_READY && coverReady
+
+/**
+ * BALANCED/CRITICAL transitions keep the cover in charge from the first detail composition.
+ * IDLE is intentional here: navigation composition happens before the host effect advances the
+ * clock to OPENING.
+ */
+internal fun shouldUsePerformanceCoverTransition(
+    snapshot: TransitionPerformanceSnapshot?,
+    phase: VideoCardTransitionBackgroundPhase,
+    isCommittedCardReturn: Boolean,
+): Boolean {
+    if (snapshot?.returnOutputMode == null ||
+        snapshot.returnOutputMode == TransitionReturnOutputMode.LIVE_SURFACE
+    ) {
+        return false
+    }
+    return isCommittedCardReturn ||
+        phase == VideoCardTransitionBackgroundPhase.IDLE ||
+        phase == VideoCardTransitionBackgroundPhase.OPENING ||
+        phase == VideoCardTransitionBackgroundPhase.RETURNING
+}

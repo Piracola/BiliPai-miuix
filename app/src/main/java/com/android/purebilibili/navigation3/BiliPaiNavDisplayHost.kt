@@ -243,6 +243,17 @@ internal fun BiliPaiNavDisplayHost(
     var previousVideoCardTransitionBackStack by remember {
         mutableStateOf(safeBackStack)
     }
+    // Back-stack changes are observed by composition before LaunchedEffect runs. Prepare the
+    // opening decision for that first composition so the detail entry never renders one frame
+    // with the default output policy and then switches to the locked policy.
+    val pendingOpeningPerformanceSnapshot = if (
+        isCardMorphDestinationNavKey(safeBackStack.lastOrNull()) &&
+            safeBackStack.size > previousVideoCardTransitionBackStack.size
+    ) {
+        captureTransitionPerformanceSnapshot()
+    } else {
+        null
+    }
     LaunchedEffect(
         safeBackStack,
         videoCardDepthEffectEnabled,
@@ -271,7 +282,8 @@ internal fun BiliPaiNavDisplayHost(
             openedVideoDetail -> {
                 videoCardClock.beginOpening(
                     sourceRoute = openingSourceRoute,
-                    snapshot = captureTransitionPerformanceSnapshot(),
+                    snapshot = pendingOpeningPerformanceSnapshot
+                        ?: captureTransitionPerformanceSnapshot(),
                 )
                 // 先给详情 AVS 一个 frame 建立 shared 回灌。已建立时不能再启动
                 // fallback Animatable，否则两条曲线在中段交接会让背景顿一下再追卡片。
@@ -578,6 +590,7 @@ internal fun BiliPaiNavDisplayHost(
         safeBackStack,
         videoCardClock,
         videoCardBackgroundProgressProvider,
+        pendingOpeningPerformanceSnapshot,
         predictiveBackBackgroundProgressProvider,
         transitionBackgroundMotionTier,
         isLightBackground,
@@ -594,7 +607,10 @@ internal fun BiliPaiNavDisplayHost(
                     CompositionLocalProvider(
                         LocalVideoCardSharedElementSourceRoute provides entryRoute,
                         LocalVideoCardTransitionClock provides videoCardClock,
-                        LocalTransitionPerformanceSnapshot provides videoCardClock.performanceSnapshot,
+                        LocalTransitionPerformanceSnapshot provides (
+                            videoCardClock.performanceSnapshot
+                                ?: pendingOpeningPerformanceSnapshot
+                            ),
                         LocalVideoCardMorphProgressReporter provides morphProgressReporter,
                         LocalVideoCardTransitionBackgroundState provides VideoCardTransitionBackgroundState(
                             progressProvider = videoCardBackgroundProgressProvider,

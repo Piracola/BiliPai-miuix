@@ -35,7 +35,10 @@ import kotlin.math.roundToInt
  */
 @Stable
 internal class VideoCardTransitionClock {
-    var performanceSnapshot: TransitionPerformanceSnapshot? by mutableStateOf(null)
+    // The snapshot is prepared before navigation and read from the next composition. It is
+    // intentionally not Compose state: changing this immutable decision must not invalidate the
+    // whole navigation tree a second time at the first transition frame.
+    var performanceSnapshot: TransitionPerformanceSnapshot? = null
         private set
     var phase: VideoCardTransitionBackgroundPhase by mutableStateOf(
         VideoCardTransitionBackgroundPhase.IDLE,

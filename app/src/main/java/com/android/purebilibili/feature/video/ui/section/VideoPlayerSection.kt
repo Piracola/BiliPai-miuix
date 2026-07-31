@@ -535,7 +535,10 @@ fun VideoPlayerSection(
     DisposableEffect(videoOutputRouter) {
         onDispose { videoOutputRouter.release() }
     }
-    LaunchedEffect(videoOutputRouter, forceCoverOnly) {
+    // Apply the route lock in the same successful composition that selects the cover-only
+    // transition policy. A coroutine effect can otherwise leave one frame where Surface/Anime4K
+    // still reacts to the old route.
+    androidx.compose.runtime.SideEffect {
         videoOutputRouter.setTransitionFrozen(forceCoverOnly)
     }
     LaunchedEffect(hostLifecycleStarted, shouldUseAnime4kPipeline, anime4kSurfaceViewRef) {
