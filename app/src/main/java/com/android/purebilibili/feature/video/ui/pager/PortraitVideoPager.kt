@@ -79,8 +79,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.keyframes
@@ -2401,59 +2399,16 @@ private fun VideoPageItem(
         }
 
         // 长按倍速提示（透明背景 + 循环箭头动画，位于视频上方）
-        AnimatedVisibility(
-            visible = isLongPressing && isCurrentPage,
-            modifier = Modifier
+        if (isLongPressing && isCurrentPage) {
+            Box(
+                modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(top = 48.dp),
-            enter = fadeIn(animationSpec = tween(200)) + slideInVertically(initialOffsetY = { -it }),
-            exit = fadeOut(animationSpec = tween(200)) + slideOutVertically(targetOffsetY = { -it })
-        ) {
-            val infiniteTransition = rememberInfiniteTransition(label = "fast_forward_portrait")
-            val arrow1Alpha by infiniteTransition.animateFloat(
-                initialValue = 0.3f,
-                targetValue = 1.0f,
-                animationSpec = infiniteRepeatable(
-                    animation = keyframes {
-                        durationMillis = 900
-                        0.3f at 0
-                        1.0f at 300
-                        0.3f at 600
-                        0.3f at 900
-                    },
-                    repeatMode = RepeatMode.Restart
-                ),
-                label = "arrow1"
-            )
-            val arrow2Alpha by infiniteTransition.animateFloat(
-                initialValue = 0.3f,
-                targetValue = 1.0f,
-                animationSpec = infiniteRepeatable(
-                    animation = keyframes {
-                        durationMillis = 900
-                        0.3f at 0
-                        0.3f at 300
-                        1.0f at 600
-                        0.3f at 900
-                    },
-                    repeatMode = RepeatMode.Restart
-                ),
-                label = "arrow2"
-            )
-            val arrow3Alpha by infiniteTransition.animateFloat(
-                initialValue = 0.3f,
-                targetValue = 1.0f,
-                animationSpec = infiniteRepeatable(
-                    animation = keyframes {
-                        durationMillis = 900
-                        0.3f at 0
-                        0.3f at 600
-                        1.0f at 900
-                    },
-                    repeatMode = RepeatMode.Restart
-                ),
-                label = "arrow3"
-            )
+                contentAlignment = Alignment.Center,
+            ) {
+            val arrow1Alpha = 1f
+            val arrow2Alpha = 1f
+            val arrow3Alpha = 1f
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -2493,15 +2448,14 @@ private fun VideoPageItem(
                 )
             }
         }
+        }
 
-        AnimatedVisibility(
-            visible = isCurrentPage && scale > 1.05f,
-            modifier = Modifier
+        if (isCurrentPage && scale > 1.05f) {
+            Box(
+                modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 104.dp),
-            enter = fadeIn(),
-            exit = fadeOut()
-        ) {
+            ) {
             AppButton(
                 onClick = {
                     resetViewportTransform()
@@ -2523,6 +2477,7 @@ private fun VideoPageItem(
                     fontWeight = FontWeight.Bold
                 )
             }
+        }
         }
 
         // Overlay & Interaction

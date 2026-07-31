@@ -3,8 +3,6 @@ package com.android.purebilibili.feature.video.ui.components
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -108,37 +106,4 @@ private fun Modifier.videoCardShimmer(
 ): Modifier = composed {
     return@composed this.background(MaterialTheme.colorScheme.surfaceVariant)
 
-    val baseColor = MaterialTheme.colorScheme.surfaceVariant
-    val highlightColor = AppSurfaceTokens.surface()
-    val shimmerColors = listOf(
-        baseColor,
-        baseColor,
-        highlightColor.copy(alpha = 0.2f),
-        highlightColor.copy(alpha = 0.6f),
-        highlightColor.copy(alpha = 0.2f),
-        baseColor,
-        baseColor,
-    )
-    val transition = rememberInfiniteTransition(label = "video_card_shimmer")
-    val translateAnim by transition.animateFloat(
-        initialValue = -1000f,
-        targetValue = 2000f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = durationMillis,
-                delayMillis = delayMillis,
-                easing = LinearOutSlowInEasing,
-            ),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "video_card_shimmer_translate",
-    )
-
-    background(
-        brush = Brush.linearGradient(
-            colors = shimmerColors,
-            start = Offset(translateAnim, translateAnim * 0.3f),
-            end = Offset(translateAnim + 600f, translateAnim * 0.3f + 300f),
-        )
-    )
 }

@@ -6,8 +6,6 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -46,10 +44,7 @@ import io.github.alexzhirkevich.cupertino.icons.CupertinoIcons
 import io.github.alexzhirkevich.cupertino.icons.outlined.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-//  Lottie 动画
-import com.airbnb.lottie.compose.*
 import com.android.purebilibili.core.util.responsiveContentWidth
-import com.android.purebilibili.core.ui.LottieUrls
 import com.android.purebilibili.core.ui.rememberAppBottomSheetMotion
 import com.android.purebilibili.core.ui.components.AppButton
 import com.android.purebilibili.core.ui.components.AppOutlinedButton
@@ -290,19 +285,8 @@ fun OnboardingBottomSheet(
 @Composable
 private fun WelcomePage(hazeState: HazeState) {
     //  iOS 风格交错入场动画
-    val animatedItems = remember { List(6) { Animatable(0f) } }
+    val animatedItems = remember { List(6) { Animatable(1f) } }
     
-    LaunchedEffect(Unit) {
-        animatedItems.forEachIndexed { index, animatable ->
-            delay(index * 80L) // 交错延迟
-            launch {
-                animatable.animateTo(
-                    1f,
-                    spring(dampingRatio = 0.65f, stiffness = 300f)
-                )
-            }
-        }
-    }
     
     Column(
         modifier = Modifier
@@ -314,13 +298,6 @@ private fun WelcomePage(hazeState: HazeState) {
         verticalArrangement = Arrangement.Center
     ) {
         //  Lottie 欢迎动画 - 动画项 0
-        val welcomeComposition by rememberLottieComposition(
-            LottieCompositionSpec.Url("https://assets9.lottiefiles.com/packages/lf20_touohxv0.json") // 欢迎/庆祝动画
-        )
-        val welcomeProgress by animateLottieCompositionAsState(
-            composition = welcomeComposition,
-            iterations = LottieConstants.IterateForever
-        )
         
         Box(
             modifier = Modifier
@@ -341,10 +318,11 @@ private fun WelcomePage(hazeState: HazeState) {
                     .clip(RoundedCornerShape(20.dp))
             )
             //  Lottie 装饰动画 (环绕效果)
-            LottieAnimation(
-                composition = welcomeComposition,
-                progress = { welcomeProgress },
-                modifier = Modifier.size(120.dp)
+            com.android.purebilibili.core.ui.components.AppIcon(
+                imageVector = CupertinoIcons.Default.Sparkles,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(52.dp),
             )
         }
         
@@ -431,40 +409,12 @@ private fun WelcomePage(hazeState: HazeState) {
 @Composable
 private fun AppearanceSettingsPage(hazeState: HazeState) {
     //  iOS 风格交错入场动画
-    val animatedItems = remember { List(7) { Animatable(0f) } }
-    
-    LaunchedEffect(Unit) {
-        animatedItems.forEachIndexed { index, animatable ->
-            delay(index * 80L)
-            launch {
-                animatable.animateTo(
-                    1f,
-                    spring(dampingRatio = 0.65f, stiffness = 300f)
-                )
-            }
-        }
-    }
+    val animatedItems = remember { List(7) { Animatable(1f) } }
     
     //  图标呼吸动画
-    val infiniteTransition = rememberInfiniteTransition(label = "iconPulse")
-    val iconScale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.05f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1500),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "iconScale"
-    )
+    val iconScale = 1f
     
     //  Lottie 外观主题动画 - 彩虹渐变
-    val themeComposition by rememberLottieComposition(
-        LottieCompositionSpec.Url(LottieUrls.THEME_COLORS)
-    )
-    val themeProgress by animateLottieCompositionAsState(
-        composition = themeComposition,
-        iterations = LottieConstants.IterateForever
-    )
     
     Column(
         modifier = Modifier
@@ -486,10 +436,11 @@ private fun AppearanceSettingsPage(hazeState: HazeState) {
                 },
             contentAlignment = Alignment.Center
         ) {
-            LottieAnimation(
-                composition = themeComposition,
-                progress = { themeProgress },
-                modifier = Modifier.size(100.dp)
+            com.android.purebilibili.core.ui.components.AppIcon(
+                imageVector = CupertinoIcons.Outlined.Paintpalette,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(52.dp),
             )
         }
         
@@ -569,40 +520,12 @@ private fun AppearanceSettingsPage(hazeState: HazeState) {
 @Composable
 private fun PlaybackSettingsPage(hazeState: HazeState) {
     //  iOS 风格交错入场动画
-    val animatedItems = remember { List(7) { Animatable(0f) } }
-    
-    LaunchedEffect(Unit) {
-        animatedItems.forEachIndexed { index, animatable ->
-            delay(index * 80L)
-            launch {
-                animatable.animateTo(
-                    1f,
-                    spring(dampingRatio = 0.65f, stiffness = 300f)
-                )
-            }
-        }
-    }
+    val animatedItems = remember { List(7) { Animatable(1f) } }
     
     //  图标呼吸动画
-    val infiniteTransition = rememberInfiniteTransition(label = "iconPulse")
-    val iconScale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.05f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1500),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "iconScale"
-    )
+    val iconScale = 1f
     
     //  Lottie 播放动画 - 视频播放按钮
-    val playComposition by rememberLottieComposition(
-        LottieCompositionSpec.Url(LottieUrls.VIDEO_PLAY)
-    )
-    val playProgress by animateLottieCompositionAsState(
-        composition = playComposition,
-        iterations = LottieConstants.IterateForever
-    )
     
     Column(
         modifier = Modifier
@@ -624,10 +547,11 @@ private fun PlaybackSettingsPage(hazeState: HazeState) {
                 },
             contentAlignment = Alignment.Center
         ) {
-            LottieAnimation(
-                composition = playComposition,
-                progress = { playProgress },
-                modifier = Modifier.size(100.dp)
+            com.android.purebilibili.core.ui.components.AppIcon(
+                imageVector = CupertinoIcons.Outlined.PlayCircle,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(52.dp),
             )
         }
         
@@ -711,16 +635,7 @@ private fun FeatureBadge(
     animationProgress: Float = 1f
 ) {
     //  徽章呼吸动画
-    val infiniteTransition = rememberInfiniteTransition(label = "badgePulse")
-    val badgeScale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.08f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "badgeScale"
-    )
+    val badgeScale = 1f
     
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,

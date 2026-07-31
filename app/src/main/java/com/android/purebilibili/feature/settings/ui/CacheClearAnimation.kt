@@ -238,56 +238,13 @@ fun CircularProgressRing(
     size: Dp = 200.dp,
     strokeWidth: Dp = 8.dp
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "ring")
-    
-    // 进度环旋转动画（清理中）
-    val rotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(3000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "rotation"
-    )
-    
-    // 渐变起始角度动画
-    val gradientAngle by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "gradientAngle"
-    )
-    
-    // 脉冲效果
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.05f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(800, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulse"
-    )
+    val rotation = 0f
+    val gradientAngle = 0f
+    val pulseScale = 1f
     
     // 完成时的动画值
-    val completionScale by animateFloatAsState(
-        targetValue = if (isComplete) 1.1f else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        ),
-        label = "completionScale"
-    )
-    
-    val animatedProgress by animateFloatAsState(
-        targetValue = if (isComplete) 1f else progress,
-        animationSpec = tween(300, easing = FastOutSlowInEasing),
-        label = "animatedProgress"
-    )
+    val completionScale = 1f
+    val animatedProgress = if (isComplete) 1f else progress
     
     Canvas(
         modifier = modifier
@@ -377,50 +334,12 @@ fun CenterCleaningIcon(
     fillLevel: Float = 1f,  // 新增：填充等级
     primaryColor: Color = CacheAnimationColors.primaryBlue
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "icon")
-    
-    // 垃圾桶盖子摆动
-    val lidAngle by infiniteTransition.animateFloat(
-        initialValue = -10f,
-        targetValue = 10f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(400, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "lidAngle"
-    )
-    
-    // 闪光旋转
-    val sparkleRotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(4000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "sparkle"
-    )
-    
-    // 闪光缩放脉冲
-    val sparkleScale by infiniteTransition.animateFloat(
-        initialValue = 0.8f,
-        targetValue = 1.2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(600, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "sparkleScale"
-    )
+    val lidAngle = 0f
+    val sparkleRotation = 0f
+    val sparkleScale = 1f
     
     // 完成动画 - 对勾出现
-    val checkScale by animateFloatAsState(
-        targetValue = if (isComplete) 1f else 0f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        ),
-        label = "checkScale"
-    )
+    val checkScale = if (isComplete) 1f else 0f
     
     val iconColor = if (isComplete) CacheAnimationColors.successGreen else primaryColor
     

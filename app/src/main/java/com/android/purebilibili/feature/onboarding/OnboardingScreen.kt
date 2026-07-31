@@ -6,8 +6,6 @@ import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -700,27 +698,7 @@ private fun OnboardingFloatingContent(
     motionSpec: OnboardingMotionSpec,
     content: @Composable () -> Unit
 ) {
-    if (motionSpec.floating.durationMillis <= 0 || motionSpec.floating.translationYPx == 0f) {
-        Box(contentAlignment = Alignment.Center) { content() }
-        return
-    }
-    val transition = rememberInfiniteTransition(label = "onboardingFloating")
-    val offsetY by transition.animateFloat(
-        initialValue = -motionSpec.floating.translationYPx,
-        targetValue = motionSpec.floating.translationYPx,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = motionSpec.floating.durationMillis,
-                easing = FastOutSlowInEasing
-            ),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "onboardingFloatY"
-    )
-    Box(
-        modifier = Modifier.graphicsLayer { translationY = offsetY },
-        contentAlignment = Alignment.Center
-    ) {
+    Box(contentAlignment = Alignment.Center) {
         content()
     }
 }
@@ -731,24 +709,7 @@ private fun OnboardingHeroHalo(
     motionSpec: OnboardingMotionSpec,
     content: @Composable BoxScope.() -> Unit
 ) {
-    val pulse = if (motionSpec.halo.durationMillis <= 0) {
-        1f
-    } else {
-        val transition = rememberInfiniteTransition(label = "onboardingHalo")
-        val animatedPulse by transition.animateFloat(
-            initialValue = motionSpec.halo.minScale,
-            targetValue = motionSpec.halo.maxScale,
-            animationSpec = infiniteRepeatable(
-                animation = tween(
-                    durationMillis = motionSpec.halo.durationMillis,
-                    easing = FastOutSlowInEasing
-                ),
-                repeatMode = RepeatMode.Reverse
-            ),
-            label = "onboardingHaloPulse"
-        )
-        animatedPulse
-    }
+    val pulse = 1f
 
     Box(
         modifier = Modifier.size(size),

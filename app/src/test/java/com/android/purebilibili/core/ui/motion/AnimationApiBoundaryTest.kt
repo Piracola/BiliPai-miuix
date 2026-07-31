@@ -23,7 +23,38 @@ class AnimationApiBoundaryTest {
         assertFalse(videoSkeleton.contains("val transition = rememberInfiniteTransition"))
     }
 
+    @Test
+    fun appSourcesCannotRestoreSharedElementsOrInfiniteDecoration() {
+        val violations = mainSources().flatMap { file ->
+            val text = file.readText()
+            buildList {
+                if (SHARED_BOUNDS.containsMatchIn(text)) add("${file.name}: sharedBounds")
+                if (SHARED_ELEMENT.containsMatchIn(text)) add("${file.name}: sharedElement")
+                if (INFINITE_TRANSITION.containsMatchIn(text)) add("${file.name}: rememberInfiniteTransition")
+                if (INFINITE_REPEATABLE.containsMatchIn(text)) add("${file.name}: infiniteRepeatable")
+            }
+        }
+
+        val violationList = violations.toList()
+        assertTrue(
+            violationList.isEmpty(),
+            "共享元素和无限装饰动画必须保持为零；发现：${violationList.sorted()}",
+        )
+    }
+
     private fun source(relativePath: String): String {
         return File("src/main/java/com/android/purebilibili/$relativePath").readText()
+    }
+
+    private fun mainSources(): Sequence<File> =
+        File("src/main/java/com/android/purebilibili")
+            .walkTopDown()
+            .filter { it.isFile && it.extension == "kt" }
+
+    private companion object {
+        val SHARED_BOUNDS = Regex("""\.sharedBounds\s*\(""")
+        val SHARED_ELEMENT = Regex("""\.sharedElement\s*\(""")
+        val INFINITE_TRANSITION = Regex("""rememberInfiniteTransition\s*\(""")
+        val INFINITE_REPEATABLE = Regex("""infiniteRepeatable\s*\(""")
     }
 }
