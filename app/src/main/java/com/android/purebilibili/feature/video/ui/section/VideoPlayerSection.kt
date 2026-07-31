@@ -2708,30 +2708,20 @@ fun VideoPlayerSection(
         var hasStartedSmoothReveal by remember(bvid) {
             mutableStateOf(coverBootstrapState.hasStartedSmoothReveal)
         }
-        val revealMotionSpec = remember {
-            resolveVideoPlayerRevealMotionSpec()
-        }
         val surfaceRevealSpec = remember(
             forceCoverDuringReturnAnimation,
             keepCoverForManualStart,
             hasStartedSmoothReveal,
-            revealMotionSpec.surfaceRevealInitialScale
         ) {
             resolveVideoPlayerSurfaceRevealSpec(
                 forceCoverDuringReturnAnimation = forceCoverDuringReturnAnimation,
                 shouldKeepCoverForManualStart = keepCoverForManualStart,
                 hasStartedSmoothReveal = hasStartedSmoothReveal,
-                surfaceRevealInitialScale = revealMotionSpec.surfaceRevealInitialScale
+                surfaceRevealInitialScale = 1f,
             )
         }
-        val playerSurfaceAlpha by animateFloatAsState(
-            targetValue = surfaceRevealSpec.alpha,
-            animationSpec = tween(revealMotionSpec.surfaceRevealDurationMillis)
-        )
-        val playerSurfaceScale by animateFloatAsState(
-            targetValue = surfaceRevealSpec.scale,
-            animationSpec = tween(revealMotionSpec.surfaceRevealDurationMillis)
-        )
+        val playerSurfaceAlpha = surfaceRevealSpec.alpha
+        val playerSurfaceScale = 1f
 
         // 1. PlayerView (底层) - key 触发 graphicsLayer 强制更新
         //  [修复] 添加 isPortraitFullscreen 到 key，确保从全屏返回时重建 PlayerView 并重新绑定 Surface (解决黑屏问题)
@@ -3067,7 +3057,6 @@ fun VideoPlayerSection(
             return@LaunchedEffect
         }
         if (hasStartedSmoothReveal) return@LaunchedEffect
-        delay(revealMotionSpec.coverRevealHoldDelayMillis.toLong())
         if (
             shouldCommitSmoothCoverReveal(
                 isFirstFrameRendered = isFirstFrameRendered,

@@ -42,6 +42,24 @@ class AnimationApiBoundaryTest {
         )
     }
 
+    @Test
+    fun playerFeedbackAndSurfaceRevealStayStatic() {
+        val celebration = source("feature/video/ui/components/CelebrationAnimations.kt")
+        val playerSection = source("feature/video/ui/section/VideoPlayerSection.kt")
+        val surfaceRevealBlock = playerSection
+            .substringAfter("val surfaceRevealSpec =")
+            .substringBefore("key(isFlippedHorizontal, isFlippedVertical, isPortraitFullscreen)")
+
+        assertFalse(celebration.contains("Animatable("))
+        assertFalse(celebration.contains("animateFloatAsState("))
+        assertFalse(celebration.contains("Canvas("))
+        assertFalse(celebration.contains("graphicsLayer"))
+        assertFalse(surfaceRevealBlock.contains("animateFloatAsState("))
+        assertTrue(surfaceRevealBlock.contains("val playerSurfaceScale = 1f"))
+        assertFalse(playerSection.contains("resolveVideoPlayerRevealMotionSpec()"))
+        assertFalse(playerSection.contains("coverRevealHoldDelayMillis"))
+    }
+
     private fun source(relativePath: String): String {
         return File("src/main/java/com/android/purebilibili/$relativePath").readText()
     }
