@@ -373,26 +373,6 @@ fun VideoTitleWithDesc(
             var titleModifier = if (animateLayout) Modifier.animateContentSize() else Modifier
 
             //  注意：使用 ExperimentalSharedTransitionApi 注解需要上下文
-            if (metadataSharedEnabled) {
-                with(requireNotNull(sharedTransitionScope)) {
-                     titleModifier = titleModifier.sharedBounds(
-                        sharedContentState = rememberSharedContentState(
-                            key = com.android.purebilibili.core.ui.transition.videoTitleSharedElementKey(
-                                info.bvid,
-                                sourceRoute = sourceRouteForSharedElement
-                            )
-                        ),
-                        animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
-                        boundsTransform = { initialBounds, targetBounds ->
-                            videoMetadataSharedElementBoundsTransformSpec(
-                                motion = metadataSharedTransitionMotionSpec,
-                                initialBounds = initialBounds,
-                                targetBounds = targetBounds
-                            )
-                        }
-                    )
-                }
-            }
 
             AppText(
                 text = info.title,
@@ -433,26 +413,6 @@ fun VideoTitleWithDesc(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 // Views
                 var viewsModifier = Modifier.wrapContentSize()
-                if (metadataSharedEnabled) {
-                    with(requireNotNull(sharedTransitionScope)) {
-                        viewsModifier = viewsModifier.sharedBounds(
-                            sharedContentState = rememberSharedContentState(
-                                key = com.android.purebilibili.core.ui.transition.videoViewsSharedElementKey(
-                                    info.bvid,
-                                    sourceRoute = sourceRouteForSharedElement
-                                )
-                            ),
-                            animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
-                            boundsTransform = { initialBounds, targetBounds ->
-                                videoMetadataSharedElementBoundsTransformSpec(
-                                    motion = metadataSharedTransitionMotionSpec,
-                                    initialBounds = initialBounds,
-                                    targetBounds = targetBounds
-                                )
-                            }
-                        )
-                    }
-                }
                 AppText(
                     text = "${FormatUtils.formatStat(info.stat.view.toLong())}播放",
                     fontSize = 11.sp,
@@ -468,26 +428,6 @@ fun VideoTitleWithDesc(
 
                 // Danmaku
                 var danmakuModifier = Modifier.wrapContentSize()
-                if (metadataSharedEnabled) {
-                    with(requireNotNull(sharedTransitionScope)) {
-                        danmakuModifier = danmakuModifier.sharedBounds(
-                            sharedContentState = rememberSharedContentState(
-                                key = com.android.purebilibili.core.ui.transition.videoDanmakuSharedElementKey(
-                                    info.bvid,
-                                    sourceRoute = sourceRouteForSharedElement
-                                )
-                            ),
-                            animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
-                            boundsTransform = { initialBounds, targetBounds ->
-                                videoMetadataSharedElementBoundsTransformSpec(
-                                    motion = metadataSharedTransitionMotionSpec,
-                                    initialBounds = initialBounds,
-                                    targetBounds = targetBounds
-                                )
-                            }
-                        )
-                    }
-                }
                 AppText(
                     text = "${FormatUtils.formatStat(info.stat.danmaku.toLong())}弹幕",
                     fontSize = 11.sp,
@@ -774,27 +714,6 @@ fun UpInfoSection(
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surfaceVariant)
 
-                if (metadataSharedEnabled) {
-                    with(requireNotNull(sharedTransitionScope)) {
-                        avatarModifier = avatarModifier.sharedBounds(
-                            sharedContentState = rememberSharedContentState(
-                                key = com.android.purebilibili.core.ui.transition.videoAvatarSharedElementKey(
-                                    info.bvid,
-                                    sourceRoute = sourceRouteForSharedElement
-                                )
-                            ),
-                            animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
-                            boundsTransform = { initialBounds, targetBounds ->
-                                videoMetadataSharedElementBoundsTransformSpec(
-                                    motion = metadataSharedTransitionMotionSpec,
-                                    initialBounds = initialBounds,
-                                    targetBounds = targetBounds
-                                )
-                            },
-                            clipInOverlayDuringTransition = OverlayClip(CircleShape)
-                        )
-                    }
-                }
 
                 if (info.owner.face.isNotBlank()) {
                     AsyncImage(
@@ -832,26 +751,6 @@ fun UpInfoSection(
                     //  [调整] 确保 sharedBounds 在交互修饰符之前应用
                     var upNameModifier: Modifier = Modifier
 
-                    if (metadataSharedEnabled) {
-                        with(requireNotNull(sharedTransitionScope)) {
-                            upNameModifier = upNameModifier.sharedBounds(
-                                sharedContentState = rememberSharedContentState(
-                                    key = com.android.purebilibili.core.ui.transition.videoUpNameSharedElementKey(
-                                        info.bvid,
-                                        sourceRoute = sourceRouteForSharedElement
-                                    )
-                                ),
-                                animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
-                                boundsTransform = { initialBounds, targetBounds ->
-                                    videoMetadataSharedElementBoundsTransformSpec(
-                                        motion = metadataSharedTransitionMotionSpec,
-                                        initialBounds = initialBounds,
-                                        targetBounds = targetBounds
-                                    )
-                                }
-                            )
-                        }
-                    }
 
                     //  添加交互修饰符 (放在 sharedBounds 之后，使其包含在 sharedBounds 内部)
                     upNameModifier = upNameModifier.copyOnLongPress(info.owner.name, "UP主名称")
@@ -900,27 +799,6 @@ fun UpInfoSection(
 
             if (playerControlVisibility.showFollowButton) {
                 var followActionModifier = Modifier.height(36.dp)
-                if (metadataSharedEnabled) {
-                    with(requireNotNull(sharedTransitionScope)) {
-                        followActionModifier = followActionModifier.sharedBounds(
-                            sharedContentState = rememberSharedContentState(
-                                key = com.android.purebilibili.core.ui.transition.videoUpActionSharedElementKey(
-                                    info.bvid,
-                                    sourceRoute = sourceRouteForSharedElement
-                                )
-                            ),
-                            animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
-                            boundsTransform = { initialBounds, targetBounds ->
-                                videoMetadataSharedElementBoundsTransformSpec(
-                                    motion = metadataSharedTransitionMotionSpec,
-                                    initialBounds = initialBounds,
-                                    targetBounds = targetBounds
-                                )
-                            },
-                            clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(16.dp))
-                        )
-                    }
-                }
 
                 val followVisualPolicy = remember(isFollowing) {
                     resolveVideoFollowVisualPolicy(isFollowing = isFollowing)

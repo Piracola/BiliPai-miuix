@@ -3052,55 +3052,7 @@ internal fun VideoDetailScreenStateHolder(
                         val coverSharedElementSourceRoute =
                             resolveForcedReturnCoverSharedElementSourceRoute(sourceRouteForSharedElement)
                         val isFullscreenTarget = activeVideoSharedTransitionVisualSpec.fillTargetViewport
-                        val playerContainerModifier = if (
-                            shouldEnableVideoCoverSharedTransition(
-                                transitionEnabled = detailChildTransitionEnabled,
-                                hasSharedTransitionScope = sharedTransitionScope != null,
-                                hasAnimatedVisibilityScope = animatedVisibilityScope != null,
-                            ) &&
-                            activeVideoSharedTransitionVisualSpec.useCoverSharedBounds &&
-                            videoSharedPlaybackIntent == VideoSharedTransitionPlaybackIntent.ImmediatePlayback &&
-                            !forceCoverOnlyForReturn
-                        ) {
-                            with(requireNotNull(sharedTransitionScope)) {
-                                Modifier.sharedBounds(
-                                    sharedContentState = rememberSharedContentState(
-                                        key = com.android.purebilibili.core.ui.transition.videoCoverSharedElementKey(
-                                            bvid,
-                                            sourceRoute = coverSharedElementSourceRoute,
-                                        ),
-                                    ),
-                                    animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
-                                    boundsTransform = { initialBounds, targetBounds ->
-                                        val durationMillis = if (
-                                            homeSharedTransitionMotionSpec.enabled && isFullscreenTarget
-                                        ) {
-                                            homeSharedTransitionMotionSpec.fullscreenDurationMillis
-                                        } else {
-                                            homeSharedTransitionMotionSpec.durationMillis
-                                        }
-                                        videoSharedElementBoundsTransformSpec(
-                                            motion = homeSharedTransitionMotionSpec,
-                                            initialBounds = initialBounds,
-                                            targetBounds = targetBounds,
-                                            durationMillis = durationMillis,
-                                        )
-                                    },
-                                    clipInOverlayDuringTransition = OverlayClip(
-                                        RoundedCornerShape(
-                                            resolveVideoDetailShellOverlayCornerDp(
-                                                visualSpec = activeVideoSharedTransitionVisualSpec,
-                                                liveReturnMorph = liveReturnMorph,
-                                                isReturningVisualState =
-                                                    useReturningVideoDetailVisualState,
-                                            ).dp,
-                                        ),
-                                    ),
-                                )
-                            }
-                        } else {
-                            Modifier
-                        }
+                        val playerContainerModifier = Modifier
 
                         // isLeaving：离开态（正文让位等）；封面/播放器 handoff 用 isCommittedCardReturn。
                         val isLeaving = useReturningVideoDetailVisualState

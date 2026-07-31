@@ -1425,18 +1425,6 @@ fun VideoPlayerSection(
             hasAnimatedVisibilityScope = animatedVisibilityScope != null,
             forceCoverDuringReturnAnimation = forceCoverDuringReturnAnimation
         )
-    if (bvid.isNotEmpty() && livePlayerSharedElementEnabled) {
-         with(requireNotNull(sharedTransitionScope)) {
-             rootModifier = rootModifier.sharedElement(
-                 sharedContentState = rememberSharedContentState(key = com.android.purebilibili.core.ui.transition.videoPlayerSharedElementKey(bvid)),
-                 animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
-                 boundsTransform = { _, _ ->
-                     com.android.purebilibili.core.ui.motion.AppMotionTokens.spatialSpec()
-                 }
-             )
-         }
-    }
-
     Box(
         modifier = rootModifier
             //  [新增] 处理双指缩放/平移，并在全屏时支持双指调倍速
@@ -3242,30 +3230,7 @@ fun VideoPlayerSection(
         modifier = Modifier.zIndex(coverLayerZIndex)
     ) {
         val coverCardShape = RoundedCornerShape(videoSharedTransitionVisualSpec.targetCornerDp.dp)
-        val sharedCoverOverlayModifier = if (coverOverlaySharedBoundsEnabled) {
-            with(requireNotNull(sharedTransitionScope)) {
-                Modifier.sharedBounds(
-                    sharedContentState = rememberSharedContentState(
-                        key = com.android.purebilibili.core.ui.transition.videoCoverSharedElementKey(
-                            bvid,
-                            sourceRoute = forcedReturnCoverSharedElementSourceRoute
-                        )
-                    ),
-                    animatedVisibilityScope = requireNotNull(animatedVisibilityScope),
-                    boundsTransform = { initialBounds, targetBounds ->
-                        videoSharedElementBoundsTransformSpec(
-                            motion = coverOverlaySharedTransitionMotionSpec,
-                            initialBounds = initialBounds,
-                            targetBounds = targetBounds
-                        )
-                    },
-                    resizeMode = scaleToBounds(ContentScale.Crop, Alignment.Center),
-                    clipInOverlayDuringTransition = OverlayClip(coverCardShape)
-                )
-            }
-        } else {
-            Modifier
-        }
+        val sharedCoverOverlayModifier = Modifier
 
         Box(modifier = playerContentModifier) {
             val coverContainerModifier = if (fillPlayerViewportForManualStartCover) {
