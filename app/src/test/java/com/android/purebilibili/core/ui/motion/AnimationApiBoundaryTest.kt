@@ -60,6 +60,21 @@ class AnimationApiBoundaryTest {
         assertFalse(playerSection.contains("coverRevealHoldDelayMillis"))
     }
 
+    @Test
+    fun videoActionRowDoesNotAnimateLayoutOrPrimaryButtonScale() {
+        val actionSection = source("feature/video/ui/section/VideoActionSection.kt")
+        val primaryRow = actionSection
+            .substringAfter("Row(\n        modifier = modifier")
+            .substringBefore("// Like")
+        val primaryButton = actionSection
+            .substringAfter("private fun TripleProgressActionButton(")
+            .substringBefore("private fun TripleLikeActionButton(")
+
+        assertFalse(primaryRow.contains("animateContentSize("))
+        assertFalse(primaryButton.contains("animateFloatAsState("))
+        assertFalse(primaryButton.contains("graphicsLayer"))
+    }
+
     private fun source(relativePath: String): String {
         return File("src/main/java/com/android/purebilibili/$relativePath").readText()
     }

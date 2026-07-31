@@ -174,7 +174,6 @@ fun ActionButtonsRow(
 
     Row(
         modifier = modifier
-            .animateContentSize()
             .padding(horizontal = 4.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(itemSpacing),
         verticalAlignment = Alignment.CenterVertically
@@ -361,7 +360,6 @@ private fun TripleProgressActionButton(
     horizontalPadding: Dp = 4.dp
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
     val inactiveTint = MaterialTheme.colorScheme.onSurfaceVariant
     val iconTint = resolveVideoActionTint(
         isActive = isActive,
@@ -373,25 +371,12 @@ private fun TripleProgressActionButton(
         activeColor = activeColor,
         inactiveColor = inactiveTint
     )
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed && !disableInternalClick) 0.92f else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "tripleActionButtonScale"
-    )
-
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 56.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
             .then(
                 if (disableInternalClick) {
                     Modifier
