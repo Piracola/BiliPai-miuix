@@ -15,27 +15,8 @@ data class SearchEntryMotionSpec(
 )
 
 internal fun resolveSearchEntryMotionSpec(
-    source: SearchEntryMotionSource,
-    reducedMotionBudget: Boolean
+    @Suppress("UNUSED_PARAMETER") source: SearchEntryMotionSource,
+    @Suppress("UNUSED_PARAMETER") reducedMotionBudget: Boolean
 ): SearchEntryMotionSpec? {
-    if (source != SearchEntryMotionSource.BOTTOM_BAR) return null
-    return if (reducedMotionBudget) {
-        SearchEntryMotionSpec(
-            durationMillis = 0,
-            initialAlpha = 1f,
-            initialScale = 1f,
-            initialTranslationYDp = 0f,
-            transformOriginPivotX = 0.88f,
-            transformOriginPivotY = 1f
-        )
-    } else {
-        SearchEntryMotionSpec(
-            durationMillis = 320,
-            initialAlpha = 0.58f,
-            initialScale = 0.88f,
-            initialTranslationYDp = 360f,
-            transformOriginPivotX = 0.5f,
-            transformOriginPivotY = 1f
-        )
-    }
+    return null
 }

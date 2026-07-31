@@ -402,7 +402,7 @@ class SearchScreenPolicyTest {
     }
 
     @Test
-    fun searchEntryMotion_onlyRunsForBottomBarSourceAndRespectsReducedBudget() {
+    fun searchEntryMotion_isDisabledForEveryEntrySource() {
         assertEquals(
             null,
             resolveSearchEntryMotionSpec(
@@ -411,29 +411,21 @@ class SearchScreenPolicyTest {
             )
         )
 
-        val bottomBarSpec = requireNotNull(
+        assertEquals(
+            null,
             resolveSearchEntryMotionSpec(
                 source = SearchEntryMotionSource.BOTTOM_BAR,
                 reducedMotionBudget = false
             )
         )
-        assertEquals(320, bottomBarSpec.durationMillis)
-        assertEquals(0.58f, bottomBarSpec.initialAlpha)
-        assertEquals(0.88f, bottomBarSpec.initialScale)
-        assertEquals(360f, bottomBarSpec.initialTranslationYDp)
-        assertEquals(0.5f, bottomBarSpec.transformOriginPivotX)
-        assertEquals(1f, bottomBarSpec.transformOriginPivotY)
 
-        val reducedSpec = requireNotNull(
+        assertEquals(
+            null,
             resolveSearchEntryMotionSpec(
                 source = SearchEntryMotionSource.BOTTOM_BAR,
                 reducedMotionBudget = true
             )
         )
-        assertEquals(0, reducedSpec.durationMillis)
-        assertEquals(1f, reducedSpec.initialAlpha)
-        assertEquals(1f, reducedSpec.initialScale)
-        assertEquals(0f, reducedSpec.initialTranslationYDp)
     }
 
     private fun loadSource(path: String): String {
