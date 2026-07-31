@@ -2541,12 +2541,7 @@ object SettingsManager {
 
     fun getVideoSharedTransitionSpeed(context: Context): Flow<VideoSharedTransitionSpeed> =
         context.settingsDataStore.data
-            .map { preferences ->
-                VideoSharedTransitionSpeed.fromValue(
-                    preferences[KEY_VIDEO_SHARED_TRANSITION_SPEED]
-                        ?: VideoSharedTransitionSpeed.STANDARD.value
-                )
-            }
+            .map { VideoSharedTransitionSpeed.STANDARD }
             .distinctUntilChanged()
 
     suspend fun setVideoSharedTransitionSpeed(
@@ -2560,12 +2555,7 @@ object SettingsManager {
 
     fun getVideoSharedTransitionCustomDurationMillis(context: Context): Flow<Int> =
         context.settingsDataStore.data
-            .map { preferences ->
-                normalizeVideoSharedTransitionCustomDurationMillis(
-                    preferences[KEY_VIDEO_SHARED_TRANSITION_CUSTOM_DURATION_MILLIS]
-                        ?: VIDEO_SHARED_TRANSITION_CUSTOM_DEFAULT_MILLIS
-                )
-            }
+            .map { VIDEO_SHARED_TRANSITION_CUSTOM_DEFAULT_MILLIS }
             .distinctUntilChanged()
 
     suspend fun setVideoSharedTransitionCustomDurationMillis(
