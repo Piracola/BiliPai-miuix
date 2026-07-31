@@ -154,14 +154,4 @@ internal fun shouldInterceptSystemBackForNavigation3(
 
 internal fun resolveCardDisabledReturnTransition(
     sourceDirection: BiliPaiNavCardSourceDirection
-): BiliPaiNavRouteTransition {
-    return when (sourceDirection) {
-        BiliPaiNavCardSourceDirection.SOURCE_LEFT ->
-            BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_RETURN_TO_LEFT
-        BiliPaiNavCardSourceDirection.SOURCE_RIGHT ->
-            BiliPaiNavRouteTransition.CARD_DISABLED_VIDEO_RETURN_TO_RIGHT
-        // Unknown origin: soft sibling pop instead of always forcing right-half exit.
-        BiliPaiNavCardSourceDirection.NONE ->
-            BiliPaiNavRouteTransition.LIGHT_SIBLING_POP
-    }
-}
+): BiliPaiNavRouteTransition = BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT
