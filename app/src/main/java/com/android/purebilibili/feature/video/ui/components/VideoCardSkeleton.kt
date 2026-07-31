@@ -106,6 +106,8 @@ private fun Modifier.videoCardShimmer(
     durationMillis: Int = 1500,
     delayMillis: Int = 0,
 ): Modifier = composed {
+    return@composed this.background(MaterialTheme.colorScheme.surfaceVariant)
+
     val baseColor = MaterialTheme.colorScheme.surfaceVariant
     val highlightColor = AppSurfaceTokens.surface()
     val shimmerColors = listOf(

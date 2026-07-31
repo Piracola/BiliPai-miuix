@@ -123,6 +123,8 @@ fun Modifier.jiggleOnDissolve(
     enabled: Boolean = true,
     isCurrentCardDissolving: Boolean = false
 ): Modifier {
+    return this
+
     // 🚀 [性能优化] 提前检查是否需要抖动，避免不必要的状态读取和动画创建
     if (!enabled) return this
     

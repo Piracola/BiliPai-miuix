@@ -313,20 +313,7 @@ private fun SkeletonBlock(
 
 @Composable
 private fun rememberVideoSkeletonPulse(): Float {
-    val transition = rememberInfiniteTransition(label = "videoSkeletonPulse")
-    val pulse by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = VIDEO_SKELETON_PULSE_DURATION_MILLIS,
-                easing = FastOutSlowInEasing
-            ),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "videoSkeletonPulseAlpha"
-    )
-    return pulse
+    return 0f
 }
 
 @Composable

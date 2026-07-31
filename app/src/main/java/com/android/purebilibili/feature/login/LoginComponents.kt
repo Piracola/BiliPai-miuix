@@ -190,21 +190,7 @@ private fun rememberLoginPalette(): LoginPalette {
 @Composable
 fun LoginBackground() {
     val palette = rememberLoginPalette()
-    val infiniteTransition = rememberInfiniteTransition(label = "login_bg")
-    // 刻意不用 `by` 解构：那会让 drift 在**组合期**被读取，
-    // 于是这个 7.2 秒的循环动画每一帧都重组整个登录背景，
-    // 而背景里有 4 个 300dp 级别的 Box、每个都挂着 .blur(72~115dp)——
-    // 每次重组都要重建对应的 RenderEffect。
-    // 保持 State 形态，让读取发生在下面 offset{} 的放置阶段。
-    val drift = infiniteTransition.animateFloat(
-        initialValue = -16f,
-        targetValue = 16f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(7200, easing = EaseInOutSine),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "bg_drift"
-    )
+    val drift = remember { mutableStateOf(0f) }
 
     Box(
         modifier = Modifier
