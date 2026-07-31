@@ -2531,7 +2531,7 @@ object SettingsManager {
 
     fun getVideoTransitionRealtimeBlurEnabled(context: Context): Flow<Boolean> =
         context.settingsDataStore.data
-            .map { preferences -> preferences[KEY_VIDEO_TRANSITION_REALTIME_BLUR_ENABLED] ?: true }
+            .map { false }
 
     suspend fun setVideoTransitionRealtimeBlurEnabled(context: Context, value: Boolean) {
         context.settingsDataStore.edit { preferences ->
