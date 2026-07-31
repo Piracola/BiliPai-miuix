@@ -44,6 +44,19 @@ class VideoDetailMiniPlayerSyncStructureTest {
         assertTrue(syncEffect.contains("miniPlayerManager != null && shouldCacheMiniPlayer && isVisible"))
     }
 
+    @Test
+    fun inactivePlaybackSessionSuspendsLocalPlayerAndEntryHaltsForeignAudio() {
+        val playerStateSource = loadSource(
+            "app/src/main/java/com/android/purebilibili/feature/video/state/VideoPlayerState.kt"
+        )
+        val navigationSource = loadSource(
+            "app/src/main/java/com/android/purebilibili/navigation/AppNavigation.kt"
+        )
+        assertTrue(playerStateSource.contains("shouldSuspendLocalPlaybackWhenSessionInactive("))
+        assertTrue(playerStateSource.contains("sessionInactive -> suspendLocalPlayback"))
+        assertTrue(navigationSource.contains("haltForeignPlaybackForIncomingVideo("))
+    }
+
     private fun loadSource(path: String): String {
         val candidates = listOf(
             File(path),

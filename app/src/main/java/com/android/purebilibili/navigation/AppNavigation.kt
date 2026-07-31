@@ -736,6 +736,10 @@ fun AppNavigation(
                 }
             }
             miniPlayerManager?.isNavigatingToVideo = true
+            // 合集列表 / 详情压详情：进新片前立刻挂起上一级仍在响的 player，避免只听见旧声音。
+            if (videoBvid.isNotBlank()) {
+                miniPlayerManager?.haltForeignPlaybackForIncomingVideo(videoBvid)
+            }
             miniPlayerManager?.exitMiniMode(animate = false)
             val key = when (parsedKey) {
                 is BiliPaiNavKey.VideoDetail -> {

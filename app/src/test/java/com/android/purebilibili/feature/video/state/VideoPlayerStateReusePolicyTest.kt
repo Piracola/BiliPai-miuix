@@ -21,6 +21,44 @@ class VideoPlayerStateReusePolicyTest {
     }
 
     @Test
+    fun sessionInactive_suspendsLocalPlayback() {
+        assertTrue(shouldSuspendLocalPlaybackWhenSessionInactive(playbackSessionActive = false))
+        assertFalse(shouldSuspendLocalPlaybackWhenSessionInactive(playbackSessionActive = true))
+    }
+
+    @Test
+    fun foreignPlayback_haltsOnlyWhenIncomingDiffersAndActive() {
+        assertTrue(
+            shouldHaltForeignPlaybackOnVideoEntry(
+                incomingBvid = "BV_new",
+                activeBvid = "BV_old",
+                isPlaybackLikelyActive = true
+            )
+        )
+        assertFalse(
+            shouldHaltForeignPlaybackOnVideoEntry(
+                incomingBvid = "BV_same",
+                activeBvid = "BV_same",
+                isPlaybackLikelyActive = true
+            )
+        )
+        assertFalse(
+            shouldHaltForeignPlaybackOnVideoEntry(
+                incomingBvid = "BV_new",
+                activeBvid = "BV_old",
+                isPlaybackLikelyActive = false
+            )
+        )
+        assertFalse(
+            shouldHaltForeignPlaybackOnVideoEntry(
+                incomingBvid = "BV_new",
+                activeBvid = null,
+                isPlaybackLikelyActive = true
+            )
+        )
+    }
+
+    @Test
     fun `reuses mini player when route cid is missing but bvid matches active player`() {
         assertTrue(
             shouldReuseMiniPlayerAtEntry(

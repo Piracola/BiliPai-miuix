@@ -1547,6 +1547,43 @@ class MiniPlayerManager private constructor(private val context: Context) :
      * 卡片 sharedBounds 返回（一镜到底）需要表面跟壳缩；过早停播会让落位变成
      * 「黑壳瞬间卸掉、列表卡已在原位」。dispose / 返回结束后仍会释放。
      */
+    /**
+     * 从合集列表等入口进入「另一支」视频时，立刻挂起当前全局 player 的声音。
+     * 不释放 player、不清会话元数据，避免打断返回上一级时的恢复链路。
+     */
+    fun haltForeignPlaybackForIncomingVideo(incomingBvid: String) {
+        val target = incomingBvid.trim()
+        if (target.isBlank()) return
+        val likelyActive = isActive ||
+            isPlaying ||
+            _externalPlayer?.let { it.isPlaying || it.playWhenReady } == true ||
+            _player?.let { it.isPlaying || it.playWhenReady } == true
+        if (
+            !com.android.purebilibili.feature.video.state.shouldHaltForeignPlaybackOnVideoEntry(
+                incomingBvid = target,
+                activeBvid = currentBvid,
+                isPlaybackLikelyActive = likelyActive
+            )
+        ) {
+            return
+        }
+        Logger.d(
+            TAG,
+            "🔇 haltForeignPlaybackForIncomingVideo: active=$currentBvid -> incoming=$target"
+        )
+        _externalPlayer?.let { player ->
+            player.volume = 0f
+            player.playWhenReady = false
+            if (player.isPlaying) player.pause()
+        }
+        _player?.let { player ->
+            player.volume = 0f
+            player.playWhenReady = false
+            if (player.isPlaying) player.pause()
+        }
+        isPlaying = false
+    }
+
     fun markLeavingByNavigation(
         expectedBvid: String? = null,
         forceStop: Boolean = false,
