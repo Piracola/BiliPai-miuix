@@ -242,6 +242,36 @@ class VideoPlayerCoverPolicyTest {
     }
 
     @Test
+    fun autoPlayEnabled_neverUsesManualStartCoverUnderlay() {
+        // 自动播放：即便尚未 playWhenReady、进度为 0，也不得进 manual-start 垫封面，
+        // 否则会 INVISIBLE surface / 卡住揭开，合集换片或重进详情整页一直封面。
+        assertFalse(
+            shouldKeepCoverForManualStart(
+                playWhenReady = false,
+                currentPositionMs = 0L,
+                autoPlayEnabled = true,
+                hasManualStartPlaybackIntent = false
+            )
+        )
+        assertFalse(
+            shouldKeepCoverForManualStart(
+                playWhenReady = true,
+                currentPositionMs = 0L,
+                autoPlayEnabled = true,
+                hasManualStartPlaybackIntent = false
+            )
+        )
+        assertFalse(
+            shouldKeepCoverForManualStart(
+                playWhenReady = false,
+                currentPositionMs = 12_000L,
+                autoPlayEnabled = true,
+                hasManualStartPlaybackIntent = true
+            )
+        )
+    }
+
+    @Test
     fun manualStartCover_staysVisibleForSavedProgressBeforeUserPlay() {
         assertTrue(
             shouldKeepCoverForManualStart(

@@ -70,6 +70,17 @@ class PlaybackDebugInfoMapperTest {
     }
 
     @Test
+    fun applyMediaTransitionFirstFrameReset_clearsStaleFirstFrameFlag() {
+        val rendered = applyRenderedFirstFrameDebugInfo(current = PlaybackDebugInfo())
+        val reset = applyMediaTransitionFirstFrameReset(current = rendered)
+
+        assertEquals("", reset.firstFrame)
+        assertEquals("media transition", reset.lastVideoEvent)
+        // Already blank: no-op identity-preserving clear.
+        assertEquals("", applyMediaTransitionFirstFrameReset(current = PlaybackDebugInfo()).firstFrame)
+    }
+
+    @Test
     fun applyDroppedVideoFramesDebugInfo_accumulatesFrameDrops() {
         val result = applyDroppedVideoFramesDebugInfo(
             current = PlaybackDebugInfo(droppedFrames = "5"),

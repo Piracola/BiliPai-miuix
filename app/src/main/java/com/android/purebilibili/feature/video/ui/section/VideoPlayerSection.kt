@@ -765,6 +765,14 @@ fun VideoPlayerSection(
     var observedPlaybackSpeed by remember(playerState.player) {
         mutableFloatStateOf(playerState.player.playbackParameters.speed)
     }
+    // Player 的 playWhenReady/isPlaying 不是 Snapshot 状态：必须镜像进 Compose，
+    // 否则合集 halt / 换片后封面与 surface 可见性不会跟着刷新。
+    var observedPlayWhenReady by remember(playerState.player) {
+        mutableStateOf(playerState.player.playWhenReady)
+    }
+    var observedIsPlaying by remember(playerState.player) {
+        mutableStateOf(playerState.player.isPlaying)
+    }
     var keepVideoPlaybackAwake by remember(playerState.player) {
         mutableStateOf(
             shouldKeepVideoPlaybackAwake(
@@ -775,17 +783,20 @@ fun VideoPlayerSection(
         )
     }
     DisposableEffect(playerState.player) {
-        fun updateKeepScreenAwake() {
+        fun syncPlayerObservation() {
+            val player = playerState.player
+            observedPlayWhenReady = player.playWhenReady
+            observedIsPlaying = player.isPlaying
             keepVideoPlaybackAwake = shouldKeepVideoPlaybackAwake(
-                playWhenReady = playerState.player.playWhenReady,
-                isPlaying = playerState.player.isPlaying,
-                playbackState = playerState.player.playbackState
+                playWhenReady = player.playWhenReady,
+                isPlaying = player.isPlaying,
+                playbackState = player.playbackState
             )
         }
         val listener = object : Player.Listener {
             override fun onPlaybackStateChanged(playbackState: Int) {
                 isBuffering = playbackState == Player.STATE_BUFFERING
-                updateKeepScreenAwake()
+                syncPlayerObservation()
                 val now = android.os.SystemClock.elapsedRealtime()
                 if (playbackState == Player.STATE_BUFFERING) {
                     if (bufferingStartedAtMs == 0L) {
@@ -814,23 +825,23 @@ fun VideoPlayerSection(
                 }
             }
 
-            override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {
-                observedPlaybackSpeed = playbackParameters.speed
-            }
-
             override fun onIsPlayingChanged(isPlaying: Boolean) {
-                updateKeepScreenAwake()
+                syncPlayerObservation()
             }
 
             override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
-                updateKeepScreenAwake()
+                syncPlayerObservation()
+            }
+
+            override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {
+                observedPlaybackSpeed = playbackParameters.speed
             }
         }
         playerState.player.addListener(listener)
         // 初始化状态
         isBuffering = playerState.player.playbackState == Player.STATE_BUFFERING
         observedPlaybackSpeed = playerState.player.playbackParameters.speed
-        updateKeepScreenAwake()
+        syncPlayerObservation()
         onDispose {
             playerState.player.removeListener(listener)
         }
@@ -2703,13 +2714,13 @@ fun VideoPlayerSection(
         var hasManualStartPlaybackIntent by remember(bvid) {
             mutableStateOf(
                 playerState.player.mediaItemCount > 0 &&
-                    (playerState.player.playWhenReady || playerState.player.isPlaying)
+                    (observedPlayWhenReady || observedIsPlaying)
             )
         }
-        LaunchedEffect(uiState, playerState.player.playWhenReady, playerState.player.isPlaying) {
+        LaunchedEffect(uiState, observedPlayWhenReady, observedIsPlaying) {
             if (
                 playerState.player.mediaItemCount > 0 &&
-                (playerState.player.playWhenReady || playerState.player.isPlaying)
+                (observedPlayWhenReady || observedIsPlaying)
             ) {
                 hasManualStartPlaybackIntent = true
             }
@@ -2719,7 +2730,7 @@ fun VideoPlayerSection(
             playPlayerFromUserAction(playerState.player)
         }
         val keepCoverForManualStart = shouldKeepCoverForManualStart(
-            playWhenReady = playerState.player.playWhenReady,
+            playWhenReady = observedPlayWhenReady,
             currentPositionMs = playerState.player.currentPosition,
             autoPlayEnabled = autoPlayOnOpenEnabled,
             hasManualStartPlaybackIntent = hasManualStartPlaybackIntent
@@ -3028,6 +3039,13 @@ fun VideoPlayerSection(
         LaunchedEffect(coverBootstrapState) {
             if (coverBootstrapState.isFirstFrameRendered) {
                 isFirstFrameRendered = true
+            }
+        }
+        // Media swap 会清空 debug firstFrame；同步清掉揭开状态，避免旧首帧标志立刻揭开成黑屏。
+        LaunchedEffect(persistedRenderedFirstFrame, bvid) {
+            if (!persistedRenderedFirstFrame) {
+                isFirstFrameRendered = false
+                hasStartedSmoothReveal = false
             }
         }
         // 换片或返回强制封面时清掉揭开标记，保证下次进场重新走封面→画面。

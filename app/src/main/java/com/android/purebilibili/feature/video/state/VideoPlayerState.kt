@@ -260,6 +260,20 @@ internal fun applyRenderedFirstFrameDebugInfo(
     )
 }
 
+/**
+ * Media swap (合集换片 / setMediaItem) 后旧首帧标志必须清掉，
+ * 否则封面状态机误用「已出画」立刻揭开，露出黑屏只有声音。
+ */
+internal fun applyMediaTransitionFirstFrameReset(
+    current: PlaybackDebugInfo
+): PlaybackDebugInfo {
+    if (current.firstFrame.isBlank()) return current
+    return current.copy(
+        firstFrame = "",
+        lastVideoEvent = "media transition"
+    )
+}
+
 internal fun applyDroppedVideoFramesDebugInfo(
     current: PlaybackDebugInfo,
     droppedFrameCount: Int
@@ -522,6 +536,16 @@ class VideoPlayerState(
                 "VideoPlayerState",
                 "USER_DBG onPlayWhenReadyChanged: playWhenReady=$playWhenReady, reason=$reason, " +
                     "state=${player.playbackState}, isPlaying=${player.isPlaying}, pos=${player.currentPosition}"
+            )
+        }
+
+        override fun onMediaItemTransition(mediaItem: androidx.media3.common.MediaItem?, reason: Int) {
+            // 合集/页内换片：清掉旧 firstFrame，避免封面状态机误以为新片已出画。
+            _debugInfo.value = applyMediaTransitionFirstFrameReset(current = _debugInfo.value)
+            appendDiagnosticEvent("mediaItemTransition reason=$reason")
+            Logger.d(
+                "VideoPlayerState",
+                "USER_DBG onMediaItemTransition: reason=$reason, mediaId=${mediaItem?.mediaId}"
             )
         }
     }

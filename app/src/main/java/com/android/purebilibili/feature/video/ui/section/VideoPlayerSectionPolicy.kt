@@ -1060,13 +1060,23 @@ internal fun shouldCommitSmoothCoverReveal(
     shouldKeepCoverForManualStart = shouldKeepCoverForManualStart,
 )
 
+/**
+ * 是否处于「CoverFirst 手动起播」垫封面。
+ *
+ * - **自动播放开启时永远 false**：进场封面只靠首帧 / smooth reveal，不得用 manual-start 逻辑
+ *   把 PlayerView 藏掉；否则合集换片 halt 或重进详情时 `playWhenReady` 短暂为 false 会永久卡住封面。
+ * - 关闭自动播放且用户尚未点播：整段 CoverFirst。
+ * - 用户已点播：仅在尚未真正起播（!playWhenReady 且进度仍在片头）时继续垫封面。
+ */
 internal fun shouldKeepCoverForManualStart(
     playWhenReady: Boolean,
     currentPositionMs: Long,
     autoPlayEnabled: Boolean = true,
     hasManualStartPlaybackIntent: Boolean = false
 ): Boolean {
-    if (!autoPlayEnabled && !hasManualStartPlaybackIntent) return true
+    // 自动连播：禁止 manual-start 垫封面与 INVISIBLE surface，否则首帧事件永不来。
+    if (autoPlayEnabled) return false
+    if (!hasManualStartPlaybackIntent) return true
     if (playWhenReady) return false
     return currentPositionMs <= 0L
 }
@@ -1233,14 +1243,20 @@ internal fun shouldKeepInlinePlayerContentOnReset(
     return !isPortraitFullscreen && !forceCoverDuringReturnAnimation
 }
 
+/**
+ * 是否展示内联 PlayerView。
+ *
+ * 注意：**不要**因 CoverFirst 垫封面而 INVISIBLE。封面叠层 + surface alpha 已能挡住画面；
+ * 把 View 设为 INVISIBLE 会导致 Surface 不产出 [Player.EVENT_RENDERED_FIRST_FRAME]，
+ * 揭开状态机永远等不到首帧（合集换片 / 重进详情「整页一直封面、只有声音」）。
+ */
 internal fun shouldShowInlinePlayerView(
     isPortraitFullscreen: Boolean,
     forceCoverDuringReturnAnimation: Boolean,
     shouldKeepCoverForManualStart: Boolean = false
 ): Boolean {
-    return !isPortraitFullscreen &&
-        !forceCoverDuringReturnAnimation &&
-        !shouldKeepCoverForManualStart
+    // shouldKeepCoverForManualStart 仅影响封面叠层 / surface alpha，不再隐藏 PlayerView。
+    return !isPortraitFullscreen && !forceCoverDuringReturnAnimation
 }
 
 internal fun shouldEnableCoverImageCrossfade(
