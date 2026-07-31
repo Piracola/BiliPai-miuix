@@ -10,22 +10,6 @@ internal const val HOME_HERO_CAROUSEL_WIDE_BREAKPOINT_DP = 840f
 internal const val HOME_HERO_CAROUSEL_MAX_WIDTH_DP = 840f
 private const val HOME_HERO_CAROUSEL_TOP_GAP_REDUCTION_DP = 12f
 
-internal data class HomeHeroCarouselCardTransform(
-    val rotationY: Float,
-    val rotationZ: Float,
-    val scale: Float,
-    val alpha: Float,
-    val cameraDistanceMultiplier: Float,
-    val translationXFraction: Float,
-    val pivotFractionX: Float,
-    val zIndex: Float,
-    val contentParallaxFraction: Float,
-    val contentScale: Float,
-    val edgeShadeAlpha: Float,
-    val edgeShadeStartFromLeft: Boolean,
-    val shadowElevationFraction: Float
-)
-
 internal fun resolveHomeFeedTopPaddingDp(
     reservedTopPaddingDp: Float,
     showHeroCarousel: Boolean
@@ -86,28 +70,6 @@ internal fun resolveHomeHeroCarouselAspectRatio(containerWidthDp: Float): Float 
 
 internal fun resolveHomeHeroCarouselWidthDp(containerWidthDp: Float): Float {
     return containerWidthDp.coerceAtMost(HOME_HERO_CAROUSEL_MAX_WIDTH_DP)
-}
-
-internal fun resolveHomeHeroCarouselCardTransform(
-    pageOffset: Float
-): HomeHeroCarouselCardTransform {
-    val clampedOffset = pageOffset.coerceIn(-1f, 1f)
-    val distance = kotlin.math.abs(clampedOffset)
-    return HomeHeroCarouselCardTransform(
-        rotationY = 0f,
-        rotationZ = 0f,
-        scale = 1f - distance * 0.04f,
-        alpha = 1f - distance * 0.08f,
-        cameraDistanceMultiplier = 8f,
-        translationXFraction = 0f,
-        pivotFractionX = 0.5f,
-        zIndex = 1f - distance * 0.01f,
-        contentParallaxFraction = 0f,
-        contentScale = 1f,
-        edgeShadeAlpha = 0f,
-        edgeShadeStartFromLeft = false,
-        shadowElevationFraction = 0f
-    )
 }
 
 internal fun resolveHomeHeroCarouselPreviewAlpha(

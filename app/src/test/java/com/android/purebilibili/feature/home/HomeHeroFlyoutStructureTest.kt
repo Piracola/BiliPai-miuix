@@ -63,12 +63,14 @@ class HomeHeroFlyoutStructureTest {
     }
 
     @Test
-    fun homeHeroCarouselUsesWholeCardShellSharedTransition() {
+    fun homeHeroCarouselNavigatesWithoutSharedTransitionOrCardTransforms() {
         val source = loadSource("app/src/main/java/com/android/purebilibili/feature/home/components/HomeHeroCarousel.kt")
 
-        assertTrue(source.contains("videoCardShellSharedBoundsOrEmpty("))
-        assertTrue(source.contains("resolveVideoCardSharedTransitionMotionSpec("))
-        assertTrue(source.contains("LocalSharedTransitionEnabled.current"))
+        assertFalse(source.contains("videoCardShellSharedBoundsOrEmpty("))
+        assertFalse(source.contains("resolveVideoCardSharedTransitionMotionSpec("))
+        assertFalse(source.contains("LocalSharedTransitionEnabled.current"))
+        assertFalse(source.contains("CardPositionManager.recordVideoCardPosition("))
+        assertFalse(source.contains("graphicsLayer {\n                transformOrigin"))
         assertFalse(source.contains("videoCoverSharedElementKey("))
         assertFalse(source.contains("videoViewsSharedElementKey("))
         assertFalse(source.contains("videoDanmakuSharedElementKey("))
