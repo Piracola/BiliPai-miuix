@@ -152,3 +152,5 @@ Pick the newest `gradle-*-bin/*/gradle-*/bin/gradle` that matches the wrapper ve
 - Treat `ralph`, `team`, `ultrawork`, `plan`, `deep-interview`, and other multi-phase workflow skills as high-overhead options. Use them only when the user explicitly asks for them or when the task truly needs planning, persistent retries, or parallel lanes.
 - Prefer domain-specific helpers such as `android-native-dev`, `android-jetpack-compose-expert`, `debugger`, `explore`, and `verifier` before generic orchestration skills.
 - For OMX or skill usage questions, answer directly unless a workflow skill is clearly necessary to complete a concrete configuration or implementation task.
+
+@RTK.md

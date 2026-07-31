@@ -182,6 +182,12 @@ cd BiliPai
 ./gradlew :app:assembleDev
 ```
 
+在 Windows 上也可以双击运行 `scripts/build_dev_apk.bat`。它会构建同一个 dev APK，但将 Gradle 的详细输出写入 `build/assemble-dev.log`，窗口只显示构建结果、APK 路径和日志路径。若从命令行运行并且不希望最后暂停，可加 `--no-pause`：
+
+```bat
+scripts\build_dev_apk.bat --no-pause
+```
+
 `google-services.json` 是可选项：放入 `app/` 后启用 Firebase Crashlytics / Analytics；缺失时构建脚本会跳过相关能力。
 
 ## 文档入口
