@@ -95,6 +95,43 @@ fun AnimationSettingsContent(
     state: SettingsUiState,
     viewModel: SettingsViewModel
 ) {
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = WindowInsets.navigationBars.asPaddingValues(),
+    ) {
+        item {
+            AppPreferenceSectionTitle("动效")
+        }
+        item {
+            AppPreferenceGroup {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                ) {
+                    AppText(
+                        text = "页面切换使用系统默认行为",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    AppText(
+                        text = "应用仅保留播放器控制栏的短暂透明度反馈；系统关闭动画时会直接显示终态。",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+@Suppress("UNUSED_PARAMETER")
+private fun LegacyAnimationSettingsContent(
+    modifier: Modifier = Modifier,
+    state: SettingsUiState,
+    viewModel: SettingsViewModel
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()

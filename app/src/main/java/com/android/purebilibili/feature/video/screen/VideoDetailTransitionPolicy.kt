@@ -455,19 +455,17 @@ internal fun resolveVideoDetailRouteSheetMotion(
     sourceRoute: String?,
     transitionEnabled: Boolean
 ): VideoDetailRouteSheetMotion {
-    val enabled = transitionEnabled &&
-        com.android.purebilibili.navigation.isVideoCardReturnTargetRoute(sourceRoute)
     return VideoDetailRouteSheetMotion(
-        enabled = enabled,
-        durationMillis = HOME_VIDEO_ROUTE_SHEET_DURATION_MILLIS,
-        mainDurationMillis = HOME_VIDEO_ROUTE_SHEET_MAIN_DURATION_MILLIS,
-        settleDurationMillis = HOME_VIDEO_ROUTE_SHEET_SETTLE_DURATION_MILLIS,
-        initialScale = HOME_VIDEO_ROUTE_SHEET_INITIAL_SCALE,
-        initialTranslationYDp = HOME_VIDEO_ROUTE_SHEET_INITIAL_TRANSLATION_Y_DP,
-        initialCornerDp = HOME_VIDEO_ROUTE_SHEET_INITIAL_CORNER_DP,
-        initialBackgroundScrimAlpha = HOME_VIDEO_ROUTE_SHEET_INITIAL_SCRIM_ALPHA,
-        settleScaleDelta = HOME_VIDEO_ROUTE_SHEET_SETTLE_SCALE_DELTA,
-        settleTranslationDp = HOME_VIDEO_ROUTE_SHEET_SETTLE_TRANSLATION_DP,
+        enabled = false,
+        durationMillis = 0,
+        mainDurationMillis = 0,
+        settleDurationMillis = 0,
+        initialScale = 1f,
+        initialTranslationYDp = 0f,
+        initialCornerDp = 0f,
+        initialBackgroundScrimAlpha = 0f,
+        settleScaleDelta = 0f,
+        settleTranslationDp = 0f,
         enterEasing = resolveVideoCardSharedTransitionEnterEasing(),
         returnEasing = resolveVideoCardSharedTransitionReturnEasing()
     )

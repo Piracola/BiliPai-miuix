@@ -197,7 +197,8 @@ internal fun rememberVideoDetailRouteSheetFrameProvider(
 ): () -> VideoDetailRouteSheetFrame {
     // shell sharedBounds 接管整张详情壳的 morph 时，sheet 自身的 scale/translation/corner/scrim
     // 必须全部停摆——否则会与共享元素同时形变导致撕裂。等价于 motion.enabled = false。
-    val effectiveMotion = if (sharedBoundsActive) motion.copy(enabled = false) else motion
+    // 详情路由壳不再参与页面转场；保留该兼容入口只为不影响播放器和返回栈生命周期。
+    val effectiveMotion = motion.copy(enabled = false)
     val routeSheetProgress = remember(effectiveMotion.enabled) {
         Animatable(if (effectiveMotion.enabled) 0f else 1f)
     }
@@ -280,29 +281,9 @@ internal fun VideoDetailRouteSheetHost(
     content: @Composable BoxScope.() -> Unit,
     overlayContent: @Composable BoxScope.() -> Unit
 ) {
-    val density = LocalDensity.current
-
     Box(
         modifier = modifier
             .fillMaxSize()
-            .drawWithContent {
-                val frame = frameProvider()
-                if (frame.backgroundScrimAlpha > 0.001f) {
-                    drawRect(Color.Black.copy(alpha = frame.backgroundScrimAlpha))
-                }
-                drawContent()
-            }
-            .graphicsLayer {
-                val frame = frameProvider()
-                scaleX = frame.scale
-                scaleY = frame.scale
-                translationY = with(density) {
-                    frame.translationYDp.dp.toPx()
-                }
-                transformOrigin = TransformOrigin(0.5f, 0f)
-                clip = motion.enabled && frame.cornerDp > 0.01f
-                shape = RoundedCornerShape(frame.cornerDp.dp)
-            }
             .background(
                 if (isFullscreenMode) Color.Black.copy(alpha = backgroundAlpha)
                 else backgroundColor.copy(alpha = backgroundAlpha)

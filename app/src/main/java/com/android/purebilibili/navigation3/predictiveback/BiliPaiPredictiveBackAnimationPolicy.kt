@@ -13,11 +13,5 @@ internal fun resolveBiliPaiPredictiveBackAnimationHandler(
     if (!predictiveBackEnabled) {
         return BiliPaiDisabledPredictiveBackAnimation()
     }
-    if (routeTransition == BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT) {
-        return BiliPaiSharedElementPredictiveBackAnimation()
-    }
-    if (routeTransition == BiliPaiNavRouteTransition.SETTINGS_IOS_PUSH_POP) {
-        return BiliPaiSettingsIosPredictiveBackAnimation()
-    }
     return BiliPaiDefaultPredictiveBackAnimation()
 }

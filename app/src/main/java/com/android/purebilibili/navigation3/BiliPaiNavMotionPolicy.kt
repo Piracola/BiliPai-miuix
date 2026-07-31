@@ -56,25 +56,10 @@ internal fun resolveBiliPaiNavMotionDecision(
     appBackActionRequiresInterception: Boolean = false
 ): BiliPaiNavMotionDecision {
     val mode = resolveBiliPaiNavMotionMode(cardTransitionEnabled = cardTransitionEnabled)
-    val isVideoToCardReturn = fromKey is BiliPaiNavKey.VideoDetail &&
-        toKey != null &&
-        isCardReturnTargetNavKey(toKey)
-    val isCardToVideoForward = fromKey != null &&
-        isCardReturnTargetNavKey(fromKey) &&
-        toKey is BiliPaiNavKey.VideoDetail
-    val routeTransition = when {
-        cardTransitionEnabled &&
-            sharedTransitionReady &&
-            (isVideoToCardReturn || isCardToVideoForward) ->
-            BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT
-        mode == BiliPaiNavMotionMode.CLASSIC_CARD ->
-            BiliPaiNavRouteTransition.CLASSIC_CARD
-        else -> BiliPaiNavRouteTransition.FALLBACK
-    }
 
     return BiliPaiNavMotionDecision(
         mode = mode,
-        routeTransition = routeTransition,
+        routeTransition = BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT,
         interceptSystemBack = shouldInterceptSystemBackForNavigation3(
             mode = mode,
             appBackActionRequiresInterception = appBackActionRequiresInterception
@@ -90,21 +75,8 @@ internal fun resolveBiliPaiBackGestureDecision(
     sourceMetadata: BiliPaiNavSourceMetadata,
     activeMainHostRoute: String? = null,
 ): BiliPaiBackGestureDecision {
-    val motionMode = resolveBiliPaiNavMotionMode(cardTransitionEnabled = cardTransitionEnabled)
-    val routeTransition = resolveBiliPaiNavDisplayPopRouteTransition(
-        cardTransitionEnabled = cardTransitionEnabled,
-        sourceMetadata = sourceMetadata,
-        fromKey = currentKey,
-        toKey = previousKey,
-        activeMainHostRoute = activeMainHostRoute,
-    )
-    val isAppAction = systemBackAction == AppSystemBackAction.RETURN_TO_HOME_TAB
     return BiliPaiBackGestureDecision(
-        routeTransition = if (isAppAction) {
-            BiliPaiNavRouteTransition.FALLBACK
-        } else {
-            routeTransition
-        },
+        routeTransition = BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT,
         interceptSystemBack = shouldInterceptSystemBackForAppAction(systemBackAction)
     )
 }
@@ -151,48 +123,7 @@ internal fun resolveBiliPaiNavDisplayPopRouteTransition(
     toKey: BiliPaiNavKey?,
     activeMainHostRoute: String? = null,
 ): BiliPaiNavRouteTransition {
-    resolveSettingsNavPopTransition(
-        fromKey = fromKey,
-        toKey = toKey,
-        activeMainHostRoute = activeMainHostRoute,
-    )?.let { return it }
-    val fromVideoKey = fromKey as? BiliPaiNavKey.VideoDetail
-    val toIsCardReturnTarget = toKey != null && isCardReturnTargetNavKey(toKey)
-    if (cardTransitionEnabled) {
-        if (isRelatedVideoDetailReturn(fromVideoKey, toKey)) {
-            return BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT
-        }
-        val sharedReadyFavoriteCollectionReturn =
-            fromKey is BiliPaiNavKey.SeasonSeriesDetail &&
-                fromKey.sharedElementTransition &&
-                (toKey == BiliPaiNavKey.MainHost || toKey == BiliPaiNavKey.Favorite)
-        if (sharedReadyFavoriteCollectionReturn) {
-            // 合集详情↔收藏列表：预测返回时 sharedBounds 常对不齐，NO_OP 会让两页全屏叠在一起。
-            // 用轻量 sibling pop，进场仍可由顶栏 sharedBounds 增强。
-            return BiliPaiNavRouteTransition.LIGHT_SIBLING_POP
-        }
-
-        // Story 直达返回：没有 sharedBounds 对端，必须走普通过渡，否则黑底悬浮卡。
-        if (fromKey is BiliPaiNavKey.Story) {
-            return BiliPaiNavRouteTransition.FALLBACK
-        }
-
-        val morphSourceRoute = resolveCardMorphDestinationSourceRoute(fromKey)
-        val normalizedMorphRoute = morphSourceRoute?.substringBefore("?")
-        // VideoDetail.sourceRoute 在 push 时写入 key，完整观看后仍可靠。
-        // 不再依赖 CardPosition / sharedTransitionEntryReady：任一过期都会把 pop 打成
-        // CLASSIC_CARD fade，表现为「卡片已在原位、没有落位动画」。
-        if (toIsCardReturnTarget && !normalizedMorphRoute.isNullOrBlank()) {
-            return BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT
-        }
-        return BiliPaiNavRouteTransition.CLASSIC_CARD
-    }
-    // 关闭共享元素时：VideoDetail → 任意 card-return-target 一律走方向化横向过渡，
-    // 没有源方向信息（单列、居中、未点击源、卡片已滚出视口等）时兜底向右滑出。
-    if (fromVideoKey != null && toIsCardReturnTarget) {
-        return resolveCardDisabledReturnTransition(sourceMetadata.cardSourceDirection)
-    }
-    return BiliPaiNavRouteTransition.FALLBACK
+    return BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT
 }
 
 internal fun isRelatedVideoDetailEntry(

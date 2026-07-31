@@ -452,7 +452,13 @@ fun AppNavigation(
     }
     val videoCardTransitionClock = rememberVideoCardTransitionClock()
     val systemReduceMotion = rememberSystemReduceMotion()
-    val sharedVideoCardTransitionEnabled = cardTransitionEnabled && !systemReduceMotion
+    val appMotionPolicy = remember(systemReduceMotion) {
+        com.android.purebilibili.core.ui.motion.AppMotionPolicy.default(
+            systemReduceMotion = systemReduceMotion,
+        )
+    }
+    // 页面导航统一硬切。旧设置值只保留读取兼容，不能再重新开启共享元素路径。
+    val sharedVideoCardTransitionEnabled = false
     val effectiveVideoCardTransitionDurationMillis = if (systemReduceMotion) {
         VideoCardTransitionVisualTimeline.REDUCED_MOTION_DURATION_MILLIS
     } else {
@@ -460,7 +466,8 @@ fun AppNavigation(
     }
     SharedTransitionProvider(enabled = sharedVideoCardTransitionEnabled) {
         CompositionLocalProvider(
-            LocalVideoSharedTransitionSpeedSettings provides videoSharedTransitionSpeedSettings
+            LocalVideoSharedTransitionSpeedSettings provides videoSharedTransitionSpeedSettings,
+            com.android.purebilibili.core.ui.motion.LocalAppMotionPolicy provides appMotionPolicy,
         ) {
         // [新增] 全局底栏状态管理
         var navigation3BackStack by remember(startDestination, launchToPortraitFeedOnStartupAtInit) {
@@ -2188,9 +2195,7 @@ fun AppNavigation(
                                 onClearReturningFromDetail = {
                                     navigation3ReturnSession = navigation3ReturnSession.clearReturning()
                                 },
-                                transitionEnabled = shouldEnableVideoDetailSharedTransition(
-                                    cardTransitionEnabled = sharedVideoCardTransitionEnabled
-                                ),
+                                transitionEnabled = false,
                                 transitionEnterDurationMillis = navMotionSpec.slowFadeDurationMillis,
                                 onBack = {
                                     if (!navigation3ProgrammaticBackDispatcher.dispatch()) {
@@ -2705,7 +2710,7 @@ fun AppNavigation(
                                     seedCover = storyKey.seedCover,
                                     seedTitle = storyKey.seedTitle,
                                     sourceRoute = storyKey.sourceRoute,
-                                    transitionEnabled = cardTransitionEnabled,
+                                    transitionEnabled = false,
                                     isActive = true,
                                     onBack = { performSystemBackAction() },
                                     onVideoClick = { bvid, cid, _ -> navigateToVideoInNavigation3(bvid, cid, "") },
@@ -3027,7 +3032,7 @@ fun AppNavigation(
                                 ArticleDetailScreen(
                                     articleId = articleKey.articleId,
                                     initialTitle = articleKey.title,
-                                    transitionEnabled = cardTransitionEnabled,
+                                    transitionEnabled = false,
                                     onBack = { useSharedReturn ->
                                         navigation3ReturnSession = if (useSharedReturn) {
                                             navigation3ReturnSession.markReturning(SystemClock.uptimeMillis())
@@ -3093,8 +3098,8 @@ fun AppNavigation(
 
                 BiliPaiNavDisplayHost(
                     backStack = navigation3BackStack,
-                    cardTransitionEnabled = sharedVideoCardTransitionEnabled,
-                    videoCardDepthEffectEnabled = sharedVideoCardTransitionEnabled,
+                    cardTransitionEnabled = false,
+                    videoCardDepthEffectEnabled = false,
                     reduceMotion = systemReduceMotion,
                     videoSharedTransitionDurationMillis =
                         effectiveVideoCardTransitionDurationMillis,
