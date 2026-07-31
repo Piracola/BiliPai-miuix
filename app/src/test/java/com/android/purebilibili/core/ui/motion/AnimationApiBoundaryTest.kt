@@ -87,6 +87,18 @@ class AnimationApiBoundaryTest {
         assertTrue(simpleIndicator.contains("val scale = 1f"))
     }
 
+    @Test
+    fun bottomBarDragScaleStopsImmediatelyWithTheGesture() {
+        val bottomBar = source("feature/home/components/BottomBar.kt")
+        val dragScale = bottomBar
+            .substringAfter("internal fun rememberBottomBarIndicatorDragScaleProgress(")
+            .substringBefore("internal fun resolveBottomBarVisualIndicatorPosition")
+
+        assertTrue(dragScale.contains("if (isDragging) 1f else 0f"))
+        assertFalse(dragScale.contains("Animatable("))
+        assertFalse(dragScale.contains("animateTo("))
+    }
+
     private fun source(relativePath: String): String {
         return File("src/main/java/com/android/purebilibili/$relativePath").readText()
     }

@@ -1749,19 +1749,7 @@ internal fun resolveBottomBarIndicatorLayerTransform(
 @Composable
 internal fun rememberBottomBarIndicatorDragScaleProgress(
     isDragging: Boolean
-): Float {
-    val progress = remember { Animatable(0f) }
-    LaunchedEffect(isDragging) {
-        progress.animateTo(
-            targetValue = if (isDragging) 1f else 0f,
-            animationSpec = tween(
-                durationMillis = if (isDragging) 90 else 220,
-                easing = if (isDragging) EaseOut else FastOutSlowInEasing
-            )
-        )
-    }
-    return progress.value
-}
+): Float = if (isDragging) 1f else 0f
 
 internal fun resolveBottomBarVisualIndicatorPosition(
     rawPosition: Float,
