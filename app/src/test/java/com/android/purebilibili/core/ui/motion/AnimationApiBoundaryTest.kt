@@ -89,6 +89,16 @@ class AnimationApiBoundaryTest {
     }
 
     @Test
+    fun portraitPlayerOverlayUsesExplicitShortAlphaFeedback() {
+        val portraitOverlay = source("feature/video/ui/overlay/PortraitFullscreenOverlay.kt")
+
+        assertFalse(portraitOverlay.contains("fadeIn()"))
+        assertFalse(portraitOverlay.contains("fadeOut()"))
+        assertTrue(portraitOverlay.contains("fadeIn(tween(100))"))
+        assertTrue(portraitOverlay.contains("fadeOut(tween(100))"))
+    }
+
+    @Test
     fun simpleTopTabIndicatorTracksPositionWithoutDecorativeDeformation() {
         val indicator = source("feature/home/components/LiquidIndicator.kt")
         val simpleIndicator = indicator

@@ -5,6 +5,7 @@ import com.android.purebilibili.core.ui.components.AppText
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -178,8 +179,8 @@ fun PortraitFullscreenOverlay(
         // 控件层动画
         AnimatedVisibility(
             visible = showControls && commentOverlayAlpha > 0.001f,
-            enter = fadeIn(),
-            exit = fadeOut(),
+            enter = fadeIn(tween(100)),
+            exit = fadeOut(tween(100)),
             modifier = Modifier.fillMaxSize()
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
@@ -331,8 +332,8 @@ fun PortraitFullscreenOverlay(
 
                 AnimatedVisibility(
                     visible = isPlaybackRecovering,
-                    enter = fadeIn(),
-                    exit = fadeOut(),
+                    enter = fadeIn(tween(100)),
+                    exit = fadeOut(tween(100)),
                     modifier = Modifier.align(Alignment.Center)
                 ) {
                     AppSurface(
