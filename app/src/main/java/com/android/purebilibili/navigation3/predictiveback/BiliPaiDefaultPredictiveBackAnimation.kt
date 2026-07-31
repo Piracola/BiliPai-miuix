@@ -3,10 +3,8 @@ package com.android.purebilibili.navigation3.predictiveback
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.tween
-import com.android.purebilibili.core.ui.transition.PREDICTIVE_BACK_EXIT_SETTLE_DURATION_MS
-import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation3.scene.Scene
@@ -31,21 +29,11 @@ internal class BiliPaiDefaultPredictiveBackAnimation : BiliPaiPredictiveBackAnim
 
     override fun AnimatedContentTransitionScope<Scene<BiliPaiNavKey>>.onPredictivePopTransitionSpec(
         swipeEdge: Int,
-    ): ContentTransform = ContentTransform(
-        // 目标页保持全屏，避免默认的 -25% 入场位移露出 windowBackground。
-        targetContentEnter = EnterTransition.None,
-        initialContentExit = slideOutHorizontally(
-            targetOffsetX = { it },
-            animationSpec = tween(
-                durationMillis = PREDICTIVE_BACK_EXIT_SETTLE_DURATION_MS,
-                easing = LinearEasing,
-            ),
-        ),
-    )
+    ): ContentTransform = EnterTransition.None togetherWith ExitTransition.None
 
     override fun AnimatedContentTransitionScope<Scene<BiliPaiNavKey>>.onPopTransitionSpec(): ContentTransform =
-        defaultPopTransitionSpec<BiliPaiNavKey>().invoke(this)
+        EnterTransition.None togetherWith ExitTransition.None
 
     override fun AnimatedContentTransitionScope<Scene<BiliPaiNavKey>>.onTransitionSpec(): ContentTransform =
-        defaultTransitionSpec<BiliPaiNavKey>().invoke(this)
+        EnterTransition.None togetherWith ExitTransition.None
 }
