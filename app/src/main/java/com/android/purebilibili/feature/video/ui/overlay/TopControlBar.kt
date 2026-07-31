@@ -54,9 +54,18 @@ internal fun shouldShowDislikeInTopControlBar(widthDp: Int): Boolean = widthDp >
 internal fun shouldShowInteractiveActionsInTopControlBar(
     showFullscreenActionItems: Boolean
 ): Boolean = showFullscreenActionItems
+/**
+ * 顶栏是否加状态栏 padding。
+ *
+ * 以 [statusBarVisible] 为准；全屏时系统栏通常已隐藏，应传 false。
+ * [isFullscreen] 仅作兼容旧调用：未显式传 statusBarVisible 时，全屏仍 pad
+ *（隐藏栏时 inset 为 0，无视觉影响）。
+ */
 internal fun shouldApplyStatusBarPaddingToTopControlBar(
-    isFullscreen: Boolean
-): Boolean = isFullscreen
+    isFullscreen: Boolean = false,
+    statusBarVisible: Boolean = isFullscreen,
+): Boolean = com.android.purebilibili.feature.video.screen
+    .shouldApplyStatusBarPaddingToVideoPlayerChrome(statusBarVisible = statusBarVisible)
 internal fun shouldPollTopControlBarClock(
     showCurrentTime: Boolean,
     hostLifecycleStarted: Boolean
@@ -133,6 +142,8 @@ fun TopControlBar(
     title: String,
     onlineCount: String = "",
     isFullscreen: Boolean,
+    /** 系统状态栏是否仍显示；显示时顶栏必须 statusBarsPadding。 */
+    statusBarVisible: Boolean = isFullscreen,
     showBatteryLevel: Boolean = false,
     showCurrentTime: Boolean = true,
     showInteractiveActions: Boolean = true,
@@ -205,7 +216,12 @@ fun TopControlBar(
         modifier = modifier
             .fillMaxWidth()
             .then(
-                if (shouldApplyStatusBarPaddingToTopControlBar(isFullscreen = isFullscreen)) {
+                if (
+                    shouldApplyStatusBarPaddingToTopControlBar(
+                        isFullscreen = isFullscreen,
+                        statusBarVisible = statusBarVisible,
+                    )
+                ) {
                     Modifier.statusBarsPadding()
                 } else {
                     Modifier

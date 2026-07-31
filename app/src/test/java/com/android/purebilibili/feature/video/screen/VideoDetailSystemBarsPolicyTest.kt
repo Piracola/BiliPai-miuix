@@ -2,6 +2,7 @@ package com.android.purebilibili.feature.video.screen
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class VideoDetailSystemBarsPolicyTest {
@@ -266,7 +267,8 @@ class VideoDetailSystemBarsPolicyTest {
     }
 
     @Test
-    fun portraitPlayerTopInset_isZeroWhenStatusBarHidden() {
+    fun portraitPlayerTopInset_alwaysZeroForEdgeToEdgeImmersion() {
+        // 画面沉浸铺满；状态栏可见时由顶栏 chrome 自己 pad，不再 letterbox 整块播放器。
         assertEquals(
             0f,
             resolveVideoDetailPortraitPlayerTopInsetDp(
@@ -274,21 +276,13 @@ class VideoDetailSystemBarsPolicyTest {
                 hideStatusBars = true
             )
         )
-    }
-
-    @Test
-    fun portraitPlayerTopInset_keepsStatusInsetWhenStatusBarVisible() {
         assertEquals(
-            24f,
+            0f,
             resolveVideoDetailPortraitPlayerTopInsetDp(
                 stableStatusBarHeightDp = 24f,
                 hideStatusBars = false
             )
         )
-    }
-
-    @Test
-    fun portraitPlayerTopInset_skipsStatusInsetForSharedCardTransition() {
         assertEquals(
             0f,
             resolveVideoDetailPortraitPlayerTopInsetDp(
@@ -297,6 +291,12 @@ class VideoDetailSystemBarsPolicyTest {
                 isSharedCardTransition = true,
             )
         )
+    }
+
+    @Test
+    fun playerChrome_padsOnlyWhenStatusBarVisible() {
+        assertTrue(shouldApplyStatusBarPaddingToVideoPlayerChrome(statusBarVisible = true))
+        assertFalse(shouldApplyStatusBarPaddingToVideoPlayerChrome(statusBarVisible = false))
     }
 
     @Test

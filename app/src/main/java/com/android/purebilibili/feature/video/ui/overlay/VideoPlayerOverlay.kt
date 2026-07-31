@@ -90,6 +90,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.android.purebilibili.core.store.BottomProgressBehavior
 import com.android.purebilibili.core.store.PlaybackCompletionBehavior
 import com.android.purebilibili.core.store.SettingsManager
+import com.android.purebilibili.feature.video.screen.resolveVideoDetailSystemBarsVisibilityPolicy
 import com.android.purebilibili.core.store.player.PlayerSettingsStore
 import com.android.purebilibili.core.ui.adaptive.MotionTier
 import com.android.purebilibili.core.ui.adaptive.resolveDeviceUiProfile
@@ -942,6 +943,19 @@ fun VideoPlayerOverlay(
         .getPlaybackCompletionBehavior(context)
         .collectAsStateWithLifecycle(initialValue = PlaybackCompletionBehavior.CONTINUE_CURRENT_LOGIC
         )
+    // 「播放页隐藏状态栏」+ 全屏/沉浸：系统栏隐藏时顶栏不 pad；栏仍显示时必须避让防重叠。
+    val hideVideoPageStatusBar by SettingsManager
+        .getHideVideoPageStatusBar(context)
+        .collectAsStateWithLifecycle(
+            initialValue = SettingsManager.getHideVideoPageStatusBarSync(context),
+        )
+    val playerChromeStatusBarVisible = !resolveVideoDetailSystemBarsVisibilityPolicy(
+        isFullscreenMode = isFullscreen,
+        hideVideoPageStatusBar = hideVideoPageStatusBar,
+        isInPipMode = false,
+        isScreenActive = true,
+        isPortraitFullscreen = false,
+    ).hideStatusBars
 
     DisposableEffect(player) {
         currentSpeed = player.playbackParameters.speed
@@ -1300,6 +1314,7 @@ fun VideoPlayerOverlay(
                         title = title,
                         onlineCount = displayedOnlineCount,
                         isFullscreen = isFullscreen,
+                        statusBarVisible = playerChromeStatusBarVisible,
                         showBatteryLevel = showFullscreenBatteryLevel,
                         showCurrentTime = showFullscreenTime,
                         showInteractiveActions = showFullscreenActionItems,
@@ -1343,6 +1358,7 @@ fun VideoPlayerOverlay(
                         //  [新增] 投屏按钮
                         onCastClick = onCastClickAction,
                         showCastButton = playerControlVisibility.showCastButton,
+                        statusBarVisible = playerChromeStatusBarVisible,
                         modifier = Modifier.align(Alignment.TopStart)
                     )
                 }
@@ -2244,6 +2260,8 @@ private fun PortraitTopBar(
     // 📺 [新增] 投屏
     onCastClick: () -> Unit = {},
     showCastButton: Boolean = true,
+    /** 系统状态栏可见时为顶栏加 statusBarsPadding，避免与系统图标重叠。 */
+    statusBarVisible: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
@@ -2258,6 +2276,13 @@ private fun PortraitTopBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .then(
+                if (shouldApplyStatusBarPaddingToPortraitTopBar(statusBarVisible = statusBarVisible)) {
+                    Modifier.statusBarsPadding()
+                } else {
+                    Modifier
+                }
+            )
             .padding(
                 horizontal = layoutPolicy.horizontalPaddingDp.dp,
                 vertical = layoutPolicy.verticalPaddingDp.dp

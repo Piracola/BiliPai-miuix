@@ -180,20 +180,32 @@ internal fun resolveVideoDetailStableStatusBarHeightDp(
     }
 }
 
+/**
+ * 竖屏详情播放器顶部 inset（letterbox）。
+ *
+ * 画面始终 edge-to-edge 沉浸：不再用状态栏高度把整块播放器顶下去。
+ * 系统状态栏若仍显示，由顶栏 chrome 自己 [statusBarsPadding] 避让，避免
+ * 「返回 / 在线人数」与状态栏图标重叠。
+ *
+ * [isSharedCardTransition] 保留参数兼容；shared morph 同样需要 0 inset，
+ * 否则飞行中顶部会出现黑条。
+ */
+@Suppress("UNUSED_PARAMETER")
 internal fun resolveVideoDetailPortraitPlayerTopInsetDp(
     stableStatusBarHeightDp: Float,
     hideStatusBars: Boolean,
     isSharedCardTransition: Boolean = false,
-): Float {
-    // 整个详情壳从来源卡片展开时，状态栏已经由页面根部处理；再把 inset 放进
-    // 播放器会在飞行中的顶部留下黑色 letterbox。
-    if (isSharedCardTransition) return 0f
-    val stableInset = stableStatusBarHeightDp
-        .takeIf { it.isFinite() }
-        ?.coerceAtLeast(0f)
-        ?: 0f
-    return if (hideStatusBars) 0f else stableInset
-}
+): Float = 0f
+
+/**
+ * 播放器顶部控件是否应避让系统状态栏。
+ *
+ * - 状态栏可见（普通详情且未开「播放页隐藏状态栏」）→ 必须 padding，防重叠
+ * - 状态栏已隐藏（全屏 / 竖屏沉浸 / 设置隐藏）→ 不 padding，保持贴顶沉浸
+ */
+internal fun shouldApplyStatusBarPaddingToVideoPlayerChrome(
+    statusBarVisible: Boolean,
+): Boolean = statusBarVisible
 
 internal fun shouldRestoreSystemBarsDuringVideoDetailExitTransition(
     isExitTransitionInProgress: Boolean,

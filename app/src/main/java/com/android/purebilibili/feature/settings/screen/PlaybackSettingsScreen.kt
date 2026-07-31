@@ -1943,9 +1943,9 @@ private fun PlaybackFullscreenGestureSettingsSection(
 	            icon = rememberSettingsSemanticIcon(SettingsIconRole.HIDE_STATUS_BAR),
             title = "播放页隐藏状态栏",
             subtitle = if (hideVideoPageStatusBar) {
-                "普通播放页隐藏顶部系统状态栏，底部手势条保持显示"
+                "隐藏顶部系统状态栏，画面与顶栏控件贴顶沉浸；底部手势条保持显示"
             } else {
-                "关闭后播放页跟随系统状态栏显示"
+                "显示系统状态栏；画面仍沉浸到状态栏下，播放器顶栏自动避让不重叠"
             },
             checked = hideVideoPageStatusBar,
             onCheckedChange = {
