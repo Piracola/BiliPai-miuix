@@ -1,9 +1,7 @@
 package com.android.purebilibili.core.ui.transition
 
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.compositionLocalOf
@@ -59,7 +57,7 @@ internal class VideoCardTransitionClock {
     var returnDepthFloor: Float? by mutableStateOf(null)
         private set
 
-    private val fallback = Animatable(0f)
+    private var fallback by mutableFloatStateOf(0f)
 
     /**
      * Shared morph 回灌：与详情 shell 同一 Transition 的 fraction（0 卡 / 1 详情）。
@@ -72,7 +70,7 @@ internal class VideoCardTransitionClock {
     private var sharedMorphActive: Boolean by mutableStateOf(false)
 
     val fallbackValue: Float
-        get() = fallback.value
+        get() = fallback
 
     /**
      * 当前景深 / morph 进度（只读入口）。
@@ -85,7 +83,7 @@ internal class VideoCardTransitionClock {
             phase = phase,
             sharedMorphActive = sharedMorphActive,
             sharedMorphFraction = sharedMorphFraction,
-            fallbackProgress = fallback.value,
+            fallbackProgress = fallback,
             gestureRestoreInProgress = gestureRestoreInProgress,
             returnDepthFloor = returnDepthFloor,
         )
@@ -191,7 +189,7 @@ internal class VideoCardTransitionClock {
     }
 
     suspend fun snapFallback(value: Float) {
-        fallback.snapTo(value.coerceIn(0f, 1f))
+        fallback = value.coerceIn(0f, 1f)
         // fallback 已接管；清 floor 才能继续 animate 到 0。
         returnDepthFloor = null
     }
@@ -205,16 +203,8 @@ internal class VideoCardTransitionClock {
         durationMillis: Int,
         easing: Easing,
     ) {
-        val safeDuration = durationMillis.coerceAtLeast(0)
-        if (safeDuration <= 0) {
-            fallback.snapTo(target.coerceIn(0f, 1f))
-            returnDepthFloor = null
-            return
-        }
-        fallback.animateTo(
-            targetValue = target.coerceIn(0f, 1f),
-            animationSpec = tween(durationMillis = safeDuration, easing = easing),
-        )
+        fallback = target.coerceIn(0f, 1f)
+        returnDepthFloor = null
     }
 
     suspend fun snapClearAndIdle() {
@@ -222,7 +212,7 @@ internal class VideoCardTransitionClock {
         gestureBackProgress = null
         gestureRestoreInProgress = false
         returnDepthFloor = null
-        fallback.snapTo(0f)
+        fallback = 0f
         phase = VideoCardTransitionBackgroundPhase.IDLE
     }
 }
