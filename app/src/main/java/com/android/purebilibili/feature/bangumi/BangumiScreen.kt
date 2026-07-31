@@ -3,21 +3,8 @@ package com.android.purebilibili.feature.bangumi
 import com.android.purebilibili.core.ui.components.AppIcon
 import com.android.purebilibili.core.ui.components.AppText
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -226,11 +213,7 @@ fun BangumiScreen(
         ) {
             val shouldShowIndexChrome = displayMode != BangumiDisplayMode.LIST || !indexChromeCollapsed
             if (displayMode == BangumiDisplayMode.LIST || displayMode == BangumiDisplayMode.TIMELINE) {
-                AnimatedVisibility(
-                    visible = shouldShowIndexChrome,
-                    enter = expandVertically(animationSpec = tween(180)) + fadeIn(animationSpec = tween(150)),
-                    exit = shrinkVertically(animationSpec = tween(160)) + fadeOut(animationSpec = tween(120))
-                ) {
+                if (shouldShowIndexChrome) {
                     Column {
                         BangumiModeTabs(
                             currentMode = displayMode,
@@ -256,18 +239,7 @@ fun BangumiScreen(
             // 内容区域
             when (displayMode) {
                 BangumiDisplayMode.LIST -> {
-                    AnimatedContent(
-                        targetState = listTransitionKey,
-                        transitionSpec = {
-                            (slideInHorizontally(animationSpec = tween(180)) { it / 12 } +
-                                fadeIn(animationSpec = tween(150))) togetherWith
-                                (slideOutHorizontally(animationSpec = tween(160)) { -it / 12 } +
-                                    fadeOut(animationSpec = tween(120))) using
-                                SizeTransform(clip = false)
-                        },
-                        label = "bangumiIndexListTransition"
-                    ) { transitionKey ->
-                        key(transitionKey) {
+                    key(listTransitionKey) {
                             BangumiPiliPlusHomeContent(
                                 listState = listState,
                                 timelineState = timelineState,
@@ -282,7 +254,6 @@ fun BangumiScreen(
                                 onItemClick = onBangumiClick,
                                 onChromeCollapsedChange = { indexChromeCollapsed = it }
                             )
-                        }
                     }
                 }
                 BangumiDisplayMode.TIMELINE -> {
@@ -495,17 +466,7 @@ private fun BangumiPiliPlusHomeContent(
             }
         }
 
-        AnimatedVisibility(
-            visible = shouldShowBackToTop,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(
-                    end = 20.dp,
-                    bottom = 28.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-                ),
-            enter = fadeIn(animationSpec = tween(180)) + scaleIn(initialScale = 0.92f),
-            exit = fadeOut(animationSpec = tween(140)) + scaleOut(targetScale = 0.92f)
-        ) {
+        if (shouldShowBackToTop) {
             AppSmallFloatingActionButton(
                 onClick = {
                     coroutineScope.launch {
@@ -513,6 +474,12 @@ private fun BangumiPiliPlusHomeContent(
                         currentOnChromeCollapsedChange(false)
                     }
                 },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(
+                        end = 20.dp,
+                        bottom = 28.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                    ),
                 containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp),
                 contentColor = MaterialTheme.colorScheme.primary
             ) {

@@ -15,7 +15,6 @@ import com.android.purebilibili.core.ui.components.AppSmallFloatingActionButton
 import com.android.purebilibili.core.ui.components.AppSurface
 import com.android.purebilibili.core.ui.components.AppTextButton
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.animate
 import dev.chrisbanes.haze.HazeState
@@ -1370,22 +1369,16 @@ fun CommonListScreen(
                 }
             }
 
-            AnimatedVisibility(
-                visible = shouldShowBackToTop,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = AppSpacingTokens.Large + AppSpacingTokens.ExtraSmall, bottom = commonListBottomPadding + AppSpacingTokens.Medium),
-                enter = androidx.compose.animation.fadeIn(animationSpec = AppMotionTokens.standardSpec()) +
-                    androidx.compose.animation.scaleIn(initialScale = 0.92f),
-                exit = androidx.compose.animation.fadeOut(animationSpec = AppMotionTokens.standardSpec()) +
-                    androidx.compose.animation.scaleOut(targetScale = 0.92f)
-            ) {
+            if (shouldShowBackToTop) {
                 AppSmallFloatingActionButton(
                     onClick = {
                         coroutineScope.launch {
                             scrollCommonListToTop()
                         }
                     },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = AppSpacingTokens.Large + AppSpacingTokens.ExtraSmall, bottom = commonListBottomPadding + AppSpacingTokens.Medium),
                     containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(AppSpacingTokens.ExtraSmall - AppSpacingTokens.Micro / 2),
                     contentColor = MaterialTheme.colorScheme.primary
                 ) {

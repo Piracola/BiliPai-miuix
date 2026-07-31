@@ -4,13 +4,6 @@ import com.android.purebilibili.core.ui.components.AppText
 
 import com.android.purebilibili.core.ui.AppSpacingTokens
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -62,7 +55,6 @@ import com.android.purebilibili.core.ui.components.AppOutlinedButton
 import com.android.purebilibili.core.ui.components.AppSurface
 import com.android.purebilibili.core.ui.components.AppSnackbarHost
 import com.android.purebilibili.core.ui.components.AppTextButton
-import com.android.purebilibili.core.ui.motion.AppMotionTokens
 import com.android.purebilibili.core.util.FormatUtils
 import com.android.purebilibili.core.util.responsiveContentWidth
 import com.android.purebilibili.data.model.response.FollowingUser
@@ -1186,41 +1178,7 @@ private fun AnimatedBlurFadeText(
     modifier: Modifier = Modifier,
     content: @Composable (String, Modifier) -> Unit
 ) {
-    val blurAnim = remember { Animatable(0f) }
-    val alphaAnim = remember { Animatable(1f) }
-    val standardMotionSpec = AppMotionTokens.standardSpec<Float>()
-
-    LaunchedEffect(targetText) {
-        blurAnim.snapTo(6f)
-        alphaAnim.snapTo(0.55f)
-        launch {
-            blurAnim.animateTo(
-                targetValue = 0f,
-                animationSpec = standardMotionSpec
-            )
-        }
-        alphaAnim.animateTo(
-            targetValue = 1f,
-            animationSpec = standardMotionSpec
-        )
-    }
-
-    AnimatedContent(
-        targetState = targetText,
-        transitionSpec = {
-            (fadeIn(animationSpec = standardMotionSpec) togetherWith
-                fadeOut(animationSpec = standardMotionSpec)) using
-                SizeTransform(clip = false)
-        },
-        label = "following-count-blur-fade"
-    ) { text ->
-        content(
-            text,
-            modifier
-                .alpha(alphaAnim.value)
-                .blur(blurAnim.value.dp)
-        )
-    }
+    content(targetText, modifier)
 }
 
 @Composable

@@ -218,6 +218,23 @@ class AnimationApiBoundaryTest {
         assertTrue(onboardingSheet.contains("pagerState.scrollToPage("))
     }
 
+    @Test
+    fun ordinaryListPagesDoNotRestoreDecorativeTransitions() {
+        val following = source("feature/following/FollowingListScreen.kt")
+        val bangumi = source("feature/bangumi/BangumiScreen.kt")
+        val commonList = source("feature/list/CommonListScreen.kt")
+
+        assertFalse(following.contains("AnimatedContent("))
+        assertFalse(following.contains("Animatable("))
+        assertFalse(following.contains(".blur("))
+        assertFalse(bangumi.contains("AnimatedContent("))
+        assertFalse(bangumi.contains("AnimatedVisibility("))
+        assertFalse(bangumi.contains("slideInHorizontally("))
+        assertFalse(bangumi.contains("scaleIn("))
+        assertFalse(commonList.contains("AnimatedVisibility("))
+        assertTrue(commonList.contains("if (shouldShowBackToTop)"))
+    }
+
     private fun source(relativePath: String): String {
         return File("src/main/java/com/android/purebilibili/$relativePath").readText()
     }
