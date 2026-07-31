@@ -2521,9 +2521,9 @@ object SettingsManager {
         context.settingsDataStore.edit { preferences -> preferences[KEY_CARD_ANIMATION_ENABLED] = value }
     }
     
-    //  [新增] --- 卡片过渡动画开关 ---
+    // 旧 key 仅兼容读取；卡片转场已删除，不能被旧配置重新开启。
     fun getCardTransitionEnabled(context: Context): Flow<Boolean> = context.settingsDataStore.data
-        .map { preferences -> preferences[KEY_CARD_TRANSITION_ENABLED] ?: true }  // 默认开启
+        .map { false }
 
     suspend fun setCardTransitionEnabled(context: Context, value: Boolean) {
         context.settingsDataStore.edit { preferences -> preferences[KEY_CARD_TRANSITION_ENABLED] = value }
