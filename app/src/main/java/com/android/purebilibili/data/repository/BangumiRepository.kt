@@ -243,8 +243,9 @@ object BangumiRepository {
                 "BangumiRepo",
                 "📡 getBangumiPlayUrl request params: wbiSigned=${signedParams.containsKey("w_rid")}, keys=${signedParams.keys.sorted()}"
             )
+            val playbackApi = NetworkModule.playbackBangumiApi()
             val primaryResponse = decodeBangumiPlayUrlPayload(
-                rawJson = api.getBangumiPlayUrl(
+                rawJson = playbackApi.getBangumiPlayUrl(
                     signedParams
                 ).string()
             )
@@ -254,7 +255,7 @@ object BangumiRepository {
                     "📡 getBangumiPlayUrl fallback legacy: code=${primaryResponse.code}, msg=${primaryResponse.message}"
                 )
                 decodeBangumiPlayUrlPayload(
-                    rawJson = api.getBangumiPlayUrlLegacy(
+                    rawJson = playbackApi.getBangumiPlayUrlLegacy(
                         signedParams
                     ).string()
                 )

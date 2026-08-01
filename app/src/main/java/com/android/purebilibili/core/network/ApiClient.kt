@@ -8,6 +8,8 @@ import com.android.purebilibili.core.network.policy.resolveHardcodedDnsFallback
 import com.android.purebilibili.core.network.policy.resolveHomeFeedCookieAnonymizerDecision
 import com.android.purebilibili.core.network.policy.shouldEnableTrustAllCertificates
 import com.android.purebilibili.core.store.TokenManager
+import com.android.purebilibili.core.store.AccountSessionStore
+import com.android.purebilibili.core.store.StoredAccountSession
 import com.android.purebilibili.data.model.response.*
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
@@ -110,6 +112,18 @@ private class AppSessionCookieJar : okhttp3.CookieJar {
             )
         }
 
+        TokenManager.midCache?.takeIf { it > 0L }?.let { mid ->
+            if (cookies.none { it.name == "DedeUserID" }) {
+                cookies.add(
+                    okhttp3.Cookie.Builder()
+                        .domain(biliBiliDomain)
+                        .name("DedeUserID")
+                        .value(mid.toString())
+                        .build()
+                )
+            }
+        }
+
         if (url.encodedPath.contains("playurl") || url.encodedPath.contains("pgc/view")) {
             com.android.purebilibili.core.util.Logger.d(
                 "CookieJar",
@@ -123,6 +137,32 @@ private class AppSessionCookieJar : okhttp3.CookieJar {
     fun clear() {
         synchronized(cookieLock) {
             cookieStore.clear()
+        }
+    }
+}
+
+/** A cookie jar isolated from the main account, used only for playback authorization. */
+private class PlaybackAccountCookieJar(account: StoredAccountSession) : okhttp3.CookieJar {
+    private val cookieLock = Any()
+    private val cookies = mutableMapOf(
+        "SESSDATA" to account.sessData,
+        "bili_jct" to account.csrf,
+        "DedeUserID" to account.mid.toString(),
+        "buvid3" to account.buvid3
+    ).filterValues { it.isNotBlank() }.toMutableMap()
+
+    override fun saveFromResponse(url: okhttp3.HttpUrl, responseCookies: List<okhttp3.Cookie>) {
+        synchronized(cookieLock) {
+            responseCookies.forEach { cookie -> cookies[cookie.name] = cookie.value }
+        }
+    }
+
+    override fun loadForRequest(url: okhttp3.HttpUrl): List<okhttp3.Cookie> {
+        val domain = if (url.host.endsWith("bilibili.com")) "bilibili.com" else url.host
+        return synchronized(cookieLock) {
+            cookies.map { (name, value) ->
+                okhttp3.Cookie.Builder().domain(domain).name(name).value(value).build()
+            }
         }
     }
 }
@@ -2065,6 +2105,9 @@ interface MessageApi {
 object NetworkModule {
     internal var appContext: Context? = null
     private val appSessionCookieJar = AppSessionCookieJar()
+    private var playbackAccountKey: String? = null
+    private var playbackAccountApi: BilibiliApi? = null
+    private var playbackAccountBangumiApi: BangumiApi? = null
 
     fun init(context: Context) {
         appContext = context.applicationContext
@@ -2072,6 +2115,60 @@ object NetworkModule {
 
     fun clearRuntimeCookies() {
         appSessionCookieJar.clear()
+    }
+
+    @Synchronized
+    fun clearPlaybackAccountClient() {
+        playbackAccountKey = null
+        playbackAccountApi = null
+        playbackAccountBangumiApi = null
+    }
+
+    fun playbackAccount(): StoredAccountSession? =
+        appContext?.let(AccountSessionStore::getPlaybackAccount)
+
+    /**
+     * Returns a client scoped to the optional playback account. It never changes
+     * the app's primary account or grants entitlements locally: Bilibili still
+     * decides access from the selected account's own server-side session.
+     */
+    @Synchronized
+    fun playbackApi(): BilibiliApi {
+        val context = appContext ?: return api
+        val account = AccountSessionStore.getPlaybackAccount(context) ?: return api
+        if (account.mid == TokenManager.midCache) return api
+
+        val key = "${account.mid}:${account.sessData.hashCode()}:${account.buvid3.hashCode()}"
+        ensurePlaybackAccountClients(account, key)
+        return requireNotNull(playbackAccountApi)
+    }
+
+    @Synchronized
+    fun playbackBangumiApi(): BangumiApi {
+        val context = appContext ?: return bangumiApi
+        val account = AccountSessionStore.getPlaybackAccount(context) ?: return bangumiApi
+        if (account.mid == TokenManager.midCache) return bangumiApi
+
+        val key = "${account.mid}:${account.sessData.hashCode()}:${account.buvid3.hashCode()}"
+        ensurePlaybackAccountClients(account, key)
+        return requireNotNull(playbackAccountBangumiApi)
+    }
+
+    private fun ensurePlaybackAccountClients(account: StoredAccountSession, key: String) {
+        if (playbackAccountKey == key && playbackAccountApi != null && playbackAccountBangumiApi != null) {
+            return
+        }
+        val client = okHttpClient.newBuilder()
+            .cookieJar(PlaybackAccountCookieJar(account))
+            .build()
+        val retrofit = Retrofit.Builder()
+            .baseUrl("https://api.bilibili.com/")
+            .client(client)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+        playbackAccountApi = retrofit.create(BilibiliApi::class.java)
+        playbackAccountBangumiApi = retrofit.create(BangumiApi::class.java)
+        playbackAccountKey = key
     }
 
     private val json = Json {

@@ -82,6 +82,8 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     val accounts = _accounts.asStateFlow()
     private val _activeAccountMid = MutableStateFlow<Long?>(null)
     val activeAccountMid = _activeAccountMid.asStateFlow()
+    private val _playbackAccountMid = MutableStateFlow<Long?>(null)
+    val playbackAccountMid = _playbackAccountMid.asStateFlow()
     private var hasLoadedProfileOnce = false
     private var isProfileLoadInFlight = false
     private var profileLoadGeneration = 0L
@@ -95,6 +97,16 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         val context = getApplication<Application>()
         _accounts.value = AccountSessionStore.getAccounts(context)
         _activeAccountMid.value = AccountSessionStore.getActiveAccountMid(context)
+        _playbackAccountMid.value = AccountSessionStore.getPlaybackAccountMid(context)
+    }
+
+    fun setPlaybackAccount(mid: Long?, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
+        if (AccountSessionStore.setPlaybackAccountMid(getApplication(), mid)) {
+            refreshSavedAccounts()
+            onSuccess()
+        } else {
+            onFailure("播放账号不可用，请重新登录后再试")
+        }
     }
 
     fun loadProfile(force: Boolean = false) {

@@ -27,4 +27,27 @@ class LoginCookieImportPolicyTest {
     fun `rejects cookie input without session cookie`() {
         assertNull(parseLoginCookieHeader("bili_jct=csrf; DedeUserID=42"))
     }
+
+    @Test
+    fun `accepts a browser cookie header prefix and quoted values`() {
+        val cookies = parseLoginCookieHeader(
+            "Cookie: SESSDATA=\"session%2Cvalue\"; bili_jct=csrf; DedeUserID=42"
+        )
+
+        requireNotNull(cookies)
+        assertEquals("session%2Cvalue", cookies.sessData)
+        assertEquals("csrf", cookies.csrf)
+        assertEquals("42", cookies.dedeUserId)
+    }
+
+    @Test
+    fun `accepts a copied set cookie line`() {
+        val cookies = parseLoginCookieHeader(
+            "Set-Cookie: SESSDATA=session; Path=/; HttpOnly; bili_jct=csrf"
+        )
+
+        requireNotNull(cookies)
+        assertEquals("session", cookies.sessData)
+        assertEquals("csrf", cookies.csrf)
+    }
 }

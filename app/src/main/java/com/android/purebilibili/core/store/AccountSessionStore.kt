@@ -27,6 +27,7 @@ object AccountSessionStore {
     private const val SP_NAME = "multi_account_sessions"
     private const val KEY_ACCOUNTS = "accounts"
     private const val KEY_ACTIVE_MID = "active_mid"
+    private const val KEY_PLAYBACK_MID = "playback_mid"
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -49,6 +50,36 @@ object AccountSessionStore {
             .takeIf { it > 0L }
     }
 
+    /**
+     * The optional account whose server-side entitlement is used only while
+     * requesting playback URLs. A missing value means "use the main account".
+     */
+    fun getPlaybackAccountMid(context: Context): Long? {
+        return context.getSharedPreferences(SP_NAME, Context.MODE_PRIVATE)
+            .getLong(KEY_PLAYBACK_MID, 0L)
+            .takeIf { it > 0L }
+    }
+
+    fun getPlaybackAccount(context: Context): StoredAccountSession? {
+        val mid = getPlaybackAccountMid(context) ?: return null
+        return getAccounts(context).firstOrNull { it.mid == mid && it.sessData.isNotBlank() }
+    }
+
+    /** Selects an already-verified local account for playback without switching the app account. */
+    fun setPlaybackAccountMid(context: Context, mid: Long?): Boolean {
+        if (mid != null && getAccounts(context).none { it.mid == mid && it.sessData.isNotBlank() }) {
+            return false
+        }
+        context.getSharedPreferences(SP_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .apply {
+                if (mid == null) remove(KEY_PLAYBACK_MID) else putLong(KEY_PLAYBACK_MID, mid)
+            }
+            .apply()
+        NetworkModule.clearPlaybackAccountClient()
+        return true
+    }
+
     fun clearActiveAccount(context: Context) {
         context.getSharedPreferences(SP_NAME, Context.MODE_PRIVATE)
             .edit()
@@ -67,6 +98,10 @@ object AccountSessionStore {
         val editor = context.getSharedPreferences(SP_NAME, Context.MODE_PRIVATE).edit()
         if (getActiveAccountMid(context) == mid) {
             editor.remove(KEY_ACTIVE_MID)
+        }
+        if (getPlaybackAccountMid(context) == mid) {
+            editor.remove(KEY_PLAYBACK_MID)
+            NetworkModule.clearPlaybackAccountClient()
         }
         editor.apply()
         return true

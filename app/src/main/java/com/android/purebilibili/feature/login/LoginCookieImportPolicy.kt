@@ -17,12 +17,21 @@ internal data class ImportedLoginCookies(
 internal fun parseLoginCookieHeader(rawCookieHeader: String): ImportedLoginCookies? {
     val values = rawCookieHeader
         .lineSequence()
-        .flatMap { it.split(';').asSequence() }
+        .flatMap { line ->
+            line.trim()
+                .removePrefix("Cookie:")
+                .removePrefix("cookie:")
+                .removePrefix("Set-Cookie:")
+                .removePrefix("set-cookie:")
+                .split(';')
+                .asSequence()
+        }
         .map { it.trim() }
         .mapNotNull { segment ->
             val separator = segment.indexOf('=')
             if (separator <= 0) null else {
-                segment.substring(0, separator).trim() to segment.substring(separator + 1).trim()
+                segment.substring(0, separator).trim() to
+                    segment.substring(separator + 1).trim().removeSurrounding("\"")
             }
         }
         .toMap()

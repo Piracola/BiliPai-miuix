@@ -139,6 +139,20 @@ object VideoRepository {
     //  [新增] 确保 buvid3 来自 Bilibili SPI API + 激活（解决 412 问题）
     private var buvidInitialized = false
 
+    private fun playbackAccount() = NetworkModule.playbackAccount()
+
+    private fun hasPlaybackSessionCookie(): Boolean =
+        !playbackAccount()?.sessData.isNullOrEmpty() || !TokenManager.sessDataCache.isNullOrEmpty()
+
+    private fun playbackAccessToken(): String? =
+        playbackAccount()?.accessToken?.takeIf { it.isNotBlank() } ?: TokenManager.accessTokenCache
+
+    private fun playbackAccessTokenPlatform(): String =
+        playbackAccount()?.accessTokenPlatform ?: TokenManager.accessTokenPlatformCache
+
+    private fun isPlaybackVip(): Boolean =
+        playbackAccount()?.isVip ?: TokenManager.isVipCache
+
     fun getSubtitleCueCacheStats(): SubtitleCueCacheStats {
         val snapshot = subtitleCueCache.values.toList()
         val entryCount = snapshot.size
@@ -340,10 +354,10 @@ object VideoRepository {
 
         val isAutoHighestQuality = targetQuality >= 127
         val isLogin = resolveVideoPlaybackAuthState(
-            hasSessionCookie = !TokenManager.sessDataCache.isNullOrEmpty(),
-            hasAccessToken = !TokenManager.accessTokenCache.isNullOrEmpty()
+            hasSessionCookie = hasPlaybackSessionCookie(),
+            hasAccessToken = !playbackAccessToken().isNullOrEmpty()
         )
-        val isVip = TokenManager.isVipCache
+        val isVip = isPlaybackVip()
         val auto1080pEnabled = try {
             val context = NetworkModule.appContext
             context?.getSharedPreferences("settings_prefs", android.content.Context.MODE_PRIVATE)
@@ -959,10 +973,10 @@ object VideoRepository {
 
             //  [优化] 根据登录和大会员状态选择起始画质
             val isLogin = resolveVideoPlaybackAuthState(
-                hasSessionCookie = !TokenManager.sessDataCache.isNullOrEmpty(),
-                hasAccessToken = !TokenManager.accessTokenCache.isNullOrEmpty()
+                hasSessionCookie = hasPlaybackSessionCookie(),
+                hasAccessToken = !playbackAccessToken().isNullOrEmpty()
             )
-            val isVip = TokenManager.isVipCache
+            val isVip = isPlaybackVip()
             
             //  [实验性功能] 读取 auto1080p 设置
             val auto1080pEnabled = try {
@@ -1290,7 +1304,7 @@ object VideoRepository {
             return@withContext null
         }
 
-        val hasToken = !TokenManager.accessTokenCache.isNullOrEmpty()
+        val hasToken = !playbackAccessToken().isNullOrEmpty()
         val cooldownUntil = appApiCooldownUntilMs
         val now = System.currentTimeMillis()
         val canUseApp = shouldCallAccessTokenApi(
@@ -1338,10 +1352,10 @@ object VideoRepository {
                 aid = aid,
                 cid = cid,
                 qn = qn,
-                accessToken = TokenManager.accessTokenCache
+                accessToken = playbackAccessToken()
             )
             val signedParams = AppSignUtils.signForTvLogin(params)
-            val response = api.getTvPlayUrl(signedParams)
+            val response = NetworkModule.playbackApi().getTvPlayUrl(signedParams)
             if (response.code != 0) {
                 com.android.purebilibili.core.util.Logger.w(
                     "VideoRepo",
@@ -1380,8 +1394,8 @@ object VideoRepository {
         ensureBuvid3FromSpi()
 
         val isLoggedIn = resolveVideoPlaybackAuthState(
-            hasSessionCookie = !TokenManager.sessDataCache.isNullOrEmpty(),
-            hasAccessToken = !TokenManager.accessTokenCache.isNullOrEmpty()
+            hasSessionCookie = hasPlaybackSessionCookie(),
+            hasAccessToken = !playbackAccessToken().isNullOrEmpty()
         )
         com.android.purebilibili.core.util.Logger.d("VideoRepo", " fetchPlayUrlRecursive: bvid=$bvid, isLoggedIn=$isLoggedIn, targetQn=$targetQn, audioLang=$audioLang")
 
@@ -1523,7 +1537,7 @@ object VideoRepository {
             val canUseAppFallback = shouldCallAccessTokenApi(
                 nowMs = System.currentTimeMillis(),
                 cooldownUntilMs = appApiCooldownUntilMs,
-                hasAccessToken = !TokenManager.accessTokenCache.isNullOrEmpty()
+                hasAccessToken = !playbackAccessToken().isNullOrEmpty()
             )
             if (canUseAppFallback) {
                 com.android.purebilibili.core.util.Logger.d(
@@ -1573,7 +1587,7 @@ object VideoRepository {
         if (PlayUrlSource.LEGACY in fallbackOrder) {
             com.android.purebilibili.core.util.Logger.d("VideoRepo", " [LoggedIn] DASH failed, trying Legacy API...")
             try {
-                val legacyResult = api.getPlayUrlLegacy(bvid = bvid, cid = cid, qn = 80)
+                val legacyResult = NetworkModule.playbackApi().getPlayUrlLegacy(bvid = bvid, cid = cid, qn = 80)
                 if (legacyResult.code == 0 && legacyResult.data != null) {
                     val data = legacyResult.data
                     if (hasPlayableStreams(data)) {
@@ -1738,8 +1752,8 @@ object VideoRepository {
         //  使用缓存的 Keys
         val (imgKey, subKey) = getWbiKeys()
         val isLoggedIn = resolveVideoPlaybackAuthState(
-            hasSessionCookie = !TokenManager.sessDataCache.isNullOrEmpty(),
-            hasAccessToken = !TokenManager.accessTokenCache.isNullOrEmpty()
+            hasSessionCookie = hasPlaybackSessionCookie(),
+            hasAccessToken = !playbackAccessToken().isNullOrEmpty()
         )
         val auto1080pEnabled = NetworkModule.appContext?.let { context ->
             runCatching { SettingsManager.getAuto1080p(context).first() }.getOrDefault(true)
@@ -1773,7 +1787,7 @@ object VideoRepository {
         }
         
         val signedParams = WbiUtils.sign(params, imgKey, subKey)
-        val response = api.getPlayUrl(signedParams)
+        val response = NetworkModule.playbackApi().getPlayUrl(signedParams)
         
         com.android.purebilibili.core.util.Logger.d("VideoRepo", " PlayUrl response: code=${response.code}, requestedQn=$qn, returnedQuality=${response.data?.quality}")
         com.android.purebilibili.core.util.Logger.d("VideoRepo", " accept_quality=${response.data?.accept_quality}, accept_description=${response.data?.accept_description}")
@@ -1821,7 +1835,7 @@ object VideoRepository {
 
     //  [New] Use access_token to get high quality stream (4K/HDR/1080P60)
     private suspend fun fetchPlayUrlWithAccessToken(bvid: String, cid: Long, qn: Int, allowRetry: Boolean = true, audioLang: String? = null): PlayUrlData? {
-        val accessToken = com.android.purebilibili.core.store.TokenManager.accessTokenCache
+        val accessToken = playbackAccessToken()
         if (accessToken.isNullOrEmpty()) {
             com.android.purebilibili.core.util.Logger.d("VideoRepo", " No access_token available, fallback to Web API")
             return null
@@ -1829,7 +1843,7 @@ object VideoRepository {
         
         com.android.purebilibili.core.util.Logger.d("VideoRepo", " fetchPlayUrlWithAccessToken: bvid=$bvid, qn=$qn, retry=$allowRetry")
         
-        val tokenPlatform = com.android.purebilibili.core.store.TokenManager.accessTokenPlatformCache
+        val tokenPlatform = playbackAccessTokenPlatform()
         val usesAndroidToken = tokenPlatform == com.android.purebilibili.core.store.TokenManager.ACCESS_TOKEN_PLATFORM_ANDROID
         val params = mapOf(
             "bvid" to bvid,
@@ -1858,10 +1872,10 @@ object VideoRepository {
         }
         
         try {
-            val response = api.getPlayUrlApp(signedParams)
+            val response = NetworkModule.playbackApi().getPlayUrlApp(signedParams)
             
             // Check for -101 (Invalid Access Key)
-            if (response.code == -101 && allowRetry && applicationContext != null) {
+            if (response.code == -101 && allowRetry && applicationContext != null && playbackAccount() == null) {
                 com.android.purebilibili.core.util.Logger.w("VideoRepo", " Access token invalid (-101), trying to refresh...")
                 val success = com.android.purebilibili.core.network.TokenRefreshHelper.refresh(applicationContext!!)
                 if (success) {

@@ -257,6 +257,7 @@ fun ProfileScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val accounts by viewModel.accounts.collectAsStateWithLifecycle()
     val activeAccountMid by viewModel.activeAccountMid.collectAsStateWithLifecycle()
+    val playbackAccountMid by viewModel.playbackAccountMid.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val view = LocalView.current
     var showAccountSwitchDialog by remember { mutableStateOf(false) }
@@ -340,6 +341,7 @@ fun ProfileScreen(
         AccountSwitchDialog(
             accounts = accounts,
             activeAccountMid = activeAccountMid,
+            playbackAccountMid = playbackAccountMid,
             onDismiss = { showAccountSwitchDialog = false },
             onAddAccount = {
                 showAccountSwitchDialog = false
@@ -356,6 +358,15 @@ fun ProfileScreen(
                     onFailure = { message ->
                         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                     }
+                )
+            },
+            onSetPlayback = { mid ->
+                viewModel.setPlaybackAccount(
+                    mid = mid,
+                    onSuccess = {
+                        Toast.makeText(context, if (mid == null) "播放授权已跟随当前账号" else "已设置播放授权账号", Toast.LENGTH_SHORT).show()
+                    },
+                    onFailure = { message -> Toast.makeText(context, message, Toast.LENGTH_SHORT).show() }
                 )
             },
             onRemove = { mid ->
@@ -4051,9 +4062,11 @@ private fun ProfileFavoriteFolderMoreChip(
 private fun AccountSwitchDialog(
     accounts: List<StoredAccountSession>,
     activeAccountMid: Long?,
+    playbackAccountMid: Long?,
     onDismiss: () -> Unit,
     onAddAccount: () -> Unit,
     onSwitch: (Long) -> Unit,
+    onSetPlayback: (Long?) -> Unit,
     onRemove: (Long) -> Unit
 ) {
     AppAlertDialog(
@@ -4067,6 +4080,15 @@ private fun AccountSwitchDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                AppText(
+                    text = if (playbackAccountMid == null) {
+                        "播放授权：跟随当前账号"
+                    } else {
+                        "播放授权：使用已选择账号的服务端权限"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 if (accounts.isEmpty()) {
                     AppText(
                         text = "暂无已保存账号，先添加一个账号后即可快速切换。",
@@ -4116,18 +4138,25 @@ private fun AccountSwitchDialog(
                                     )
                                 }
 
-                                if (account.mid == activeAccountMid) {
-                                    AppText(
-                                        text = "当前",
-                                        color = MaterialTheme.colorScheme.primary,
-                                        style = MaterialTheme.typography.labelLarge
-                                    )
-                                } else {
-                                    AppTextButton(onClick = { onSwitch(account.mid) }) {
-                                        AppText("切换")
+                                Column(horizontalAlignment = Alignment.End) {
+                                    if (account.mid == activeAccountMid) {
+                                        AppText(
+                                            text = "当前",
+                                            color = MaterialTheme.colorScheme.primary,
+                                            style = MaterialTheme.typography.labelLarge
+                                        )
+                                    } else {
+                                        AppTextButton(onClick = { onSwitch(account.mid) }) {
+                                            AppText("切换")
+                                        }
+                                        AppTextButton(onClick = { onRemove(account.mid) }) {
+                                            AppText("移除", color = MaterialTheme.colorScheme.error)
+                                        }
                                     }
-                                    AppTextButton(onClick = { onRemove(account.mid) }) {
-                                        AppText("移除", color = MaterialTheme.colorScheme.error)
+                                    AppTextButton(onClick = {
+                                        onSetPlayback(if (account.mid == playbackAccountMid) null else account.mid)
+                                    }) {
+                                        AppText(if (account.mid == playbackAccountMid) "播放中" else "用于播放")
                                     }
                                 }
                             }
