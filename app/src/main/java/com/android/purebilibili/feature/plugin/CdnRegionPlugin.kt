@@ -36,6 +36,9 @@ import com.android.purebilibili.core.util.Logger
 import io.github.alexzhirkevich.cupertino.icons.CupertinoIcons
 import io.github.alexzhirkevich.cupertino.icons.outlined.ServerRack
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
@@ -47,7 +50,9 @@ import java.net.Socket
 
 const val CDN_REGION_PLUGIN_ID = "cdn_region"
 private const val TAG = "CdnRegionPlugin"
-private const val CDN_PROBE_SAMPLE_BYTES = 64 * 1024
+private const val CDN_PROBE_SAMPLE_BYTES = 32 * 1024
+private const val CDN_REALTIME_PROBE_INTERVAL_MS = 30_000L
+private const val CDN_ACTIVE_PLAYBACK_SESSION_TTL_MS = 10 * 60_000L
 
 data class PlaybackCdnRewriteResult(
     val candidates: List<PlaybackCdnCandidate>,
@@ -68,6 +73,15 @@ private data class CdnProbeMeasure(
 private data class CdnSettingsProbeTarget(
     val region: String,
     val hosts: List<String>
+)
+
+/**
+ * Kept in memory only. Signed playurl addresses must never be written to plugin storage because
+ * they expire and would otherwise look like a reusable CDN rule on the next playback session.
+ */
+private data class CdnActivePlaybackSession(
+    val candidates: List<PlaybackCdnCandidate>,
+    val updatedAtMs: Long
 )
 
 interface PlaybackCdnPlugin : Plugin {
@@ -98,7 +112,7 @@ class CdnRegionPlugin : PlaybackCdnPlugin {
     override val id: String = CDN_REGION_PLUGIN_ID
     override val name: String = "CDN 智能选线"
     override val description: String = "在 B 站当前授权的签名 CDN 候选中选线，并可选预缓存未来 DASH 分片"
-    override val version: String = "1.3.0"
+    override val version: String = "1.4.0"
     override val author: String = "BiliPai项目组"
     override val icon: ImageVector = CupertinoIcons.Outlined.ServerRack
     override val capabilityManifest: PluginCapabilityManifest = PluginCapabilityManifest(
@@ -123,6 +137,9 @@ class CdnRegionPlugin : PlaybackCdnPlugin {
     @Volatile
     private var compiledCustomRules: List<Pair<CdnCustomRule, Regex>> = emptyList()
 
+    @Volatile
+    private var activePlaybackSession: CdnActivePlaybackSession? = null
+
     override suspend fun onEnable() {
         val context = PluginManager.getContext()
         catalog = loadCdnRegionCatalog(context)
@@ -136,6 +153,7 @@ class CdnRegionPlugin : PlaybackCdnPlugin {
     }
 
     override suspend fun onDisable() {
+        activePlaybackSession = null
         Logger.d(TAG, "CDN 属地优选已禁用")
     }
 
@@ -145,6 +163,7 @@ class CdnRegionPlugin : PlaybackCdnPlugin {
     ): PlaybackCdnRewriteResult {
         val snapshot = cache
         val originalCandidates = buildPlaybackCdnCandidates(videoUrls, audioUrls)
+        publishActivePlaybackCandidates(originalCandidates)
         if (!snapshot.experimentalRewriteEnabled) {
             val safeCandidates = sortSafeSignedPlaybackCandidates(
                 candidates = originalCandidates,
@@ -192,13 +211,29 @@ class CdnRegionPlugin : PlaybackCdnPlugin {
         videoUrls: List<String>,
         sources: List<PlaybackCdnCandidateSource>
     ): List<CdnLineDiagnostic> {
+        return probePlaybackCdnCandidatesInternal(
+            videoUrls = videoUrls,
+            sources = sources,
+            ignoreCooldown = false
+        )
+    }
+
+    private suspend fun probePlaybackCdnCandidatesInternal(
+        videoUrls: List<String>,
+        sources: List<PlaybackCdnCandidateSource>,
+        ignoreCooldown: Boolean
+    ): List<CdnLineDiagnostic> {
         val context = PluginManager.getContext()
         val now = System.currentTimeMillis()
         val current = CdnRegionPluginStore.read(context).also { cache = it }
         val candidates = resolveCdnProbeCandidates(
             urls = videoUrls,
             healthByHost = current.healthByHost,
-            nowMs = now
+            nowMs = now,
+            limit = CdnProbeLimit(
+                maxCandidates = 3,
+                cooldownMs = if (ignoreCooldown) 0L else CDN_MANUAL_PROBE_COOLDOWN_MS
+            )
         )
         var nextHealth = current.healthByHost
         candidates.filter { it.allowed }.forEach { candidate ->
@@ -253,6 +288,9 @@ class CdnRegionPlugin : PlaybackCdnPlugin {
             mutableStateOf(snapshot.experimentalRewriteEnabled)
         }
         var customRuleError by remember { mutableStateOf<String?>(null) }
+        var activeCandidates by remember { mutableStateOf<List<PlaybackCdnCandidate>>(emptyList()) }
+        var liveDiagnostics by remember { mutableStateOf<List<CdnLineDiagnostic>>(emptyList()) }
+        var lastLiveProbeAtMs by remember { mutableStateOf<Long?>(null) }
 
         LaunchedEffect(Unit) {
             catalogSnapshot = catalog.ifEmpty {
@@ -260,11 +298,26 @@ class CdnRegionPlugin : PlaybackCdnPlugin {
             }
             snapshot = CdnRegionPluginStore.read(context).also { cache = it }
         }
+        LaunchedEffect(Unit) {
+            while (currentCoroutineContext().isActive) {
+                val session = activePlaybackSessionOrNull()
+                activeCandidates = session?.candidates.orEmpty()
+                if (session != null) {
+                    liveDiagnostics = probePlaybackCdnCandidatesInternal(
+                        videoUrls = session.candidates.map { it.videoUrl },
+                        sources = session.candidates.map { it.source },
+                        ignoreCooldown = true
+                    )
+                    snapshot = cache
+                    lastLiveProbeAtMs = System.currentTimeMillis()
+                } else {
+                    liveDiagnostics = emptyList()
+                    lastLiveProbeAtMs = null
+                }
+                delay(CDN_REALTIME_PROBE_INTERVAL_MS)
+            }
+        }
         val probeTarget = resolveSettingsProbeTarget(snapshot, catalogSnapshot)
-        val hostDiagnostics = buildCdnHostDiagnostics(
-            hosts = probeTarget.hosts.take(5),
-            healthByHost = snapshot.healthByHost
-        )
         val regionText = snapshot.selectedRegion.ifBlank {
             probeTarget.region.ifBlank { "未命中" }
         }
@@ -280,10 +333,54 @@ class CdnRegionPlugin : PlaybackCdnPlugin {
                 color = MaterialTheme.colorScheme.onSurface
             )
             AppText(
-                text = "默认只比较当前 playurl 返回的完整签名主/备地址，不会替换 Host 或发现任意 CDN 节点。",
+                text = "打开视频后会自动比较 B 站当前返回的签名主/备线路；不会改写 Host，也不会保存过期链接。",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            Spacer(modifier = Modifier.height(10.dp))
+            AppText(
+                text = "当前播放线路 · 实时检测",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            when {
+                activeCandidates.isEmpty() -> {
+                    AppText(
+                        text = "打开任意视频并开始播放后，这里会自动显示最多 3 条授权线路的实时质量，无需填写地域或规则。",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                else -> {
+                    AppText(
+                        text = "正在检测当前会话；每 ${CDN_REALTIME_PROBE_INTERVAL_MS / 1_000} 秒刷新一次，仅使用 32 KiB 小范围请求。",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    liveDiagnostics.forEachIndexed { index, diagnostic ->
+                        AppText(
+                            text = "${index + 1}. ${diagnostic.host} · ${formatCdnLineDiagnostic(diagnostic)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (index == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    if (liveDiagnostics.isEmpty()) {
+                        AppText(
+                            text = "正在建立首轮检测…",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    lastLiveProbeAtMs?.let {
+                        AppText(
+                            text = "最近更新：刚刚",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
             Spacer(modifier = Modifier.height(8.dp))
             Row(modifier = Modifier.fillMaxWidth()) {
                 AppText(
@@ -330,64 +427,57 @@ class CdnRegionPlugin : PlaybackCdnPlugin {
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            AppHorizontalDivider(modifier = Modifier.padding(top = 10.dp))
-            Spacer(modifier = Modifier.height(12.dp))
-            AppText(
-                text = "属地：${snapshot.location.province.ifBlank { "未知" }} / ${snapshot.location.city.ifBlank { "未知" }}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            AppText(
-                text = "运营商：${snapshot.location.isp.ifBlank { "未知" }}，命中区域：$regionText",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            hostDiagnostics.forEachIndexed { index, diagnostic ->
+            if (experimentalRewriteEnabled) {
+                val hostDiagnostics = buildCdnHostDiagnostics(
+                    hosts = probeTarget.hosts.take(5),
+                    healthByHost = snapshot.healthByHost
+                )
+                AppHorizontalDivider(modifier = Modifier.padding(top = 10.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 AppText(
-                    text = "${index + 1}. ${diagnostic.host} · ${formatCdnHostDiagnostic(diagnostic)}",
-                    style = MaterialTheme.typography.bodySmall,
+                    text = "实验性属地检测",
+                    style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-            }
-            if (hostDiagnostics.isEmpty()) {
                 AppText(
-                    text = "暂无可检测候选 host，请稍后刷新属地或进入播放页检测当前线路。",
+                    text = "属地：${snapshot.location.province.ifBlank { "未知" }} / ${snapshot.location.city.ifBlank { "未知" }}；运营商：${snapshot.location.isp.ifBlank { "未知" }}；命中区域：$regionText",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            }
-            Spacer(modifier = Modifier.height(10.dp))
-            AppButton(
-                enabled = !probing && probeTarget.hosts.isNotEmpty(),
-                onClick = {
-                    probing = true
-                    scope.launch {
-                        snapshot = probeSelectedHosts(context, snapshot, probeTarget)
-                        probing = false
-                    }
+                Spacer(modifier = Modifier.height(8.dp))
+                hostDiagnostics.forEachIndexed { index, diagnostic ->
+                    AppText(
+                        text = "${index + 1}. ${diagnostic.host} · ${formatCdnHostDiagnostic(diagnostic)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                 }
-            ) {
-                AppText(if (probing) "检测中..." else "检测候选服务器")
-            }
-            AppText(
-                text = "检测仅手动触发，单次最多 5 个 host，同一 host 10 分钟冷却。",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            AppHorizontalDivider(modifier = Modifier.padding(top = 10.dp))
-            Spacer(modifier = Modifier.height(12.dp))
-            AppText(
-                text = "高级 URL 替换",
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            AppText(
-                text = "规则按顺序匹配完整播放 URL，仅应用首条命中规则。替换结果必须是 HTTPS 且指向 B 站或当前候选 CDN。",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
+                AppButton(
+                    enabled = !probing && probeTarget.hosts.isNotEmpty(),
+                    onClick = {
+                        probing = true
+                        scope.launch {
+                            snapshot = probeSelectedHosts(context, snapshot, probeTarget)
+                            probing = false
+                        }
+                    }
+                ) {
+                    AppText(if (probing) "检测中..." else "检测实验线路")
+                }
+                AppHorizontalDivider(modifier = Modifier.padding(top = 10.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+                AppText(
+                    text = "高级 URL 替换",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                AppText(
+                    text = "规则按顺序匹配完整播放 URL，仅应用首条命中规则。替换结果必须是 HTTPS 且指向 B 站或当前候选 CDN。",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
             Row(modifier = Modifier.fillMaxWidth()) {
                 AppText(
                     text = "严格使用自定义 CDN",
@@ -468,7 +558,32 @@ class CdnRegionPlugin : PlaybackCdnPlugin {
                 )
             }
             AppHorizontalDivider(modifier = Modifier.padding(top = 10.dp))
+            }
         }
+    }
+
+    private fun publishActivePlaybackCandidates(candidates: List<PlaybackCdnCandidate>) {
+        activePlaybackSession = CdnActivePlaybackSession(
+            candidates = candidates.distinctBy { it.videoUrl }.take(3),
+            updatedAtMs = System.currentTimeMillis()
+        )
+    }
+
+    private fun activePlaybackSessionOrNull(): CdnActivePlaybackSession? {
+        val session = activePlaybackSession ?: return null
+        return session.takeIf {
+            System.currentTimeMillis() - it.updatedAtMs <= CDN_ACTIVE_PLAYBACK_SESSION_TTL_MS
+        }
+    }
+
+    private fun formatCdnLineDiagnostic(diagnostic: CdnLineDiagnostic): String {
+        return buildList {
+            diagnostic.latencyMs?.let { add("${it}ms") }
+            diagnostic.speedKbps?.let { add("${it}Kbps") }
+            add(diagnostic.statusLabel)
+            if (diagnostic.errorCount > 0) add("失败 ${diagnostic.errorCount}")
+            if (diagnostic.bufferingCount > 0) add("缓冲 ${diagnostic.bufferingCount}")
+        }.distinct().joinToString(" · ")
     }
 
     @Composable
@@ -629,6 +744,7 @@ class CdnRegionPlugin : PlaybackCdnPlugin {
                     )
                 }
             }.getOrElse { error ->
+                if (error is CancellationException) throw error
                 Logger.w(TAG, "CDN 播放候选检测失败: ${hostFromCdnUrl(url)} ${error.message}")
                 CdnProbeMeasure(success = false, latencyMs = null, speedKbps = null)
             }
@@ -645,6 +761,7 @@ class CdnRegionPlugin : PlaybackCdnPlugin {
                 val elapsedMs = ((System.nanoTime() - startedAt) / 1_000_000L).coerceAtLeast(1L)
                 CdnProbeMeasure(success = true, latencyMs = elapsedMs, speedKbps = null)
             }.getOrElse { error ->
+                if (error is CancellationException) throw error
                 Logger.w(TAG, "CDN host 检测失败: $host ${error.message}")
                 CdnProbeMeasure(success = false, latencyMs = null, speedKbps = null)
             }

@@ -40,7 +40,7 @@ class GoogleCastPluginTest {
 
     @Test
     fun `version is 0 dot 1 dot 0`() {
-        assertEquals("0.1.0", plugin.version)
+        assertEquals("0.1.1", plugin.version)
     }
 
     @Test
@@ -53,7 +53,7 @@ class GoogleCastPluginTest {
         val manifest = plugin.capabilityManifest
         assertEquals("google_cast", manifest.pluginId)
         assertEquals("Google Cast", manifest.displayName)
-        assertEquals("0.1.0", manifest.version)
+        assertEquals("0.1.1", manifest.version)
         assertEquals(1, manifest.apiVersion)
         assertEquals(
             "com.android.purebilibili.feature.plugin.googlecast.GoogleCastPlugin",

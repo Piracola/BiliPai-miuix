@@ -29,7 +29,7 @@ class DlnaCastPlugin : CastPluginApi {
     override val id = DLNA_CAST_PLUGIN_ID
     override val name = "DLNA"
     override val description = "通过 DLNA 协议将视频投屏到智能电视等设备"
-    override val version = "0.1.0"
+    override val version = "0.1.1"
     override val author = "BiliPai项目组, Leko (lekoOwO)"
     override val icon = Icons.Rounded.Tv
     override val capabilityManifest = PluginCapabilityManifest(

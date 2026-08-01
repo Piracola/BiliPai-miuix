@@ -46,7 +46,7 @@ class DanmakuEnhancePlugin : DanmakuPluginApi {
     override val id = "danmaku_enhance"
     override val name = "弹幕增强"
     override val description = "关键词屏蔽、按用户ID屏蔽、同传弹幕高亮"
-    override val version = "1.1.0"
+    override val version = "1.1.1"
     override val author = "BiliPai项目组"
     override val icon: ImageVector = CupertinoIcons.Default.TextBubble
     override val capabilityManifest: PluginCapabilityManifest = PluginCapabilityManifest(

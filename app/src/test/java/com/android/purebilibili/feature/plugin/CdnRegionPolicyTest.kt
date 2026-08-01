@@ -28,7 +28,7 @@ class CdnRegionPolicyTest {
     fun `plugin capability manifest keeps CDN optimizer release version`() {
         val plugin = CdnRegionPlugin()
 
-        assertEquals("1.3.0", plugin.version)
+        assertEquals("1.4.0", plugin.version)
         assertEquals(plugin.version, plugin.capabilityManifest.version)
     }
 

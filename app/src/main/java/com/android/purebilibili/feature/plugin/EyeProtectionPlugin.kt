@@ -138,7 +138,7 @@ class EyeProtectionPlugin : Plugin {
     override val id = "eye_protection"
     override val name = "夜间护眼"
     override val description = "夜间护眼、休息提醒与温和关怀"
-    override val version = "2.0.0"
+    override val version = "2.0.1"
     override val author = "BiliPai项目组"
     override val icon: ImageVector = CupertinoIcons.Default.Moon
 

@@ -54,7 +54,7 @@ class HomeFeedAnonymizerPlugin : Plugin {
     override val id: String = HOME_FEED_ANONYMIZER_PLUGIN_ID
     override val name: String = "初见推荐"
     override val description: String = "仅在 Web 首页推荐接口隐藏登录 Cookie，让推荐流更接近未登录公共热门"
-    override val version: String = "1.0.1"
+    override val version: String = "1.0.2"
     override val author: String = "BiliPai项目组"
     override val capabilityManifest: PluginCapabilityManifest = PluginCapabilityManifest(
         pluginId = id,
