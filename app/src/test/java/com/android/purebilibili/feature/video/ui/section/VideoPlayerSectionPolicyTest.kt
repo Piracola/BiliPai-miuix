@@ -1517,6 +1517,19 @@ class VideoPlayerSectionPolicyTest {
     }
 
     @Test
+    fun playerReplacement_doesNotRestartActivityLifecycleRecovery() {
+        val lifecycleBlock = loadVideoPlayerSectionSource()
+            .substringAfter("// Activity 生命周期监听必须只跟随 LifecycleOwner")
+            .substringBefore("// --- [优化] 视频封面逻辑 ---")
+
+        assertTrue(lifecycleBlock.contains("val lifecyclePlayer by rememberUpdatedState(playerState.player)"))
+        assertTrue(lifecycleBlock.contains("DisposableEffect(lifecycleOwner)"))
+        assertFalse(lifecycleBlock.contains("DisposableEffect(lifecycleOwner, playerState.player)"))
+        assertTrue(lifecycleBlock.contains("if (!hasObservedHostPause)"))
+        assertTrue(lifecycleBlock.contains("Lifecycle.Event.ON_PAUSE"))
+    }
+
+    @Test
     fun lockedLongPressSpeed_reappliesWhenPlaybackSpeedUnexpectedlyResets() {
         assertTrue(
             shouldReapplyLockedLongPressSpeed(

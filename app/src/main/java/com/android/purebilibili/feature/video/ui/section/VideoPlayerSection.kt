@@ -2623,22 +2623,32 @@ fun VideoPlayerSection(
             }
         }
         
-        //  [修复] 使用 LifecycleOwner 监听真正的 Activity 生命周期
-        // DisposableEffect(Unit) 会在横竖屏切换时触发，导致 player 引用被清除
-        //  [关键修复] 添加 ON_RESUME 事件，确保从其他视频返回后重新绑定弹幕播放器
-        DisposableEffect(lifecycleOwner, playerState.player) {
+        // Activity 生命周期监听必须只跟随 LifecycleOwner。合集内换片会替换 Player，若把 Player
+        // 作为 effect key，重新注册的 observer 会立刻收到当前 ON_RESUME，误触发前台 Surface 恢复。
+        val lifecyclePlayer by rememberUpdatedState(playerState.player)
+        val lifecycleIsPortraitFullscreen by rememberUpdatedState(isPortraitFullscreen)
+        val lifecycleIsInPipMode by rememberUpdatedState(isInPipMode)
+        val lifecyclePlayerView by rememberUpdatedState(playerViewRef)
+        val lifecycleVideoOutputRouter by rememberUpdatedState(videoOutputRouter)
+        DisposableEffect(lifecycleOwner) {
+            var hasObservedHostPause = false
             val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
                 when (event) {
                     androidx.lifecycle.Lifecycle.Event.ON_RESUME -> {
-                        //  [关键修复] 返回页面时重新绑定弹幕播放器
-                        // 解决导航到其他视频后返回，弹幕暂停失效的问题
                         android.util.Log.d("VideoPlayerSection", " ON_RESUME: Re-attaching danmaku player")
-                        danmakuManager.attachPlayer(playerState.player)
-                        val player = playerState.player
+                        val player = lifecyclePlayer
+                        danmakuManager.attachPlayer(player)
+                        if (!hasObservedHostPause) {
+                            Logger.d("VideoPlayerSection") {
+                                "ON_RESUME skipped foreground recovery (initial lifecycle sync)"
+                            }
+                            return@LifecycleEventObserver
+                        }
+                        hasObservedHostPause = false
                         if (!shouldBindInlinePlayerViewToPlayer(
-                                isPortraitFullscreen = isPortraitFullscreen,
+                                isPortraitFullscreen = lifecycleIsPortraitFullscreen,
                                 hostLifecycleStarted = true,
-                                isInPipMode = isInPipMode
+                                isInPipMode = lifecycleIsInPipMode
                             )
                         ) {
                             return@LifecycleEventObserver
@@ -2654,18 +2664,18 @@ fun VideoPlayerSection(
                             "🌅 ON_RESUME recovery start: pos=${player.currentPosition}, buffered=${player.bufferedPosition}, " +
                                 "state=${player.playbackState}, playing=${player.isPlaying}, playWhenReady=${player.playWhenReady}, " +
                                 "needsSurfaceRecovery=$needsSurfaceRecovery, " +
-                                "surface=${playerViewRef?.videoSurfaceView?.javaClass?.simpleName}"
+                                "surface=${lifecyclePlayerView?.videoSurfaceView?.javaClass?.simpleName}"
                         }
                         val shouldRebindSurface = shouldRebindPlayerSurfaceOnForeground(
-                            hasPlayerView = playerViewRef != null,
-                            isInPipMode = isInPipMode,
+                            hasPlayerView = lifecyclePlayerView != null,
+                            isInPipMode = lifecycleIsInPipMode,
                             videoWidth = player.videoSize.width,
                             videoHeight = player.videoSize.height,
                             needsSurfaceRecovery = needsSurfaceRecovery
                         )
                         if (shouldRebindSurface) {
-                            playerViewRef?.let { playerView ->
-                                videoOutputRouter.rebindDirectSurfaceIfNeeded()
+                            lifecyclePlayerView?.let {
+                                lifecycleVideoOutputRouter.rebindDirectSurfaceIfNeeded()
                                 Logger.d("VideoPlayerSection") {
                                     "🎬 ON_RESUME surface rebind applied"
                                 }
@@ -2692,6 +2702,9 @@ fun VideoPlayerSection(
                             playWhenReady = player.playWhenReady,
                             playbackState = player.playbackState
                         )
+                    }
+                    androidx.lifecycle.Lifecycle.Event.ON_PAUSE -> {
+                        hasObservedHostPause = true
                     }
                     androidx.lifecycle.Lifecycle.Event.ON_DESTROY -> {
                         android.util.Log.d("VideoPlayerSection", " ON_DESTROY: Clearing danmaku references")
