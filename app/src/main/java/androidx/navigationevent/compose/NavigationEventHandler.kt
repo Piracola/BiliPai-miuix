@@ -317,6 +317,28 @@ fun NavigationBackHandler(
 }
 
 /**
+ * ABI bridge for Miuix Navigation3 artifacts compiled against the short callback overload that
+ * included `isBackEnabled` but predated `reportPredictiveProgress`.
+ */
+@Composable
+@Keep
+@Suppress("unused")
+fun NavigationBackHandler(
+    state: NavigationEventState<out NavigationEventInfo>,
+    isBackEnabled: Boolean = true,
+    onBackCancelled: () -> Unit = {},
+    onBackCompleted: () -> Unit,
+) {
+    NavigationBackHandler(
+        state = state,
+        isBackEnabled = isBackEnabled,
+        onBackCancelled = onBackCancelled,
+        onBackCompleted = onBackCompleted,
+        reportPredictiveProgress = true,
+    )
+}
+
+/**
  * A composable that handles only back navigation gestures, driven by a manually hoisted
  * [NavigationEventState].
  *
