@@ -202,6 +202,7 @@ data class SponsorContributionUiState(
     val startMs: Long? = null,
     val endMs: Long? = null,
     val category: String = SponsorCategory.SPONSOR,
+    val actionType: String = "skip",
     val serverBaseUrl: String = "",
     val message: String? = null,
 ) {
@@ -1535,6 +1536,8 @@ class VideoPlaybackViewModel : ViewModel() {
     private val _sponsorContributionUiState = MutableStateFlow(SponsorContributionUiState())
     val sponsorContributionUiState = _sponsorContributionUiState.asStateFlow()
     private var sponsorContributionRequest: SponsorContributionRequest? = null
+    private var sponsorMuteRestoreAtMs: Long? = null
+    private var sponsorMutedOriginalVolume: Float? = null
     
     //  Download state
     private val _downloadProgress = MutableStateFlow(-1f)
@@ -7582,6 +7585,12 @@ class VideoPlaybackViewModel : ViewModel() {
                 if (plugins.isEmpty()) continue
 
                 val currentPos = playbackUseCase.getCurrentPosition()
+                val restoreAt = sponsorMuteRestoreAtMs
+                if (restoreAt != null && currentPos >= restoreAt) {
+                    sponsorMutedOriginalVolume?.let { exoPlayer?.volume = it }
+                    sponsorMutedOriginalVolume = null
+                    sponsorMuteRestoreAtMs = null
+                }
                 if (!shouldDispatchPluginPositionUpdate(
                         lastDispatchedPositionMs = lastPluginDispatchPositionMs,
                         currentPositionMs = currentPos
@@ -7611,7 +7620,7 @@ class VideoPlaybackViewModel : ViewModel() {
                                     endMs = action.positionMs,
                                     trigger = SponsorBlockSkipTrigger.AUTO
                                 )
-                                toast(action.reason)
+                                if (action.showToast) toast(action.reason)
                                 Logger.d("PlayerVM", " Plugin ${plugin.name} skipped to ${action.positionMs}ms")
                             }
                             is SkipAction.ShowButton -> {
@@ -7625,6 +7634,14 @@ class VideoPlaybackViewModel : ViewModel() {
                                 if (plugin is com.android.purebilibili.feature.plugin.SponsorBlockPlugin) {
                                     _currentSponsorSegment.value = plugin.getActiveSegment()
                                 }
+                            }
+                            is SkipAction.Mute -> {
+                                if (sponsorMutedOriginalVolume == null) {
+                                    sponsorMutedOriginalVolume = exoPlayer?.volume
+                                    exoPlayer?.volume = 0f
+                                    if (action.showToast) toast(action.reason)
+                                }
+                                sponsorMuteRestoreAtMs = action.untilMs
                             }
                             SkipAction.None -> {
                                 clearSponsorSkipUi()
@@ -7646,6 +7663,19 @@ class VideoPlaybackViewModel : ViewModel() {
             }
         }
         clearSponsorSkipUi()
+    }
+
+    /** Explicit voting is only available for the segment the user is currently reviewing. */
+    fun voteCurrentSponsorSegment(voteType: Int) {
+        val segmentId = _sponsorSkipUiState.value.segmentId ?: return
+        val plugin = PluginManager.getEnabledPlayerPlugins()
+            .filterIsInstance<com.android.purebilibili.feature.plugin.SponsorBlockPlugin>()
+            .firstOrNull() ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            plugin.voteOnCommunitySegment(segmentId, voteType)
+                .onSuccess { toast("已提交社区投票") }
+                .onFailure { error -> toast(error.message ?: "社区投票失败") }
+        }
     }
 
     fun skipCurrentSponsorSegment() {
@@ -7781,10 +7811,18 @@ class VideoPlaybackViewModel : ViewModel() {
     }
 
     fun setSponsorContributionCategory(category: String) {
-        if (category !in SponsorCategory.ALL_SKIP_CATEGORIES) return
+        if (category !in SponsorCategory.ALL_CATEGORIES) return
         val current = _sponsorContributionUiState.value
         if (current.phase != SponsorContributionPhase.REVIEW) return
-        _sponsorContributionUiState.value = current.copy(category = category, message = null)
+        val actionType = com.android.purebilibili.feature.plugin.sponsorBlockAllowedActionTypes(category).first()
+        _sponsorContributionUiState.value = current.copy(category = category, actionType = actionType, message = null)
+    }
+
+    fun setSponsorContributionActionType(actionType: String) {
+        val current = _sponsorContributionUiState.value
+        if (current.phase != SponsorContributionPhase.REVIEW) return
+        if (actionType !in com.android.purebilibili.feature.plugin.sponsorBlockAllowedActionTypes(current.category)) return
+        _sponsorContributionUiState.value = current.copy(actionType = actionType, message = null)
     }
 
     fun submitSponsorContribution() {
@@ -7803,6 +7841,7 @@ class VideoPlaybackViewModel : ViewModel() {
                 startMs = request.startMs,
                 endMs = request.endMs,
                 category = current.category,
+                actionType = current.actionType,
             ).onSuccess {
                 _sponsorContributionUiState.value = _sponsorContributionUiState.value.copy(
                     phase = SponsorContributionPhase.SUCCESS,

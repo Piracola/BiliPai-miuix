@@ -413,9 +413,11 @@ fun VideoPlayerSection(
     showSponsorSkipButton: Boolean = false,
     onSponsorSkip: () -> Unit = {},
     onSponsorDismiss: () -> Unit = {},
+    onSponsorVote: (Int) -> Unit = {},
     sponsorContributionState: SponsorContributionUiState = SponsorContributionUiState(),
     onSponsorContributionMarkBoundary: () -> Unit = {},
     onSponsorContributionCategoryChange: (String) -> Unit = {},
+    onSponsorContributionActionTypeChange: (String) -> Unit = {},
     onSponsorContributionSubmit: () -> Unit = {},
     onSponsorContributionCancel: () -> Unit = {},
     //  [新增] 重载视频回调
@@ -4938,6 +4940,7 @@ fun VideoPlayerSection(
                 visible = showSponsorSkipButton,
                 onSkip = onSponsorSkip,
                 onDismiss = onSponsorDismiss,
+                onVote = onSponsorVote,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(bottom = 60.dp, end = 16.dp)
@@ -4946,6 +4949,7 @@ fun VideoPlayerSection(
                 state = sponsorContributionState,
                 onMarkBoundary = onSponsorContributionMarkBoundary,
                 onCategoryChange = onSponsorContributionCategoryChange,
+                onActionTypeChange = onSponsorContributionActionTypeChange,
                 onSubmit = onSponsorContributionSubmit,
                 onCancel = onSponsorContributionCancel,
                 modifier = Modifier

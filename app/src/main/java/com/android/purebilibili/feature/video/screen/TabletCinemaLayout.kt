@@ -510,6 +510,7 @@ private fun CinemaStagePlayer(
                 sponsorContributionState = sponsorContributionState,
                 onSponsorContributionMarkBoundary = playbackActions.markSponsorContributionBoundary,
                 onSponsorContributionCategoryChange = playbackActions.setSponsorContributionCategory,
+                onSponsorContributionActionTypeChange = playbackActions.setSponsorContributionActionType,
                 onSponsorContributionSubmit = playbackActions.submitSponsorContribution,
                 onSponsorContributionCancel = playbackActions.cancelSponsorContribution,
             )

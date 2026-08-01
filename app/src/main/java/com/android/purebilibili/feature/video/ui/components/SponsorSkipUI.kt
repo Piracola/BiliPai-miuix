@@ -27,6 +27,7 @@ import com.android.purebilibili.core.ui.components.AppSurface
 import com.android.purebilibili.core.ui.AppAlertDialog
 import com.android.purebilibili.core.ui.rememberAppClearIcon
 import com.android.purebilibili.data.model.response.SponsorCategory
+import com.android.purebilibili.feature.plugin.sponsorBlockAllowedActionTypes
 import com.android.purebilibili.data.model.response.SponsorSegment
 import com.android.purebilibili.feature.video.viewmodel.SponsorContributionPhase
 import com.android.purebilibili.feature.video.viewmodel.SponsorContributionUiState
@@ -41,6 +42,7 @@ fun SponsorSkipButton(
     visible: Boolean,
     onSkip: () -> Unit,
     onDismiss: () -> Unit,
+    onVote: (Int) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val clearIcon = rememberAppClearIcon()
@@ -98,6 +100,8 @@ fun SponsorSkipButton(
                             )
                         }
                     }
+                    AppTextButton(onClick = { onVote(1) }) { AppText("有用") }
+                    AppTextButton(onClick = { onVote(-1) }) { AppText("不准确") }
                     
                     // 关闭按钮
                     AppIcon(
@@ -124,6 +128,7 @@ fun SponsorContributionOverlay(
     state: SponsorContributionUiState,
     onMarkBoundary: () -> Unit,
     onCategoryChange: (String) -> Unit,
+    onActionTypeChange: (String) -> Unit,
     onSubmit: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
@@ -199,12 +204,30 @@ fun SponsorContributionOverlay(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            SponsorCategory.ALL_SKIP_CATEGORIES.forEach { category ->
+                            SponsorCategory.ALL_CATEGORIES.forEach { category ->
                                 FilterChip(
                                     selected = state.category == category,
                                     onClick = { onCategoryChange(category) },
                                     enabled = state.phase == SponsorContributionPhase.REVIEW,
                                     label = { AppText(SponsorCategory.getCategoryName(category)) },
+                                )
+                            }
+                        }
+                        AppText(
+                            text = "动作类型",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            sponsorBlockAllowedActionTypes(state.category).forEach { actionType ->
+                                FilterChip(
+                                    selected = state.actionType == actionType,
+                                    onClick = { onActionTypeChange(actionType) },
+                                    enabled = state.phase == SponsorContributionPhase.REVIEW,
+                                    label = { AppText(sponsorActionTypeLabel(actionType)) },
                                 )
                             }
                         }
@@ -246,6 +269,14 @@ fun SponsorContributionOverlay(
             },
         )
     }
+}
+
+private fun sponsorActionTypeLabel(actionType: String): String = when (actionType) {
+    "skip" -> "跳过"
+    "mute" -> "静音"
+    "full" -> "整段标记"
+    "poi" -> "精彩时刻"
+    else -> actionType
 }
 
 private fun formatSponsorContributionTime(positionMs: Long): String {

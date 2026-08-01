@@ -32,7 +32,7 @@ internal fun buildSponsorBlockSegmentsUrl(
     baseUrl: String,
     bvid: String,
     cid: Long = 0L,
-    categories: List<String> = SponsorCategory.ALL_SKIP_CATEGORIES
+    categories: List<String> = SponsorCategory.ALL_CATEGORIES
 ): String {
     val params = buildList {
         add("videoID=$bvid")
@@ -89,6 +89,21 @@ object SponsorBlockRepository {
         val minutesSaved: Double = 0.0,
         val segmentCount: Int = 0
     )
+
+    class SponsorBlockRequestException(
+        val statusCode: Int,
+        detail: String? = null,
+    ) : IllegalStateException(
+        when (statusCode) {
+            400 -> "参数错误"
+            403 -> "被服务器自动审核机制拒绝"
+            404 -> "未找到数据"
+            409 -> "重复提交"
+            429 -> "提交太快，请稍后重试"
+            500 -> "服务器无法处理请求"
+            else -> detail?.takeIf { it.isNotBlank() } ?: "服务器错误（HTTP $statusCode）"
+        }
+    )
     
     /**
      * 获取视频的空降片段
@@ -99,7 +114,7 @@ object SponsorBlockRepository {
     suspend fun getSegments(
         bvid: String,
         cid: Long = 0L,
-        categories: List<String> = SponsorCategory.ALL_SKIP_CATEGORIES,
+        categories: List<String> = SponsorCategory.ALL_CATEGORIES,
         baseUrl: String = DEFAULT_BASE_URL
     ): List<SponsorSegment> = withContext(Dispatchers.IO) {
         try {
@@ -124,7 +139,7 @@ object SponsorBlockRepository {
                     val body = response.body.string()
                     val segments = json.decodeFromString<List<SponsorSegment>>(body)
                     android.util.Log.d(TAG, "获取到 ${segments.size} 个空降片段 for $bvid")
-                    segments.filter { it.isSkipType } // 只返回跳过类型的片段
+                    segments
                 }
                 404 -> {
                     // 没有空降数据，这是正常情况
@@ -173,8 +188,9 @@ object SponsorBlockRepository {
                 .build()
             val response = client.newCall(Request.Builder().url(url).get().build()).execute()
             response.use {
-                require(it.isSuccessful) { "HTTP ${it.code}" }
-                val payload = json.parseToJsonElement(it.body.string()).jsonObject
+                val body = it.body.string()
+                if (!it.isSuccessful) throw SponsorBlockRequestException(it.code, body.take(160))
+                val payload = json.parseToJsonElement(body).jsonObject
                 CommunityUserInfo(
                     userName = payload["userName"]?.jsonPrimitive?.contentOrNull.orEmpty(),
                     viewCount = payload["viewCount"]?.jsonPrimitive?.longOrNull ?: 0L,
@@ -188,7 +204,7 @@ object SponsorBlockRepository {
     suspend fun uploadViewedSegment(baseUrl: String, segmentId: String): Result<Unit> = postJson(
         url = "${baseUrl.trimEnd('/')}/viewedVideoSponsorTime",
         body = "{\"UUID\":${json.encodeToString(segmentId)}}"
-    )
+    ).map { }
 
     suspend fun submitSegments(
         baseUrl: String,
@@ -197,28 +213,56 @@ object SponsorBlockRepository {
         userId: String,
         videoDurationSeconds: Float,
         segments: List<SegmentSubmission>
-    ): Result<Unit> = postJson(
+    ): Result<List<SponsorSegment>> = postJson(
         url = "${baseUrl.trimEnd('/')}/skipSegments",
-        body = json.encodeToString(
-            SegmentSubmissionRequest(
-                videoID = bvid,
-                cid = cid.toString(),
-                userID = userId,
-                videoDuration = videoDurationSeconds,
-                userAgent = "BiliPai",
-                segments = segments
-            )
-        )
-    )
+        body = json.encodeToString(SegmentSubmissionRequest(
+            videoID = bvid,
+            cid = cid.toString(),
+            userID = userId,
+            videoDuration = videoDurationSeconds,
+            userAgent = "BiliPai",
+            segments = segments,
+        )),
+    ).mapCatching { body ->
+        json.decodeFromString<List<SponsorSegment>>(body)
+    }
 
-    private suspend fun postJson(url: String, body: String): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun voteOnSegment(
+        baseUrl: String,
+        userId: String,
+        segmentId: String,
+        voteType: Int? = null,
+        category: String? = null,
+    ): Result<Unit> {
+        require((voteType == null) != (category == null))
+        val url = okhttp3.HttpUrl.Builder()
+            .scheme(baseUrl.substringBefore("://"))
+            .host(java.net.URI(baseUrl).host)
+            .apply {
+                val uri = java.net.URI(baseUrl)
+                if (uri.port != -1) port(uri.port)
+                uri.path.trim('/').split('/').filter(String::isNotBlank).forEach(::addPathSegment)
+                addPathSegment("voteOnSponsorTime")
+                addQueryParameter("UUID", segmentId)
+                addQueryParameter("userID", userId)
+                voteType?.let { addQueryParameter("type", it.toString()) }
+                category?.let { addQueryParameter("category", it) }
+            }.build()
+        return postJson(url.toString(), "").map { }
+    }
+
+    private suspend fun postJson(url: String, body: String): Result<String> = withContext(Dispatchers.IO) {
         runCatching {
             val request = Request.Builder()
                 .url(url)
                 .post(body.toRequestBody("application/json".toMediaType()))
                 .build()
             client.newCall(request).execute().use { response ->
-                require(response.isSuccessful) { "HTTP ${response.code}: ${response.body.string().take(160)}" }
+                val responseBody = response.body.string()
+                if (!response.isSuccessful) {
+                    throw SponsorBlockRequestException(response.code, responseBody.take(160))
+                }
+                responseBody
             }
         }
     }

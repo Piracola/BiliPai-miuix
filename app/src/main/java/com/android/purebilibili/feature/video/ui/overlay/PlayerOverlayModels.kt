@@ -442,13 +442,16 @@ internal fun resolveSponsorProgressBarMarkers(
                 category = marker.category,
                 startFraction = startFraction,
                 endFraction = endFraction,
-                color = resolveSponsorProgressMarkerColor(marker.category)
+                color = resolveSponsorProgressMarkerColor(marker.category, marker.colorHex)
             )
         }
     }
 }
 
-private fun resolveSponsorProgressMarkerColor(category: String): Color {
+private fun resolveSponsorProgressMarkerColor(category: String, colorHex: String?): Color {
+    colorHex?.let { hex ->
+        runCatching { return Color(android.graphics.Color.parseColor(hex)) }
+    }
     return if (category == SponsorCategory.SPONSOR) {
         Color(0xFFFF8A65)
     } else {

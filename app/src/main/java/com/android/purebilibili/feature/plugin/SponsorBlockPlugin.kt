@@ -80,8 +80,8 @@ internal fun normalizeSponsorSegments(
 ): List<SponsorSegment> {
     return segments
         .asSequence()
-        .filter { segment -> segment.isSkipType && segment.endTimeMs > segment.startTimeMs }
-        .groupBy { segment -> segment.category }
+        .filter { segment -> segment.endTimeMs > segment.startTimeMs }
+        .groupBy { "${segment.category}:${segment.actionType}" }
         .values
         .mapNotNull { candidates ->
             candidates.maxWithOrNull(
@@ -97,7 +97,8 @@ internal fun normalizeSponsorSegments(
 
 internal fun resolveSponsorProgressMarkers(
     segments: List<SponsorSegment>,
-    markerMode: SponsorBlockMarkerMode
+    markerMode: SponsorBlockMarkerMode,
+    categoryColors: Map<String, String> = emptyMap(),
 ): List<SponsorProgressMarker> {
     if (markerMode == SponsorBlockMarkerMode.OFF) return emptyList()
     return segments.asSequence()
@@ -113,7 +114,8 @@ internal fun resolveSponsorProgressMarkers(
                 segmentId = segment.UUID,
                 category = segment.category,
                 startTimeMs = segment.startTimeMs,
-                endTimeMs = segment.endTimeMs
+                endTimeMs = segment.endTimeMs,
+                colorHex = categoryColors[segment.category],
             )
         }
         .toList()
@@ -221,10 +223,7 @@ class SponsorBlockPlugin : PlayerPluginApi {
                 config.behaviorFor(segment.category) != SponsorBlockSegmentBehavior.DISABLED &&
                     segment.duration >= config.minimumSegmentDurationSeconds
             }
-            progressMarkers = resolveSponsorProgressMarkers(
-                segments = segments,
-                markerMode = config.markerMode
-            )
+            progressMarkers = resolveSponsorProgressMarkers(segments, config.markerMode, config.categoryColorHex)
             Logger.d(
                 TAG,
                 " Loaded ${segments.size} SponsorBlock segments for $bvid, autoSkip=${config.autoSkip}, markers=${progressMarkers.size}"
@@ -283,10 +282,35 @@ class SponsorBlockPlugin : PlayerPluginApi {
             ?: run {
                 activeSegment = null
                 return SkipAction.None
-            }
+        }
         activeSegment = segment
+        val behavior = config.behaviorFor(segment.category)
+        if (behavior == SponsorBlockSegmentBehavior.DISABLED) {
+            skippedIds.add(segment.UUID)
+            nextSegmentIndex += 1
+            activeSegment = null
+            return SkipAction.None
+        }
         
-        when (config.behaviorFor(segment.category)) {
+        when {
+            segment.isMuteType -> {
+                skippedIds.add(segment.UUID)
+                nextSegmentIndex += 1
+                activeSegment = null
+                return SkipAction.Mute(
+                    untilMs = segment.endTimeMs,
+                    reason = "已静音: ${segment.categoryName}",
+                    segmentId = segment.UUID,
+                    showToast = config.skipToastEnabled,
+                )
+            }
+            segment.isMarkerOnlyType -> {
+                skippedIds.add(segment.UUID)
+                nextSegmentIndex += 1
+                activeSegment = null
+                return SkipAction.None
+            }
+            else -> when (behavior) {
             SponsorBlockSegmentBehavior.AUTOMATIC -> {
             skippedIds.add(segment.UUID)
             lastAutoSkipTime = System.currentTimeMillis() // 记录跳过时间
@@ -302,8 +326,22 @@ class SponsorBlockPlugin : PlayerPluginApi {
                 reason = "已跳过: ${segment.categoryName}",
                 segmentId = segment.UUID,
                 startMs = segment.startTimeMs,
-                categoryName = segment.categoryName
+                categoryName = segment.categoryName,
+                showToast = config.skipToastEnabled,
             )
+            }
+            SponsorBlockSegmentBehavior.SKIP_ONCE -> {
+                skippedIds.add(segment.UUID)
+                nextSegmentIndex += 1
+                activeSegment = null
+                return SkipAction.SkipTo(
+                    positionMs = segment.endTimeMs,
+                    reason = "本次跳过: ${segment.categoryName}",
+                    segmentId = segment.UUID,
+                    startMs = segment.startTimeMs,
+                    categoryName = segment.categoryName,
+                    showToast = config.skipToastEnabled,
+                )
             }
             SponsorBlockSegmentBehavior.MANUAL -> {
                 Logger.d(TAG, "🔘 显示跳过按钮: ${segment.categoryName}")
@@ -319,6 +357,7 @@ class SponsorBlockPlugin : PlayerPluginApi {
                 nextSegmentIndex += 1
                 activeSegment = null
                 return SkipAction.None
+            }
             }
         }
     }
@@ -375,16 +414,20 @@ class SponsorBlockPlugin : PlayerPluginApi {
         videoDurationSeconds: Float,
         startMs: Long,
         endMs: Long,
-        category: String
-    ): Result<Unit> {
+        category: String,
+        actionType: String
+    ): Result<List<SponsorSegment>> {
         if (!config.communityContributionEnabled) {
             return Result.failure(IllegalStateException("请先在空降助手设置中允许提交社区片段"))
         }
         if (bvid.isBlank() || endMs <= startMs || startMs < 0L) {
             return Result.failure(IllegalArgumentException("片段时间范围无效"))
         }
-        if (category !in com.android.purebilibili.data.model.response.SponsorCategory.ALL_SKIP_CATEGORIES) {
+        if (category !in com.android.purebilibili.data.model.response.SponsorCategory.ALL_CATEGORIES) {
             return Result.failure(IllegalArgumentException("不支持的片段类别"))
+        }
+        if (actionType !in sponsorBlockAllowedActionTypes(category)) {
+            return Result.failure(IllegalArgumentException("该类别不支持所选动作"))
         }
         return SponsorBlockRepository.submitSegments(
             baseUrl = config.serverBaseUrl,
@@ -395,10 +438,16 @@ class SponsorBlockPlugin : PlayerPluginApi {
             segments = listOf(
                 SponsorBlockRepository.SegmentSubmission(
                     segment = listOf(startMs / 1000f, endMs / 1000f),
-                    category = category
+                    category = category,
+                    actionType = actionType,
                 )
             )
         )
+    }
+
+    suspend fun voteOnCommunitySegment(segmentId: String, voteType: Int): Result<Unit> {
+        if (segmentId.isBlank()) return Result.failure(IllegalArgumentException("片段标识无效"))
+        return SponsorBlockRepository.voteOnSegment(config.serverBaseUrl, config.userId, segmentId, voteType = voteType)
     }
 
     private fun findCandidateSegmentIndex(positionMs: Long): Int {
@@ -456,6 +505,7 @@ class SponsorBlockPlugin : PlayerPluginApi {
         var categorySettings by remember { mutableStateOf(resolveSponsorBlockCategorySettings(config)) }
         var communityTrackingEnabled by remember { mutableStateOf(config.communityTrackingEnabled) }
         var communityContributionEnabled by remember { mutableStateOf(config.communityContributionEnabled) }
+        var skipToastEnabled by remember { mutableStateOf(config.skipToastEnabled) }
         var serverStatus by remember { mutableStateOf<SponsorBlockRepository.ServerStatus?>(null) }
         var communityUserInfo by remember { mutableStateOf<SponsorBlockRepository.CommunityUserInfo?>(null) }
         var showServerDialog by remember { mutableStateOf(false) }
@@ -464,6 +514,9 @@ class SponsorBlockPlugin : PlayerPluginApi {
         var durationDraft by remember { mutableStateOf(config.minimumSegmentDurationSeconds.toString()) }
         var showCommunityUserDialog by remember { mutableStateOf(false) }
         var showRegenerateUserIdDialog by remember { mutableStateOf(false) }
+        var userIdDraft by remember { mutableStateOf(config.userId) }
+        var colorDialogCategory by remember { mutableStateOf<SponsorBlockCategorySetting?>(null) }
+        var colorDraft by remember { mutableStateOf("") }
         var insightRecords by remember { mutableStateOf<List<SponsorBlockSkipRecord>>(emptyList()) }
         val aboutItem = remember { resolveSponsorBlockAboutItemModel() }
         val markerOptions = remember {
@@ -512,6 +565,8 @@ class SponsorBlockPlugin : PlayerPluginApi {
             categorySettings = resolveSponsorBlockCategorySettings(config)
             communityTrackingEnabled = config.communityTrackingEnabled
             communityContributionEnabled = config.communityContributionEnabled
+            skipToastEnabled = config.skipToastEnabled
+            userIdDraft = config.userId
             serverDraft = config.serverBaseUrl
             durationDraft = config.minimumSegmentDurationSeconds.toString()
             insightRecords = SponsorBlockInsightStore.readRecords(context)
@@ -529,7 +584,7 @@ class SponsorBlockPlugin : PlayerPluginApi {
                 onShareClick = { shareSponsorBlockInsightImage(context, insightSummary) }
             )
 
-            SponsorBlockSettingsSection(title = "片段规则", subtitle = "按类别选择自动跳过、手动提示、仅标记或忽略") {
+            SponsorBlockSettingsSection(title = "片段规则", subtitle = "按类别选择总是跳过、本次跳过、手动跳过、仅显示或禁用") {
                 AppSwitchPreference(
                     icon = CupertinoIcons.Default.Bolt,
                     title = "全部自动跳过",
@@ -549,6 +604,10 @@ class SponsorBlockPlugin : PlayerPluginApi {
                         persistConfig(config.copy(categoryBehaviorRaw = config.categoryBehaviorRaw + (category to behavior.name)))
                         categorySettings = resolveSponsorBlockCategorySettings(config)
                         autoSkip = categorySettings.all { it.behavior == SponsorBlockSegmentBehavior.AUTOMATIC }
+                    },
+                    onColorClick = { setting ->
+                        colorDialogCategory = setting
+                        colorDraft = config.categoryColorHex[setting.category] ?: setting.defaultColorHex
                     },
                 )
                 AppPreference(
@@ -570,12 +629,23 @@ class SponsorBlockPlugin : PlayerPluginApi {
                     onSelectionChange = { newValue ->
                         markerMode = newValue
                         persistConfig(config.copy(markerModeRaw = newValue.name))
-                        progressMarkers = resolveSponsorProgressMarkers(segments, newValue)
+                        progressMarkers = resolveSponsorProgressMarkers(segments, newValue, config.categoryColorHex)
                     },
                 )
             }
 
             SponsorBlockSettingsSection(title = "通知") {
+                AppSwitchPreference(
+                    icon = CupertinoIcons.Default.InfoCircle,
+                    title = "跳过提示",
+                    subtitle = "自动跳过时显示简短提示",
+                    checked = skipToastEnabled,
+                    onCheckedChange = { enabled ->
+                        skipToastEnabled = enabled
+                        persistConfig(config.copy(skipToastEnabled = enabled))
+                    },
+                    iconTint = Color(0xFF34C759),
+                )
                 AppSwitchPreference(
                     icon = CupertinoIcons.Default.Bell,
                     title = "每日汇总通知",
@@ -726,6 +796,8 @@ class SponsorBlockPlugin : PlayerPluginApi {
                             serverDraft = normalized
                             scope.launch {
                                 serverStatus = SponsorBlockRepository.checkServerStatus(normalized)
+                                communityUserInfo = SponsorBlockRepository.getCommunityUserInfo(normalized, config.userId)
+                                    .getOrNull()
                             }
                         }
                     }) { AppText("保存并检测") }
@@ -747,6 +819,12 @@ class SponsorBlockPlugin : PlayerPluginApi {
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         AppText(config.userId, style = MaterialTheme.typography.bodySmall)
+                        AppTextField(
+                            value = userIdDraft,
+                            onValueChange = { userIdDraft = it },
+                            label = "用户 ID",
+                            singleLine = true,
+                        )
                         communityUserInfo?.let { info ->
                             AppText("${info.userName.ifBlank { "匿名用户" }} · 已贡献 ${info.segmentCount} 段 · 节省 ${info.minutesSaved.toInt()} 分钟")
                         }
@@ -756,12 +834,19 @@ class SponsorBlockPlugin : PlayerPluginApi {
                 },
                 confirmButton = {
                     AppTextButton(onClick = {
+                        validateSponsorBlockUserId(userIdDraft)?.let(::showNotificationToast) ?: run {
+                            persistConfig(config.copy(userId = userIdDraft.trim()))
+                            showNotificationToast("用户 ID 已保存")
+                        }
+                    }) { AppText("保存") }
+                },
+                dismissButton = {
+                    AppTextButton(onClick = {
                         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
                         clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("社区用户 ID", config.userId))
                         showNotificationToast("用户 ID 已复制")
                     }) { AppText("复制") }
                 },
-                dismissButton = { AppTextButton(onClick = { showCommunityUserDialog = false }) { AppText("关闭") } },
             )
         }
 
@@ -778,6 +863,31 @@ class SponsorBlockPlugin : PlayerPluginApi {
                     }) { AppText("确认重新生成") }
                 },
                 dismissButton = { AppTextButton(onClick = { showRegenerateUserIdDialog = false }) { AppText("取消") } },
+            )
+        }
+
+        colorDialogCategory?.let { setting ->
+            AppAlertDialog(
+                onDismissRequest = { colorDialogCategory = null },
+                title = { AppText("${setting.title}进度条颜色") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        AppText("输入 #RRGGBB；留空可恢复默认颜色。")
+                        AppTextField(value = colorDraft, onValueChange = { colorDraft = it }, label = "颜色", singleLine = true)
+                    }
+                },
+                confirmButton = {
+                    AppTextButton(onClick = {
+                        val normalized = colorDraft.trim().uppercase()
+                        if (normalized.isNotBlank() && !Regex("^#[0-9A-F]{6}$").matches(normalized)) {
+                            showNotificationToast("颜色格式应为 #RRGGBB")
+                        } else {
+                            persistConfig(config.copy(categoryColorHex = config.categoryColorHex + (setting.category to normalized)))
+                            colorDialogCategory = null
+                        }
+                    }) { AppText("保存") }
+                },
+                dismissButton = { AppTextButton(onClick = { colorDialogCategory = null }) { AppText("取消") } },
             )
         }
     }
@@ -809,6 +919,7 @@ private fun SponsorBlockSettingsSection(
 private fun SponsorBlockCategorySettingsSection(
     settings: List<SponsorBlockCategorySetting>,
     onBehaviorChange: (String, SponsorBlockSegmentBehavior) -> Unit,
+    onColorClick: (SponsorBlockCategorySetting) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(12.dp)) {
         settings.forEach { setting ->
@@ -829,6 +940,7 @@ private fun SponsorBlockCategorySettingsSection(
                             )
                         }
                     }
+                    AppTextButton(onClick = { onColorClick(setting) }) { AppText("自定义进度条颜色") }
                 }
             }
         }
@@ -1476,7 +1588,9 @@ data class SponsorBlockConfig(
     val skipOutro: Boolean = true,
     val skipInteraction: Boolean = true,
     val categoryBehaviorRaw: Map<String, String> = emptyMap(),
+    val categoryColorHex: Map<String, String> = emptyMap(),
     val minimumSegmentDurationSeconds: Float = 0f,
+    val skipToastEnabled: Boolean = true,
     val serverBaseUrl: String = SponsorBlockRepository.DEFAULT_BASE_URL,
     val userId: String = "",
     val communityTrackingEnabled: Boolean = false,
@@ -1488,7 +1602,7 @@ data class SponsorBlockConfig(
         get() = com.android.purebilibili.data.model.response.resolveSponsorBlockMarkerMode(markerModeRaw)
 
     val requestedCategories: List<String>
-        get() = com.android.purebilibili.data.model.response.SponsorCategory.ALL_SKIP_CATEGORIES
+        get() = com.android.purebilibili.data.model.response.SponsorCategory.ALL_CATEGORIES
             .filter { behaviorFor(it) != SponsorBlockSegmentBehavior.DISABLED }
 
     fun behaviorFor(category: String): SponsorBlockSegmentBehavior {
@@ -1514,6 +1628,10 @@ data class SponsorBlockConfig(
         return copy(
             markerModeRaw = markerMode.name,
             categoryBehaviorRaw = migratedBehaviors,
+            categoryColorHex = categoryColorHex.mapNotNull { (category, color) ->
+                color.takeIf { category in com.android.purebilibili.data.model.response.SponsorCategory.ALL_CATEGORIES &&
+                    Regex("^#[0-9a-fA-F]{6}$").matches(it) }?.let { category to it.uppercase() }
+            }.toMap(),
             minimumSegmentDurationSeconds = minimumSegmentDurationSeconds.coerceAtLeast(0f),
             serverBaseUrl = normalizeSponsorBlockServerUrl(serverBaseUrl)
                 ?: SponsorBlockRepository.DEFAULT_BASE_URL,
