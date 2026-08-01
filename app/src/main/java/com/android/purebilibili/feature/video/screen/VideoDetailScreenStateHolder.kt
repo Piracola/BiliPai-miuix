@@ -101,6 +101,7 @@ import com.android.purebilibili.core.ui.blur.rememberRecoverableHazeState
 import com.android.purebilibili.core.store.PortraitPlayerCollapseMode
 import com.android.purebilibili.core.ui.rememberAppPlayerChromeProfile
 import com.android.purebilibili.core.ui.AppSurfaceTokens
+import com.android.purebilibili.core.ui.components.AppSurface
 //  已改用 MaterialTheme.colorScheme.primary
 
 import com.android.purebilibili.data.model.response.RelatedVideo
