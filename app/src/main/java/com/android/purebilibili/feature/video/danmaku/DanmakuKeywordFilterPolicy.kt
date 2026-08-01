@@ -6,6 +6,10 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
+import java.io.StringReader
+import javax.xml.parsers.DocumentBuilderFactory
+import org.w3c.dom.Element
+import org.xml.sax.InputSource
 
 private const val REGEX_RULE_PREFIX = "regex:"
 private const val SHORT_REGEX_RULE_PREFIX = "re:"
@@ -26,6 +30,19 @@ data class DanmakuBlockRuleSections(
     val regexRules: List<String> = emptyList(),
     val userHashRules: List<String> = emptyList()
 )
+
+data class DanmakuBlockRuleImportResult(
+    val rules: List<String> = emptyList(),
+    val invalidEntries: List<String> = emptyList(),
+    val skippedDisabledCount: Int = 0,
+    val errorMessage: String? = null
+) {
+    val sections: DanmakuBlockRuleSections
+        get() = partitionDanmakuBlockRules(rules)
+
+    val canImport: Boolean
+        get() = errorMessage == null && rules.isNotEmpty()
+}
 
 internal sealed interface DanmakuBlockRuleMatcher {
     fun matches(content: String, userHash: String = ""): Boolean
@@ -62,6 +79,100 @@ fun parseDanmakuBlockRules(raw: String): List<String> {
         .map { it.trim() }
         .filter { it.isNotEmpty() }
         .distinct()
+}
+
+fun parseDanmakuBlockRuleImport(raw: String): DanmakuBlockRuleImportResult {
+    val trimmed = raw.trim()
+    if (trimmed.isEmpty()) {
+        return DanmakuBlockRuleImportResult(errorMessage = "文件内容为空")
+    }
+    return when {
+        trimmed.startsWith("<") -> parseDanmakuBlockRuleXmlImport(trimmed)
+        trimmed.startsWith("{") || trimmed.startsWith("[") -> {
+            val rules = parseDanmakuBlockRulesJson(trimmed)
+                ?: return DanmakuBlockRuleImportResult(errorMessage = "JSON 屏蔽规则格式无效")
+            buildDanmakuBlockRuleImportResult(rules)
+        }
+        else -> buildDanmakuBlockRuleImportResult(
+            trimmed.split(DANMAKU_RULE_SPLITTER)
+        )
+    }
+}
+
+private fun parseDanmakuBlockRuleXmlImport(raw: String): DanmakuBlockRuleImportResult {
+    if (raw.contains("<!DOCTYPE", ignoreCase = true)) {
+        return DanmakuBlockRuleImportResult(errorMessage = "XML 屏蔽规则不支持 DOCTYPE")
+    }
+    val candidates = mutableListOf<String>()
+    var skippedDisabledCount = 0
+    return try {
+        val document = DocumentBuilderFactory.newInstance().apply {
+            isNamespaceAware = false
+            isExpandEntityReferences = false
+            isXIncludeAware = false
+        }.newDocumentBuilder().parse(InputSource(StringReader(raw)))
+        val nodes = document.getElementsByTagName("*")
+        for (index in 0 until nodes.length) {
+            val element = nodes.item(index) as? Element ?: continue
+            if (!element.tagName.equals("item", ignoreCase = true) &&
+                !element.tagName.equals("filter", ignoreCase = true)
+            ) {
+                continue
+            }
+            val enabled = element.getAttribute("enabled")
+                .trim()
+                .lowercase()
+            val value = element.textContent.orEmpty().trim()
+            if (enabled == "false" || enabled == "0") {
+                skippedDisabledCount++
+            } else if (value.isNotEmpty()) {
+                candidates += value
+            }
+        }
+        buildDanmakuBlockRuleImportResult(
+            candidates = candidates,
+            skippedDisabledCount = skippedDisabledCount
+        )
+    } catch (error: Exception) {
+        DanmakuBlockRuleImportResult(
+            skippedDisabledCount = skippedDisabledCount,
+            errorMessage = "XML 屏蔽规则格式无效：${error.message.orEmpty()}".trimEnd('：')
+        )
+    }
+}
+
+private fun buildDanmakuBlockRuleImportResult(
+    candidates: List<String>,
+    skippedDisabledCount: Int = 0
+): DanmakuBlockRuleImportResult {
+    val valid = mutableListOf<String>()
+    val invalid = mutableListOf<String>()
+    candidates.forEach { candidate ->
+        val normalized = normalizeDanmakuImportedRule(candidate)
+        if (normalized == null || resolveDanmakuBlockRuleMatcher(normalized) == null) {
+            candidate.trim().takeIf { it.isNotEmpty() }?.let(invalid::add)
+        } else {
+            valid += normalized
+        }
+    }
+    return DanmakuBlockRuleImportResult(
+        rules = valid.distinct(),
+        invalidEntries = invalid.distinct(),
+        skippedDisabledCount = skippedDisabledCount
+    )
+}
+
+private fun normalizeDanmakuImportedRule(rule: String): String? {
+    val normalized = rule.trim()
+    if (normalized.isEmpty()) return null
+    val prefix = normalized.take(2).lowercase()
+    val body = normalized.drop(2).trim()
+    return when (prefix) {
+        "t=" -> body.takeIf(String::isNotEmpty)
+        "r=" -> body.takeIf(String::isNotEmpty)?.let { "$REGEX_RULE_PREFIX$it" }
+        "u=" -> body.takeIf(String::isNotEmpty)?.let { "$USER_HASH_RULE_PREFIX$it" }
+        else -> normalizeDanmakuBlockRuleForAppend(normalized)
+    }
 }
 
 private fun parseDanmakuBlockRulesJson(raw: String): List<String>? {

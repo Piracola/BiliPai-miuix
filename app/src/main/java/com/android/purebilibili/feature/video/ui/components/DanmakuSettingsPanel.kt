@@ -10,6 +10,8 @@ import com.android.purebilibili.core.store.PortraitDanmakuDisplayAreaMode
 import com.android.purebilibili.feature.video.danmaku.DanmakuBlockRuleSections
 import com.android.purebilibili.feature.video.danmaku.DanmakuCloudSyncStatus
 import com.android.purebilibili.feature.video.danmaku.DanmakuCloudSyncUiState
+import com.android.purebilibili.feature.video.danmaku.DanmakuBlockRuleImportResult
+import com.android.purebilibili.feature.video.danmaku.parseDanmakuBlockRuleImport
 import com.android.purebilibili.feature.video.danmaku.resolveDanmakuCloudSyncToggleSubtitle
 import com.android.purebilibili.feature.video.danmaku.mergeDanmakuBlockRuleSections
 import com.android.purebilibili.feature.video.danmaku.parseDanmakuBlockRules
@@ -42,6 +44,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.*
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,6 +56,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -62,6 +67,11 @@ import androidx.compose.ui.window.DialogProperties
 import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.roundToInt
+import java.io.IOException
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * 横屏全屏侧栏：够放中文标题/滑杆，又不占半屏。
@@ -1152,6 +1162,8 @@ private fun DanmakuBlockManagerDialog(
     onRulesSave: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val colorScheme = MaterialTheme.colorScheme
     val panelColors = remember(colorScheme) {
         resolveDanmakuSettingsPanelSurfaceColors(colorScheme)
@@ -1164,6 +1176,28 @@ private fun DanmakuBlockManagerDialog(
     var regexRules by remember(rawRules) { mutableStateOf(initialSections.regexRules) }
     var userHashRules by remember(rawRules) { mutableStateOf(initialSections.userHashRules) }
     var inputValue by remember(selectedTabIndex) { mutableStateOf("") }
+    var pendingImportResult by remember { mutableStateOf<DanmakuBlockRuleImportResult?>(null) }
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            pendingImportResult = try {
+                val raw = withContext(Dispatchers.IO) {
+                    context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { reader ->
+                        reader.readText()
+                    } ?: throw IOException("无法读取文件")
+                }
+                parseDanmakuBlockRuleImport(raw)
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                DanmakuBlockRuleImportResult(
+                    errorMessage = error.message?.takeIf(String::isNotBlank) ?: "文件读取失败"
+                )
+            }
+        }
+    }
 
     fun updateCurrentRules(transform: (List<String>) -> List<String>) {
         when (selectedTabIndex) {
@@ -1185,6 +1219,51 @@ private fun DanmakuBlockManagerDialog(
         0 -> "例如：剧透"
         1 -> "例如：regex:第\\d+集"
         else -> "例如：uid:abc123 或 abc123"
+    }
+
+    pendingImportResult?.let { result ->
+        val sections = result.sections
+        AlertDialog(
+            onDismissRequest = { pendingImportResult = null },
+            title = { AppText("导入屏蔽规则") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    result.errorMessage?.let { AppText(it, color = MaterialTheme.colorScheme.error) }
+                    if (result.errorMessage == null) {
+                        AppText(
+                            "关键词 ${sections.keywordRules.size} 条 · 正则 ${sections.regexRules.size} 条 · UID ${sections.userHashRules.size} 条"
+                        )
+                        if (result.invalidEntries.isNotEmpty()) {
+                            AppText(
+                                "无效规则 ${result.invalidEntries.size} 条，将跳过",
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                        if (result.skippedDisabledCount > 0) {
+                            AppText("已跳过 ${result.skippedDisabledCount} 条禁用规则")
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                AppButton(
+                    onClick = {
+                        keywordRules = (keywordRules + sections.keywordRules).distinct()
+                        regexRules = (regexRules + sections.regexRules).distinct()
+                        userHashRules = (userHashRules + sections.userHashRules).distinct()
+                        pendingImportResult = null
+                    },
+                    enabled = result.canImport
+                ) {
+                    AppText("合并导入")
+                }
+            },
+            dismissButton = {
+                AppTextButton(onClick = { pendingImportResult = null }) {
+                    AppText("取消")
+                }
+            }
+        )
     }
 
     Dialog(
@@ -1280,8 +1359,18 @@ private fun DanmakuBlockManagerDialog(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
+                    AppOutlinedButton(
+                        onClick = {
+                            importLauncher.launch(
+                                arrayOf("text/plain", "application/json", "text/xml", "application/xml")
+                            )
+                        }
+                    ) {
+                        AppText("导入文件")
+                    }
                     AppButton(
                         onClick = {
                             val candidate = inputValue.trim()

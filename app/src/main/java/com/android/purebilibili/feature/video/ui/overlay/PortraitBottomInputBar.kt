@@ -26,6 +26,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ScreenRotation
+import androidx.compose.material.icons.rounded.ChatBubble
+import androidx.compose.material.icons.rounded.ChatBubbleOutline
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.remember
 
 /**
@@ -35,6 +38,8 @@ import androidx.compose.runtime.remember
 @Composable
 fun PortraitBottomInputBar(
     onInputClick: () -> Unit,
+    danmakuEnabled: Boolean,
+    onDanmakuToggle: () -> Unit,
     onRotateClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -80,6 +85,13 @@ fun PortraitBottomInputBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
+                icon = if (danmakuEnabled) Icons.Rounded.ChatBubble else Icons.Rounded.ChatBubbleOutline,
+                desc = if (danmakuEnabled) "关闭弹幕" else "开启弹幕",
+                layoutPolicy = layoutPolicy,
+                selected = danmakuEnabled,
+                onClick = onDanmakuToggle
+            )
+            IconButton(
                 icon = Icons.Rounded.ScreenRotation,
                 desc = "切换横屏",
                 layoutPolicy = layoutPolicy,
@@ -94,19 +106,23 @@ private fun IconButton(
     icon: ImageVector,
     desc: String,
     layoutPolicy: PortraitBottomInputBarLayoutPolicy,
+    selected: Boolean = false,
     onClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
             .size(layoutPolicy.actionButtonSizeDp.dp)
             .clip(CircleShape)
+            .background(
+                if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.24f) else Color.Transparent
+            )
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
         AppIcon(
             imageVector = icon,
             contentDescription = desc,
-            tint = Color.White,
+            tint = if (selected) MaterialTheme.colorScheme.primary else Color.White,
             modifier = Modifier.size(layoutPolicy.actionIconSizeDp.dp)
         )
     }

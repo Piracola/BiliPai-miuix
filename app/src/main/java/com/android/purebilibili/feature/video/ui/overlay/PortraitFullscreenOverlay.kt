@@ -11,7 +11,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -209,10 +208,6 @@ fun PortraitFullscreenOverlay(
                     onBack = onBack,
                     onHomeClick = onHomeClick,
                     viewCount = statView,
-                    danmakuEnabled = danmakuEnabled,
-                    onDanmakuToggle = onDanmakuToggle,
-                    isStatusBarHidden = isStatusBarHidden,
-                    onToggleStatusBar = onToggleStatusBar,
                     onSearchClick = onSearchClick,
                     onMoreClick = onMoreClick,
                     modifier = Modifier.graphicsLayer {
@@ -332,6 +327,8 @@ fun PortraitFullscreenOverlay(
                 // 4. 底部输入栏 (Input Bar) - Keep strict bottom alignment (Overlay)
                 PortraitBottomInputBar(
                     onInputClick = onDanmakuInputClick,
+                    danmakuEnabled = danmakuEnabled,
+                    onDanmakuToggle = onDanmakuToggle,
                     onRotateClick = onRotateToLandscape,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
@@ -540,10 +537,6 @@ private fun PortraitTopControlBar(
     onBack: () -> Unit,
     onHomeClick: () -> Unit,
     viewCount: Int,
-    danmakuEnabled: Boolean,
-    onDanmakuToggle: () -> Unit,
-    isStatusBarHidden: Boolean,
-    onToggleStatusBar: () -> Unit,
     onSearchClick: () -> Unit,
     onMoreClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -602,34 +595,6 @@ private fun PortraitTopControlBar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(layoutPolicy.topActionSpacingDp.dp)
         ) {
-            val danmakuToggleInteraction = remember { MutableInteractionSource() }
-            val danmakuActiveColor = MaterialTheme.colorScheme.primary
-            val danmakuInactiveColor = Color.White.copy(alpha = 0.74f)
-            Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(
-                        if (danmakuEnabled) {
-                            danmakuActiveColor.copy(alpha = 0.2f)
-                        } else {
-                            danmakuInactiveColor.copy(alpha = 0.14f)
-                        }
-                    )
-                    .clickable(
-                        interactionSource = danmakuToggleInteraction,
-                        indication = null,
-                        onClick = onDanmakuToggle
-                    )
-                    .padding(horizontal = 6.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                AppIcon(
-                    imageVector = if (danmakuEnabled) CupertinoIcons.Filled.TextBubble else CupertinoIcons.Outlined.TextBubble,
-                    contentDescription = if (danmakuEnabled) "关闭弹幕" else "开启弹幕",
-                    tint = if (danmakuEnabled) danmakuActiveColor else danmakuInactiveColor,
-                    modifier = Modifier.size(layoutPolicy.topActionIconSizeDp.dp)
-                )
-            }
             AppIconButton(onClick = onSearchClick) {
                 AppIcon(
                     imageVector = Icons.Rounded.Search,

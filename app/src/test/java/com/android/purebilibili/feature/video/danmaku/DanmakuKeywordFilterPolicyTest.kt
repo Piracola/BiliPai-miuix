@@ -42,6 +42,43 @@ class DanmakuKeywordFilterPolicyTest {
     }
 
     @Test
+    fun parseDanmakuBlockRuleImport_supportsTextJsonAndXml() {
+        val text = parseDanmakuBlockRuleImport("t=剧透\nr=第\\d+集\nu=abc123")
+        assertEquals(listOf("剧透", "regex:第\\d+集", "uid:abc123"), text.rules)
+
+        val json = parseDanmakuBlockRuleImport("""{"regex":["哈{3,}"]}""")
+        assertEquals(listOf("regex:哈{3,}"), json.rules)
+
+        val xml = parseDanmakuBlockRuleImport(
+            """
+            <filters>
+              <item enabled="true">t=剧透</item>
+              <item enabled="true">r=第\d+集</item>
+              <filter enabled="true">u=abc123</filter>
+              <item enabled="false">t=已禁用</item>
+            </filters>
+            """.trimIndent()
+        )
+        assertEquals(listOf("剧透", "regex:第\\d+集", "uid:abc123"), xml.rules)
+        assertEquals(1, xml.skippedDisabledCount)
+        assertTrue(xml.canImport)
+    }
+
+    @Test
+    fun parseDanmakuBlockRuleImport_reportsInvalidRegexAndMalformedFiles() {
+        val mixed = parseDanmakuBlockRuleImport("剧透\nr=[a-")
+        assertEquals(listOf("剧透"), mixed.rules)
+        assertEquals(listOf("r=[a-"), mixed.invalidEntries)
+
+        val malformedXml = parseDanmakuBlockRuleImport("<filters><item>剧透</filters>")
+        assertFalse(malformedXml.canImport)
+        assertTrue(malformedXml.errorMessage?.startsWith("XML 屏蔽规则格式无效") == true)
+
+        val malformedJson = parseDanmakuBlockRuleImport("{not-json}")
+        assertEquals("JSON 屏蔽规则格式无效", malformedJson.errorMessage)
+    }
+
+    @Test
     fun matchesDanmakuBlockRule_supportsPlainKeywordIgnoreCase() {
         assertTrue(matchesDanmakuBlockRule(content = "这段有剧透注意", rule = "剧透"))
         assertTrue(matchesDanmakuBlockRule(content = "Spoiler alert", rule = "spoiler"))
