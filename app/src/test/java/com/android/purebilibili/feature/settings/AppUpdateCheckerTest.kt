@@ -48,7 +48,7 @@ class AppUpdateCheckerTest {
     }
 
     @Test
-    fun `selectLatestReleaseCandidate should allow prerelease when current version is beta`() {
+    fun `selectLatestReleaseCandidate should ignore prereleases even on a beta install`() {
         val release = AppUpdateChecker.selectLatestReleaseCandidate(
             rawReleaseJson = """
             [
@@ -68,14 +68,18 @@ class AppUpdateCheckerTest {
                 "published_at": "2026-03-14T10:00:00Z",
                 "draft": false,
                 "prerelease": false,
-                "assets": []
+                "assets": [{
+                  "name": "BiliPai-v6.9.9.apk",
+                  "browser_download_url": "https://example.com/stable.apk",
+                  "content_type": "application/vnd.android.package-archive"
+                }]
               }
             ]
             """.trimIndent(),
             currentVersion = "7.0.0 Beta1"
         )
 
-        assertEquals("v7.0.0 Beta2", release?.tagName)
+        assertEquals("v6.9.9", release?.tagName)
     }
 
     @Test
@@ -99,7 +103,11 @@ class AppUpdateCheckerTest {
                 "published_at": "2026-03-14T10:00:00Z",
                 "draft": false,
                 "prerelease": false,
-                "assets": []
+                "assets": [{
+                  "name": "BiliPai-v7.0.0.apk",
+                  "browser_download_url": "https://example.com/stable.apk",
+                  "content_type": "application/vnd.android.package-archive"
+                }]
               }
             ]
             """.trimIndent(),
@@ -110,24 +118,26 @@ class AppUpdateCheckerTest {
     }
 
     @Test
-    fun `parseRepositoryVersionCandidate should read version from remote gradle file`() {
-        val candidate = AppUpdateChecker.parseRepositoryVersionCandidate(
-            rawBuildGradle = """
-            android {
-                defaultConfig {
-                    versionCode = 119
-                    versionName = "7.0.0 RC2"
-                }
-            }
+    fun `selectLatestReleaseCandidate should ignore stable releases without an apk`() {
+        val release = AppUpdateChecker.selectLatestReleaseCandidate(
+            rawReleaseJson = """
+            [{
+              "tag_name": "v8.0.0",
+              "draft": false,
+              "prerelease": false,
+              "assets": [{
+                "name": "build-metadata.json",
+                "browser_download_url": "https://example.com/build-metadata.json",
+                "content_type": "application/json"
+              }]
+            }]
             """.trimIndent()
         )
 
-        assertEquals("7.0.0 RC2", candidate?.tagName)
-        assertEquals("https://github.com/jay3-yy/BiliPai", candidate?.releaseUrl)
-        assertTrue(candidate?.releaseNotes?.contains("未创建 GitHub Release") == true)
-        assertTrue(candidate?.isPrerelease == true)
+        assertEquals(null, release)
     }
 
+    @Test
     @Test
     fun `parseReleaseAssets should keep apk metadata and sidecar assets`() {
         val assets = AppUpdateChecker.parseReleaseAssets(

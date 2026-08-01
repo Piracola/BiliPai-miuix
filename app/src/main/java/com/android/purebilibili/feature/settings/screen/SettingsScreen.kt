@@ -623,6 +623,14 @@ fun SettingsScreen(
     }
 
     updateCheckResult?.let { info ->
+        AppUpdateDialogHost(
+            update = info,
+            onDismissRequest = { updateCheckResult = null },
+        )
+    }
+
+    if (false) {
+    updateCheckResult?.let { info ->
         val resolvedReleaseNotes = remember(info.releaseNotes) {
             resolveUpdateReleaseNotesText(info.releaseNotes)
         }
@@ -700,6 +708,7 @@ fun SettingsScreen(
                         Spacer(modifier = Modifier.height(6.dp))
                         AppText(
                             text = when (updateDownloadState.status) {
+                                AppUpdateDownloadStatus.QUEUED -> "等待网络后开始下载"
                                 AppUpdateDownloadStatus.DOWNLOADING -> "下载中 ${(updateDownloadState.progress * 100).toInt()}%"
                                 AppUpdateDownloadStatus.COMPLETED -> "下载完成，正在准备安装"
                                 AppUpdateDownloadStatus.FAILED -> updateDownloadState.errorMessage ?: "下载失败"
@@ -787,6 +796,17 @@ fun SettingsScreen(
         )
     }
 
+    }
+
+    changelogCheckResult?.let { info ->
+        AppUpdateDialogHost(
+            update = info,
+            showReleaseNotesOnly = true,
+            onDismissRequest = { changelogCheckResult = null },
+        )
+    }
+
+    if (false) {
     changelogCheckResult?.let { info ->
         val resolvedReleaseNotes = remember(info.releaseNotes) {
             resolveUpdateReleaseNotesText(info.releaseNotes)
@@ -874,6 +894,8 @@ fun SettingsScreen(
                 }) { AppText("关闭") }
             }
         )
+    }
+
     }
 
     val onOpenLinksAction: () -> Unit = {

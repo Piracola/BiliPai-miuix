@@ -96,26 +96,15 @@ internal data class AppUpdateReleaseCandidate(
 
 object AppUpdateChecker {
     private const val RELEASES_API = "https://api.github.com/repos/jay3-yy/BiliPai/releases"
-    private const val REPOSITORY_BUILD_GRADLE_URL =
-        "https://raw.githubusercontent.com/jay3-yy/BiliPai/main/app/build.gradle.kts"
-    private const val REPOSITORY_URL = "https://github.com/jay3-yy/BiliPai"
     private const val CONNECT_TIMEOUT_MS = 6000
     private const val READ_TIMEOUT_MS = 8000
     private val releaseJson = Json { ignoreUnknownKeys = true }
 
     suspend fun check(currentVersion: String): Result<AppUpdateCheckResult> = withContext(Dispatchers.IO) {
         runCatching {
-            val releaseCandidate = fetchRemoteText(RELEASES_API, required = false)
-                ?.let { body -> selectLatestReleaseCandidate(body, currentVersion) }
-            val repositoryCandidate = fetchRemoteText(REPOSITORY_BUILD_GRADLE_URL, required = false)
-                ?.let { body -> parseRepositoryVersionCandidate(body) }
-                ?.takeIf { candidate ->
-                    !candidate.isPrerelease || isPrereleaseVersion(currentVersion)
-                }
-            val release = selectPreferredUpdateCandidate(
-                releaseCandidate = releaseCandidate,
-                repositoryCandidate = repositoryCandidate
-            ) ?: throw IllegalStateException("未获取到有效版本信息")
+            val release = fetchRemoteText(RELEASES_API, required = false)
+                ?.let(::selectLatestReleaseCandidate)
+                ?: throw IllegalStateException("未获取到包含安装包的稳定版 Release")
 
             val latestTag = release.tagName
             val latestVersion = normalizeVersion(latestTag)
@@ -275,62 +264,23 @@ object AppUpdateChecker {
 
     internal fun selectLatestReleaseCandidate(
         rawReleaseJson: String,
-        currentVersion: String
+        currentVersion: String = ""
     ): AppUpdateReleaseCandidate? {
         val releasesJson = runCatching {
             releaseJson.parseToJsonElement(rawReleaseJson).jsonArray
         }.getOrNull() ?: return null
 
-        val allowPrerelease = isPrereleaseVersion(currentVersion)
         return releasesJson
             .mapNotNull { releaseElement ->
                 parseReleaseCandidateElement(releaseElement)
             }
-            .filter { !it.isPrerelease || allowPrerelease }
+            .filter { !it.isPrerelease && it.assets.any(AppUpdateAsset::isApk) }
             .maxWithOrNull { left, right ->
                 compareVersions(
                     localVersion = normalizeVersion(left.tagName),
                     remoteVersion = normalizeVersion(right.tagName)
                 )
             }
-    }
-
-    internal fun parseRepositoryVersionCandidate(
-        rawBuildGradle: String
-    ): AppUpdateReleaseCandidate? {
-        val versionName = Regex("""versionName\s*=\s*"([^"]+)"""")
-            .find(rawBuildGradle)
-            ?.groupValues
-            ?.getOrNull(1)
-            ?.trim()
-            .orEmpty()
-        if (versionName.isBlank()) return null
-        return AppUpdateReleaseCandidate(
-            tagName = versionName,
-            releaseUrl = REPOSITORY_URL,
-            releaseNotes = "当前版本来自仓库默认分支，尚未创建 GitHub Release。",
-            publishedAt = null,
-            assets = emptyList(),
-            isPrerelease = isPrereleaseVersion(versionName)
-        )
-    }
-
-    internal fun selectPreferredUpdateCandidate(
-        releaseCandidate: AppUpdateReleaseCandidate?,
-        repositoryCandidate: AppUpdateReleaseCandidate?
-    ): AppUpdateReleaseCandidate? {
-        if (releaseCandidate == null) return repositoryCandidate
-        if (repositoryCandidate == null) return releaseCandidate
-        return if (
-            compareVersions(
-                localVersion = normalizeVersion(releaseCandidate.tagName),
-                remoteVersion = normalizeVersion(repositoryCandidate.tagName)
-            ) >= 0
-        ) {
-            releaseCandidate
-        } else {
-            repositoryCandidate
-        }
     }
 
     private fun parseReleaseCandidateElement(
