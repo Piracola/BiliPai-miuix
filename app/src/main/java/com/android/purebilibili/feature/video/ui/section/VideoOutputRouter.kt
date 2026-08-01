@@ -55,7 +55,6 @@ internal class VideoOutputRouter(
         transitionFrozen = false
         anime4kInputSurface = null
         boundAnime4kSurface = null
-        directPlayerView?.takeIf { it.player === player }?.player = null
         directPlayerView = null
     }
 
@@ -78,15 +77,10 @@ internal class VideoOutputRouter(
             boundAnime4kSurface = null
         }
         val view = directPlayerView ?: return
-        if (shouldBindDirectPlayerView) {
-            if (wasUsingAnime4K) {
-                // clearVideoSurface() 会清掉同一帧内 PlayerView 刚绑定的 Surface，必须显式重绑。
-                rebindPlayerSurfaceIfNeeded(view, player)
-            } else if (view.player !== player) {
-                view.player = player
-            }
-        } else if (view.player === player) {
-            view.player = null
+        // 普通直出由 AndroidView 同步设置 PlayerView.player，保持 9.9.8.8 的稳定路径。
+        // Router 只负责从 Anime4K Surface 切回直出时，补做一次显式 Surface 重绑。
+        if (wasUsingAnime4K && shouldBindDirectPlayerView) {
+            rebindPlayerSurfaceIfNeeded(view, player)
         }
     }
 

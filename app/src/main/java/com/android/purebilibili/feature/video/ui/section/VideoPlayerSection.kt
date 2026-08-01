@@ -2845,8 +2845,9 @@ fun VideoPlayerSection(
                         }
                         basePlayerView.apply {
                             playerViewRef = this
-                            // 视频输出绑定统一由 VideoOutputRouter 管理，避免和 Anime4K 切换发生 Surface 竞态。
-                            player = null
+                            // 普通直出同步绑定 PlayerView；Anime4K 仅在输入 Surface 就绪后接管。
+                            // 合集换片会替换 Player，不能等待后续 effect 才补绑，否则解码器可能无输出窗口。
+                            player = if (shouldBindDirectPlayerView) playerState.player else null
                             setKeepContentOnPlayerReset(
                                 shouldKeepInlinePlayerContentOnReset(
                                     isPortraitFullscreen = isPortraitFullscreen,
@@ -2876,6 +2877,7 @@ fun VideoPlayerSection(
                     },
                     update = { playerView ->
                         playerViewRef = playerView
+                        playerView.player = if (shouldBindDirectPlayerView) playerState.player else null
                         playerView.setKeepContentOnPlayerReset(
                             shouldKeepInlinePlayerContentOnReset(
                                 isPortraitFullscreen = isPortraitFullscreen,

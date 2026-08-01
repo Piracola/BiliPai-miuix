@@ -463,11 +463,9 @@ internal fun VideoDetailScreenStateHolder(
             pendingInPageSwitchCoverUrl = switchedCover
         }
         presentationState.switchVideo(normalizedBvid, safeCid)
-        // force=true: always full-reload media for in-page collection/playlist switches.
         viewModel.loadVideo(
             bvid = normalizedBvid,
             cid = safeCid,
-            force = true,
             autoPlay = autoPlay
         )
     }

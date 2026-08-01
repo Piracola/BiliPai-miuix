@@ -170,10 +170,11 @@ class VideoDetailScreenPolicyTest {
             source.contains("presentationState.switchVideo(normalizedBvid, safeCid)") &&
                 source.contains("viewModel.loadVideo(")
         )
-        // In-page collection switch must force full reload and capture transitional cover.
+        // Presentation state already changes the player identity. A forced request here races the
+        // keyed player effect and can prepare the old player before the new player is attached.
         val switchSource = source.substringAfter("fun switchVideoInCurrentDetailPage")
             .substringBefore("val relatedNavigationScope")
-        assertTrue(switchSource.contains("force = true"))
+        assertFalse(switchSource.contains("force = true"))
         assertTrue(switchSource.contains("resolveUgcSeasonEpisodeCoverUrl("))
         assertTrue(switchSource.contains("pendingInPageSwitchCoverUrl"))
     }
