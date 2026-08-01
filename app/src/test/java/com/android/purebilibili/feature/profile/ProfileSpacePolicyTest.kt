@@ -211,7 +211,7 @@ class ProfileSpacePolicyTest {
     }
 
     @Test
-    fun `profile contribution hydrates when aggregate only has count`() {
+    fun `profile contribution hydration policy still covers missing aggregate items`() {
         assertTrue(
             shouldHydrateProfileContributionVideos(
                 contributionVideoCount = 5,
@@ -236,6 +236,63 @@ class ProfileSpacePolicyTest {
                 seededVideoCount = 0
             )
         )
+    }
+
+    @Test
+    fun `profile contribution content distinguishes loading empty and failure`() {
+        assertEquals(
+            ProfileContributionContentState.LOADING,
+            resolveProfileContributionContentState(ProfileContributionLoadState.LOADING, hasVideos = false)
+        )
+        assertEquals(
+            ProfileContributionContentState.EMPTY,
+            resolveProfileContributionContentState(ProfileContributionLoadState.LOADED, hasVideos = false)
+        )
+        assertEquals(
+            ProfileContributionContentState.ERROR,
+            resolveProfileContributionContentState(ProfileContributionLoadState.ERROR, hasVideos = false)
+        )
+        assertEquals(
+            ProfileContributionContentState.CONTENT,
+            resolveProfileContributionContentState(ProfileContributionLoadState.ERROR, hasVideos = true)
+        )
+    }
+
+    @Test
+    fun `hydrated contribution result remains authoritative over late aggregate`() {
+        val hydrated = ProfileSpaceUiState(
+            contributionVideos = listOf(SpaceVideoItem(aid = 9, bvid = "BV9", title = "WBI 投稿")),
+            contributionVideoCount = 1,
+            contributionLoadState = ProfileContributionLoadState.LOADED
+        )
+
+        val merged = mergeProfileAggregateState(
+            current = hydrated,
+            aggregate = SpaceAggregateData(
+                archive = com.android.purebilibili.data.model.response.SpaceAggregateArchive(
+                    count = 0,
+                    item = emptyList()
+                )
+            )
+        )
+
+        assertEquals(hydrated.contributionVideos, merged.contributionVideos)
+        assertEquals(1, merged.contributionVideoCount)
+    }
+
+    @Test
+    fun `successful empty contribution response clears aggregate seed`() {
+        val seeded = ProfileSpaceUiState(
+            contributionVideos = listOf(SpaceVideoItem(aid = 3, bvid = "BV3", title = "聚合投稿")),
+            contributionVideoCount = 1,
+            contributionLoadState = ProfileContributionLoadState.LOADING
+        )
+
+        val merged = mergeProfileContributionVideoState(seeded, videos = emptyList(), totalCount = 0)
+
+        assertTrue(merged.contributionVideos.isEmpty())
+        assertEquals(0, merged.contributionVideoCount)
+        assertEquals(ProfileContributionLoadState.LOADED, merged.contributionLoadState)
     }
 
     @Test

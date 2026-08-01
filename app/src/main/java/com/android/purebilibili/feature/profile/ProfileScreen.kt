@@ -70,6 +70,7 @@ import com.android.purebilibili.core.ui.AppAlertDialog
 import com.android.purebilibili.core.ui.AppModalBottomSheet
 import com.android.purebilibili.core.ui.components.AppPrimaryButton
 import com.android.purebilibili.core.ui.components.AppButton
+import com.android.purebilibili.core.ui.components.AppCircularProgressIndicator
 import com.android.purebilibili.core.ui.components.AppDropdownMenu
 import com.android.purebilibili.core.ui.components.AppDropdownMenuItem
 import com.android.purebilibili.core.ui.components.AppIconButton
@@ -609,6 +610,7 @@ fun ProfileScreen(
                         onWatchLaterClick = onWatchLaterClick,
                         onInboxClick = onInboxClick,
                         onVideoClick = onVideoClick,
+                        onContributionRetry = viewModel::retryProfileContributions,
                         onDynamicDeleteClick = { action ->
                             viewModel.deleteProfileDynamic(action) { _, message ->
                                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
@@ -760,6 +762,7 @@ private fun ProfileSpaceContent(
     onWatchLaterClick: () -> Unit,
     onInboxClick: () -> Unit,
     onVideoClick: (String) -> Unit,
+    onContributionRetry: () -> Unit,
     onDynamicDeleteClick: (DynamicDeleteAction) -> Unit,
     onBangumiClick: (Long, Long) -> Unit,
     onBangumiMoreClick: () -> Unit,
@@ -934,6 +937,7 @@ private fun ProfileSpaceContent(
                     onBangumiClick = onBangumiClick,
                     onBangumiMoreClick = onBangumiMoreClick,
                     onVideoClick = onVideoClick,
+                    onContributionRetry = onContributionRetry,
                     onHistoryClick = onHistoryClick,
                     showHistoryService = showHistoryService,
                     onDownloadClick = onDownloadClick,
@@ -985,6 +989,7 @@ private fun ProfileSpaceContent(
                             onBangumiClick = onBangumiClick,
                             onBangumiMoreClick = onBangumiMoreClick,
                             onVideoClick = onVideoClick,
+                            onContributionRetry = onContributionRetry,
                             onHistoryClick = onHistoryClick,
                             showHistoryService = showHistoryService,
                             onDownloadClick = onDownloadClick,
@@ -1035,6 +1040,7 @@ private fun ProfileSpaceFeedColumn(
     onBangumiClick: (Long, Long) -> Unit,
     onBangumiMoreClick: () -> Unit,
     onVideoClick: (String) -> Unit,
+    onContributionRetry: () -> Unit,
     onHistoryClick: () -> Unit,
     showHistoryService: Boolean,
     onDownloadClick: () -> Unit,
@@ -1066,6 +1072,7 @@ private fun ProfileSpaceFeedColumn(
                 onBangumiClick = onBangumiClick,
                 onBangumiMoreClick = onBangumiMoreClick,
                 onVideoClick = onVideoClick,
+                onContributionRetry = onContributionRetry,
                 onHistoryClick = onHistoryClick,
                 showHistoryService = showHistoryService,
                 onDownloadClick = onDownloadClick,
@@ -1487,6 +1494,7 @@ private fun ProfileSpaceTabBody(
     onBangumiClick: (Long, Long) -> Unit,
     onBangumiMoreClick: () -> Unit,
     onVideoClick: (String) -> Unit,
+    onContributionRetry: () -> Unit,
     onHistoryClick: () -> Unit,
     showHistoryService: Boolean,
     onDownloadClick: () -> Unit,
@@ -1524,7 +1532,12 @@ private fun ProfileSpaceTabBody(
             onVideoClick = onVideoClick,
             onDeleteClick = onDynamicDeleteClick
         )
-        ProfileSpaceMainTab.CONTRIBUTION -> ProfileVideoList(space.contributionVideos, onVideoClick)
+        ProfileSpaceMainTab.CONTRIBUTION -> ProfileVideoList(
+            videos = space.contributionVideos,
+            loadState = space.contributionLoadState,
+            onVideoClick = onVideoClick,
+            onRetry = onContributionRetry
+        )
         ProfileSpaceMainTab.FAVORITE -> ProfileFavoriteFolderList(user.mid, space.favoriteFolders, onFavoriteFolderClick)
         ProfileSpaceMainTab.BANGUMI -> ProfileBangumiList(space.bangumiItems, onBangumiClick)
     }
@@ -1929,10 +1942,36 @@ private fun ProfileBangumiList(items: List<FollowBangumiItem>, onBangumiClick: (
 }
 
 @Composable
-private fun ProfileVideoList(videos: List<SpaceVideoItem>, onVideoClick: (String) -> Unit) {
-    if (videos.isEmpty()) {
-        ProfileSpaceEmpty("暂无投稿")
-        return
+private fun ProfileVideoList(
+    videos: List<SpaceVideoItem>,
+    loadState: ProfileContributionLoadState,
+    onVideoClick: (String) -> Unit,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    when (resolveProfileContributionContentState(loadState, videos.isNotEmpty())) {
+        ProfileContributionContentState.LOADING -> {
+            Box(modifier = modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                AppCircularProgressIndicator()
+            }
+            return
+        }
+        ProfileContributionContentState.EMPTY -> {
+            ProfileSpaceEmpty("暂无投稿")
+            return
+        }
+        ProfileContributionContentState.ERROR -> {
+            Column(
+                modifier = modifier.fillMaxWidth().padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                AppText("投稿加载失败", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                AppOutlinedButton(onClick = onRetry) { AppText("重试") }
+            }
+            return
+        }
+        ProfileContributionContentState.CONTENT -> Unit
     }
     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         videos.forEach { video ->

@@ -73,12 +73,27 @@ enum class ProfileSpaceHomeSection {
     SERVICES
 }
 
+enum class ProfileContributionLoadState {
+    IDLE,
+    LOADING,
+    LOADED,
+    ERROR
+}
+
+enum class ProfileContributionContentState {
+    CONTENT,
+    LOADING,
+    EMPTY,
+    ERROR
+}
+
 data class ProfileSpaceUiState(
     val selectedTab: ProfileSpaceMainTab = ProfileSpaceMainTab.HOME,
     val isLoading: Boolean = false,
     val favoriteFolders: List<FavFolder> = emptyList(),
     val bangumiItems: List<FollowBangumiItem> = emptyList(),
     val contributionVideos: List<SpaceVideoItem> = emptyList(),
+    val contributionLoadState: ProfileContributionLoadState = ProfileContributionLoadState.IDLE,
     val coinVideos: List<SpaceAggregateArchiveItem> = emptyList(),
     val likeVideos: List<SpaceAggregateArchiveItem> = emptyList(),
     val dynamicItems: List<SpaceDynamicItem> = emptyList(),
@@ -227,6 +242,19 @@ fun resolveProfileSpaceHomeSections(
     }
 }
 
+fun resolveProfileContributionContentState(
+    loadState: ProfileContributionLoadState,
+    hasVideos: Boolean
+): ProfileContributionContentState {
+    if (hasVideos) return ProfileContributionContentState.CONTENT
+    return when (loadState) {
+        ProfileContributionLoadState.IDLE,
+        ProfileContributionLoadState.LOADING -> ProfileContributionContentState.LOADING
+        ProfileContributionLoadState.LOADED -> ProfileContributionContentState.EMPTY
+        ProfileContributionLoadState.ERROR -> ProfileContributionContentState.ERROR
+    }
+}
+
 fun validateProfileSign(sign: String): String? {
     return if (sign.length > 70) "签名最多支持 70 个字符" else null
 }
@@ -297,6 +325,8 @@ internal fun mergeProfileAggregateState(
     val aggregateFavoriteFolders = aggregate.favourite2?.item.orEmpty()
         .map(::mapProfileAggregateFavoriteFolder)
     val contributionVideos = aggregate.archive?.item.orEmpty().map(::mapProfileAggregateVideoItem)
+    val shouldSeedContributions = current.contributionLoadState != ProfileContributionLoadState.LOADED &&
+        current.contributionVideos.isEmpty()
     return current.copy(
         favoriteFolders = if (aggregate.favourite2 != null) {
             mergeProfileFavoriteFolders(current.favoriteFolders, aggregateFavoriteFolders)
@@ -304,12 +334,16 @@ internal fun mergeProfileAggregateState(
             current.favoriteFolders
         },
         favoriteFolderCount = aggregate.favourite2?.count ?: current.favoriteFolderCount,
-        contributionVideos = if (aggregate.archive != null) {
+        contributionVideos = if (aggregate.archive != null && shouldSeedContributions) {
             contributionVideos
         } else {
             current.contributionVideos
         },
-        contributionVideoCount = aggregate.archive?.count ?: current.contributionVideoCount,
+        contributionVideoCount = if (aggregate.archive != null && shouldSeedContributions) {
+            aggregate.archive.count
+        } else {
+            current.contributionVideoCount
+        },
         coinVideos = aggregate.coinArchive?.item ?: current.coinVideos,
         coinVideoCount = aggregate.coinArchive?.count ?: current.coinVideoCount,
         likeVideos = aggregate.likeArchive?.item ?: current.likeVideos,
@@ -336,12 +370,10 @@ internal fun mergeProfileContributionVideoState(
     videos: List<SpaceVideoItem>,
     totalCount: Int
 ): ProfileSpaceUiState {
-    if (videos.isEmpty() && totalCount <= current.contributionVideoCount) {
-        return current
-    }
     return current.copy(
-        contributionVideos = videos.ifEmpty { current.contributionVideos },
-        contributionVideoCount = maxOf(current.contributionVideoCount, totalCount, videos.size)
+        contributionVideos = videos,
+        contributionVideoCount = maxOf(totalCount, videos.size),
+        contributionLoadState = ProfileContributionLoadState.LOADED
     )
 }
 
