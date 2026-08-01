@@ -8,17 +8,23 @@ import kotlin.test.assertTrue
 class BiliPaiNavContentTransformPolicyStructureTest {
 
     @Test
-    fun allNavigationTransformsAreNoOp() {
+    fun navigationTransformsUseHorizontalStackMotionAndRespectReducedMotion() {
         val source = contentTransformPolicySource()
 
         assertTrue(source.contains("EnterTransition.None togetherWith ExitTransition.None"))
-        assertFalse(source.contains("slideIn"))
-        assertFalse(source.contains("slideOut"))
-        assertFalse(source.contains("fadeIn"))
-        assertFalse(source.contains("fadeOut"))
+        assertTrue(source.contains("BiliPaiNavRouteTransition.REDUCED_MOTION"))
+        assertTrue(source.contains("slideInHorizontally("))
+        assertTrue(source.contains("slideOutHorizontally("))
+        assertTrue(source.contains("NAVIGATION_PUSH_DURATION_MILLIS = 280"))
+        assertTrue(source.contains("NAVIGATION_POP_DURATION_MILLIS = 240"))
+        assertTrue(source.contains("NAVIGATION_BACKGROUND_PARALLAX_RATIO = 0.2f"))
+        assertTrue(source.contains("LayoutDirection"))
+        assertTrue(source.contains("targetContentZIndex = 1f"))
+        assertTrue(source.contains("targetContentZIndex = -1f"))
+        assertFalse(source.contains("fadeIn("))
+        assertFalse(source.contains("fadeOut("))
         assertFalse(source.contains("scaleIn"))
         assertFalse(source.contains("scaleOut"))
-        assertFalse(source.contains("tween("))
     }
 
     private fun contentTransformPolicySource(): String {

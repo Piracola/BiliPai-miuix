@@ -1,6 +1,11 @@
 package com.android.purebilibili.feature.settings.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,11 +25,13 @@ import androidx.compose.material3.MaterialTheme
 import com.android.purebilibili.core.ui.components.AppNavigationDrawerItem
 import com.android.purebilibili.core.ui.components.AppText
 import androidx.compose.runtime.Composable
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -34,6 +41,7 @@ import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.ui.ContainerLevel
 import com.android.purebilibili.core.ui.rememberAppBackIcon
+import com.android.purebilibili.core.ui.motion.rememberSystemReduceMotion
 import com.android.purebilibili.feature.settings.SettingsHomeSearchEntry
 import com.android.purebilibili.feature.settings.SettingsRootCategory
 import com.android.purebilibili.feature.settings.rememberSettingsEntryVisual
@@ -55,6 +63,11 @@ fun SettingsTabletShell(
         resolveSettingsTabletLayoutPolicy(widthDp = configuration.screenWidthDp)
     }
     val categories = remember { resolveSettingsRootCategoryOrder() }
+    val reduceMotion = rememberSystemReduceMotion()
+    val sharedAxisOffsetPx = with(LocalDensity.current) { 32.dp.roundToPx() }
+    val detailPaneVisibleState = remember(selectedCategory, reduceMotion) {
+        MutableTransitionState(reduceMotion).apply { targetState = true }
+    }
     AppSplitLayout(
         modifier = modifier.fillMaxSize(),
         primaryRatio = layoutPolicy.primaryRatio,
@@ -136,7 +149,19 @@ fun SettingsTabletShell(
                     .background(AppSurfaceTokens.groupedListContainer())
                     .padding(layoutPolicy.detailPanePaddingDp.dp),
             ) {
-                rightPane()
+                AnimatedVisibility(
+                    visibleState = detailPaneVisibleState,
+                    enter = if (reduceMotion) {
+                        androidx.compose.animation.EnterTransition.None
+                    } else {
+                        slideInHorizontally(
+                            animationSpec = tween(180, easing = FastOutSlowInEasing),
+                            initialOffsetX = { sharedAxisOffsetPx },
+                        ) + fadeIn(animationSpec = tween(180, easing = FastOutSlowInEasing))
+                    },
+                ) {
+                    rightPane()
+                }
             }
         },
     )

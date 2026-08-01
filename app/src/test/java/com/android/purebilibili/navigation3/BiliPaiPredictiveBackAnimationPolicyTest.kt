@@ -12,7 +12,7 @@ class BiliPaiPredictiveBackAnimationPolicyTest {
     @Test
     fun enabledPredictiveBackAlwaysUsesPlatformDefaultHandler() {
         val handler = resolveBiliPaiPredictiveBackAnimationHandler(
-            routeTransition = BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT,
+            routeTransition = BiliPaiNavRouteTransition.STACK,
             predictiveBackEnabled = true,
         )
 
@@ -22,7 +22,7 @@ class BiliPaiPredictiveBackAnimationPolicyTest {
     @Test
     fun disabledPredictiveBackDoesNotInstallPreviewHandler() {
         val handler = resolveBiliPaiPredictiveBackAnimationHandler(
-            routeTransition = BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT,
+            routeTransition = BiliPaiNavRouteTransition.STACK,
             predictiveBackEnabled = false,
         )
 

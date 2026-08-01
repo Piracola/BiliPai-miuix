@@ -372,11 +372,6 @@ fun VideoContentSection(
     onSearchKeywordClick: (String) -> Unit = {},
     onReportComment: (Long, Int) -> Unit = { _, _ -> },
     onToggleTopComment: (ReplyItem) -> Unit = {},
-    // 🔗 [新增] 共享元素过渡开关
-    transitionEnabled: Boolean = false,
-    relatedVideoTransitionEnabled: Boolean = transitionEnabled,
-    isQuickReturnLimitedForSharedElements: Boolean = false,
-    sourceRouteForSharedElement: String? = null,
     // [新增] 收藏夹相关参数
     onFavoriteLongClick: () -> Unit = {},
     // [新增] 恢复播放器 (音频模式 -> 视频模式)
@@ -599,10 +594,6 @@ fun VideoContentSection(
                         onWatchLaterClick = onWatchLaterClick,
                         onShareClick = onShareClick,
                         contentPadding = PaddingValues(bottom = bottomContentPadding),
-                        transitionEnabled = transitionEnabled,
-                        relatedVideoTransitionEnabled = relatedVideoTransitionEnabled,
-                        isQuickReturnLimitedForSharedElements = isQuickReturnLimitedForSharedElements,
-                        sourceRouteForSharedElement = sourceRouteForSharedElement,
                         ownerFollowerCount = ownerFollowerCount,
                         ownerVideoCount = ownerVideoCount,
                         showUpBadge = showUpBadge,
@@ -766,10 +757,6 @@ private fun VideoIntroTab(
     onDescriptionUrlClick: ((String) -> Unit)? = null,
     onSearchKeywordClick: (String) -> Unit = {},
     contentPadding: PaddingValues,
-    transitionEnabled: Boolean = false,  // 🔗 共享元素过渡开关
-    relatedVideoTransitionEnabled: Boolean = transitionEnabled,
-    isQuickReturnLimitedForSharedElements: Boolean = false,
-    sourceRouteForSharedElement: String? = null,
     ownerFollowerCount: Int? = null,
     ownerVideoCount: Int? = null,
     showUpBadge: Boolean = true,
@@ -840,9 +827,6 @@ private fun VideoIntroTab(
                 onShareClick = onShareClick,
 
                 onGloballyPositioned = { },
-                transitionEnabled = transitionEnabled,  // 🔗 传递共享元素开关
-                isQuickReturnLimitedForSharedElements = isQuickReturnLimitedForSharedElements,
-                sourceRouteForSharedElement = sourceRouteForSharedElement,
                 ownerFollowerCount = ownerFollowerCount,
                 ownerVideoCount = ownerVideoCount,
                 onFavoriteLongClick = onFavoriteLongClick,
@@ -898,30 +882,25 @@ private fun VideoIntroTab(
                 )
             }
         ) { _, row ->
-            CompositionLocalProvider(
-                LocalVideoCardSharedElementSourceRoute provides "video/${info.bvid}"
-            ) {
-                RelatedVideoGridRow(
-                    videos = row,
-                    followingMids = followingMids,
-                    transitionEnabled = relatedVideoTransitionEnabled,
-                    isListScrolling = isRelatedListScrolling,
-                    showUpBadge = showUpBadge,
-                    onVideoClick = { video ->
-                        val navOptions = if (video.cid > 0L) {
-                            android.os.Bundle().apply {
-                                putLong(VIDEO_NAV_TARGET_CID_KEY, video.cid)
-                            }
-                        } else {
-                            null
+            RelatedVideoGridRow(
+                videos = row,
+                followingMids = followingMids,
+                isListScrolling = isRelatedListScrolling,
+                showUpBadge = showUpBadge,
+                onVideoClick = { video ->
+                    val navOptions = if (video.cid > 0L) {
+                        android.os.Bundle().apply {
+                            putLong(VIDEO_NAV_TARGET_CID_KEY, video.cid)
                         }
-                        onRelatedVideoClick(video.bvid, navOptions)
-                    },
-                    onVideoHidden = { video ->
-                        hiddenRelatedBvids = hiddenRelatedBvids + video.bvid
+                    } else {
+                        null
                     }
-                )
-            }
+                    onRelatedVideoClick(video.bvid, navOptions)
+                },
+                onVideoHidden = { video ->
+                    hiddenRelatedBvids = hiddenRelatedBvids + video.bvid
+                }
+            )
         }
     }
 }
@@ -1160,9 +1139,6 @@ private fun VideoHeaderContent(
     onWatchLaterClick: () -> Unit,
     onShareClick: () -> Unit = {},
     onGloballyPositioned: (Float) -> Unit,
-    transitionEnabled: Boolean = false,  // 🔗 共享元素过渡开关
-    isQuickReturnLimitedForSharedElements: Boolean = false,
-    sourceRouteForSharedElement: String? = null,
     ownerFollowerCount: Int? = null,
     ownerVideoCount: Int? = null,
     onFavoriteLongClick: () -> Unit = {},
@@ -1218,17 +1194,11 @@ private fun VideoHeaderContent(
             showOwnerAvatar = true,
             followerCount = ownerFollowerCount,
             videoCount = ownerVideoCount,
-            transitionEnabled = transitionEnabled,  // 🔗 传递共享元素开关
-            isQuickReturnLimitedForSharedElements = isQuickReturnLimitedForSharedElements,
-            sourceRouteForSharedElement = sourceRouteForSharedElement
         )
 
         VideoTitleWithDesc(
             info = info,
             videoTags = videoTags,
-            transitionEnabled = transitionEnabled,  // 🔗 传递共享元素开关
-            isQuickReturnLimitedForSharedElements = isQuickReturnLimitedForSharedElements,
-            sourceRouteForSharedElement = sourceRouteForSharedElement,
             bgmList = resolveDisplayBgmList(
                 bgmInfo = bgmInfo,
                 bgmInfoList = bgmInfoList

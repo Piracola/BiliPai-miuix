@@ -4,6 +4,8 @@ import com.android.purebilibili.data.model.response.UgcSeason
 import com.android.purebilibili.feature.video.player.ExternalPlaylistSource
 import kotlin.math.roundToInt
 
+internal const val VIDEO_CONTENT_COMMENT_TAB_INDEX = 1
+
 internal fun hasMeaningfulVideoPlayerBoundsChange(
     oldBounds: android.graphics.Rect?,
     newBounds: android.graphics.Rect?,

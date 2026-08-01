@@ -27,7 +27,7 @@ class VideoDetailMiniPlayerSyncStructureTest {
     }
 
     @Test
-    fun backPreviewCannotReplaceTheCurrentMiniPlayerSession() {
+    fun pageStackOnlyKeepsTheTopDetailPlaybackSessionActive() {
         val source = loadSource("app/src/main/java/com/android/purebilibili/feature/video/screen/VideoDetailScreenStateHolder.kt")
         val playerStateBlock = source
             .substringAfter("val playerState = rememberVideoPlayerState(")
@@ -39,8 +39,8 @@ class VideoDetailMiniPlayerSyncStructureTest {
         assertTrue(playerStateBlock.contains("cid = playbackTargetCid"))
         assertTrue(source.contains("currentBvidCid"))
         assertTrue(source.contains("requestedCid = playbackTargetCid"))
-        assertTrue(playerStateBlock.contains("playbackSessionActive = playbackSessionActiveForMorph"))
-        assertTrue(source.contains("shouldKeepPlaybackSessionActiveForSharedReturnMorph("))
+        assertTrue(playerStateBlock.contains("playbackSessionActive = isVisible"))
+        assertFalse(source.contains("shouldKeepPlaybackSessionActiveForSharedReturnMorph("))
         assertTrue(syncEffect.contains("miniPlayerManager != null && shouldCacheMiniPlayer && isVisible"))
     }
 

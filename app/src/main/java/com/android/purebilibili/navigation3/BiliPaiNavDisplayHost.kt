@@ -3,7 +3,6 @@ package com.android.purebilibili.navigation3
 import android.app.Application
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -12,10 +11,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.HasDefaultViewModelProviderFactory
 import androidx.lifecycle.ViewModelProvider
@@ -32,13 +36,12 @@ import androidx.navigation3.scene.rememberNavigationEventState
 import androidx.navigation3.scene.rememberSceneState
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import androidx.navigation3.ui.NavDisplay
-import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.NavigationEventState
 import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.ui.ProvideAnimatedVisibilityScope
-import com.android.purebilibili.core.ui.transition.LocalVideoCardSharedElementSourceRoute
-import com.android.purebilibili.navigation3.predictiveback.BiliPaiPredictiveBackAnimationStyle
+import com.android.purebilibili.feature.settings.isSettingsSubtreeNavKey
+import com.android.purebilibili.feature.settings.shouldUseSettingsSplitLayout
 
 internal class BiliPaiProgrammaticBackDispatcher {
     private var callback: (() -> Unit)? = null
@@ -63,42 +66,23 @@ internal class BiliPaiProgrammaticBackDispatcher {
 /**
  * Navigation3 的唯一显示宿主。
  *
- * 普通导航固定硬切；预测返回只把 NavigationEvent 交给 Navigation3/AOSP，不再叠加项目的
- * 卡片、快照、模糊或回弹效果。保留旧参数仅用于与已持久化的设置和上层调用兼容，它们不会
- * 改变任何视觉行为。
+ * 普通导航统一使用原生页面栈 Push/Pop；预测返回仍只交给 Navigation3/AOSP，
+ * 不叠加项目的卡片、快照、模糊或回弹效果。系统关闭动画时直接切换终态。
  */
 @Composable
-@Suppress("UNUSED_PARAMETER")
 internal fun BiliPaiNavDisplayHost(
     backStack: List<BiliPaiNavKey>,
-    cardTransitionEnabled: Boolean = true,
-    videoCardDepthEffectEnabled: Boolean = cardTransitionEnabled,
     reduceMotion: Boolean = false,
     predictiveBackEnabled: Boolean = true,
-    predictiveBackAnimationStyle: BiliPaiPredictiveBackAnimationStyle =
-        BiliPaiPredictiveBackAnimationStyle.SCALE,
-    predictiveBackExitDirectionOverride: String = "auto",
-    sourceMetadata: BiliPaiNavSourceMetadata,
     programmaticBackDispatcher: BiliPaiProgrammaticBackDispatcher,
     onBack: () -> Unit,
-    onNativeVideoBackProgress: (currentKey: BiliPaiNavKey?, targetKey: BiliPaiNavKey?, progress: Float) -> Unit =
-        { _, _, _ -> },
-    onNativeVideoBackCancelled: (currentKey: BiliPaiNavKey?, targetKey: BiliPaiNavKey?) -> Unit =
-        { _, _ -> },
-    isQuickReturnFromDetail: Boolean = false,
-    preferWholeCardReturn: Boolean = false,
-    onPrepareVideoCardSharedReturn: () -> Boolean = { isQuickReturnFromDetail },
-    onRelatedVideoDetailReturned: () -> Unit = {},
     modifier: Modifier = Modifier,
-    sharedTransitionScope: SharedTransitionScope? = null,
-    visibleBottomBarRoutes: Set<String> = emptySet(),
-    activeMainHostRoute: String? = null,
-    isLightBackground: Boolean = false,
     content: @Composable (BiliPaiNavKey) -> Unit,
 ) {
     val safeBackStack = remember(backStack) {
         backStack.ifEmpty { listOf(BiliPaiNavKey.MainHost) }
     }
+    var previousBackStack by remember { mutableStateOf(safeBackStack) }
     val application = LocalContext.current.applicationContext as Application
     var navigationEventState: NavigationEventState<SceneInfo<BiliPaiNavKey>>? = null
     val latestOnBack = rememberUpdatedState(onBack)
@@ -123,30 +107,17 @@ internal fun BiliPaiNavDisplayHost(
                 ProvideAnimatedVisibilityScope(
                     animatedVisibilityScope = LocalNavAnimatedContentScope.current,
                 ) {
-                    // 此值只保留路由来源标识；页面不再注册 shared bounds。
-                    CompositionLocalProvider(
-                        LocalVideoCardSharedElementSourceRoute provides key.toLegacyRoute(),
-                    ) {
-                        ProvideNavigation3ViewModelApplicationExtras(application) {
-                            content(key)
-                        }
+                    ProvideNavigation3ViewModelApplicationExtras(application) {
+                        content(key)
                     }
                 }
             }
         }
     }
     val entryProvider = remember(
-        sourceMetadata,
-        visibleBottomBarRoutes,
-        activeMainHostRoute,
         scopedContent,
     ) {
         biliPaiNavEntryProvider(
-            sourceMetadata = sourceMetadata,
-            cardTransitionEnabled = false,
-            reduceMotion = true,
-            visibleBottomBarRoutes = visibleBottomBarRoutes,
-            activeMainHostRoute = activeMainHostRoute,
             content = scopedContent,
         )
     }
@@ -162,31 +133,17 @@ internal fun BiliPaiNavDisplayHost(
         entries = entries,
         sceneStrategies = listOf(SinglePaneSceneStrategy()),
         sceneDecoratorStrategies = emptyList(),
-        sharedTransitionScope = sharedTransitionScope,
+        sharedTransitionScope = null,
         onBack = { performBack { } },
     )
     val scene = sceneState.currentScene
     navigationEventState = rememberNavigationEventState(sceneState)
-    val currentBackKey = safeBackStack.lastOrNull()
-    val targetBackKey = safeBackStack.getOrNull(safeBackStack.lastIndex - 1)
-    val nativeVideoBackProgress =
-        (navigationEventState.transitionState as? NavigationEventTransitionState.InProgress)
-            ?.latestEvent
-            ?.progress
-    SideEffect {
-        if (nativeVideoBackProgress != null) {
-            onNativeVideoBackProgress(currentBackKey, targetBackKey, nativeVideoBackProgress)
-        }
-    }
     NavigationBackHandler(
         state = navigationEventState,
         isBackEnabled = scene.previousEntries.isNotEmpty(),
         reportPredictiveProgress = predictiveBackEnabled,
         onBackCompleted = performBack,
-        onBackCancelled = { commitTransition ->
-            onNativeVideoBackCancelled(currentBackKey, targetBackKey)
-            commitTransition()
-        },
+        onBackCancelled = { commitTransition -> commitTransition() },
     )
 
     Box(
@@ -194,15 +151,40 @@ internal fun BiliPaiNavDisplayHost(
             .fillMaxSize()
             .background(AppSurfaceTokens.groupedListContainer()),
     ) {
+        val layoutDirection = LocalLayoutDirection.current
+        val configuration = LocalConfiguration.current
+        val isTabletSettingsInternalTransition =
+            shouldUseSettingsSplitLayout(configuration.screenWidthDp) &&
+                previousBackStack.lastOrNull()?.let(::isSettingsSubtreeNavKey) == true &&
+                safeBackStack.lastOrNull()?.let(::isSettingsSubtreeNavKey) == true
+        val fallbackRouteTransition = if (reduceMotion) {
+            BiliPaiNavRouteTransition.REDUCED_MOTION
+        } else {
+            BiliPaiNavRouteTransition.STACK
+        }
+        val fallbackForwardTransform = remember(fallbackRouteTransition, layoutDirection) {
+            resolveBiliPaiNavContentTransform(fallbackRouteTransition, layoutDirection)
+        }
+        val fallbackPopTransform = remember(fallbackRouteTransition, layoutDirection) {
+            resolveBiliPaiNavPopContentTransform(fallbackRouteTransition, layoutDirection)
+        }
+        val settingsInternalTransform = EnterTransition.None togetherWith ExitTransition.None
+        SideEffect { previousBackStack = safeBackStack }
         NavDisplay(
             sceneState = sceneState,
             navigationEventState = navigationEventState,
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.TopStart,
             sizeTransform = null,
-            transitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
-            popTransitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
-            predictivePopTransitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
+            transitionSpec = {
+                if (isTabletSettingsInternalTransition) settingsInternalTransform else fallbackForwardTransform
+            },
+            popTransitionSpec = {
+                if (isTabletSettingsInternalTransition) settingsInternalTransform else fallbackPopTransform
+            },
+            predictivePopTransitionSpec = {
+                if (isTabletSettingsInternalTransition) settingsInternalTransform else fallbackPopTransform
+            },
         )
     }
 }

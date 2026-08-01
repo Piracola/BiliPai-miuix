@@ -11,8 +11,8 @@ class AnimationSettingsScreenStructureTest {
     fun animationSettingsScreen_exposesOnlyTheRetainedMotionPolicy() {
         val source = animationSettingsSource()
 
-        assertTrue(source.contains("页面切换使用系统默认行为"))
-        assertTrue(source.contains("应用仅保留播放器控制栏的短暂透明度反馈"))
+        assertTrue(source.contains("页面切换使用原生左右滑动"))
+        assertTrue(source.contains("下一级页面从右侧进入，返回时向右滑出"))
         assertFalse(source.contains("SettingsManager.setPredictiveBackEnabled"))
         assertFalse(source.contains("setPredictiveBackAnimationStyle"))
         assertFalse(source.contains("setPredictiveBackExitDirection"))

@@ -22,7 +22,7 @@ import com.android.purebilibili.feature.settings.ui.SettingsPageScaffold
 /**
  * 动画与效果设置页。
  *
- * 历史上的卡片、共享元素和入场动画开关已停止生效，因此不再展示或保留对应的死代码。
+ * 历史上的卡片、共享元素和复杂入场动画开关已停止生效；页面导航使用原生左右滑动。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,12 +73,12 @@ fun AnimationSettingsContent(
                         .padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
                     AppText(
-                        text = "页面切换使用系统默认行为",
+                        text = "页面切换使用原生左右滑动",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                     AppText(
-                        text = "应用仅保留播放器控制栏的短暂透明度反馈；系统关闭动画时会直接显示终态。",
+                        text = "下一级页面从右侧进入，返回时向右滑出；系统关闭动画时会直接显示终态。",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

@@ -28,8 +28,8 @@ class SettingsMiuixSimplificationStructureTest {
     fun `animation settings expose only the retained static motion policy`() {
         val source = loadSource("app/src/main/java/com/android/purebilibili/feature/settings/screen/AnimationSettingsScreen.kt")
 
-        assertTrue(source.contains("页面切换使用系统默认行为"))
-        assertTrue(source.contains("应用仅保留播放器控制栏的短暂透明度反馈"))
+        assertTrue(source.contains("页面切换使用轻量淡入淡出"))
+        assertTrue(source.contains("页面进入和返回使用短暂透明度过渡"))
         assertFalse(source.contains("液态玻璃"))
         assertFalse(source.contains("toggleTopBarLiquidGlass("))
         assertFalse(source.contains("toggleHomeSearchLiquidGlass("))

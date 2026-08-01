@@ -18,17 +18,22 @@ class BiliPaiNavDisplayHostStructureTest {
         assertTrue(source.contains("rememberNavigationEventState(sceneState)"))
         assertTrue(source.contains("NavigationBackHandler("))
         assertTrue(source.contains("onBackCompleted = performBack"))
-        assertTrue(source.contains("onNativeVideoBackCancelled(currentBackKey, targetBackKey)"))
+        assertFalse(source.contains("onNativeVideoBackCancelled"))
         assertTrue(source.contains("programmaticBackDispatcher.register(callback)"))
     }
 
     @Test
-    fun navDisplayHost_usesNoOpTransformsForEveryNavigationPath() {
+    fun navDisplayHost_usesStackTransformExceptTabletSettingsDetailPane() {
         val source = navDisplayHostSource()
 
-        assertTrue(source.contains("transitionSpec = { EnterTransition.None togetherWith ExitTransition.None }"))
-        assertTrue(source.contains("popTransitionSpec = { EnterTransition.None togetherWith ExitTransition.None }"))
-        assertTrue(source.contains("predictivePopTransitionSpec = { EnterTransition.None togetherWith ExitTransition.None }"))
+        assertTrue(source.contains("BiliPaiNavRouteTransition.STACK"))
+        assertTrue(source.contains("LocalLayoutDirection.current"))
+        assertTrue(source.contains("resolveBiliPaiNavContentTransform(fallbackRouteTransition, layoutDirection)"))
+        assertTrue(source.contains("resolveBiliPaiNavPopContentTransform(fallbackRouteTransition, layoutDirection)"))
+        assertTrue(source.contains("isTabletSettingsInternalTransition"))
+        assertTrue(source.contains("settingsInternalTransform"))
+        assertTrue(source.contains("if (isTabletSettingsInternalTransition) settingsInternalTransform else fallbackForwardTransform"))
+        assertTrue(source.contains("if (isTabletSettingsInternalTransition) settingsInternalTransform else fallbackPopTransform"))
         assertTrue(source.contains("reportPredictiveProgress = predictiveBackEnabled"))
     }
 

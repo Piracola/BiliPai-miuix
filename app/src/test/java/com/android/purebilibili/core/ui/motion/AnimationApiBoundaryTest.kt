@@ -8,7 +8,7 @@ import kotlin.test.assertTrue
 class AnimationApiBoundaryTest {
 
     @Test
-    fun navigationAndVideoCardHotPathCannotRestoreDecorativeMotion() {
+    fun navigationUsesOnlyStandardFadeWithoutRestoringDecorativeMotion() {
         val navigationTransform = source("navigation3/BiliPaiNavContentTransformPolicy.kt")
         val videoCardBounds = source("core/ui/transition/VideoCardShellSharedBounds.kt")
         val homeSkeleton = source("feature/home/HomeFeedSkeletonCard.kt")
@@ -16,7 +16,11 @@ class AnimationApiBoundaryTest {
 
         assertTrue(navigationTransform.contains("EnterTransition.None togetherWith ExitTransition.None"))
         assertFalse(navigationTransform.contains("slideIn"))
-        assertFalse(navigationTransform.contains("fadeIn"))
+        assertFalse(navigationTransform.contains("slideOut"))
+        assertTrue(navigationTransform.contains("fadeIn("))
+        assertTrue(navigationTransform.contains("fadeOut("))
+        assertFalse(navigationTransform.contains("scaleIn"))
+        assertFalse(navigationTransform.contains("scaleOut"))
         assertFalse(videoCardBounds.substringAfter("videoCardShellSharedBoundsOrEmpty")
             .contains("Modifier.sharedBounds("))
         assertFalse(homeSkeleton.contains("rememberInfiniteTransition"))

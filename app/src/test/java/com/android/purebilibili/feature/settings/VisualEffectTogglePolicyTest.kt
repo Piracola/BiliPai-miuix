@@ -129,7 +129,7 @@ class VisualEffectTogglePolicyTest {
         requireNotNull(sourceFile)
         val source = sourceFile.readText()
 
-        assertTrue(source.contains("页面切换使用系统默认行为"))
+        assertTrue(source.contains("页面切换使用原生左右滑动"))
         assertFalse(source.contains("顶部 Dock 液态玻璃"))
         assertFalse(source.contains("toggleTopBarLiquidGlass"))
         assertFalse(source.contains("首页搜索框液态玻璃"))

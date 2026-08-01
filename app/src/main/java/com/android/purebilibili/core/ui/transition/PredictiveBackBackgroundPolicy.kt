@@ -110,15 +110,7 @@ internal fun shouldApplyPredictiveBackGestureBlur(
     gestureReturningVideoCard: Boolean,
     motionTier: MotionTier,
 ): Boolean {
-    if (!predictiveBackEnabled) return false
-    if (gestureReturningVideoCard) return false
-    if (motionTier == MotionTier.Reduced) return false
-    if (routeTransition == BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT) return false
-    // 设置 iOS 预测返回已靠横滑露出完整底层页；再叠满屏 GPU 模糊会起手发灰、跟手发沉。
-    if (routeTransition == BiliPaiNavRouteTransition.SETTINGS_IOS_PUSH_POP) return false
-    return routeTransition == BiliPaiNavRouteTransition.CLASSIC_CARD ||
-        routeTransition == BiliPaiNavRouteTransition.BOTTOM_BAR_SIBLING_POP ||
-        routeTransition == BiliPaiNavRouteTransition.LIGHT_SIBLING_POP
+    return false
 }
 
 internal fun shouldApplyPredictiveBackBlurToRoute(

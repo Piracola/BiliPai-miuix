@@ -1,7 +1,5 @@
 package com.android.purebilibili.navigation
 
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -10,15 +8,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
-import androidx.compose.runtime.withFrameNanos
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
-import kotlin.math.abs
 
 internal class MainBottomPagerState(
     val pagerState: PagerState,
@@ -31,6 +25,9 @@ internal class MainBottomPagerState(
         private set
 
     var navigationStartPage by mutableIntStateOf(pagerState.currentPage)
+        private set
+
+    var contentVisible by mutableStateOf(true)
         private set
 
     private var navJob: Job? = null
@@ -53,16 +50,18 @@ internal class MainBottomPagerState(
             val myJob = coroutineContext.job
             try {
                 previousJob?.join()
-                awaitScrollIdle()
-                awaitNextFrame()
-                if (!animatePageChange(safeTargetIndex)) {
-                    pagerState.scrollToPage(safeTargetIndex)
-                }
-                delay(BOTTOM_TAB_RENDER_BUDGET_HOLD_MILLIS)
+                // 底栏点击表示平级页面替换，而非用户拖动页面。先淡出、直接换页、再淡入，
+                // 不与 HorizontalPager 自身的跟手滑动叠加。
+                contentVisible = false
+                delay(BOTTOM_PAGER_FADE_OUT_DURATION_MILLIS)
+                pagerState.scrollToPage(safeTargetIndex)
+                contentVisible = true
+                delay(BOTTOM_PAGER_FADE_IN_DURATION_MILLIS)
             } catch (_: IllegalStateException) {
                 // Pager 在测量竞争期间可能拒绝切页，保持当前页并避免快速点击闪退。
             } finally {
                 if (navJob == myJob) {
+                    contentVisible = true
                     isNavigating = false
                     selectedPage = pagerState.currentPage
                     navigationStartPage = pagerState.currentPage
@@ -78,42 +77,10 @@ internal class MainBottomPagerState(
         }
     }
 
-    private suspend fun animatePageChange(targetIndex: Int): Boolean {
-        val layoutInfo = pagerState.layoutInfo
-        if (layoutInfo.pageSize <= 0) return false
-
-        val currentPage = pagerState.currentPage
-        if (targetIndex == currentPage && abs(pagerState.currentPageOffsetFraction) < 0.001f) {
-            return false
-        }
-
-        val durationMillis = resolveBottomPagerNavigationDurationMillis(
-            pageDistance = abs(targetIndex - currentPage)
-        ).coerceAtMost(BOTTOM_PAGER_ANIMATED_SCROLL_MAX_MILLIS)
-        pagerState.run {
-            animateScrollToPage(
-                page = targetIndex,
-                animationSpec = tween(
-                    durationMillis = durationMillis,
-                    easing = LinearOutSlowInEasing,
-                ),
-            )
-        }
-        return true
-    }
-
-    private suspend fun awaitScrollIdle() {
-        if (pagerState.isScrollInProgress) {
-            snapshotFlow { pagerState.isScrollInProgress }.first { !it }
-        }
-    }
-
-    private suspend fun awaitNextFrame() {
-        withFrameNanos { }
-    }
 }
 
-private const val BOTTOM_PAGER_ANIMATED_SCROLL_MAX_MILLIS = 280
+internal const val BOTTOM_PAGER_FADE_OUT_DURATION_MILLIS = 90L
+internal const val BOTTOM_PAGER_FADE_IN_DURATION_MILLIS = 130L
 
 @Composable
 internal fun rememberMainBottomPagerState(

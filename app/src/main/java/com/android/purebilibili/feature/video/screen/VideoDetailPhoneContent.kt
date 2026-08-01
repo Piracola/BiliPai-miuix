@@ -30,7 +30,6 @@ import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.ui.ContainerLevel
 import com.android.purebilibili.core.ui.components.AppSurface
-import com.android.purebilibili.core.ui.LocalSharedTransitionEnabled
 import com.android.purebilibili.core.ui.blur.hazeSourceCompat
 import com.android.purebilibili.core.ui.blur.shouldAllowRuntimeShaderBackedHazeEffect
 import com.android.purebilibili.core.ui.rememberAppChevronUpIcon
@@ -72,12 +71,7 @@ internal fun VideoDetailPhoneSuccessContentLayer(
     context: Context,
     sortPreferenceScope: CoroutineScope,
     playerState: VideoPlayerState,
-    motionSpec: VideoDetailMotionSpec,
     hazeState: HazeState,
-    isTransitionFinished: Boolean,
-    isLeaving: Boolean,
-    rootTransitionOwnsContentAlpha: Boolean,
-    keepContentVisibleAfterBackPreview: Boolean = false,
     shouldShowExternalPlaylistQueueBar: Boolean,
     selectedVideoContentTabIndex: Int,
     useTabletLayout: Boolean,
@@ -88,9 +82,6 @@ internal fun VideoDetailPhoneSuccessContentLayer(
     showFavoriteFolderDialog: Boolean,
     downloadProgress: Float,
     danmakuEnabledForDetail: Boolean,
-    isQuickReturnLimitedForSharedElements: Boolean,
-    transitionEnabled: Boolean,
-    sourceRouteForSharedElement: String?,
     isPlayerCollapsed: Boolean,
     onRestorePlayer: () -> Unit,
     onBgmClick: (BgmInfo) -> Unit,
@@ -111,7 +102,6 @@ internal fun VideoDetailPhoneSuccessContentLayer(
 ) {
     val engagementSuccess = success.withEngagementUiState(engagementState)
     val danmakuManager = rememberDanmakuManager()
-    val relatedVideoTransitionEnabled = LocalSharedTransitionEnabled.current
     // Android 16 ART 曾拒绝校验 VideoDetailScreen 中捕获过多状态的匿名 Compose lambda。
     // 保持这个成功态为命名边界，避免 R8/Compose 再生成单个超大内容块。
     key(success.info.bvid) {
@@ -121,36 +111,12 @@ internal fun VideoDetailPhoneSuccessContentLayer(
                     .fillMaxSize()
                     .hazeSourceCompat(hazeState)
             ) {
-                val detailContentRevealEnter = fadeIn(
-                    tween(
-                        motionSpec.contentRevealFadeDurationMillis,
-                        easing = com.android.purebilibili.core.ui.motion.AppMotionEasing.Continuity
-                    )
-                )
-                val detailContentExitFade = fadeOut(
-                    tween(
-                        durationMillis = 180,
-                        delayMillis = 60,
-                        easing = com.android.purebilibili.core.ui.motion.AppMotionEasing.Continuity
-                    )
-                )
                 AnimatedVisibility(
-                    visible = shouldShowVideoDetailContent(
-                        isTransitionFinished = isTransitionFinished,
-                        isLeaving = isLeaving,
-                        rootTransitionOwnsContentAlpha = rootTransitionOwnsContentAlpha,
-                        keepContentVisibleAfterBackPreview = keepContentVisibleAfterBackPreview,
-                    ),
-                    enter = if (rootTransitionOwnsContentAlpha) {
-                        EnterTransition.None
-                    } else {
-                        detailContentRevealEnter
-                    },
-                    exit = if (rootTransitionOwnsContentAlpha) {
-                        ExitTransition.None
-                    } else {
-                        detailContentExitFade
-                    }
+                    // 页面栈已负责完整的 Push/Pop。成功态内容不能在其内部再次淡出或
+                    // 卸载，否则预测返回会露出播放器下方的空白区域。
+                    visible = true,
+                    enter = EnterTransition.None,
+                    exit = ExitTransition.None,
                 ) {
                     Box(modifier = Modifier.fillMaxSize()) {
                         val floatingLiquidBottomInputBar = shouldUseFloatingLiquidBottomInputBar(
@@ -283,10 +249,6 @@ internal fun VideoDetailPhoneSuccessContentLayer(
                                             )
                                     }
                                 },
-                                transitionEnabled = transitionEnabled,
-                                relatedVideoTransitionEnabled = relatedVideoTransitionEnabled,
-                                isQuickReturnLimitedForSharedElements = isQuickReturnLimitedForSharedElements,
-                                sourceRouteForSharedElement = sourceRouteForSharedElement,
                                 onFavoriteLongClick = playbackActions.showFavoriteFolderDialog,
                                 isPlayerCollapsed = isPlayerCollapsed,
                                 onRestorePlayer = onRestorePlayer,

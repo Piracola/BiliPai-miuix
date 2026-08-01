@@ -738,7 +738,6 @@ private fun TabletSecondaryContent(
                                 RelatedVideoGridRow(
                                     videos = row,
                                     followingMids = success.followingMids,
-                                    transitionEnabled = LocalSharedTransitionEnabled.current,
                                     showUpBadge = showUpBadge,
                                     onVideoClick = { video ->
                                         val activity = (context as? android.app.Activity)

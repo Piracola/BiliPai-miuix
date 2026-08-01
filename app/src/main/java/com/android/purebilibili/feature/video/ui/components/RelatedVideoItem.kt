@@ -163,110 +163,32 @@ internal fun chunkRelatedVideosForHomeStyleGrid(
 }
 
 /** 相关推荐单列横卡：整卡进入 shared overlay，封面、标题与元数据一起移动。 */
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun RelatedVideoItem(
     video: RelatedVideo,
     isFollowed: Boolean = false,
-    transitionEnabled: Boolean = false,
-    sharedTransitionEnabled: Boolean = transitionEnabled,
     showUpBadge: Boolean = true,
     coverAspectRatio: Float = RELATED_VIDEO_CARD_COVER_ASPECT_RATIO,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
     onMoreClick: (() -> Unit)? = null
 ) {
-    val clickScope = rememberCoroutineScope()
-    var forceSharedTransitionForClick by remember { mutableStateOf(false) }
-    val effectiveTransitionEnabled = transitionEnabled || forceSharedTransitionForClick
-    val latestOnClick by rememberUpdatedState(onClick)
-    val sharedTransitionScope = LocalSharedTransitionScope.current
-    val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
-    val sharedReady = effectiveTransitionEnabled &&
-        sharedTransitionScope != null &&
-        animatedVisibilityScope != null
-    val configuration = LocalConfiguration.current
-    val density = LocalDensity.current
-    val screenWidthPx = remember(configuration.screenWidthDp, density) {
-        with(density) { configuration.screenWidthDp.dp.toPx() }
-    }
-    val screenHeightPx = remember(configuration.screenHeightDp, density) {
-        with(density) { configuration.screenHeightDp.dp.toPx() }
-    }
-    val densityValue = density.density
-    val sourceRoute = resolveRelatedVideoSharedElementSourceRoute(
-        LocalVideoCardSharedElementSourceRoute.current
-    )
-    val sharedTransitionSpeedSettings = LocalVideoSharedTransitionSpeedSettings.current
-    val cardSharedTransitionMotionSpec = remember(sourceRoute, effectiveTransitionEnabled, sharedTransitionSpeedSettings) {
-        resolveVideoCardSharedTransitionMotionSpec(
-            sourceRoute = sourceRoute,
-            transitionEnabled = effectiveTransitionEnabled,
-            speedSettings = sharedTransitionSpeedSettings
-        )
-    }
-    val cardBoundsRef = remember { object { var value: Rect? = null } }
-    val triggerRelatedVideoClick = {
-        cardBoundsRef.value?.let { bounds ->
-            CardPositionManager.recordVideoCardPosition(
-                bvid = video.bvid,
-                sourceRoute = sourceRoute,
-                bounds = bounds,
-                screenWidth = screenWidthPx,
-                screenHeight = screenHeightPx,
-                density = densityValue,
-                sourceCornerDp = 12
-            )
-        }
-        if (shouldDeferRelatedVideoNavigationForSharedTransition(
-                sharedTransitionEnabled = sharedTransitionEnabled,
-                cardTransitionEnabled = effectiveTransitionEnabled,
-            )
-        ) {
-            forceSharedTransitionForClick = true
-            clickScope.launch {
-                // First frame applies the shared-bounds modifier; the second measures it before navigation.
-                withFrameNanos { }
-                withFrameNanos { }
-                latestOnClick()
-            }
-        } else {
-            latestOnClick()
-        }
-        Unit
-    }
+    val triggerRelatedVideoClick = onClick
     val cardShape = RoundedCornerShape(12.dp)
     val coverShape = RoundedCornerShape(10.dp)
     val coverWidth = 144.dp
     val coverHeight = coverWidth / coverAspectRatio.coerceAtLeast(1f)
-    val useCardShellSharedBounds = shouldUseVideoCardShellSharedBounds(
-        sourceRoute = sourceRoute,
-        transitionEnabled = sharedReady
-    )
     val context = LocalContext.current
-    val coverRequest = remember(video.pic, transitionEnabled) {
+    val coverRequest = remember(video.pic) {
         ImageRequest.Builder(context)
             .data(FormatUtils.resolveVideoCoverUrl(video.pic, useLowQuality = false))
-            .crossfade(shouldEnableRelatedVideoCoverCrossfade(transitionEnabled))
+            .crossfade(false)
             .build()
     }
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .onGloballyPositioned { coordinates ->
-                cardBoundsRef.value = coordinates.boundsInRoot()
-            }
-            .videoCardShellSharedBoundsOrEmpty(
-                enabled = useCardShellSharedBounds,
-                sharedTransitionScope = sharedTransitionScope,
-                animatedVisibilityScope = animatedVisibilityScope,
-                bvid = video.bvid,
-                sourceRoute = sourceRoute,
-                motionSpec = cardSharedTransitionMotionSpec,
-                clipShape = cardShape,
-                crossfadeSourceContent = true
-            )
             .clip(cardShape)
             .background(MaterialTheme.colorScheme.surface)
             .clickable(onClick = triggerRelatedVideoClick)
@@ -407,7 +329,6 @@ fun RelatedVideoItem(
 fun RelatedVideoGridRow(
     videos: List<RelatedVideo>,
     followingMids: Set<Long> = emptySet(),
-    transitionEnabled: Boolean = false,
     isListScrolling: Boolean = false,
     showUpBadge: Boolean = true,
     onVideoClick: (RelatedVideo) -> Unit,
@@ -421,10 +342,6 @@ fun RelatedVideoGridRow(
     val cardLayout = remember(homeFeedCardStyle) {
         resolveHomeFeedCardLayout(homeFeedCardStyle)
     }
-    val cardTransitionEnabled = shouldEnableRelatedVideoGridSharedTransition(
-        sharedTransitionEnabled = transitionEnabled,
-        isListScrolling = isListScrolling,
-    )
     var actionVideo by remember { mutableStateOf<RelatedVideo?>(null) }
     var blockCreatorRequest by remember {
         mutableStateOf<RelatedVideoBlockRequest?>(null)
@@ -440,8 +357,6 @@ fun RelatedVideoGridRow(
             RelatedVideoItem(
                 video = video,
                 isFollowed = video.owner.mid in followingMids,
-                transitionEnabled = cardTransitionEnabled,
-                sharedTransitionEnabled = transitionEnabled,
                 showUpBadge = showUpBadge,
                 coverAspectRatio = cardLayout.coverAspectRatio,
                 modifier = Modifier.fillMaxWidth(),

@@ -3,7 +3,15 @@ package com.android.purebilibili.feature.video.ui.section
 import com.android.purebilibili.core.ui.components.AppIcon
 import com.android.purebilibili.core.ui.components.AppText
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.border
@@ -171,6 +179,8 @@ private const val BGM_DISCOVERY_LOAD_DELAY_MS = 420L
 private const val BGM_RECOMMEND_PAGE_SIZE = 5
 private const val BGM_RECOMMEND_ROW_START_INDEX = 4
 private val BGM_DETAIL_CARD_HEIGHT = 168.dp
+private const val VIDEO_INFO_EXPAND_DURATION_MILLIS = 220
+private const val VIDEO_INFO_INDICATOR_DURATION_MILLIS = 200
 
 /**
  * Video Title Section (Bilibili official style: compact layout)
@@ -274,7 +284,7 @@ fun VideoTitleSection(
  */
 
 
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class, androidx.compose.animation.ExperimentalSharedTransitionApi::class)
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun VideoTitleWithDesc(
     info: ViewInfo,
@@ -282,9 +292,6 @@ fun VideoTitleWithDesc(
     bgmList: List<BgmInfo> = emptyList(),
     onlineCount: String = "",
     showOnlineCount: Boolean = true,
-    transitionEnabled: Boolean = false,  // 🔗 共享元素过渡开关
-    isQuickReturnLimitedForSharedElements: Boolean = false,
-    sourceRouteForSharedElement: String? = null,
     animateLayout: Boolean = true,
     onDescriptionUrlClick: ((String) -> Unit)? = null,
     onBgmClick: (BgmInfo) -> Unit = {},
@@ -327,33 +334,37 @@ fun VideoTitleWithDesc(
     val videoBadges = remember(info.isUpowerExclusive, info.isUpowerPreview, info.isCooperation) {
         resolveVideoDetailBadges(info)
     }
-    
-    //  尝试获取共享元素作用域
-    val sharedTransitionScope = com.android.purebilibili.core.ui.LocalSharedTransitionScope.current
-    val animatedVisibilityScope = com.android.purebilibili.core.ui.LocalAnimatedVisibilityScope.current
-    val coverSharedEnabled = shouldEnableVideoCoverSharedTransition(
-        transitionEnabled = transitionEnabled,
-        hasSharedTransitionScope = sharedTransitionScope != null,
-        hasAnimatedVisibilityScope = animatedVisibilityScope != null
-    )
-    val useCardContainerSharedBounds = shouldUseVideoCardShellSharedBounds(
-        sourceRoute = sourceRouteForSharedElement,
-        transitionEnabled = coverSharedEnabled
-    )
-    val metadataSharedEnabled = shouldEnableVideoMetadataSharedTransition(
-        coverSharedEnabled = coverSharedEnabled,
-        isQuickReturnLimited = isQuickReturnLimitedForSharedElements,
-        useCardContainerSharedBounds = useCardContainerSharedBounds
-    )
-    val sharedTransitionSpeedSettings = LocalVideoSharedTransitionSpeedSettings.current
-    val metadataSharedTransitionMotionSpec = remember(
-        metadataSharedEnabled,
-        sharedTransitionSpeedSettings
-    ) {
-        resolveVideoMetadataSharedTransitionMotionSpec(
-            transitionEnabled = metadataSharedEnabled,
-            speedSettings = sharedTransitionSpeedSettings
+    val expandedContentEnter = if (animateLayout) {
+        expandVertically(
+            expandFrom = Alignment.Top,
+            animationSpec = tween(
+                durationMillis = VIDEO_INFO_EXPAND_DURATION_MILLIS,
+                easing = FastOutSlowInEasing,
+            ),
+        ) + fadeIn(
+            animationSpec = tween(
+                durationMillis = VIDEO_INFO_EXPAND_DURATION_MILLIS,
+                easing = FastOutSlowInEasing,
+            ),
         )
+    } else {
+        EnterTransition.None
+    }
+    val expandedContentExit = if (animateLayout) {
+        shrinkVertically(
+            shrinkTowards = Alignment.Top,
+            animationSpec = tween(
+                durationMillis = VIDEO_INFO_EXPAND_DURATION_MILLIS,
+                easing = FastOutSlowInEasing,
+            ),
+        ) + fadeOut(
+            animationSpec = tween(
+                durationMillis = VIDEO_INFO_EXPAND_DURATION_MILLIS,
+                easing = FastOutSlowInEasing,
+            ),
+        )
+    } else {
+        ExitTransition.None
     }
     
     Column(
@@ -368,8 +379,16 @@ fun VideoTitleWithDesc(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.Top
         ) {
-            //  共享元素过渡 - 标题
-            val titleModifier = Modifier
+            val titleModifier = if (animateLayout) {
+                Modifier.animateContentSize(
+                    animationSpec = tween(
+                        durationMillis = VIDEO_INFO_EXPAND_DURATION_MILLIS,
+                        easing = FastOutSlowInEasing,
+                    ),
+                )
+            } else {
+                Modifier
+            }
 
             //  注意：使用 ExperimentalSharedTransitionApi 注解需要上下文
 
@@ -386,13 +405,26 @@ fun VideoTitleWithDesc(
                 modifier = titleModifier.weight(1f)
             )
 
+            val expandIndicatorRotation by animateFloatAsState(
+                targetValue = if (expanded) 180f else 0f,
+                animationSpec = if (animateLayout) {
+                    tween(
+                        durationMillis = VIDEO_INFO_INDICATOR_DURATION_MILLIS,
+                        easing = FastOutSlowInEasing,
+                    )
+                } else {
+                    tween(durationMillis = 0)
+                },
+                label = "VideoInfoExpandIndicator",
+            )
             AppIcon(
-                imageVector = if (expanded) CupertinoIcons.Default.ChevronUp else CupertinoIcons.Default.ChevronDown,
+                imageVector = CupertinoIcons.Default.ChevronDown,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                 modifier = Modifier
                     .size(20.dp)
                     .padding(4.dp)
+                    .rotate(expandIndicatorRotation)
             )
         }
         
@@ -504,7 +536,11 @@ fun VideoTitleWithDesc(
         }
         
         //  Description - 默认隐藏，展开后显示
-        if (expanded && info.desc.isNotBlank()) {
+        AnimatedVisibility(
+            visible = expanded && info.desc.isNotBlank(),
+            enter = expandedContentEnter,
+            exit = expandedContentExit,
+        ) {
             Column {
                 Spacer(Modifier.height(6.dp))
                 val descriptionUrlColor = MaterialTheme.colorScheme.primary
@@ -551,7 +587,11 @@ fun VideoTitleWithDesc(
         }
         
         //  Tags - 默认隐藏，展开后显示
-        if (expanded && videoTags.isNotEmpty()) {
+        AnimatedVisibility(
+            visible = expanded && videoTags.isNotEmpty(),
+            enter = expandedContentEnter,
+            exit = expandedContentExit,
+        ) {
             Column {
                 Spacer(Modifier.height(8.dp))
                 androidx.compose.foundation.layout.FlowRow(
@@ -614,7 +654,6 @@ private fun VideoDetailBadgeChip(
 /**
  * UP Owner Info Section (Bilibili official style: blue UP tag)
  */
-@OptIn(androidx.compose.animation.ExperimentalSharedTransitionApi::class)
 @Composable
 fun UpInfoSection(
     info: ViewInfo,
@@ -624,9 +663,6 @@ fun UpInfoSection(
     showOwnerAvatar: Boolean = true,
     followerCount: Int? = null,
     videoCount: Int? = null,
-    transitionEnabled: Boolean = false,  // 🔗 共享元素过渡开关
-    isQuickReturnLimitedForSharedElements: Boolean = false,
-    sourceRouteForSharedElement: String? = null,
     modifier: Modifier = Modifier
 ) {
     val playerControlVisibility by com.android.purebilibili.core.store.SettingsManager
@@ -634,33 +670,6 @@ fun UpInfoSection(
         .collectAsStateWithLifecycle(
             initialValue = com.android.purebilibili.core.store.PlayerControlVisibilitySettings()
         )
-    //  尝试获取共享元素作用域
-    val sharedTransitionScope = com.android.purebilibili.core.ui.LocalSharedTransitionScope.current
-    val animatedVisibilityScope = com.android.purebilibili.core.ui.LocalAnimatedVisibilityScope.current
-    val coverSharedEnabled = shouldEnableVideoCoverSharedTransition(
-        transitionEnabled = transitionEnabled,
-        hasSharedTransitionScope = sharedTransitionScope != null,
-        hasAnimatedVisibilityScope = animatedVisibilityScope != null
-    )
-    val useCardContainerSharedBounds = shouldUseVideoCardShellSharedBounds(
-        sourceRoute = sourceRouteForSharedElement,
-        transitionEnabled = coverSharedEnabled
-    )
-    val metadataSharedEnabled = shouldEnableVideoMetadataSharedTransition(
-        coverSharedEnabled = coverSharedEnabled,
-        isQuickReturnLimited = isQuickReturnLimitedForSharedElements,
-        useCardContainerSharedBounds = useCardContainerSharedBounds
-    )
-    val sharedTransitionSpeedSettings = LocalVideoSharedTransitionSpeedSettings.current
-    val metadataSharedTransitionMotionSpec = remember(
-        metadataSharedEnabled,
-        sharedTransitionSpeedSettings
-    ) {
-        resolveVideoMetadataSharedTransitionMotionSpec(
-            transitionEnabled = metadataSharedEnabled,
-            speedSettings = sharedTransitionSpeedSettings
-        )
-    }
     val upStatsText = resolveUpStatsText(
         followerCount = followerCount,
         videoCount = videoCount

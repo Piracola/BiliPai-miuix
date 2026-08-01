@@ -1367,7 +1367,6 @@ private fun CinemaRelatedPane(
                 RelatedVideoGridRow(
                     videos = row,
                     followingMids = success.followingMids,
-                    transitionEnabled = LocalSharedTransitionEnabled.current,
                     showUpBadge = showUpBadge,
                     onVideoClick = { video ->
                         val activity = (context as? Activity)

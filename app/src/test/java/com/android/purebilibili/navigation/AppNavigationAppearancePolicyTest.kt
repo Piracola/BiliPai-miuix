@@ -135,12 +135,8 @@ class AppNavigationAppearancePolicyTest {
         val providerSource = loadSource("app/src/main/java/com/android/purebilibili/core/ui/SharedTransitionProvider.kt")
         val activitySource = loadSource("app/src/main/java/com/android/purebilibili/MainActivity.kt")
 
-        assertTrue(
-            navigationSource.contains(
-                "SharedTransitionProvider(enabled = sharedVideoCardTransitionEnabled)"
-            )
-        )
-        assertTrue(navigationSource.contains("cardTransitionEnabled = false"))
+        assertFalse(navigationSource.contains("SharedTransitionProvider("))
+        assertFalse(navigationSource.contains("cardTransitionEnabled ="))
         assertFalse(navigationSource.contains("VideoCardTransitionVisualTimeline.REDUCED_MOTION_DURATION_MILLIS"))
         assertTrue(providerSource.contains("val sharedTransitionScope = if (enabled) this else null"))
         assertTrue(providerSource.contains("LocalSharedTransitionScope provides sharedTransitionScope"))
@@ -170,9 +166,9 @@ class AppNavigationAppearancePolicyTest {
 
         assertFalse(source.contains("getVideoTransitionLiveReturnPreviewEnabled"))
         assertFalse(source.contains("videoTransitionLiveReturnPreviewEnabled"))
-        assertTrue(navHostCall.contains("preferWholeCardReturn = false"))
+        assertFalse(navHostCall.contains("preferWholeCardReturn"))
         assertFalse(navHostSource.contains("preferWholeCardReturnProvider"))
-        assertTrue(navHostSource.contains("preferWholeCardReturn: Boolean = false"))
+        assertFalse(navHostSource.contains("preferWholeCardReturn"))
     }
 
     @Test
@@ -185,7 +181,7 @@ class AppNavigationAppearancePolicyTest {
             .substringAfter("BiliPaiNavDisplayHost(")
             .substringBefore(") { key ->")
 
-        assertTrue(navHostCall.contains("videoCardDepthEffectEnabled = false"))
+        assertFalse(navHostCall.contains("videoCardDepthEffectEnabled"))
         assertFalse(navHostCall.contains("videoCardBackgroundSinkEnabled"))
         assertFalse(navHostSource.contains("isBackgroundSinkEnabledProvider ="))
         assertFalse(navHostSource.contains("videoCardBackgroundSinkEnabled"))

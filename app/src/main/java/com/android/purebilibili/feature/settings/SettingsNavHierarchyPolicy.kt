@@ -157,10 +157,10 @@ internal fun resolveSettingsNavRouteTransition(
 ): BiliPaiNavRouteTransition? {
     if (forward) {
         if (!isSettingsNavHierarchyTransition(fromRoute, toRoute)) return null
-        return BiliPaiNavRouteTransition.SETTINGS_IOS_PUSH_FORWARD
+        return BiliPaiNavRouteTransition.STACK
     }
     if (!isSettingsNavHierarchyTransition(toRoute, fromRoute)) return null
-    return BiliPaiNavRouteTransition.SETTINGS_IOS_PUSH_POP
+    return BiliPaiNavRouteTransition.STACK
 }
 
 /**
@@ -188,12 +188,12 @@ internal fun resolveSettingsNavPopTransition(
             childRoute = fromRoute,
         )
     ) {
-        return BiliPaiNavRouteTransition.SETTINGS_IOS_PUSH_POP
+        return BiliPaiNavRouteTransition.STACK
     }
     // 设置子树任意页直接回到 MainHost，且底栏仍在 Settings：统一走设置 iOS pop，
     // 覆盖非严格父子边（如搜索直达 animation 后一键返回）。
     if (normalizedTo == BiliPaiNavKey.MainHost.routeBase && isSettingsSubtreeRoute(normalizedActive)) {
-        return BiliPaiNavRouteTransition.SETTINGS_IOS_PUSH_POP
+        return BiliPaiNavRouteTransition.STACK
     }
     return null
 }

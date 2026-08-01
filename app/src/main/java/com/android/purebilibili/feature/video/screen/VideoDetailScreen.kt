@@ -14,7 +14,8 @@ import com.android.purebilibili.feature.video.viewmodel.VideoSupplementViewModel
  * Navigation-facing video detail entry point.
  *
  * ViewModel acquisition and the public route contract stay here; screen orchestration lives in
- * [VideoDetailScreenStateHolder], while transition and platform behavior have dedicated owners.
+ * [VideoDetailScreenStateHolder], while platform behavior has dedicated owners. Page motion is
+ * owned by Navigation3; this screen never coordinates a card-to-detail transition.
  */
 @Composable
 fun VideoDetailScreen(
@@ -29,16 +30,6 @@ fun VideoDetailScreen(
     resumePositionMsFromRoute: Long = 0L,
     openCommentRootRpidFromRoute: Long = 0L,
     openCommentTargetRpidFromRoute: Long = 0L,
-    sourceRouteForSharedElement: String? = null,
-    keepLoadedContentForBackPreview: Boolean = false,
-    bindLivePlayerForBackPreview: Boolean = keepLoadedContentForBackPreview,
-    predictiveBackCancelRecoveryGeneration: Int = 0,
-    isReturningFromDetail: Boolean = false,
-    isQuickReturningFromDetail: Boolean = false,
-    onMarkReturningFromDetail: () -> Unit = {},
-    onClearReturningFromDetail: () -> Unit = {},
-    transitionEnabled: Boolean = false,
-    transitionEnterDurationMillis: Int = 320,
     onBack: () -> Unit,
     onHomeClick: () -> Unit = onBack,
     onNavigateToAudioMode: () -> Unit = {},
@@ -70,16 +61,6 @@ fun VideoDetailScreen(
         resumePositionMsFromRoute = resumePositionMsFromRoute,
         openCommentRootRpidFromRoute = openCommentRootRpidFromRoute,
         openCommentTargetRpidFromRoute = openCommentTargetRpidFromRoute,
-        sourceRouteForSharedElement = sourceRouteForSharedElement,
-        keepLoadedContentForBackPreview = keepLoadedContentForBackPreview,
-        bindLivePlayerForBackPreview = bindLivePlayerForBackPreview,
-        predictiveBackCancelRecoveryGeneration = predictiveBackCancelRecoveryGeneration,
-        isReturningFromDetail = isReturningFromDetail,
-        isQuickReturningFromDetail = isQuickReturningFromDetail,
-        onMarkReturningFromDetail = onMarkReturningFromDetail,
-        onClearReturningFromDetail = onClearReturningFromDetail,
-        transitionEnabled = transitionEnabled,
-        transitionEnterDurationMillis = transitionEnterDurationMillis,
         onBack = onBack,
         onHomeClick = onHomeClick,
         onNavigateToAudioMode = onNavigateToAudioMode,

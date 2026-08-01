@@ -7,15 +7,14 @@ import kotlin.test.assertTrue
 
 class HomeMotionAndFeedPerformanceStructureTest {
     @Test
-    fun bottomTabSwitch_animatesPagerOffset() {
+    fun bottomTabSwitch_usesFadeThroughWithoutAnimatingPagerOffset() {
         val source = sourceFile("navigation/MainBottomPagerState.kt")
 
-        assertTrue(source.contains("private suspend fun animatePageChange("))
-        assertTrue(source.contains("animateScrollToPage("))
-        assertTrue(!source.contains("AnimationState(initialValue = 0f).animateTo("))
-        assertTrue(!source.contains("scrollScope.scrollBy(value - previousValue)"))
-        assertTrue(source.contains(".coerceAtMost(BOTTOM_PAGER_ANIMATED_SCROLL_MAX_MILLIS)"))
-        assertTrue(source.contains("easing = LinearOutSlowInEasing"))
+        assertTrue(source.contains("var contentVisible by mutableStateOf(true)"))
+        assertTrue(source.contains("delay(BOTTOM_PAGER_FADE_OUT_DURATION_MILLIS)"))
+        assertTrue(source.contains("pagerState.scrollToPage(safeTargetIndex)"))
+        assertTrue(source.contains("delay(BOTTOM_PAGER_FADE_IN_DURATION_MILLIS)"))
+        assertTrue(!source.contains("animateScrollToPage("))
     }
 
     @Test
@@ -49,11 +48,11 @@ class HomeMotionAndFeedPerformanceStructureTest {
     }
 
     @Test
-    fun videoMotionSwitch_doesNotChangeGlobalNavigationTiming() {
+    fun videoMotionSwitch_noLongerControlsGlobalNavigationTiming() {
         val source = sourceFile("navigation/AppNavigation.kt")
 
-        assertTrue(source.contains("remember(isTabletLayout, cardTransitionEnabled)"))
-        assertTrue(source.contains("cardTransitionEnabled = cardTransitionEnabled"))
+        assertTrue(source.contains("remember { resolveAppNavigationMotionSpec() }"))
+        assertFalse(source.contains("cardTransitionEnabled"))
         assertFalse(source.contains("val shouldApplyBackground = cardTransitionEnabled &&"))
     }
 
