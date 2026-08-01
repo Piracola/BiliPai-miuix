@@ -49,6 +49,7 @@ import com.android.purebilibili.core.player.PlaybackMediaCache
 import com.android.purebilibili.core.player.PlayerVolumeController
 import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.store.TokenManager
+import com.android.purebilibili.core.store.player.PlayerSettingsStore
 import com.android.purebilibili.core.store.normalizeAppIconKey
 import com.android.purebilibili.core.util.FormatUtils
 import com.android.purebilibili.core.util.MediaUtils
@@ -2212,7 +2213,7 @@ class MiniPlayerManager private constructor(private val context: Context) :
                 isLoggedIn = isLoggedIn,
                 isVip = effectiveVip
             )
-            val audioQualityPreference = SettingsManager.getAudioQualitySync(context)
+            val audioQualityPreference = PlayerSettingsStore.getCachedLastSelectedAudioQuality(context)
             val videoCodecPreference = SettingsManager.getVideoCodecSync(context)
             val videoSecondCodecPreference = SettingsManager.getVideoSecondCodecSync(context)
 

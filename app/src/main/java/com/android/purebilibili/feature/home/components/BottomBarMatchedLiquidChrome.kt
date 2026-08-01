@@ -33,6 +33,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.android.purebilibili.core.store.BottomBarLiquidGlassPreset
 import com.android.purebilibili.core.store.HomeSettings
 import com.android.purebilibili.core.store.SettingsManager
+import com.android.purebilibili.core.ui.AppSpacingTokens
 import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.ui.adaptive.MotionTier
 import com.android.purebilibili.core.ui.animation.DampedDragAnimationState
@@ -314,12 +315,16 @@ internal fun BottomBarMatchedReusableLiquidDock(
         liquidGlassPreset = homeSettings.bottomBarLiquidGlassPreset
     )
     val fullCaptureLensSpec = resolveBottomBarBackdropPresetCaptureLens(progress = 1f)
-    val captureSafeInset = resolveBottomBarCaptureSafeInsetDp(
-        indicatorWidthDp = 0f,
-        refractionHeightDp = fullCaptureLensSpec.refractionHeightDp,
-        refractionAmountDp = fullCaptureLensSpec.refractionAmountDp,
-        panelOffsetDp = 0f
-    ).dp
+    val captureSafeInset = if (drawShellLens) {
+        resolveBottomBarCaptureSafeInsetDp(
+            indicatorWidthDp = 0f,
+            refractionHeightDp = fullCaptureLensSpec.refractionHeightDp,
+            refractionAmountDp = fullCaptureLensSpec.refractionAmountDp,
+            panelOffsetDp = 0f
+        ).dp
+    } else {
+        AppSpacingTokens.None
+    }
 
     Box(modifier = modifier) {
         Box(

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.android.purebilibili.core.store.resolvePreferredPlaybackSpeed as resolvePreferredPlaybackSpeedPolicy
 import com.android.purebilibili.core.store.normalizePlaybackSpeed as normalizePlaybackSpeedPolicy
@@ -11,6 +12,10 @@ import com.android.purebilibili.core.store.settingsDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+
+const val DEFAULT_AUDIO_QUALITY_FOLLOW_LAST = -2
+
+internal val defaultAudioQualityPreferenceKey = intPreferencesKey("default_audio_quality")
 
 object PlayerSettingsStore {
     enum class PlayerInsightMode {
@@ -29,6 +34,9 @@ object PlayerSettingsStore {
     private const val cacheKeyRememberLastSpeed = "remember_last_speed"
     private const val cacheKeyLastPlaybackSpeed = "last_speed"
     private const val cacheKeyPreferredPlayerVolume = "preferred_player_volume"
+    private const val audioQualityCachePrefs = "quality_settings"
+    private const val cacheKeyAudioQuality = "audio_quality"
+    private const val cacheKeyDefaultAudioQuality = "default_audio_quality"
     private const val legacyAppPrefs = "app_prefs"
     private const val legacyShowStatsKey = "show_stats"
     private const val cachePlayerInsightModeKey = "player_insight_mode_cache"
@@ -144,6 +152,31 @@ object PlayerSettingsStore {
             context.getSharedPreferences(playbackSpeedCachePrefs, Context.MODE_PRIVATE)
                 .getFloat(cacheKeyPreferredPlayerVolume, 1.0f)
         )
+    }
+
+    fun getDefaultAudioQuality(context: Context): Flow<Int> = context.settingsDataStore.data
+        .map { preferences ->
+            preferences[defaultAudioQualityPreferenceKey] ?: DEFAULT_AUDIO_QUALITY_FOLLOW_LAST
+        }
+
+    suspend fun setDefaultAudioQuality(context: Context, value: Int) {
+        context.settingsDataStore.edit { preferences ->
+            preferences[defaultAudioQualityPreferenceKey] = value
+        }
+        context.getSharedPreferences(audioQualityCachePrefs, Context.MODE_PRIVATE)
+            .edit()
+            .putInt(cacheKeyDefaultAudioQuality, value)
+            .commit()
+    }
+
+    fun getCachedDefaultAudioQuality(context: Context): Int {
+        return context.getSharedPreferences(audioQualityCachePrefs, Context.MODE_PRIVATE)
+            .getInt(cacheKeyDefaultAudioQuality, DEFAULT_AUDIO_QUALITY_FOLLOW_LAST)
+    }
+
+    fun getCachedLastSelectedAudioQuality(context: Context): Int {
+        return context.getSharedPreferences(audioQualityCachePrefs, Context.MODE_PRIVATE)
+            .getInt(cacheKeyAudioQuality, -1)
     }
 
     fun getPlayerInsightMode(context: Context): Flow<PlayerInsightMode> = context.settingsDataStore.data

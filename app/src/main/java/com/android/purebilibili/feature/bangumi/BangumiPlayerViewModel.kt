@@ -7,6 +7,7 @@ import com.android.purebilibili.core.player.BasePlayerViewModel
 import com.android.purebilibili.core.network.NetworkModule
 import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.store.TokenManager
+import com.android.purebilibili.core.store.player.PlayerSettingsStore
 import com.android.purebilibili.core.util.MediaUtils
 import com.android.purebilibili.data.model.response.*
 import com.android.purebilibili.data.repository.ActionRepository
@@ -154,8 +155,8 @@ class BangumiPlayerViewModel : BasePlayerViewModel() {
     private fun resolveConfiguredAudioQuality(): Int {
         val context = NetworkModule.appContext ?: return -1
         return resolveRequestedAudioQuality(
-            defaultAudioQuality = SettingsManager.getDefaultAudioQualitySync(context),
-            rememberedAudioQuality = SettingsManager.getAudioQualitySync(context)
+            defaultAudioQuality = PlayerSettingsStore.getCachedDefaultAudioQuality(context),
+            rememberedAudioQuality = PlayerSettingsStore.getCachedLastSelectedAudioQuality(context)
         )
     }
     

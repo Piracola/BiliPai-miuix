@@ -3105,10 +3105,10 @@ class VideoPlaybackViewModel : ViewModel() {
                 //  [新增] 获取音频/视频偏好
                 val audioQualityPreference = appContext?.let { context ->
                     resolveRequestedAudioQuality(
-                        defaultAudioQuality = com.android.purebilibili.core.store.SettingsManager
-                            .getDefaultAudioQualitySync(context),
-                        rememberedAudioQuality = com.android.purebilibili.core.store.SettingsManager
-                            .getAudioQualitySync(context)
+                        defaultAudioQuality = com.android.purebilibili.core.store.player.PlayerSettingsStore
+                            .getCachedDefaultAudioQuality(context),
+                        rememberedAudioQuality = com.android.purebilibili.core.store.player.PlayerSettingsStore
+                            .getCachedLastSelectedAudioQuality(context)
                     )
                 } ?: -1
                 val settingsCodecPreference = appContext?.let {
@@ -7158,10 +7158,10 @@ class VideoPlaybackViewModel : ViewModel() {
                     } ?: AVC_CODEC_KEY
                     val audioQualityPreference = appContext?.let { context ->
                         resolveRequestedAudioQuality(
-                            defaultAudioQuality = com.android.purebilibili.core.store.SettingsManager
-                                .getDefaultAudioQualitySync(context),
-                            rememberedAudioQuality = com.android.purebilibili.core.store.SettingsManager
-                                .getAudioQualitySync(context)
+                            defaultAudioQuality = com.android.purebilibili.core.store.player.PlayerSettingsStore
+                                .getCachedDefaultAudioQuality(context),
+                            rememberedAudioQuality = com.android.purebilibili.core.store.player.PlayerSettingsStore
+                                .getCachedLastSelectedAudioQuality(context)
                         )
                     } ?: -1
                     

@@ -39,6 +39,7 @@ import com.android.purebilibili.core.store.DEFAULT_PLAYER_DIAGNOSTIC_LOGGING_ENA
 import com.android.purebilibili.core.store.DEFAULT_QUALITY_SWITCH_FAILURE_DIALOG_ENABLED
 import com.android.purebilibili.core.store.DEFAULT_QUALITY_SWITCH_FAILURE_DIALOG_ONCE_ENABLED
 import com.android.purebilibili.core.store.SettingsManager
+import com.android.purebilibili.core.store.player.DEFAULT_AUDIO_QUALITY_FOLLOW_LAST
 import com.android.purebilibili.core.store.player.PlayerSettingsStore
 import com.android.purebilibili.core.ui.adaptive.resolveDeviceUiProfile
 import com.android.purebilibili.core.store.BottomProgressBehavior
@@ -749,10 +750,10 @@ fun PlaybackSettingsContent(
                         .getWifiQuality(context).collectAsStateWithLifecycle(initialValue = 80)
                     val mobileQuality by com.android.purebilibili.core.store.SettingsManager
                         .getMobileQuality(context).collectAsStateWithLifecycle(initialValue = 64)
-                    val defaultAudioQuality by com.android.purebilibili.core.store.SettingsManager
+                    val defaultAudioQuality by PlayerSettingsStore
                         .getDefaultAudioQuality(context)
                         .collectAsStateWithLifecycle(
-                            initialValue = com.android.purebilibili.core.store.DEFAULT_AUDIO_QUALITY_FOLLOW_LAST
+                            initialValue = DEFAULT_AUDIO_QUALITY_FOLLOW_LAST
                         )
                     val autoHighestQualityEnabled by com.android.purebilibili.core.store.SettingsManager
                         .getAutoHighestQuality(context).collectAsStateWithLifecycle(initialValue = false)
@@ -887,7 +888,7 @@ fun PlaybackSettingsContent(
                             title = "默认音质：${getAudioQualityLabel(normalizedDefaultAudioQuality)}",
                             subtitle = if (
                                 normalizedDefaultAudioQuality ==
-                                com.android.purebilibili.core.store.DEFAULT_AUDIO_QUALITY_FOLLOW_LAST
+                                DEFAULT_AUDIO_QUALITY_FOLLOW_LAST
                             ) {
                                 "新视频跟随播放器上次手动选择"
                             } else {
@@ -897,7 +898,7 @@ fun PlaybackSettingsContent(
                             selectedValue = normalizedDefaultAudioQuality,
                             onSelectionChange = { audioQuality ->
                                 scope.launch {
-                                    com.android.purebilibili.core.store.SettingsManager
+                                    PlayerSettingsStore
                                         .setDefaultAudioQuality(context, audioQuality)
                                 }
                             }

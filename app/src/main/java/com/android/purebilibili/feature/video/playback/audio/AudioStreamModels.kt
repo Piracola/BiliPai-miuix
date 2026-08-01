@@ -1,7 +1,7 @@
 package com.android.purebilibili.feature.video.playback.audio
 
 import com.android.purebilibili.data.model.response.DashAudio
-import com.android.purebilibili.core.store.DEFAULT_AUDIO_QUALITY_FOLLOW_LAST
+import com.android.purebilibili.core.store.player.DEFAULT_AUDIO_QUALITY_FOLLOW_LAST
 
 const val AUDIO_QUALITY_FOLLOW_LAST_SELECTED = DEFAULT_AUDIO_QUALITY_FOLLOW_LAST
 const val AUDIO_QUALITY_AUTO = -1

@@ -6,7 +6,7 @@ import com.android.purebilibili.core.ui.components.resolveAppSegmentedChrome
 import com.android.purebilibili.core.ui.components.resolveAppSegmentedLabelFontSizeSp
 import com.android.purebilibili.core.store.FullscreenAspectRatio
 import com.android.purebilibili.core.store.FullscreenMode
-import com.android.purebilibili.core.store.DEFAULT_AUDIO_QUALITY_FOLLOW_LAST
+import com.android.purebilibili.core.store.player.DEFAULT_AUDIO_QUALITY_FOLLOW_LAST
 import com.android.purebilibili.core.store.PortraitPlayerCollapseMode
 import java.io.File
 import org.junit.Assert.assertEquals
