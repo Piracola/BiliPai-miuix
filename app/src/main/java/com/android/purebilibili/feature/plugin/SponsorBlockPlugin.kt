@@ -81,7 +81,7 @@ internal fun normalizeSponsorSegments(
     return segments
         .asSequence()
         .filter { segment -> segment.endTimeMs > segment.startTimeMs }
-        .groupBy { "${segment.category}:${segment.actionType}" }
+        .groupBy { segment -> "${segment.category}:${segment.actionType}" }
         .values
         .mapNotNull { candidates ->
             candidates.maxWithOrNull(
