@@ -133,7 +133,6 @@ import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.ui.AppSpacingTokens
 import com.android.purebilibili.core.ui.ContainerLevel
 import dev.chrisbanes.haze.HazeState
-import com.android.purebilibili.core.ui.LocalWallpaperHazeState
 import com.android.purebilibili.core.ui.blur.hazeSourceCompat
 import com.android.purebilibili.core.ui.LocalSharedTransitionScope  //  共享过渡
 import com.android.purebilibili.core.ui.transition.LocalVideoCardSharedElementSourceRoute
@@ -1489,28 +1488,12 @@ fun HomeScreen(
                             // 首页使用 Pager + Lazy 子层，source 挂在外层容器更稳定。
                             .hazeSourceCompat(state = hazeState)
                     ) {
-                    // Wallpaper-only HazeSource (app LocalWallpaperHazeState): cards sample this
-                    // for frosted info glass. Must stay a sibling of feed content so hazeEffect
-                    // on cards is never nested inside its own source (prepareTree SO).
-                    val wallpaperHazeState = LocalWallpaperHazeState.current
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .then(
-                                if (wallpaperHazeState != null) {
-                                    Modifier.hazeSourceCompat(state = wallpaperHazeState)
-                                } else {
-                                    Modifier
-                                }
-                            )
-                    ) {
-                        HomeWallpaperBackdrop(
-                            wallpaperUri = homeWallpaperUri,
-                            appearance = homeWallpaperBackdropAppearance,
-                            baseColor = AppSurfaceTokens.chromeBackground(),
-                            isDataSaverActive = isDataSaverActive
-                        )
-                    }
+                    HomeWallpaperBackdrop(
+                        wallpaperUri = homeWallpaperUri,
+                        appearance = homeWallpaperBackdropAppearance,
+                        baseColor = AppSurfaceTokens.chromeBackground(),
+                        isDataSaverActive = isDataSaverActive
+                    )
                     // [Fix] Re-enabled default overscroll for better feedback
                         HorizontalPager(
                             state = pagerState,

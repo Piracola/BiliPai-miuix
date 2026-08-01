@@ -358,9 +358,9 @@ internal fun ElegantVideoCard(
     glassEnabled: Boolean = true,
     blurEnabled: Boolean = true,
     compactStatsOnCover: Boolean = true, // 播放量/评论数是否贴在封面底部
-    showCoverGlassBadges: Boolean = true,
-    showInfoGlassBadges: Boolean = true,
-    badgeEffectMode: HomeCardBadgeEffectMode = HomeCardBadgeEffectMode.SOFT_GLASS,
+    showCoverGlassBadges: Boolean = false,
+    showInfoGlassBadges: Boolean = false,
+    badgeEffectMode: HomeCardBadgeEffectMode = HomeCardBadgeEffectMode.OFF,
     infoGlassMode: HomeCardInfoGlassMode = HomeCardInfoGlassMode.OFF,
     wallpaperTintEnabled: Boolean = false,
     wallpaperEffectMode: HomeWallpaperEffectMode = HomeWallpaperEffectMode.SOFT_BLUR,

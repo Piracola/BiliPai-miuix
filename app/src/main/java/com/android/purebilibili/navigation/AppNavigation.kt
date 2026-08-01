@@ -1190,27 +1190,6 @@ fun AppNavigation(
         // Capture the wallpaper and navigation content together so transparent wallpaper-aware
         // pages feed the same background into the floating dock as Home.
         val bottomBarBackdrop = rememberMiuixLayerBackdrop()
-        // Wallpaper-only Haze source for card badge frosted glass. Must stay separate from
-        // mainHazeState: badges live inside the main content source tree, and reusing that
-        // state for hazeEffect causes HWUI prepareTree stack overflow.
-        //
-        // 条件挂载：这个 state 只有卡片角标实时模糊 / 信息区实时模糊两个消费者，
-        // 两者默认都关闭。为 null 时，本文件与 HomeScreen 里的两处 hazeSourceCompat
-        // 会一并跳过——默认档因此省掉两层全屏 record。判定见
-        // HomeWallpaperHazeSourcePolicy。
-        val wallpaperHazeSourceEnabled = com.android.purebilibili.feature.home
-            .shouldMountWallpaperHazeSource(
-                badgeEffectMode = effectiveHomeSettings.homeCardBadgeEffectMode,
-                infoGlassMode = effectiveHomeSettings.homeCardInfoGlassMode
-            )
-        val wallpaperHazeState = if (mainHazeState != null && wallpaperHazeSourceEnabled) {
-            com.android.purebilibili.core.ui.blur.rememberRecoverableHazeState(
-                initialBlurEnabled = true
-            )
-        } else {
-            null
-        }
-
         CompositionLocalProvider(
             LocalSetBottomBarVisible provides setBottomBarVisible,
             LocalBottomBarVisible provides finalBottomBarVisible,
@@ -1218,7 +1197,8 @@ fun AppNavigation(
             LocalGlobalWallpaperBackdropVisible provides exposeGlobalHomeWallpaperChrome,
             LocalPredictiveBackGestureEnabled provides predictiveBackEnabled,
             com.android.purebilibili.core.ui.LocalMainHazeState provides mainHazeState,
-            com.android.purebilibili.core.ui.LocalWallpaperHazeState provides wallpaperHazeState,
+            // 卡片标签 / 信息区实时玻璃效果已下线，不再为首页建立额外 Haze 录制树。
+            com.android.purebilibili.core.ui.LocalWallpaperHazeState provides null,
             com.android.purebilibili.feature.home.LocalHomeScrollChannel provides homeScrollChannel,
             LocalDynamicScrollChannel provides dynamicScrollChannel,
             com.android.purebilibili.feature.home.LocalHomeScrollOffset provides scrollOffsetState,

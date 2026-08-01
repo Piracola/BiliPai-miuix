@@ -36,12 +36,12 @@ class HomeSettingsStoreParityTest {
     }
 
     @Test
-    fun `home settings defaults enable soft glass card badges`() {
+    fun `home settings keep retired card surface effects disabled`() {
         val result = mapHomeSettingsFromPreferences(mutablePreferencesOf())
 
-        assertTrue(result.showHomeCoverGlassBadges)
-        assertTrue(result.showHomeInfoGlassBadges)
-        assertEquals(HomeCardBadgeEffectMode.SOFT_GLASS, result.homeCardBadgeEffectMode)
+        assertFalse(result.showHomeCoverGlassBadges)
+        assertFalse(result.showHomeInfoGlassBadges)
+        assertEquals(HomeCardBadgeEffectMode.OFF, result.homeCardBadgeEffectMode)
         assertEquals(HomeCardInfoGlassMode.OFF, result.homeCardInfoGlassMode)
         assertEquals(HomeWallpaperEffectMode.SOFT_BLUR, result.homeWallpaperEffectMode)
         assertEquals(HomeWallpaperEffectScope.HOME_ONLY, result.homeWallpaperEffectScope)
@@ -50,7 +50,7 @@ class HomeSettingsStoreParityTest {
     }
 
     @Test
-    fun `home settings honor explicit card badge effect mode`() {
+    fun `home settings ignore saved retired card surface effects`() {
         val prefs = mutablePreferencesOf(
             intPreferencesKey("home_card_badge_effect_mode") to HomeCardBadgeEffectMode.LIGHT_BLUR.value,
             intPreferencesKey("home_card_info_glass_mode") to HomeCardInfoGlassMode.REALTIME_BLUR.value,
@@ -62,10 +62,10 @@ class HomeSettingsStoreParityTest {
 
         val result = mapHomeSettingsFromPreferences(prefs)
 
-        assertTrue(result.showHomeCoverGlassBadges)
-        assertTrue(result.showHomeInfoGlassBadges)
-        assertEquals(HomeCardBadgeEffectMode.LIGHT_BLUR, result.homeCardBadgeEffectMode)
-        assertEquals(HomeCardInfoGlassMode.REALTIME_BLUR, result.homeCardInfoGlassMode)
+        assertFalse(result.showHomeCoverGlassBadges)
+        assertFalse(result.showHomeInfoGlassBadges)
+        assertEquals(HomeCardBadgeEffectMode.OFF, result.homeCardBadgeEffectMode)
+        assertEquals(HomeCardInfoGlassMode.OFF, result.homeCardInfoGlassMode)
         assertEquals(HomeWallpaperEffectMode.OFF, result.homeWallpaperEffectMode)
         assertEquals(HomeWallpaperEffectScope.GLOBAL, result.homeWallpaperEffectScope)
         assertEquals(false, result.showHomeUpBadges)
@@ -73,11 +73,12 @@ class HomeSettingsStoreParityTest {
     }
 
     @Test
-    fun `home settings keep info glass off when unset even if badge light blur`() {
+    fun `home settings ignore retired badge mode when info glass is unset`() {
         val prefs = mutablePreferencesOf(
             intPreferencesKey("home_card_badge_effect_mode") to HomeCardBadgeEffectMode.LIGHT_BLUR.value
         )
         val result = mapHomeSettingsFromPreferences(prefs)
+        assertEquals(HomeCardBadgeEffectMode.OFF, result.homeCardBadgeEffectMode)
         assertEquals(HomeCardInfoGlassMode.OFF, result.homeCardInfoGlassMode)
     }
 

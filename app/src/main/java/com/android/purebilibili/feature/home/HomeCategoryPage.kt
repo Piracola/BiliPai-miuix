@@ -130,10 +130,10 @@ internal fun HomeCategoryPageContent(
     isDataSaverActive: Boolean,
     preferLowQualityCover: Boolean = false,
     compactStatsOnCover: Boolean = true,
-    showCoverGlassBadges: Boolean = true,
-    showInfoGlassBadges: Boolean = true,
+    showCoverGlassBadges: Boolean = false,
+    showInfoGlassBadges: Boolean = false,
     badgeEffectMode: com.android.purebilibili.core.store.HomeCardBadgeEffectMode =
-        com.android.purebilibili.core.store.HomeCardBadgeEffectMode.SOFT_GLASS,
+        com.android.purebilibili.core.store.HomeCardBadgeEffectMode.OFF,
     infoGlassMode: com.android.purebilibili.core.store.HomeCardInfoGlassMode =
         com.android.purebilibili.core.store.HomeCardInfoGlassMode.OFF,
     wallpaperTintEnabled: Boolean = false,

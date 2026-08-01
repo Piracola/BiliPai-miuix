@@ -101,8 +101,8 @@ fun GlassVideoCard(
     scrollLiteModeEnabled: Boolean = false,
     isDataSaverActive: Boolean = false,
     preferLowQualityCover: Boolean = false,
-    showCoverGlassBadges: Boolean = true,
-    showInfoGlassBadges: Boolean = true,
+    showCoverGlassBadges: Boolean = false,
+    showInfoGlassBadges: Boolean = false,
     showUpBadge: Boolean = true,
     onDismiss: (() -> Unit)? = null,    //  [新增] 删除/过滤回调（长按触发）
     onClick: (String, Long) -> Unit
