@@ -16,6 +16,7 @@
 
 package androidx.navigationevent.compose
 
+import androidx.annotation.Keep
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
@@ -290,7 +291,31 @@ private class ComposeNavigationEventHandler<T : NavigationEventInfo>(
     }
 }
 
-// Compatible with the fucking miuix
+// Miuix 0.9.3 and older Navigation3 artifacts are compiled against different
+// NavigationEvent Compose ABIs. Keep both function-shaped callback overloads:
+// these calls originate in precompiled dependencies, so R8 must not remove or
+// rename the bridge methods even when app source does not invoke them directly.
+
+/**
+ * ABI bridge for Navigation3 artifacts compiled before `isBackEnabled` was
+ * added to NavigationBackHandler.
+ */
+@Composable
+@Keep
+@Suppress("unused")
+fun NavigationBackHandler(
+    state: NavigationEventState<out NavigationEventInfo>,
+    onBackCancelled: () -> Unit = {},
+    onBackCompleted: () -> Unit,
+) {
+    NavigationBackHandler(
+        state = state,
+        isBackEnabled = true,
+        onBackCancelled = onBackCancelled,
+        onBackCompleted = onBackCompleted,
+    )
+}
+
 /**
  * A composable that handles only back navigation gestures, driven by a manually hoisted
  * [NavigationEventState].
@@ -311,7 +336,8 @@ private class ComposeNavigationEventHandler<T : NavigationEventInfo>(
  *   still completing edge-swipe / system back on lift.
  */
 @Composable
-@Suppress("unused") // Reason: Miuix Library use that
+@Keep
+@Suppress("unused")
 fun NavigationBackHandler(
     state: NavigationEventState<out NavigationEventInfo>,
     isBackEnabled: Boolean = true,
