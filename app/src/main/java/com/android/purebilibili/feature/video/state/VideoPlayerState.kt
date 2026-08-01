@@ -33,7 +33,10 @@ import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.exoplayer.ExoPlaybackException
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.LoadControl
+import androidx.media3.exoplayer.analytics.PlayerId
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.source.TrackGroupArray
+import androidx.media3.exoplayer.trackselection.ExoTrackSelection
 import coil.imageLoader
 import coil.request.ImageRequest
 import coil.request.SuccessResult
@@ -128,6 +131,35 @@ private class FirstQuarterAwareLoadControl(
 ) : LoadControl by delegate {
     private val period = androidx.media3.common.Timeline.Period()
 
+    // Kotlin interface delegation does not forward Java default methods. Media3 invokes these
+    // PlayerId-based overloads directly, so forward them explicitly instead of falling back to
+    // the deprecated defaults that throw "not implemented".
+    override fun onPrepared(playerId: PlayerId) {
+        delegate.onPrepared(playerId)
+    }
+
+    override fun onTracksSelected(
+        parameters: LoadControl.Parameters,
+        trackGroups: TrackGroupArray,
+        trackSelections: Array<ExoTrackSelection?>
+    ) {
+        delegate.onTracksSelected(parameters, trackGroups, trackSelections)
+    }
+
+    override fun onStopped(playerId: PlayerId) {
+        delegate.onStopped(playerId)
+    }
+
+    override fun onReleased(playerId: PlayerId) {
+        delegate.onReleased(playerId)
+    }
+
+    override fun getBackBufferDurationUs(playerId: PlayerId): Long =
+        delegate.getBackBufferDurationUs(playerId)
+
+    override fun retainBackBufferFromKeyframe(playerId: PlayerId): Boolean =
+        delegate.retainBackBufferFromKeyframe(playerId)
+
     override fun shouldContinueLoading(parameters: LoadControl.Parameters): Boolean {
         val periodDurationUs = runCatching {
             parameters.timeline
@@ -144,6 +176,9 @@ private class FirstQuarterAwareLoadControl(
             delegate.shouldContinueLoading(parameters)
         }
     }
+
+    override fun shouldStartPlayback(parameters: LoadControl.Parameters): Boolean =
+        delegate.shouldStartPlayback(parameters)
 }
 
 internal fun shouldReuseMiniPlayerAtEntry(
