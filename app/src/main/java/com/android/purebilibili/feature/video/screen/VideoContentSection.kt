@@ -309,17 +309,16 @@ internal fun resolveVideoContentEffectiveSelectedTabIndex(
 }
 
 /**
- * 评论列表的纵向手势优先于详情页 Tab 的横向分页。
+ * 简介与评论页之间始终支持横向分页。
  *
- * [HorizontalPager] 会将斜向拖动中的横向分量当作分页手势；评论页滚动时这会表现为
- * 页面左右轻微晃动。评论页改由顶部 Tab 明确切换，已开始的分页仍允许自然完成，
- * 避免在动画中途锁住 Pager。
+ * 评论列表的纵向滚动会由其 [LazyColumn] 正常处理；不要在评论页禁用 Pager，
+ * 否则用户无法通过左/右滑动返回简介。
  */
 internal fun shouldEnableVideoContentHorizontalPagerSwipe(
     currentPage: Int,
     commentPageIndex: Int,
     isPagerScrollInProgress: Boolean,
-): Boolean = isPagerScrollInProgress || currentPage != commentPageIndex
+): Boolean = true
 
 /**
  * 视频详情内容区域

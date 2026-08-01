@@ -179,8 +179,8 @@ class VideoContentTabBarPolicyTest {
     }
 
     @Test
-    fun `comment tab disables new horizontal page drags but lets an active switch finish`() {
-        assertFalse(
+    fun `horizontal page drags stay enabled on both intro and comment tabs`() {
+        assertTrue(
             shouldEnableVideoContentHorizontalPagerSwipe(
                 currentPage = 1,
                 commentPageIndex = 1,
