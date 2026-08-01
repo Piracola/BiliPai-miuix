@@ -1671,6 +1671,11 @@ internal data class AboutContributor(
 // 默认使用本地头像以避免进入关于页时请求 GitHub；个别新贡献者可使用其公开头像链接。
 internal val AboutContributors = listOf(
     AboutContributor("jay3-yy", "jay3-yy", R.drawable.avatar_jay3_yy),
+    AboutContributor(
+        name = "Piracola",
+        githubLogin = "Piracola",
+        avatarUrl = "https://avatars.githubusercontent.com/u/116626041?v=4"
+    ),
     AboutContributor("Chenx Dust", "chenx-dust", R.drawable.avatar_chenx_dust),
     AboutContributor("usontong", "usontong", R.drawable.avatar_usontong),
     AboutContributor("Leko", "lekoOwO", R.drawable.avatar_lekoowo),
@@ -1681,6 +1686,21 @@ internal val AboutContributors = listOf(
         name = "maxzrb",
         githubLogin = "maxzrb",
         avatarUrl = "https://avatars.githubusercontent.com/u/114979598?v=4"
+    ),
+    AboutContributor(
+        name = "xiaoniao427",
+        githubLogin = "xiaoniao427",
+        avatarUrl = "https://avatars.githubusercontent.com/u/115906803?v=4"
+    ),
+    AboutContributor(
+        name = "zensu357",
+        githubLogin = "zensu357",
+        avatarUrl = "https://avatars.githubusercontent.com/u/109052061?v=4"
+    ),
+    AboutContributor(
+        name = "Kurarion",
+        githubLogin = "Kurarion",
+        avatarUrl = "https://avatars.githubusercontent.com/u/29721634?v=4"
     )
 )
 

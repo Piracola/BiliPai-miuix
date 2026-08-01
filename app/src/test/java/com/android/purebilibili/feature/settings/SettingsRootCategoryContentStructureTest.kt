@@ -248,12 +248,17 @@ class SettingsRootCategoryContentStructureTest {
         assertTrue(aboutSectionBlock.indexOf("AboutProjectOverviewCard(") < aboutSectionBlock.indexOf("SettingsCardGroup {"))
         assertTrue(source.contains("internal val AboutContributors = listOf("))
         assertTrue(source.contains("AboutContributor(\"jay3-yy\", \"jay3-yy\", R.drawable.avatar_jay3_yy)"))
+        assertTrue(source.contains("name = \"Piracola\""))
+        assertTrue(source.contains("githubLogin = \"Piracola\""))
         assertTrue(source.contains("AboutContributor(\"Chenx Dust\""))
         assertTrue(source.contains("AboutContributor(\"usontong\""))
         assertTrue(source.contains("AboutContributor(\"Leko\", \"lekoOwO\", R.drawable.avatar_lekoowo)"))
         assertTrue(source.contains("AboutContributor(\"qyo123oyq\", \"qyo123oyq\", R.drawable.avatar_qyo123oyq)"))
         assertTrue(source.contains("name = \"maxzrb\""))
         assertTrue(source.contains("githubLogin = \"maxzrb\""))
+        assertTrue(source.contains("name = \"xiaoniao427\""))
+        assertTrue(source.contains("name = \"zensu357\""))
+        assertTrue(source.contains("name = \"Kurarion\""))
     }
 
     @Test
