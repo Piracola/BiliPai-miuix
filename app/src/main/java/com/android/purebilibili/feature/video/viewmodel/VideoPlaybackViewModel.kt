@@ -188,6 +188,41 @@ data class SponsorSkipUiState(
     val label: String? = null
 )
 
+enum class SponsorContributionPhase {
+    HIDDEN,
+    READY,
+    MARKING,
+    REVIEW,
+    SUBMITTING,
+    SUCCESS,
+}
+
+data class SponsorContributionUiState(
+    val phase: SponsorContributionPhase = SponsorContributionPhase.HIDDEN,
+    val startMs: Long? = null,
+    val endMs: Long? = null,
+    val category: String = SponsorCategory.SPONSOR,
+    val serverBaseUrl: String = "",
+    val message: String? = null,
+) {
+    val showsMarkAction: Boolean
+        get() = phase == SponsorContributionPhase.READY || phase == SponsorContributionPhase.MARKING
+
+    val showsReview: Boolean
+        get() = phase == SponsorContributionPhase.REVIEW ||
+            phase == SponsorContributionPhase.SUBMITTING ||
+            phase == SponsorContributionPhase.SUCCESS
+}
+
+private data class SponsorContributionRequest(
+    val plugin: com.android.purebilibili.feature.plugin.SponsorBlockPlugin,
+    val bvid: String,
+    val cid: Long,
+    val durationSeconds: Float,
+    val startMs: Long,
+    val endMs: Long,
+)
+
 internal fun reduceSponsorSkipUiState(
     previous: SponsorSkipUiState,
     action: SkipAction?
@@ -1497,6 +1532,9 @@ class VideoPlaybackViewModel : ViewModel() {
     private val _sponsorProgressMarkers =
         MutableStateFlow<List<com.android.purebilibili.data.model.response.SponsorProgressMarker>>(emptyList())
     val sponsorProgressMarkers = _sponsorProgressMarkers.asStateFlow()
+    private val _sponsorContributionUiState = MutableStateFlow(SponsorContributionUiState())
+    val sponsorContributionUiState = _sponsorContributionUiState.asStateFlow()
+    private var sponsorContributionRequest: SponsorContributionRequest? = null
     
     //  Download state
     private val _downloadProgress = MutableStateFlow(-1f)
@@ -7499,6 +7537,8 @@ class VideoPlaybackViewModel : ViewModel() {
                             PlaybackPostLoadTask.HEARTBEAT -> startHeartbeat()
                             PlaybackPostLoadTask.PLUGIN_ON_VIDEO_LOAD -> {
                                 _sponsorProgressMarkers.value = emptyList()
+                                sponsorContributionRequest = null
+                                _sponsorContributionUiState.value = SponsorContributionUiState()
                                 PluginManager.getEnabledPlayerPlugins().forEach { plugin ->
                                     try {
                                         plugin.onVideoLoad(loadedBvid, loadedCid)
@@ -7509,6 +7549,7 @@ class VideoPlaybackViewModel : ViewModel() {
                                         Logger.e("PlayerVM", "Plugin ${plugin.name} onVideoLoad failed", e)
                                     }
                                 }
+                                refreshSponsorContributionAvailability()
                             }
                             PlaybackPostLoadTask.START_PLUGIN_CHECK -> startPluginCheck()
                         }
@@ -7526,6 +7567,7 @@ class VideoPlaybackViewModel : ViewModel() {
         pluginCheckJob = viewModelScope.launch {
             while (true) {
                 val plugins = PluginManager.getEnabledPlayerPlugins()
+                refreshSponsorContributionAvailability(plugins)
                 if (plugins.none { it is com.android.purebilibili.feature.plugin.SponsorBlockPlugin } &&
                     _sponsorProgressMarkers.value.isNotEmpty()
                 ) {
@@ -7694,6 +7736,128 @@ class VideoPlaybackViewModel : ViewModel() {
         _showSkipButton.value = false
         _currentSkipReason.value = null
         _currentSponsorSegment.value = null
+    }
+
+    fun markSponsorContributionBoundary() {
+        val currentState = _sponsorContributionUiState.value
+        val context = resolveSponsorContributionContext() ?: run {
+            _sponsorContributionUiState.value = SponsorContributionUiState(
+                phase = SponsorContributionPhase.HIDDEN,
+                message = "请先启用空降助手的社区投稿，并等待视频信息加载完成",
+            )
+            return
+        }
+        val currentPositionMs = playbackUseCase.getCurrentPosition().coerceAtLeast(0L)
+        when (currentState.phase) {
+            SponsorContributionPhase.READY -> {
+                _sponsorContributionUiState.value = SponsorContributionUiState(
+                    phase = SponsorContributionPhase.MARKING,
+                    startMs = currentPositionMs,
+                    category = currentState.category,
+                    serverBaseUrl = context.plugin.getCommunityServerBaseUrl(),
+                    message = "已记录起点，再次点按结束标记",
+                )
+            }
+
+            SponsorContributionPhase.MARKING -> {
+                val startMs = currentState.startMs ?: return
+                if (currentPositionMs <= startMs) {
+                    _sponsorContributionUiState.value = currentState.copy(
+                        message = "结束时间需要晚于起点",
+                    )
+                    return
+                }
+                sponsorContributionRequest = context.copy(startMs = startMs, endMs = currentPositionMs)
+                _sponsorContributionUiState.value = currentState.copy(
+                    phase = SponsorContributionPhase.REVIEW,
+                    endMs = currentPositionMs,
+                    serverBaseUrl = context.plugin.getCommunityServerBaseUrl(),
+                    message = null,
+                )
+            }
+
+            else -> Unit
+        }
+    }
+
+    fun setSponsorContributionCategory(category: String) {
+        if (category !in SponsorCategory.ALL_SKIP_CATEGORIES) return
+        val current = _sponsorContributionUiState.value
+        if (current.phase != SponsorContributionPhase.REVIEW) return
+        _sponsorContributionUiState.value = current.copy(category = category, message = null)
+    }
+
+    fun submitSponsorContribution() {
+        val current = _sponsorContributionUiState.value
+        val request = sponsorContributionRequest ?: return
+        if (current.phase != SponsorContributionPhase.REVIEW) return
+        _sponsorContributionUiState.value = current.copy(
+            phase = SponsorContributionPhase.SUBMITTING,
+            message = null,
+        )
+        viewModelScope.launch(Dispatchers.IO) {
+            request.plugin.submitCommunitySegment(
+                bvid = request.bvid,
+                cid = request.cid,
+                videoDurationSeconds = request.durationSeconds,
+                startMs = request.startMs,
+                endMs = request.endMs,
+                category = current.category,
+            ).onSuccess {
+                _sponsorContributionUiState.value = _sponsorContributionUiState.value.copy(
+                    phase = SponsorContributionPhase.SUCCESS,
+                    message = "社区片段已提交",
+                )
+            }.onFailure { error ->
+                _sponsorContributionUiState.value = _sponsorContributionUiState.value.copy(
+                    phase = SponsorContributionPhase.REVIEW,
+                    message = error.message ?: "提交失败，请检查服务器后重试",
+                )
+            }
+        }
+    }
+
+    fun cancelSponsorContribution() {
+        sponsorContributionRequest = null
+        refreshSponsorContributionAvailability()
+    }
+
+    private fun refreshSponsorContributionAvailability(
+        enabledPlugins: List<com.android.purebilibili.core.plugin.PlayerPlugin> =
+            PluginManager.getEnabledPlayerPlugins(),
+    ) {
+        val current = _sponsorContributionUiState.value
+        if (current.phase !in setOf(SponsorContributionPhase.HIDDEN, SponsorContributionPhase.READY)) return
+        val context = resolveSponsorContributionContext(enabledPlugins)
+        _sponsorContributionUiState.value = if (context == null) {
+            SponsorContributionUiState()
+        } else {
+            SponsorContributionUiState(
+                phase = SponsorContributionPhase.READY,
+                serverBaseUrl = context.plugin.getCommunityServerBaseUrl(),
+            )
+        }
+    }
+
+    private fun resolveSponsorContributionContext(
+        enabledPlugins: List<com.android.purebilibili.core.plugin.PlayerPlugin> =
+            PluginManager.getEnabledPlayerPlugins(),
+    ): SponsorContributionRequest? {
+        val plugin = enabledPlugins
+            .filterIsInstance<com.android.purebilibili.feature.plugin.SponsorBlockPlugin>()
+            .firstOrNull { it.isCommunityContributionEnabled() }
+            ?: return null
+        val snapshot = buildSponsorBlockVideoSnapshot(_uiState.value) ?: return null
+        val durationMs = playbackUseCase.getDuration()
+        if (snapshot.bvid.isBlank() || snapshot.cid <= 0L || durationMs <= 0L) return null
+        return SponsorContributionRequest(
+            plugin = plugin,
+            bvid = snapshot.bvid,
+            cid = snapshot.cid,
+            durationSeconds = durationMs / 1000f,
+            startMs = 0L,
+            endMs = 0L,
+        )
     }
     
     // ========== Playback Control ==========

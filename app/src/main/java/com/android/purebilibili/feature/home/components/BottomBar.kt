@@ -40,6 +40,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.MenuOpen
 import androidx.compose.material.icons.filled.CollectionsBookmark
+import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LiveTv
@@ -50,6 +51,7 @@ import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.WatchLater
 import androidx.compose.material.icons.outlined.CollectionsBookmark
+import androidx.compose.material.icons.outlined.Extension
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.LiveTv
@@ -359,6 +361,15 @@ enum class BottomNavItem(
         { AppIcon(CupertinoIcons.Filled.Gearshape, contentDescription = null) },
         { AppIcon(CupertinoIcons.Default.Gearshape, contentDescription = null) },
         ScreenRoutes.Settings.route
+    ),
+    PLUGINS(
+        "插件",
+        R.string.plugins_center_title,
+        R.string.plugins_center_title,
+        listOf("插件中心"),
+        { AppIcon(CupertinoIcons.Default.Puzzlepiece, contentDescription = null) },
+        { AppIcon(CupertinoIcons.Outlined.PuzzlepieceExtension, contentDescription = null) },
+        ScreenRoutes.PluginsSettings.createRoute()
     )
 }
 
@@ -4792,6 +4803,7 @@ internal fun resolveMaterialBottomBarIcon(
     BottomNavItem.LIVE -> if (selected) Icons.Filled.LiveTv else Icons.Outlined.LiveTv
     BottomNavItem.WATCHLATER -> if (selected) Icons.Filled.WatchLater else Icons.Outlined.WatchLater
     BottomNavItem.SETTINGS -> if (selected) Icons.Filled.Settings else Icons.Outlined.Settings
+    BottomNavItem.PLUGINS -> if (selected) Icons.Filled.Extension else Icons.Outlined.Extension
 }
 
 @Composable

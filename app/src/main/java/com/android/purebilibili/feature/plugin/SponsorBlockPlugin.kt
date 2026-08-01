@@ -351,6 +351,8 @@ class SponsorBlockPlugin : PlayerPluginApi {
 
     fun getProgressMarkers(): List<SponsorProgressMarker> = progressMarkers
     fun getActiveSegment(): SponsorSegment? = activeSegment
+    fun isCommunityContributionEnabled(): Boolean = config.communityContributionEnabled
+    fun getCommunityServerBaseUrl(): String = config.serverBaseUrl
 
     /** Sends an optional, explicitly consented community view ping for a skipped segment. */
     suspend fun uploadViewedSegmentIfEnabled(segmentId: String) {
@@ -433,6 +435,17 @@ class SponsorBlockPlugin : PlayerPluginApi {
     
     @Composable
     override fun SettingsContent() {
+        SponsorBlockSettingsContent(modifier = Modifier.padding(16.dp))
+    }
+
+    @Composable
+    override fun SettingsContent(modifier: Modifier) {
+        SponsorBlockSettingsContent(modifier = modifier)
+    }
+
+    @OptIn(ExperimentalLayoutApi::class)
+    @Composable
+    private fun SponsorBlockSettingsContent(modifier: Modifier) {
         val context = LocalContext.current
         val uriHandler = LocalUriHandler.current
         val scope = rememberCoroutineScope()
@@ -449,6 +462,8 @@ class SponsorBlockPlugin : PlayerPluginApi {
         var serverDraft by remember { mutableStateOf(config.serverBaseUrl) }
         var showDurationDialog by remember { mutableStateOf(false) }
         var durationDraft by remember { mutableStateOf(config.minimumSegmentDurationSeconds.toString()) }
+        var showCommunityUserDialog by remember { mutableStateOf(false) }
+        var showRegenerateUserIdDialog by remember { mutableStateOf(false) }
         var insightRecords by remember { mutableStateOf<List<SponsorBlockSkipRecord>>(emptyList()) }
         val aboutItem = remember { resolveSponsorBlockAboutItemModel() }
         val markerOptions = remember {
@@ -504,205 +519,155 @@ class SponsorBlockPlugin : PlayerPluginApi {
         }
         
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(0.dp)
+                .padding(vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             SponsorBlockInsightPanel(
                 summary = insightSummary,
                 onShareClick = { shareSponsorBlockInsightImage(context, insightSummary) }
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 使用原设置组件 - 自动跳过
-            AppSwitchPreference(
-                icon = CupertinoIcons.Default.Bolt,
-                title = "自动跳过",
-                subtitle = "关闭后将显示手动跳过按钮而非自动跳过",
-                checked = autoSkip,
-                onCheckedChange = { newValue ->
-                    autoSkip = newValue
-                    val behavior = if (newValue) {
-                        SponsorBlockSegmentBehavior.AUTOMATIC
-                    } else {
-                        SponsorBlockSegmentBehavior.MANUAL
-                    }
-                    persistConfig(
-                        config.copy(
-                            autoSkip = newValue,
-                            categoryBehaviorRaw = config.categoryBehaviorRaw
-                                .mapValues { behavior.name }
-                        )
-                    )
-                    categorySettings = resolveSponsorBlockCategorySettings(config)
-                },
-                iconTint = Color(0xFFFF9800) // iOS Orange
-            )
-
-            AppHorizontalDivider(
-                modifier = Modifier.padding(start = 56.dp),
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-            )
-
-            SponsorBlockCategorySettingsSection(
-                settings = categorySettings,
-                onBehaviorChange = { category, behavior ->
-                    persistConfig(
-                        config.copy(
-                            categoryBehaviorRaw = config.categoryBehaviorRaw + (category to behavior.name)
-                        )
-                    )
-                    categorySettings = resolveSponsorBlockCategorySettings(config)
-                    autoSkip = categorySettings.all { it.behavior == SponsorBlockSegmentBehavior.AUTOMATIC }
-                }
-            )
-
-            AppHorizontalDivider(
-                modifier = Modifier.padding(start = 56.dp),
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-            )
-
-            AppPreference(
-                icon = CupertinoIcons.Default.Timer,
-                title = "最短片段时长",
-                subtitle = "短于该时长的社区片段不会参与跳过或提示",
-                value = "${config.minimumSegmentDurationSeconds}s",
-                onClick = { showDurationDialog = true },
-                iconTint = Color(0xFFFF9800)
-            )
-
-            AppSegmentedPreference(
-                title = "进度条提示：${markerMode.label}",
-                subtitle = "可选关闭、仅提示恰饭，或显示全部可跳过片段",
-                options = markerOptions,
-                selectedValue = markerMode,
-                onSelectionChange = { newValue ->
-                    markerMode = newValue
-                    persistConfig(config.copy(markerModeRaw = newValue.name))
-                    progressMarkers = resolveSponsorProgressMarkers(
-                        segments = segments,
-                        markerMode = newValue
-                    )
-                }
-            )
-
-            AppHorizontalDivider(
-                modifier = Modifier.padding(start = 56.dp),
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-            )
-
-            AppSwitchPreference(
-                icon = CupertinoIcons.Default.Bell,
-                title = "每日汇总通知",
-                subtitle = "当天有跳过记录时，汇总跳过次数和节省时间",
-                checked = dailySummaryNotificationEnabled,
-                onCheckedChange = { newValue ->
-                    dailySummaryNotificationEnabled = newValue
-                    persistConfig(config.copy(dailySummaryNotificationEnabled = newValue))
-                },
-                iconTint = Color(0xFF34C759)
-            )
-
-            if (dailySummaryNotificationEnabled) {
-                AppOutlinedTextField(
-                    value = dailySummaryNotificationPrefix,
-                    onValueChange = { nextValue ->
-                        dailySummaryNotificationPrefix = nextValue
-                        persistConfig(config.copy(dailySummaryNotificationPrefix = nextValue))
+            SponsorBlockSettingsSection(title = "片段规则", subtitle = "按类别选择自动跳过、手动提示、仅标记或忽略") {
+                AppSwitchPreference(
+                    icon = CupertinoIcons.Default.Bolt,
+                    title = "全部自动跳过",
+                    subtitle = "关闭后，所有类别先改为显示跳过按钮",
+                    checked = autoSkip,
+                    onCheckedChange = { newValue ->
+                        autoSkip = newValue
+                        val behavior = if (newValue) SponsorBlockSegmentBehavior.AUTOMATIC else SponsorBlockSegmentBehavior.MANUAL
+                        persistConfig(config.copy(autoSkip = newValue, categoryBehaviorRaw = config.categoryBehaviorRaw.mapValues { behavior.name }))
+                        categorySettings = resolveSponsorBlockCategorySettings(config)
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 56.dp, top = 8.dp, bottom = 12.dp),
-                    singleLine = true,
-                    label = { AppText("通知文案前缀") },
-                    textStyle = MaterialTheme.typography.bodyMedium
+                    iconTint = Color(0xFFFF9800),
+                )
+                SponsorBlockCategorySettingsSection(
+                    settings = categorySettings,
+                    onBehaviorChange = { category, behavior ->
+                        persistConfig(config.copy(categoryBehaviorRaw = config.categoryBehaviorRaw + (category to behavior.name)))
+                        categorySettings = resolveSponsorBlockCategorySettings(config)
+                        autoSkip = categorySettings.all { it.behavior == SponsorBlockSegmentBehavior.AUTOMATIC }
+                    },
+                )
+                AppPreference(
+                    icon = CupertinoIcons.Default.Timer,
+                    title = "最短片段时长",
+                    subtitle = "短于该时长的社区片段不会参与跳过或提示",
+                    value = "${config.minimumSegmentDurationSeconds}s",
+                    onClick = { showDurationDialog = true },
+                    iconTint = Color(0xFFFF9800),
                 )
             }
 
-            AppPreference(
-                icon = CupertinoIcons.Default.Bell,
-                title = "发送测试通知",
-                subtitle = "确认空降助手通知权限和展示效果，不写入跳过记录",
-                onClick = {
-                    notificationPermission.launchWithPermission {
-                        sendTestNotification()
-                    }
-                },
-                iconTint = Color(0xFF34C759)
-            )
+            SponsorBlockSettingsSection(title = "进度条") {
+                AppSegmentedPreference(
+                    title = "进度条提示：${markerMode.label}",
+                    subtitle = "关闭、仅提示恰饭，或显示全部可跳过片段",
+                    options = markerOptions,
+                    selectedValue = markerMode,
+                    onSelectionChange = { newValue ->
+                        markerMode = newValue
+                        persistConfig(config.copy(markerModeRaw = newValue.name))
+                        progressMarkers = resolveSponsorProgressMarkers(segments, newValue)
+                    },
+                )
+            }
 
-            AppHorizontalDivider(
-                modifier = Modifier.padding(start = 56.dp),
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-            )
+            SponsorBlockSettingsSection(title = "通知") {
+                AppSwitchPreference(
+                    icon = CupertinoIcons.Default.Bell,
+                    title = "每日汇总通知",
+                    subtitle = "当天有跳过记录时，汇总跳过次数和节省时间",
+                    checked = dailySummaryNotificationEnabled,
+                    onCheckedChange = { newValue ->
+                        dailySummaryNotificationEnabled = newValue
+                        persistConfig(config.copy(dailySummaryNotificationEnabled = newValue))
+                    },
+                    iconTint = Color(0xFF34C759),
+                )
+                if (dailySummaryNotificationEnabled) {
+                    AppOutlinedTextField(
+                        value = dailySummaryNotificationPrefix,
+                        onValueChange = { nextValue ->
+                            dailySummaryNotificationPrefix = nextValue
+                            persistConfig(config.copy(dailySummaryNotificationPrefix = nextValue))
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                        singleLine = true,
+                        label = { AppText("通知文案前缀") },
+                        textStyle = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+                AppPreference(
+                    icon = CupertinoIcons.Default.Bell,
+                    title = "发送测试通知",
+                    subtitle = "确认通知权限和展示效果，不写入跳过记录",
+                    onClick = { notificationPermission.launchWithPermission { sendTestNotification() } },
+                    iconTint = Color(0xFF34C759),
+                )
+            }
 
-            AppPreference(
-                icon = CupertinoIcons.Default.Network,
-                title = "社区服务器",
-                subtitle = serverStatus?.message ?: config.serverBaseUrl,
-                value = if (serverStatus?.reachable == true) "正常" else null,
-                onClick = { showServerDialog = true },
-                iconTint = Color(0xFF2196F3)
-            )
-
-            AppSwitchPreference(
-                icon = CupertinoIcons.Default.ChartBar,
-                title = "上传跳过记录",
-                subtitle = "将已跳过片段的匿名 UUID 上报给当前社区服务器，用于贡献统计；默认关闭",
-                checked = communityTrackingEnabled,
-                onCheckedChange = { enabled ->
-                    communityTrackingEnabled = enabled
-                    persistConfig(config.copy(communityTrackingEnabled = enabled))
-                },
-                iconTint = Color(0xFF5856D6)
-            )
-
-            AppSwitchPreference(
-                icon = CupertinoIcons.Default.Paperplane,
-                title = "允许提交社区片段",
-                subtitle = "允许在播放页将你确认的时间片段提交至当前社区服务器；提交前仍需逐次确认",
-                checked = communityContributionEnabled,
-                onCheckedChange = { enabled ->
-                    communityContributionEnabled = enabled
-                    persistConfig(config.copy(communityContributionEnabled = enabled))
-                },
-                iconTint = Color(0xFF5856D6)
-            )
-
-            AppPreference(
-                icon = CupertinoIcons.Default.Person,
-                title = "社区用户 ID",
-                subtitle = "${config.userId.take(8)}…（用于归属贡献；点按查看社区数据）",
-                onClick = {
-                    scope.launch {
-                        communityUserInfo = SponsorBlockRepository.getCommunityUserInfo(
-                            baseUrl = config.serverBaseUrl,
-                            userId = config.userId
-                        ).getOrElse { error ->
-                            showNotificationToast(error.message ?: "无法读取社区用户信息")
-                            return@launch
+            SponsorBlockSettingsSection(title = "社区与隐私", subtitle = "所有发送都指向下方服务器；默认关闭，提交片段始终需要逐次确认") {
+                AppPreference(
+                    icon = CupertinoIcons.Default.Network,
+                    title = "社区服务器",
+                    subtitle = serverStatus?.message ?: config.serverBaseUrl,
+                    value = if (serverStatus?.reachable == true) "正常" else null,
+                    onClick = { showServerDialog = true },
+                    iconTint = Color(0xFF2196F3),
+                )
+                AppSwitchPreference(
+                    icon = CupertinoIcons.Default.ChartBar,
+                    title = "上传跳过贡献",
+                    subtitle = "仅在实际跳过时上传片段匿名 UUID；不会上传连续观看轨迹",
+                    checked = communityTrackingEnabled,
+                    onCheckedChange = { enabled ->
+                        communityTrackingEnabled = enabled
+                        persistConfig(config.copy(communityTrackingEnabled = enabled))
+                    },
+                    iconTint = Color(0xFF5856D6),
+                )
+                AppSwitchPreference(
+                    icon = CupertinoIcons.Default.Paperplane,
+                    title = "允许提交社区片段",
+                    subtitle = "允许播放页标记起止时间；提交前会显示类别、时间和服务器供确认",
+                    checked = communityContributionEnabled,
+                    onCheckedChange = { enabled ->
+                        communityContributionEnabled = enabled
+                        persistConfig(config.copy(communityContributionEnabled = enabled))
+                    },
+                    iconTint = Color(0xFF5856D6),
+                )
+                AppPreference(
+                    icon = CupertinoIcons.Default.Person,
+                    title = "社区用户 ID",
+                    subtitle = "${config.userId.take(8)}… · 用于归属你的片段贡献",
+                    onClick = {
+                        showCommunityUserDialog = true
+                        scope.launch {
+                            communityUserInfo = SponsorBlockRepository.getCommunityUserInfo(config.serverBaseUrl, config.userId)
+                                .getOrElse { error ->
+                                    showNotificationToast(error.message ?: "无法读取社区用户信息")
+                                    null
+                                }
                         }
-                    }
-                },
-                iconTint = Color(0xFF5856D6)
-            )
-            
-            AppHorizontalDivider(
-                modifier = Modifier.padding(start = 56.dp),
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-            )
-            
-            // 使用原设置组件 - 关于空降助手
-            AppPreference(
-                icon = CupertinoIcons.Default.InfoCircle,
-                title = aboutItem.title,
-                subtitle = aboutItem.subtitle,
-                value = aboutItem.value,
-                onClick = { uriHandler.openUri("https://github.com/hanydd/BilibiliSponsorBlock") },
-                iconTint = Color(0xFF2196F3) // iOS Blue
-            )
+                    },
+                    iconTint = Color(0xFF5856D6),
+                )
+            }
+
+            SponsorBlockSettingsSection(title = "关于") {
+                AppPreference(
+                    icon = CupertinoIcons.Default.InfoCircle,
+                    title = aboutItem.title,
+                    subtitle = aboutItem.subtitle,
+                    value = aboutItem.value,
+                    onClick = { uriHandler.openUri("https://github.com/hanydd/BilibiliSponsorBlock") },
+                    iconTint = Color(0xFF2196F3),
+                )
+            }
         }
 
         if (showDurationDialog) {
@@ -774,53 +739,99 @@ class SponsorBlockPlugin : PlayerPluginApi {
                 }
             )
         }
+
+        if (showCommunityUserDialog) {
+            AppAlertDialog(
+                onDismissRequest = { showCommunityUserDialog = false },
+                title = { AppText("社区用户 ID") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        AppText(config.userId, style = MaterialTheme.typography.bodySmall)
+                        communityUserInfo?.let { info ->
+                            AppText("${info.userName.ifBlank { "匿名用户" }} · 已贡献 ${info.segmentCount} 段 · 节省 ${info.minutesSaved.toInt()} 分钟")
+                        }
+                        AppText("此 ID 仅用于当前服务器上的贡献归属。重新生成后，旧贡献不会迁移。", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        AppTextButton(onClick = { showRegenerateUserIdDialog = true }) { AppText("重新生成 ID") }
+                    }
+                },
+                confirmButton = {
+                    AppTextButton(onClick = {
+                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                        clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("社区用户 ID", config.userId))
+                        showNotificationToast("用户 ID 已复制")
+                    }) { AppText("复制") }
+                },
+                dismissButton = { AppTextButton(onClick = { showCommunityUserDialog = false }) { AppText("关闭") } },
+            )
+        }
+
+        if (showRegenerateUserIdDialog) {
+            AppAlertDialog(
+                onDismissRequest = { showRegenerateUserIdDialog = false },
+                title = { AppText("重新生成社区用户 ID？") },
+                text = { AppText("旧 ID 的贡献不会迁移到新 ID。") },
+                confirmButton = {
+                    AppTextButton(onClick = {
+                        persistConfig(config.copy(userId = generateSponsorBlockUserId()))
+                        showRegenerateUserIdDialog = false
+                        showCommunityUserDialog = false
+                    }) { AppText("确认重新生成") }
+                },
+                dismissButton = { AppTextButton(onClick = { showRegenerateUserIdDialog = false }) { AppText("取消") } },
+            )
+        }
     }
 }
 
 @Composable
-private fun SponsorBlockCategorySettingsSection(
-    settings: List<SponsorBlockCategorySetting>,
-    onBehaviorChange: (String, SponsorBlockSegmentBehavior) -> Unit
+private fun SponsorBlockSettingsSection(
+    title: String,
+    subtitle: String? = null,
+    content: @Composable ColumnScope.() -> Unit,
 ) {
-    var editing by remember { mutableStateOf<SponsorBlockCategorySetting?>(null) }
-    Column {
-        AppText(
-            text = "片段行为",
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
-        )
-        settings.forEach { setting ->
-            AppPreference(
-                icon = CupertinoIcons.Default.Tag,
-                title = setting.title,
-                subtitle = setting.description,
-                value = setting.behavior.label,
-                onClick = { editing = setting },
-                iconTint = Color(0xFFAF52DE)
-            )
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        AppText(text = title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+        if (subtitle != null) {
+            AppText(text = subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        AppSurface(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.38f),
+            shape = RoundedCornerShape(16.dp),
+        ) {
+            Column(content = content)
         }
     }
-    editing?.let { setting ->
-        AppAlertDialog(
-            onDismissRequest = { editing = null },
-            title = { AppText(setting.title) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    AppText(setting.description)
-                    SponsorBlockSegmentBehavior.entries.forEach { behavior ->
-                        AppOutlinedButton(
-                            onClick = {
-                                onBehaviorChange(setting.category, behavior)
-                                editing = null
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) { AppText(behavior.label) }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SponsorBlockCategorySettingsSection(
+    settings: List<SponsorBlockCategorySetting>,
+    onBehaviorChange: (String, SponsorBlockSegmentBehavior) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(12.dp)) {
+        settings.forEach { setting ->
+            AppSurface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.62f),
+                shape = RoundedCornerShape(12.dp),
+            ) {
+                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    AppText(setting.title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                    AppText(setting.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        SponsorBlockSegmentBehavior.entries.forEach { behavior ->
+                            AppFilterChip(
+                                selected = setting.behavior == behavior,
+                                onClick = { onBehaviorChange(setting.category, behavior) },
+                                label = { AppText(behavior.label) },
+                            )
+                        }
                     }
                 }
-            },
-            confirmButton = { AppTextButton(onClick = { editing = null }) { AppText("取消") } }
-        )
+            }
+        }
     }
 }
 

@@ -25,6 +25,8 @@ import com.android.purebilibili.feature.video.ui.overlay.resolveBottomControlBar
 import com.android.purebilibili.feature.video.ui.overlay.resolveVideoProgressBarLayoutPolicy
 import com.android.purebilibili.feature.video.ui.overlay.resolveLandscapeEndDrawerReservedWidthDp
 import com.android.purebilibili.feature.video.ui.components.SponsorSkipButton
+import com.android.purebilibili.feature.video.ui.components.SponsorContributionOverlay
+import com.android.purebilibili.feature.video.viewmodel.SponsorContributionUiState
 import com.android.purebilibili.feature.video.ui.components.TwoFingerSpeedFeedbackOverlay
 import com.android.purebilibili.feature.video.ui.components.VideoAspectRatio
 import com.android.purebilibili.feature.video.ui.components.GesturePercentTransitionDirection
@@ -411,6 +413,11 @@ fun VideoPlayerSection(
     showSponsorSkipButton: Boolean = false,
     onSponsorSkip: () -> Unit = {},
     onSponsorDismiss: () -> Unit = {},
+    sponsorContributionState: SponsorContributionUiState = SponsorContributionUiState(),
+    onSponsorContributionMarkBoundary: () -> Unit = {},
+    onSponsorContributionCategoryChange: (String) -> Unit = {},
+    onSponsorContributionSubmit: () -> Unit = {},
+    onSponsorContributionCancel: () -> Unit = {},
     //  [新增] 重载视频回调
     onReloadVideo: () -> Unit = {},
     //  [新增] CDN 线路切换
@@ -4934,6 +4941,16 @@ fun VideoPlayerSection(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(bottom = 60.dp, end = 16.dp)
+            )
+            SponsorContributionOverlay(
+                state = sponsorContributionState,
+                onMarkBoundary = onSponsorContributionMarkBoundary,
+                onCategoryChange = onSponsorContributionCategoryChange,
+                onSubmit = onSponsorContributionSubmit,
+                onCancel = onSponsorContributionCancel,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(bottom = 60.dp, start = 16.dp),
             )
     }
 

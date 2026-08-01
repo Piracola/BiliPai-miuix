@@ -3380,6 +3380,7 @@ object SettingsManager {
             "live" -> "LIVE"
             "watchlater", "watch_later" -> "WATCHLATER"
             "settings" -> "SETTINGS"
+            "plugins", "plugin", "plugin_center" -> "PLUGINS"
             else -> id.uppercase()
         }
     }

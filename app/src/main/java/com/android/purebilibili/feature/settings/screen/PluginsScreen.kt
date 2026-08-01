@@ -160,6 +160,7 @@ fun PluginsScreen(
     
     //  编辑插件状态
     var editingPlugin by remember { mutableStateOf<com.android.purebilibili.core.plugin.json.JsonRulePlugin?>(null) }
+    var selectedBuiltInPluginId by remember { mutableStateOf<String?>(null) }
     
     //  如果正在编辑插件，显示编辑器全屏覆盖 (Mobile behavior)
     //  In Tablet, this will be handled differently.
@@ -175,6 +176,18 @@ fun PluginsScreen(
         return
     }
 
+    selectedBuiltInPluginId?.let { pluginId ->
+        val pluginInfo = plugins.firstOrNull { it.plugin.id == pluginId }
+        if (pluginInfo != null) {
+            SettingsLocalBackHandler { selectedBuiltInPluginId = null }
+            PluginDetailScreen(
+                pluginInfo = pluginInfo,
+                onBack = { selectedBuiltInPluginId = null }
+            )
+            return
+        }
+    }
+
     val bottomContentPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
     SettingsPageScaffold(
@@ -187,6 +200,7 @@ fun PluginsScreen(
         PluginsContent(
             plugins = plugins,
             jsonPlugins = jsonPlugins,
+            onOpenBuiltInPlugin = { selectedBuiltInPluginId = it },
             onEditJsonPlugin = { editingPlugin = it },
             initialImportUrl = initialImportUrl,
             onOpenJsPlugin = onOpenJsPlugin,
@@ -199,6 +213,7 @@ fun PluginsContent(
     modifier: Modifier = Modifier,
     plugins: List<com.android.purebilibili.core.plugin.PluginInfo>,
     jsonPlugins: List<com.android.purebilibili.core.plugin.json.LoadedJsonPlugin>,
+    onOpenBuiltInPlugin: (String) -> Unit,
     onEditJsonPlugin: (com.android.purebilibili.core.plugin.json.JsonRulePlugin) -> Unit,
     initialImportUrl: String? = null,
     onOpenJsPlugin: (String) -> Unit = {}
@@ -215,7 +230,6 @@ fun PluginsContent(
     val enabledPlugins = plugins.count { it.enabled } + jsonPlugins.count { it.enabled }
     
     // Local UI states
-    var expandedPluginId by remember { mutableStateOf<String?>(null) }
     var jsonStatsNotificationEnabled by remember(context) {
         mutableStateOf(readJsonPluginStatsNotificationConfig(context).enabled)
     }
@@ -496,7 +510,6 @@ fun PluginsContent(
                         plugins.forEachIndexed { index, pluginInfo ->
                             PluginItem(
                                 pluginInfo = pluginInfo,
-                                isExpanded = expandedPluginId == pluginInfo.plugin.id,
                                 iconTint = getPluginColor(index),
                                 onToggle = { enabled ->
                                     scope.launch {
@@ -512,13 +525,7 @@ fun PluginsContent(
                                         )
                                     }
                                 },
-                                onExpandToggle = {
-                                    expandedPluginId = if (expandedPluginId == pluginInfo.plugin.id) {
-                                        null
-                                    } else {
-                                        pluginInfo.plugin.id
-                                    }
-                                }
+                                onOpen = { onOpenBuiltInPlugin(pluginInfo.plugin.id) }
                             )
                             if (index < plugins.lastIndex) {
                                 Box(
@@ -549,8 +556,14 @@ fun PluginsContent(
             item {
                 Spacer(modifier = Modifier.height(24.dp))
                 AppText(
-                    text = "外部插件",
+                    text = "高级/实验功能",
                     style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 32.dp, bottom = 4.dp)
+                )
+                AppText(
+                    text = "JSON、JS、Kotlin 包与装扮等扩展能力",
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 32.dp, bottom = 8.dp)
                 )
@@ -1928,10 +1941,9 @@ private fun InstalledUiSkinItem(
 @Composable
 private fun PluginItem(
     pluginInfo: PluginInfo,
-    isExpanded: Boolean,
     iconTint: Color,
     onToggle: (Boolean) -> Unit,
-    onExpandToggle: () -> Unit
+    onOpen: () -> Unit
 ) {
     val plugin = pluginInfo.plugin
     val effectiveIconTint = rememberAdaptiveSemanticIconTint(iconTint)
@@ -1941,7 +1953,7 @@ private fun PluginItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onExpandToggle() }
+                .clickable { onOpen() }
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -2025,10 +2037,10 @@ private fun PluginItem(
                 enabled = !plugin.unavailable
             )
             
-            // 展开箭头
+            // 进入详情
             AppIcon(
-                imageVector = if (isExpanded) CupertinoIcons.Default.ChevronUp else CupertinoIcons.Default.ChevronDown,
-                contentDescription = if (isExpanded) "收起" else "展开",
+                imageVector = CupertinoIcons.Default.ChevronForward,
+                contentDescription = "打开插件详情",
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                 modifier = Modifier
                     .padding(start = 4.dp)
@@ -2036,39 +2048,71 @@ private fun PluginItem(
             )
         }
         
-        // 展开的配置区域
-        AnimatedVisibility(
-            visible = isExpanded && (pluginInfo.enabled || plugin.unavailable),
-            enter = expandVertically(),
-            exit = shrinkVertically()
-        ) {
-            AppSurface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 66.dp, end = 16.dp, bottom = 8.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                if (plugin.unavailable) {
-                    AppText(
-                        text = plugin.unavailableReason,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(12.dp)
-                    )
-                } else {
-                    Column {
+    }
+}
+
+@Composable
+private fun PluginDetailScreen(
+    pluginInfo: PluginInfo,
+    onBack: () -> Unit,
+) {
+    val plugin = pluginInfo.plugin
+    val bottomContentPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    SettingsPageScaffold(
+        title = plugin.name,
+        onBack = onBack,
+        backContentDescription = "返回插件中心",
+        bottomContentPadding = bottomContentPadding + 16.dp,
+        scrollHost = SettingsPageScrollHost.LazyColumn,
+        lazyListContent = {
+            item {
+                AppSurface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.42f),
+                    shape = RoundedCornerShape(16.dp),
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        AppText(
+                            text = plugin.description,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        if (plugin.author != "Unknown") {
+                            AppText(
+                                text = "${plugin.author} · v${plugin.version}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 4.dp),
+                            )
+                        }
                         PluginCapabilityDetailSection(
                             capabilities = plugin.capabilityManifest.capabilities,
                             showAuthorizationLabels = false,
-                            modifier = Modifier.padding(12.dp)
+                            modifier = Modifier.padding(top = 12.dp),
                         )
-                        plugin.SettingsContent()
                     }
                 }
             }
-        }
-    }
+            item {
+                if (plugin.unavailable) {
+                    AppText(
+                        text = plugin.unavailableReason,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
+                    )
+                } else {
+                    plugin.SettingsContent(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                    )
+                }
+            }
+        },
+    )
 }
 
 @Composable

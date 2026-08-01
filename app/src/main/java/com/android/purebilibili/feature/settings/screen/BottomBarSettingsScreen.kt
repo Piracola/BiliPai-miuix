@@ -7,6 +7,7 @@ import com.android.purebilibili.core.ui.components.AppHorizontalDivider
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.TrendingUp
 import androidx.compose.material.icons.outlined.DynamicFeed
+import androidx.compose.material.icons.outlined.Extension
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.GridView
@@ -114,6 +115,7 @@ internal fun resolveBottomBarTabIcon(
             "LIVE" -> Icons.Outlined.LiveTv
             "WATCHLATER" -> Icons.Outlined.WatchLater
             "SETTINGS" -> Icons.Outlined.Settings
+            "PLUGINS" -> Icons.Outlined.Extension
             else -> Icons.Outlined.Home
         }
         AppSemanticIconFamily.CUPERTINO -> when (id) {
@@ -127,6 +129,7 @@ internal fun resolveBottomBarTabIcon(
             "LIVE" -> CupertinoIcons.Default.Video
             "WATCHLATER" -> CupertinoIcons.Outlined.Clock
             "SETTINGS" -> CupertinoIcons.Default.Gearshape
+            "PLUGINS" -> CupertinoIcons.Default.Puzzlepiece
             else -> CupertinoIcons.Default.House
         }
     }
@@ -179,7 +182,8 @@ internal fun resolveAllBottomBarTabs(
     BottomBarTabConfig("FAVORITE", "收藏", resolveBottomBarTabIcon("FAVORITE", iconFamily), isDefault = false),
     BottomBarTabConfig("LIVE", "直播", resolveBottomBarTabIcon("LIVE", iconFamily), isDefault = false),
     BottomBarTabConfig("WATCHLATER", "稍后看", resolveBottomBarTabIcon("WATCHLATER", iconFamily), isDefault = false),
-    BottomBarTabConfig("SETTINGS", "设置", resolveBottomBarTabIcon("SETTINGS", iconFamily), isDefault = false)
+    BottomBarTabConfig("SETTINGS", "设置", resolveBottomBarTabIcon("SETTINGS", iconFamily), isDefault = false),
+    BottomBarTabConfig("PLUGINS", "插件中心", resolveBottomBarTabIcon("PLUGINS", iconFamily), isDefault = false)
 )
 
 private val defaultTopTabIds = listOf("RECOMMEND", "FOLLOW", "POPULAR", "LIVE", "GAME", "PARTITION")

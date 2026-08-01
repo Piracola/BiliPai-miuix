@@ -1325,6 +1325,7 @@ fun AppNavigation(
                         BottomNavItem.LIVE -> BiliPaiNavKey.LiveList
                         BottomNavItem.WATCHLATER -> BiliPaiNavKey.WatchLater
                         BottomNavItem.SETTINGS -> BiliPaiNavKey.Settings
+                        BottomNavItem.PLUGINS -> BiliPaiNavKey.PluginsSettings()
                     }
                 }
 
@@ -1437,6 +1438,7 @@ fun AppNavigation(
                                     }
                                 },
                                 onSettingsClick = { pushNavigation3Route(ScreenRoutes.Settings.route) },
+                                onPluginsClick = { pushNavigation3Key(BiliPaiNavKey.PluginsSettings()) },
                                 onDynamicClick = { pushNavigation3Route(ScreenRoutes.Dynamic.route) },
                                 onHistoryClick = { pushNavigation3Route(ScreenRoutes.History.route) },
                                 onPartitionClick = { pushNavigation3Key(BiliPaiNavKey.Partition) },

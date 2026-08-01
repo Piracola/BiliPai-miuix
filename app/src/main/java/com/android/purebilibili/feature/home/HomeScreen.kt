@@ -227,6 +227,7 @@ fun HomeScreen(
     onDownloadClick: () -> Unit = {},  // 离线缓存页面
     onInboxClick: () -> Unit = {},  // 私信页面
     onStoryClick: () -> Unit = {},  //  [新增] 竖屏短视频
+    onPluginsClick: () -> Unit = {},
     onSpaceClick: (Long) -> Unit = {},
     globalHazeState: dev.chrisbanes.haze.HazeState? = null,  //  [新增] 全局底栏模糊状态
     isTopLevelActive: Boolean = true,
@@ -1108,6 +1109,7 @@ fun HomeScreen(
             BottomNavItem.WATCHLATER -> onWatchLaterClick()
             BottomNavItem.STORY -> onStoryClick()
             BottomNavItem.SETTINGS -> onSettingsClick()
+            BottomNavItem.PLUGINS -> onPluginsClick()
         }
     }
     

@@ -277,6 +277,10 @@ internal fun VideoDetailScreenStateHolder(
             showDanmakuSendDialog = viewModel::showDanmakuSendDialog,
             skipSponsorSegment = viewModel::skipCurrentSponsorSegment,
             dismissSponsorSkipButton = viewModel::dismissSponsorSkipButton,
+            markSponsorContributionBoundary = viewModel::markSponsorContributionBoundary,
+            setSponsorContributionCategory = viewModel::setSponsorContributionCategory,
+            submitSponsorContribution = viewModel::submitSponsorContribution,
+            cancelSponsorContribution = viewModel::cancelSponsorContribution,
             notifyExplicitSeek = viewModel::notifyPluginsOfExplicitSeek,
             setVideoCodec = viewModel::setVideoCodec,
             setVideoSecondCodec = viewModel::setVideoSecondCodec,
@@ -654,6 +658,7 @@ internal fun VideoDetailScreenStateHolder(
 
     val sponsorSegment by viewModel.currentSponsorSegment.collectAsStateWithLifecycle()
     val showSponsorSkipButton by viewModel.showSkipButton.collectAsStateWithLifecycle()
+    val sponsorContributionState by viewModel.sponsorContributionUiState.collectAsStateWithLifecycle()
 
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
@@ -2022,6 +2027,7 @@ internal fun VideoDetailScreenStateHolder(
             videoPlayerSectionTarget = videoPlayerSectionTarget,
             sponsorSegment = sponsorSegment,
             showSponsorSkipButton = showSponsorSkipButton,
+            sponsorContributionState = sponsorContributionState,
             sleepTimerMinutes = sleepTimerMinutes,
             viewPoints = viewPoints,
             pbpProgressData = pbpProgressData,
@@ -2163,6 +2169,11 @@ internal fun VideoDetailScreenStateHolder(
                     showSponsorSkipButton = showSponsorSkipButton,
                     onSponsorSkip = { viewModel.skipCurrentSponsorSegment() },
                     onSponsorDismiss = { viewModel.dismissSponsorSkipButton() },
+                    sponsorContributionState = sponsorContributionState,
+                    onSponsorContributionMarkBoundary = viewModel::markSponsorContributionBoundary,
+                    onSponsorContributionCategoryChange = viewModel::setSponsorContributionCategory,
+                    onSponsorContributionSubmit = viewModel::submitSponsorContribution,
+                    onSponsorContributionCancel = viewModel::cancelSponsorContribution,
                     //  [新增] 重载视频
                     onReloadVideo = { viewModel.reloadVideo() },
                     //  [新增] CDN 线路切换
@@ -2329,7 +2340,8 @@ internal fun VideoDetailScreenStateHolder(
                             currentPlayMode = currentPlayMode,
                             onPlayModeClick = { com.android.purebilibili.feature.video.player.PlaylistManager.togglePlayMode() },
                             forceCoverOnlyOnReturn = false,
-                            predictiveBackCancelRecoveryGeneration = 0
+                            predictiveBackCancelRecoveryGeneration = 0,
+                            sponsorContributionState = sponsorContributionState,
                         )
                     } else {
                         // 📱 手机竖屏：原有单列布局
@@ -2670,6 +2682,7 @@ internal fun VideoDetailScreenStateHolder(
                                 videoPlayerSectionTarget = videoPlayerSectionTarget,
                                 sponsorSegment = sponsorSegment,
                                 showSponsorSkipButton = showSponsorSkipButton,
+                                sponsorContributionState = sponsorContributionState,
                                 sleepTimerMinutes = sleepTimerMinutes,
                                 viewPoints = viewPoints,
                                 pbpProgressData = pbpProgressData,

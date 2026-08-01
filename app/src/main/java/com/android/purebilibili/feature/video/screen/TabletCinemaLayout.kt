@@ -134,6 +134,7 @@ import com.android.purebilibili.feature.video.ui.section.VideoNoteEditorSheet
 import com.android.purebilibili.feature.video.ui.section.shouldShowAiSummaryEntry
 import com.android.purebilibili.feature.video.viewmodel.CommentUiState
 import com.android.purebilibili.feature.video.viewmodel.VideoPlaybackUiState
+import com.android.purebilibili.feature.video.viewmodel.SponsorContributionUiState
 import com.android.purebilibili.feature.video.viewmodel.VideoEngagementUiState
 import com.android.purebilibili.feature.video.viewmodel.withEngagementUiState
 import com.android.purebilibili.feature.video.viewmodel.SubReplyUiState
@@ -188,7 +189,8 @@ internal fun TabletCinemaLayout(
         com.android.purebilibili.feature.video.player.PlayMode.SEQUENTIAL,
     onPlayModeClick: () -> Unit = {},
     forceCoverOnlyOnReturn: Boolean = false,
-    predictiveBackCancelRecoveryGeneration: Int = 0
+    predictiveBackCancelRecoveryGeneration: Int = 0,
+    sponsorContributionState: SponsorContributionUiState = SponsorContributionUiState(),
 ) {
     val appContext = LocalContext.current
     val policy = remember(configuration.screenWidthDp, tabletCommentPanelWidthPreset) {
@@ -290,7 +292,8 @@ internal fun TabletCinemaLayout(
                     onRelatedVideoClick = onRelatedVideoClick,
                     playerMaxWidth = policy.playerMaxWidthDp.dp,
                     forceCoverOnlyOnReturn = forceCoverOnlyOnReturn,
-                    predictiveBackCancelRecoveryGeneration = predictiveBackCancelRecoveryGeneration
+                    predictiveBackCancelRecoveryGeneration = predictiveBackCancelRecoveryGeneration,
+                    sponsorContributionState = sponsorContributionState,
                 )
 
                 if (success != null) {
@@ -415,7 +418,8 @@ private fun CinemaStagePlayer(
     onRelatedVideoClick: (String, android.os.Bundle?) -> Unit,
     playerMaxWidth: Dp,
     forceCoverOnlyOnReturn: Boolean,
-    predictiveBackCancelRecoveryGeneration: Int
+    predictiveBackCancelRecoveryGeneration: Int,
+    sponsorContributionState: SponsorContributionUiState,
 ) {
     val success = uiState as? VideoPlaybackUiState.Success
     val sharedTransitionScope = LocalSharedTransitionScope.current
@@ -502,7 +506,12 @@ private fun CinemaStagePlayer(
                 onCoin = engagementActions.openCoinDialog,
                 onToggleFavorite = engagementActions.toggleFavorite,
                 onTriple = engagementActions.doTripleAction,
-                onSubtitleTrackSelected = playbackActions.selectSubtitleTrack
+                onSubtitleTrackSelected = playbackActions.selectSubtitleTrack,
+                sponsorContributionState = sponsorContributionState,
+                onSponsorContributionMarkBoundary = playbackActions.markSponsorContributionBoundary,
+                onSponsorContributionCategoryChange = playbackActions.setSponsorContributionCategory,
+                onSponsorContributionSubmit = playbackActions.submitSponsorContribution,
+                onSponsorContributionCancel = playbackActions.cancelSponsorContribution,
             )
         }
     }
