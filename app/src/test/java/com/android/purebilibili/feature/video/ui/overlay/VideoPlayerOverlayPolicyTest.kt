@@ -493,6 +493,12 @@ class VideoPlayerOverlayPolicyTest {
                 firstFrame = "rendered",
                 droppedFrames = "12",
                 bandwidthEstimate = "8.6 Mbps",
+                playerViewport = "2400 x 1080",
+                cdnHost = "upos.example.com",
+                cdnIndex = "2/3",
+                networkType = "WiFi",
+                forwardBuffer = "0 ms",
+                lastLoadError = "ERROR_CODE_IO_NETWORK_CONNECTION_FAILED: timeout",
                 lastVideoEvent = "first frame rendered",
                 lastAudioEvent = "audio sink recovered"
             )
@@ -513,6 +519,12 @@ class VideoPlayerOverlayPolicyTest {
                 DebugStatRow("First frame", "rendered"),
                 DebugStatRow("Dropped frames", "12"),
                 DebugStatRow("Bandwidth", "8.6 Mbps"),
+                DebugStatRow("Player viewport", "2400 x 1080"),
+                DebugStatRow("CDN host", "upos.example.com"),
+                DebugStatRow("CDN index", "2/3"),
+                DebugStatRow("Network type", "WiFi"),
+                DebugStatRow("Forward buffer", "0 ms"),
+                DebugStatRow("Last load error", "ERROR_CODE_IO_NETWORK_CONNECTION_FAILED: timeout"),
                 DebugStatRow("Last video event", "first frame rendered"),
                 DebugStatRow("Last audio event", "audio sink recovered")
             ),
@@ -627,6 +639,12 @@ class VideoPlayerOverlayPolicyTest {
                 firstFrame = "rendered",
                 droppedFrames = "12",
                 bandwidthEstimate = "8.6 Mbps",
+                playerViewport = "2400 x 1080",
+                cdnHost = "upos.example.com",
+                cdnIndex = "2/3",
+                networkType = "WiFi",
+                forwardBuffer = "0 ms",
+                lastLoadError = "ERROR_CODE_IO_NETWORK_CONNECTION_FAILED: timeout",
                 lastVideoEvent = "first frame rendered",
                 lastAudioEvent = "audio sink recovered"
             ),
@@ -645,6 +663,12 @@ class VideoPlayerOverlayPolicyTest {
         assertTrue(report.contains("Buffered: 03:08"))
         assertTrue(report.contains("Playback state: READY"))
         assertTrue(report.contains("Bandwidth: 8.6 Mbps"))
+        assertTrue(report.contains("Player viewport: 2400 x 1080"))
+        assertTrue(report.contains("CDN host: upos.example.com"))
+        assertTrue(report.contains("CDN index: 2/3"))
+        assertTrue(report.contains("Network type: WiFi"))
+        assertTrue(report.contains("Forward buffer: 0 ms"))
+        assertTrue(report.contains("Last load error: ERROR_CODE_IO_NETWORK_CONNECTION_FAILED: timeout"))
         assertTrue(report.contains("Recent events:"))
         assertTrue(report.contains("- pause requested at 01:40"))
         assertTrue(report.contains("- resume requested at 02:05"))
@@ -663,6 +687,19 @@ class VideoPlayerOverlayPolicyTest {
         assertNotNull(signal)
         assertEquals(PlaybackIssueType.STUTTER, signal.type)
         assertTrue(signal.title.contains("卡顿"))
+    }
+
+    @Test
+    fun playbackIssuePrompt_isNonBlockingAndKeepsViewAndExportActions() {
+        val source = loadVideoPlayerOverlaySource()
+        val issuePrompt = source
+            .substringAfter("if (playerDiagnosticLoggingEnabled) playbackIssueSignal?.let")
+            .substringBefore("// --- 5.")
+
+        assertFalse(issuePrompt.contains("AppAlertDialog"))
+        assertTrue(issuePrompt.contains("AppSurface"))
+        assertTrue(issuePrompt.contains("AppText(\"查看\")"))
+        assertTrue(issuePrompt.contains("AppText(\"导出\")"))
     }
 
     @Test

@@ -24,6 +24,12 @@ data class PlaybackDebugInfo(
     val firstFrame: String = "",
     val droppedFrames: String = "",
     val bandwidthEstimate: String = "",
+    val playerViewport: String = "",
+    val cdnHost: String = "",
+    val cdnIndex: String = "",
+    val networkType: String = "",
+    val forwardBuffer: String = "",
+    val lastLoadError: String = "",
     val lastVideoEvent: String = "",
     val lastAudioEvent: String = ""
 )
@@ -124,6 +130,12 @@ internal fun resolvePlaybackDebugRows(
         DebugStatRow("First frame", info.firstFrame),
         DebugStatRow("Dropped frames", info.droppedFrames),
         DebugStatRow("Bandwidth", info.bandwidthEstimate),
+        DebugStatRow("Player viewport", info.playerViewport),
+        DebugStatRow("CDN host", info.cdnHost),
+        DebugStatRow("CDN index", info.cdnIndex),
+        DebugStatRow("Network type", info.networkType),
+        DebugStatRow("Forward buffer", info.forwardBuffer),
+        DebugStatRow("Last load error", info.lastLoadError),
         DebugStatRow("Last video event", info.lastVideoEvent),
         DebugStatRow("Last audio event", info.lastAudioEvent)
     )
@@ -154,7 +166,11 @@ internal fun resolvePlaybackInsightPresentation(
             DebugStatRow("分辨率", info.resolution),
             DebugStatRow("视频码率", info.videoBitrate),
             DebugStatRow("音频码率", info.audioBitrate),
-            DebugStatRow("带宽估算", info.bandwidthEstimate)
+            DebugStatRow("带宽估算", info.bandwidthEstimate),
+            DebugStatRow("播放器视口", info.playerViewport),
+            DebugStatRow("CDN", listOf(info.cdnHost, info.cdnIndex).filter { it.isNotBlank() }.joinToString(" · ")),
+            DebugStatRow("网络", info.networkType),
+            DebugStatRow("前向缓冲", info.forwardBuffer)
         ),
         PlaybackInsightSection.VIDEO to listOf(
             DebugStatRow("视频编码", info.videoCodec),
@@ -173,6 +189,7 @@ internal fun resolvePlaybackInsightPresentation(
             DebugStatRow("首帧", info.firstFrame)
         ),
         PlaybackInsightSection.EVENTS to listOf(
+            DebugStatRow("最近加载错误", info.lastLoadError),
             DebugStatRow("最近视频事件", info.lastVideoEvent),
             DebugStatRow("最近音频事件", info.lastAudioEvent)
         )

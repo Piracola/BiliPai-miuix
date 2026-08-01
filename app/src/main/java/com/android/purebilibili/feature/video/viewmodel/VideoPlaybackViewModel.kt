@@ -138,6 +138,41 @@ import com.android.purebilibili.feature.video.subtitle.normalizeBilibiliSubtitle
 import com.android.purebilibili.feature.video.subtitle.resolveDefaultSubtitleLanguages
 
 private const val PLAYBACK_CDN_FIRST_FRAME_FALLBACK_TIMEOUT_MS = 2_500L
+private const val PLAYBACK_STALL_RECOVERY_TIMEOUT_MS = 10_000L
+
+internal data class PlaybackStallRecoveryDecision(
+    val nextCdnIndex: Int? = null
+) {
+    val shouldSwitchCdn: Boolean get() = nextCdnIndex != null
+}
+
+internal fun resolvePlaybackStallRecoveryDecision(
+    playbackState: Int,
+    playWhenReady: Boolean,
+    firstFrameRendered: Boolean,
+    forwardBufferDurationMs: Long,
+    currentCdnIndex: Int,
+    cdnCandidateCount: Int,
+    attemptedCdnIndexes: Set<Int>,
+    usesAdaptivePlayback: Boolean
+): PlaybackStallRecoveryDecision {
+    if (
+        playbackState != Player.STATE_BUFFERING ||
+        !playWhenReady ||
+        !firstFrameRendered ||
+        forwardBufferDurationMs > 0L ||
+        cdnCandidateCount <= 1 ||
+        usesAdaptivePlayback
+    ) {
+        return PlaybackStallRecoveryDecision()
+    }
+
+    val nextIndex = (1 until cdnCandidateCount)
+        .asSequence()
+        .map { offset -> (currentCdnIndex + offset) % cdnCandidateCount }
+        .firstOrNull { candidate -> candidate !in attemptedCdnIndexes }
+    return PlaybackStallRecoveryDecision(nextCdnIndex = nextIndex)
+}
 
 data class CommentMentionSearchUiState(
     val query: String = "",
@@ -1231,6 +1266,10 @@ class VideoPlaybackViewModel : ViewModel() {
     private var pluginCheckJob: Job? = null
     private var playbackCdnFallbackJob: Job? = null
     private var playbackCdnFallbackState: PlaybackCdnFallbackState = PlaybackCdnFallbackState.Inactive
+    private var playbackStallRecoveryJob: Job? = null
+    private var playbackStallRecoveryFirstFrameRendered = false
+    private var playbackStallRecoveryMediaKey = ""
+    private val attemptedPlaybackStallRecoveryCdnIndexes = mutableSetOf<Int>()
     
     // State
     private val _uiState = MutableStateFlow<VideoPlaybackUiState>(VideoPlaybackUiState.Loading.Initial)
@@ -2060,6 +2099,8 @@ class VideoPlaybackViewModel : ViewModel() {
         val previousPlayer = exoPlayer
 
         if (changed && previousPlayer != null) {
+            cancelPlaybackStallRecovery()
+            playbackStallRecoveryFirstFrameRendered = false
             flushPlaybackHeartbeatSnapshot(reason = "replace_player")
             saveCurrentPosition()
             // 切换播放器时立即停止旧实例，避免转场期间双播
@@ -2081,10 +2122,14 @@ class VideoPlaybackViewModel : ViewModel() {
     private val playbackEndListener = object : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
             if (playbackState == Player.STATE_READY) {
+                cancelPlaybackStallRecovery()
                 markPlaybackCdnReadyIfMediaReady()
                 recordCurrentCdnHealthEvent(CdnHealthEvent.PLAYBACK_READY)
             } else if (playbackState == Player.STATE_BUFFERING) {
                 recordCurrentCdnHealthEvent(CdnHealthEvent.BUFFERING)
+                schedulePlaybackStallRecovery()
+            } else if (playbackState == Player.STATE_IDLE || playbackState == Player.STATE_ENDED) {
+                cancelPlaybackStallRecovery()
             }
             if (playbackState == Player.STATE_ENDED) {
                 if (shouldSuppressPlaybackCompletionForCommentInteraction(isCommentInteractionActive)) {
@@ -2172,11 +2217,30 @@ class VideoPlaybackViewModel : ViewModel() {
             }
         }
 
+        override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+            if (!playWhenReady) {
+                cancelPlaybackStallRecovery()
+            }
+        }
+
+        override fun onRenderedFirstFrame() {
+            playbackStallRecoveryFirstFrameRendered = true
+        }
+
+        override fun onMediaItemTransition(
+            mediaItem: androidx.media3.common.MediaItem?,
+            reason: Int
+        ) {
+            cancelPlaybackStallRecovery()
+            playbackStallRecoveryFirstFrameRendered = false
+        }
+
         override fun onTracksChanged(tracks: Tracks) {
             markPlaybackCdnReadyIfMediaReady()
         }
 
         override fun onPlayerError(error: PlaybackException) {
+            cancelPlaybackStallRecovery()
             Logger.w("PlayerVM", "Playback error: ${error.errorCodeName}, message=${error.message}")
             val current = _uiState.value as? VideoPlaybackUiState.Success
             val exoPlaybackError = error as? ExoPlaybackException
@@ -2199,6 +2263,55 @@ class VideoPlaybackViewModel : ViewModel() {
             recordCurrentCdnHealthEvent(CdnHealthEvent.PLAYER_ERROR)
             fallbackFromCdnRewrite(reason = "player_error")
         }
+    }
+
+    private fun schedulePlaybackStallRecovery() {
+        if (exoPlayer == null) return
+        val current = _uiState.value as? VideoPlaybackUiState.Success ?: return
+        val mediaKey = "${current.info.bvid}:${current.info.cid}"
+        if (playbackStallRecoveryMediaKey != mediaKey) {
+            playbackStallRecoveryMediaKey = mediaKey
+            attemptedPlaybackStallRecoveryCdnIndexes.clear()
+        }
+        if (playbackStallRecoveryJob?.isActive == true) return
+
+        playbackStallRecoveryJob = viewModelScope.launch {
+            delay(PLAYBACK_STALL_RECOVERY_TIMEOUT_MS)
+            val latestPlayer = exoPlayer ?: return@launch
+            val latest = _uiState.value as? VideoPlaybackUiState.Success ?: return@launch
+            if ("${latest.info.bvid}:${latest.info.cid}" != playbackStallRecoveryMediaKey) {
+                return@launch
+            }
+
+            attemptedPlaybackStallRecoveryCdnIndexes += latest.currentCdnIndex
+            val decision = resolvePlaybackStallRecoveryDecision(
+                playbackState = latestPlayer.playbackState,
+                playWhenReady = latestPlayer.playWhenReady,
+                firstFrameRendered = playbackStallRecoveryFirstFrameRendered,
+                forwardBufferDurationMs = (latestPlayer.bufferedPosition - latestPlayer.currentPosition)
+                    .coerceAtLeast(0L),
+                currentCdnIndex = latest.currentCdnIndex,
+                cdnCandidateCount = latest.allVideoUrls.size,
+                attemptedCdnIndexes = attemptedPlaybackStallRecoveryCdnIndexes,
+                usesAdaptivePlayback = latest.playbackQualityMode == PlaybackQualityMode.AUTO &&
+                    latest.adaptiveDashSource != null
+            )
+            val nextCdnIndex = decision.nextCdnIndex ?: return@launch
+            attemptedPlaybackStallRecoveryCdnIndexes += nextCdnIndex
+            playbackStallRecoveryJob = null
+            Logger.w(
+                "PlayerVM",
+                "Playback stall recovery: media=$playbackStallRecoveryMediaKey, " +
+                    "cdn=${latest.currentCdnIndex + 1}->${nextCdnIndex + 1}, " +
+                    "position=${latestPlayer.currentPosition}"
+            )
+            switchCdnTo(nextCdnIndex)
+        }
+    }
+
+    private fun cancelPlaybackStallRecovery() {
+        playbackStallRecoveryJob?.cancel()
+        playbackStallRecoveryJob = null
     }
     
     /**
@@ -2725,6 +2838,12 @@ class VideoPlaybackViewModel : ViewModel() {
         fallbackResumePositionMs: Long = 0L
     ) {
         if (bvid.isBlank()) return
+        if (bvid != currentBvid || (cid > 0L && cid != currentCid)) {
+            cancelPlaybackStallRecovery()
+            playbackStallRecoveryFirstFrameRendered = false
+            playbackStallRecoveryMediaKey = "$bvid:$cid"
+            attemptedPlaybackStallRecoveryCdnIndexes.clear()
+        }
         val playbackRequest = PlaybackRequest.create(
             bvid = bvid,
             aid = aid,
@@ -3882,6 +4001,7 @@ class VideoPlaybackViewModel : ViewModel() {
      * 在当前画质下切换到下一个 CDN
      */
     fun switchCdn() {
+        cancelPlaybackStallRecovery()
         val current = _uiState.value as? VideoPlaybackUiState.Success ?: return
 
         if (playbackCdnFallbackState.usesCdnRewrite) {
@@ -3935,6 +4055,7 @@ class VideoPlaybackViewModel : ViewModel() {
      *  切换到指定 CDN 线路
      */
     fun switchCdnTo(index: Int) {
+        cancelPlaybackStallRecovery()
         val current = _uiState.value as? VideoPlaybackUiState.Success ?: return
         
         if (index < 0 || index >= current.cdnCount) return

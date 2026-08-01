@@ -291,11 +291,23 @@ internal fun applyRenderedFirstFrameDebugInfo(
 internal fun applyMediaTransitionFirstFrameReset(
     current: PlaybackDebugInfo
 ): PlaybackDebugInfo {
-    if (current.firstFrame.isBlank()) return current
     return current.copy(
         firstFrame = "",
+        lastLoadError = "",
         lastVideoEvent = "media transition"
     )
+}
+
+internal fun applyPlaybackLoadErrorDebugInfo(
+    current: PlaybackDebugInfo,
+    errorCodeName: String,
+    message: String?
+): PlaybackDebugInfo {
+    val summary = listOf(errorCodeName.trim(), message.orEmpty().trim())
+        .filter { it.isNotBlank() }
+        .joinToString(": ")
+    if (summary.isBlank()) return current
+    return current.copy(lastLoadError = summary)
 }
 
 internal fun applyDroppedVideoFramesDebugInfo(
@@ -571,6 +583,15 @@ class VideoPlayerState(
                 "VideoPlayerState",
                 "USER_DBG onMediaItemTransition: reason=$reason, mediaId=${mediaItem?.mediaId}"
             )
+        }
+
+        override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+            _debugInfo.value = applyPlaybackLoadErrorDebugInfo(
+                current = _debugInfo.value,
+                errorCodeName = error.errorCodeName,
+                message = error.message
+            )
+            appendDiagnosticEvent("playerError=${error.errorCodeName}")
         }
     }
 

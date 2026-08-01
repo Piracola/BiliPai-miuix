@@ -76,8 +76,22 @@ class PlaybackDebugInfoMapperTest {
 
         assertEquals("", reset.firstFrame)
         assertEquals("media transition", reset.lastVideoEvent)
-        // Already blank: no-op identity-preserving clear.
         assertEquals("", applyMediaTransitionFirstFrameReset(current = PlaybackDebugInfo()).firstFrame)
+    }
+
+    @Test
+    fun applyPlaybackLoadErrorDebugInfo_tracksAndTransitionClearsLatestError() {
+        val failed = applyPlaybackLoadErrorDebugInfo(
+            current = PlaybackDebugInfo(),
+            errorCodeName = "ERROR_CODE_IO_NETWORK_CONNECTION_FAILED",
+            message = "timeout"
+        )
+
+        assertEquals(
+            "ERROR_CODE_IO_NETWORK_CONNECTION_FAILED: timeout",
+            failed.lastLoadError
+        )
+        assertEquals("", applyMediaTransitionFirstFrameReset(failed).lastLoadError)
     }
 
     @Test
