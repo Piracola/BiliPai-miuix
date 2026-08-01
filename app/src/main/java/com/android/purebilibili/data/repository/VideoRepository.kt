@@ -139,19 +139,28 @@ object VideoRepository {
     //  [新增] 确保 buvid3 来自 Bilibili SPI API + 激活（解决 412 问题）
     private var buvidInitialized = false
 
-    private fun playbackAccount() = NetworkModule.playbackAccount()
+    internal fun playbackAccount() = NetworkModule.playbackAccount()
 
-    private fun hasPlaybackSessionCookie(): Boolean =
+    internal fun isUsingDedicatedPlaybackAccount(): Boolean = playbackAccount() != null
+
+    internal fun hasPlaybackSessionCookie(): Boolean =
         !playbackAccount()?.sessData.isNullOrEmpty() || !TokenManager.sessDataCache.isNullOrEmpty()
 
-    private fun playbackAccessToken(): String? =
+    internal fun playbackAccessToken(): String? =
         playbackAccount()?.accessToken?.takeIf { it.isNotBlank() } ?: TokenManager.accessTokenCache
 
-    private fun playbackAccessTokenPlatform(): String =
+    internal fun playbackAccessTokenPlatform(): String =
         playbackAccount()?.accessTokenPlatform ?: TokenManager.accessTokenPlatformCache
 
-    private fun isPlaybackVip(): Boolean =
+    internal fun isPlaybackVip(): Boolean =
         playbackAccount()?.isVip ?: TokenManager.isVipCache
+
+    /** 播放会话是否已登录（优先播放账号，其次主账号）。 */
+    internal fun isPlaybackLoggedIn(): Boolean =
+        resolveVideoPlaybackAuthState(
+            hasSessionCookie = hasPlaybackSessionCookie(),
+            hasAccessToken = !playbackAccessToken().isNullOrEmpty()
+        )
 
     fun getSubtitleCueCacheStats(): SubtitleCueCacheStats {
         val snapshot = subtitleCueCache.values.toList()
@@ -856,6 +865,27 @@ object VideoRepository {
         }
     }
 
+    /**
+     * 按「播放会话」（优先播放账号，其次主账号）查询 nav，用于决定播放画质/会员状态。
+     * 与 [getNavInfo]（始终主账号）不同，这里跟随 [NetworkModule.playbackApi] 的账号归属。
+     */
+    internal suspend fun getPlaybackNavInfo(): Result<NavData> = withContext(Dispatchers.IO) {
+        try {
+            val resp = NetworkModule.playbackApi().getNavInfo()
+            if (resp.code == 0 && resp.data != null) {
+                Result.success(resp.data)
+            } else {
+                if (resp.code == -101) {
+                    Result.success(NavData(isLogin = false))
+                } else {
+                    Result.failure(Exception("错误码: ${resp.code}"))
+                }
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun refreshVipStatusForPreferredQualityIfNeeded(
         isLoggedIn: Boolean,
         cachedIsVip: Boolean,
@@ -873,15 +903,18 @@ object VideoRepository {
             return cachedIsVip
         }
 
-        return getNavInfo()
+        // 按播放会话刷新：有独立播放账号时查播放账号的 nav，且不污染主账号 VIP 缓存。
+        return getPlaybackNavInfo()
             .getOrNull()
             ?.takeIf { it.isLogin }
             ?.let { navData ->
                 val isVip = navData.vip.status == 1
-                TokenManager.isVipCache = isVip
+                if (!isUsingDedicatedPlaybackAccount()) {
+                    TokenManager.isVipCache = isVip
+                }
                 com.android.purebilibili.core.util.Logger.d(
                     "VideoRepo",
-                    " Refreshed VIP status before quality resolution: cached=$cachedIsVip, refreshed=$isVip, storedQuality=$storedQuality, autoHighest=$autoHighestEnabled"
+                    " Refreshed VIP status before quality resolution: cached=$cachedIsVip, refreshed=$isVip, storedQuality=$storedQuality, autoHighest=$autoHighestEnabled, dedicatedPlayback=${isUsingDedicatedPlaybackAccount()}"
                 )
                 isVip
             }

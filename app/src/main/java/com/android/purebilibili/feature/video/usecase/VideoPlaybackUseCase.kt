@@ -542,17 +542,16 @@ class VideoPlaybackUseCase(
             
             return detailResult.fold(
                 onSuccess = { (info, playData) ->
-                    val isLogin = com.android.purebilibili.data.repository.resolveVideoPlaybackAuthState(
-                        hasSessionCookie = !com.android.purebilibili.core.store.TokenManager.sessDataCache.isNullOrEmpty(),
-                        hasAccessToken = !com.android.purebilibili.core.store.TokenManager.accessTokenCache.isNullOrEmpty()
-                    )
-                    var isVip = com.android.purebilibili.core.store.TokenManager.isVipCache
+                    val isLogin = com.android.purebilibili.data.repository.VideoRepository.isPlaybackLoggedIn()
+                    var isVip = com.android.purebilibili.data.repository.VideoRepository.isPlaybackVip()
                     if (isLogin && !isVip && com.android.purebilibili.data.repository.shouldRefreshVipStatusOnVideoLoad()) {
                         try {
-                            val navResult = VideoRepository.getNavInfo()
+                            val navResult = VideoRepository.getPlaybackNavInfo()
                             navResult.onSuccess { navData ->
                                 isVip = navData.vip.status == 1
-                                com.android.purebilibili.core.store.TokenManager.isVipCache = isVip
+                                if (!VideoRepository.isUsingDedicatedPlaybackAccount()) {
+                                    com.android.purebilibili.core.store.TokenManager.isVipCache = isVip
+                                }
                                 Logger.d("VideoPlaybackUseCase", " Refreshed VIP status: $isVip")
                             }
                         } catch (e: Exception) {

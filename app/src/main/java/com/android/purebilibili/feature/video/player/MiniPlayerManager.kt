@@ -2195,15 +2195,12 @@ class MiniPlayerManager private constructor(private val context: Context) :
         backgroundSkipJob?.cancel()
         backgroundSkipJob = scope.launch {
             backgroundPlaybackUseCase.attachPlayer(currentPlayer)
-            val isLoggedIn = resolveVideoPlaybackAuthState(
-                hasSessionCookie = !TokenManager.sessDataCache.isNullOrEmpty(),
-                hasAccessToken = !TokenManager.accessTokenCache.isNullOrEmpty()
-            )
+            val isLoggedIn = VideoRepository.isPlaybackLoggedIn()
             val storedQuality = NetworkUtils.getDefaultQualityId(context)
             val autoHighestEnabled = SettingsManager.getAutoHighestQualitySync(context)
             val effectiveVip = VideoRepository.refreshVipStatusForPreferredQualityIfNeeded(
                 isLoggedIn = isLoggedIn,
-                cachedIsVip = TokenManager.isVipCache,
+                cachedIsVip = VideoRepository.isPlaybackVip(),
                 storedQuality = storedQuality,
                 autoHighestEnabled = autoHighestEnabled
             )

@@ -759,9 +759,8 @@ fun PlaybackSettingsContent(
                         .getAutoHighestQuality(context).collectAsStateWithLifecycle(initialValue = false)
                     val directedTrafficEnabled by com.android.purebilibili.core.store.SettingsManager
                         .getBiliDirectedTrafficEnabled(context).collectAsStateWithLifecycle(initialValue = false)
-                    val isLoggedIn = !TokenManager.sessDataCache.isNullOrEmpty() ||
-                        !TokenManager.accessTokenCache.isNullOrEmpty()
-                    val isVip = TokenManager.isVipCache
+                    val isLoggedIn = com.android.purebilibili.data.repository.VideoRepository.isPlaybackLoggedIn()
+                    val isVip = com.android.purebilibili.data.repository.VideoRepository.isPlaybackVip()
 
                     val qualityOptions = resolveDefaultPlaybackQualityOptions()
                     val audioQualityOptions = resolveDefaultAudioQualityOptions()

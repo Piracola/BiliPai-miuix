@@ -364,8 +364,8 @@ fun PortraitVideoPager(
     val portraitDefaultQuality = remember(context) {
         NetworkUtils.getPlayableDefaultQualityId(
             context = context,
-            isLoggedIn = !TokenManager.sessDataCache.isNullOrEmpty(),
-            isVip = TokenManager.isVipCache
+            isLoggedIn = VideoRepository.isPlaybackLoggedIn(),
+            isVip = VideoRepository.isPlaybackVip()
         )
     }
     var portraitSelectedQuality by remember {
@@ -402,8 +402,8 @@ fun PortraitVideoPager(
         mutableStateOf<List<AudioQualityOption>>(emptyList())
     }
     var portraitAspectRatio by remember { mutableStateOf(VideoAspectRatio.FIT) }
-    val isPortraitLoggedIn = !TokenManager.sessDataCache.isNullOrEmpty()
-    val isPortraitVip = TokenManager.isVipCache
+    val isPortraitLoggedIn = VideoRepository.isPlaybackLoggedIn()
+    val isPortraitVip = VideoRepository.isPlaybackVip()
     val portraitMediaSourceFactory = remember(context) {
         buildPortraitCachedMediaSourceFactory(context)
     }

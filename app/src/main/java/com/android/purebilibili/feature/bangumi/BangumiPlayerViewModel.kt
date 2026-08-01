@@ -480,9 +480,9 @@ class BangumiPlayerViewModel : BasePlayerViewModel() {
                 )
             )
             val (isLoggedIn, isVip) = resolveBangumiPlaybackAuthState(
-                hasSessionCookie = !TokenManager.sessDataCache.isNullOrEmpty(),
-                hasAccessToken = !TokenManager.accessTokenCache.isNullOrEmpty(),
-                cachedIsVip = TokenManager.isVipCache,
+                hasSessionCookie = com.android.purebilibili.data.repository.VideoRepository.hasPlaybackSessionCookie(),
+                hasAccessToken = !com.android.purebilibili.data.repository.VideoRepository.playbackAccessToken().isNullOrEmpty(),
+                cachedIsVip = com.android.purebilibili.data.repository.VideoRepository.isPlaybackVip(),
                 seasonUserVip = detail.userStatus?.vip == 1
             )
 

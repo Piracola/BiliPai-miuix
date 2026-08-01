@@ -3129,10 +3129,7 @@ class VideoPlaybackViewModel : ViewModel() {
             Logger.w("VideoReturnTrace", "show Loading.Initial for ${playbackRequest.bvid}")
             _uiState.value = VideoPlaybackUiState.Loading.Initial
             
-                val isLoggedIn = resolveVideoPlaybackAuthState(
-                    hasSessionCookie = !com.android.purebilibili.core.store.TokenManager.sessDataCache.isNullOrEmpty(),
-                    hasAccessToken = !com.android.purebilibili.core.store.TokenManager.accessTokenCache.isNullOrEmpty()
-                )
+                val isLoggedIn = com.android.purebilibili.data.repository.VideoRepository.isPlaybackLoggedIn()
                 var storedQualityForWarning = 64
                 var autoHighestQualityEnabledForLoad = false
                 val defaultQuality = appContext?.let { context ->
@@ -3143,7 +3140,7 @@ class VideoPlaybackViewModel : ViewModel() {
                     autoHighestQualityEnabledForLoad = autoHighestEnabled
                     val effectiveVip = VideoRepository.refreshVipStatusForPreferredQualityIfNeeded(
                         isLoggedIn = isLoggedIn,
-                        cachedIsVip = com.android.purebilibili.core.store.TokenManager.isVipCache,
+                        cachedIsVip = com.android.purebilibili.data.repository.VideoRepository.isPlaybackVip(),
                         storedQuality = storedQuality,
                         autoHighestEnabled = autoHighestEnabled
                     )
@@ -3910,10 +3907,7 @@ class VideoPlaybackViewModel : ViewModel() {
                     }
                     
                     // 获取默认画质
-                    val isLoggedIn = resolveVideoPlaybackAuthState(
-                        hasSessionCookie = !com.android.purebilibili.core.store.TokenManager.sessDataCache.isNullOrEmpty(),
-                        hasAccessToken = !com.android.purebilibili.core.store.TokenManager.accessTokenCache.isNullOrEmpty()
-                    )
+                    val isLoggedIn = com.android.purebilibili.data.repository.VideoRepository.isPlaybackLoggedIn()
                     val defaultQuality = appContext?.let { context ->
                         val storedQuality = com.android.purebilibili.core.util.NetworkUtils
                             .getDefaultQualityId(context)
@@ -3922,7 +3916,7 @@ class VideoPlaybackViewModel : ViewModel() {
                         val effectiveVip = com.android.purebilibili.data.repository.VideoRepository
                             .refreshVipStatusForPreferredQualityIfNeeded(
                                 isLoggedIn = isLoggedIn,
-                                cachedIsVip = com.android.purebilibili.core.store.TokenManager.isVipCache,
+                                cachedIsVip = com.android.purebilibili.data.repository.VideoRepository.isPlaybackVip(),
                                 storedQuality = storedQuality,
                                 autoHighestEnabled = autoHighestEnabled
                             )
@@ -5088,10 +5082,10 @@ class VideoPlaybackViewModel : ViewModel() {
             val likeDeferred = async { com.android.purebilibili.data.repository.ActionRepository.checkLikeStatus(aid) }
             val coinDeferred = async { com.android.purebilibili.data.repository.ActionRepository.checkCoinStatus(aid) }
             val vipDeferred = async {
-                if (com.android.purebilibili.core.store.TokenManager.isVipCache) {
+                if (com.android.purebilibili.data.repository.VideoRepository.isPlaybackVip()) {
                     true
                 } else {
-                    com.android.purebilibili.data.repository.VideoRepository.getNavInfo()
+                    com.android.purebilibili.data.repository.VideoRepository.getPlaybackNavInfo()
                         .getOrNull()
                         ?.vip
                         ?.status == 1
@@ -5105,7 +5099,7 @@ class VideoPlaybackViewModel : ViewModel() {
             val fetchedCoinCount = coinDeferred.await()
             val fetchedVip = vipDeferred.await()
 
-            if (fetchedVip) {
+            if (fetchedVip && !com.android.purebilibili.data.repository.VideoRepository.isUsingDedicatedPlaybackAccount()) {
                 com.android.purebilibili.core.store.TokenManager.isVipCache = true
             }
 
