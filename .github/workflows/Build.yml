@@ -31,7 +31,11 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
-          cache: 'gradle'
+
+      - name: Set up Gradle cache
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
@@ -48,7 +52,6 @@ jobs:
             --tests 'com.android.purebilibili.core.ui.lint.StyleLintAllowlistRatchetTest' \
             --tests 'com.android.purebilibili.core.ui.perf.FrameBudgetLintTest' \
             --no-daemon \
-            --no-configuration-cache \
             --console=plain
 
   check-fcm:
@@ -94,7 +97,11 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
-          cache: 'gradle'
+
+      - name: Set up Gradle cache
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
   
       - name: Set up Android SDK and NDK
         uses: android-actions/setup-android@v3
