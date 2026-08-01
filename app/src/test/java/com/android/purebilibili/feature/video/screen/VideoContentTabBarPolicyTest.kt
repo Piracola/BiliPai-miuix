@@ -179,6 +179,31 @@ class VideoContentTabBarPolicyTest {
     }
 
     @Test
+    fun `comment tab disables new horizontal page drags but lets an active switch finish`() {
+        assertFalse(
+            shouldEnableVideoContentHorizontalPagerSwipe(
+                currentPage = 1,
+                commentPageIndex = 1,
+                isPagerScrollInProgress = false,
+            )
+        )
+        assertTrue(
+            shouldEnableVideoContentHorizontalPagerSwipe(
+                currentPage = 1,
+                commentPageIndex = 1,
+                isPagerScrollInProgress = true,
+            )
+        )
+        assertTrue(
+            shouldEnableVideoContentHorizontalPagerSwipe(
+                currentPage = 0,
+                commentPageIndex = 1,
+                isPagerScrollInProgress = false,
+            )
+        )
+    }
+
+    @Test
     fun `intro action row exposes a labeled comment entry and opens comment tab`() {
         val contentSource = loadSource(
             "app/src/main/java/com/android/purebilibili/feature/video/screen/VideoContentSection.kt"
