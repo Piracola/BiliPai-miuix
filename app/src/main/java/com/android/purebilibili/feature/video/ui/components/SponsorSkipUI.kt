@@ -2,6 +2,7 @@
 package com.android.purebilibili.feature.video.ui.components
 import com.android.purebilibili.core.ui.components.AppIcon
 import com.android.purebilibili.core.ui.components.AppText
+import com.android.purebilibili.core.ui.components.AppTextButton
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
