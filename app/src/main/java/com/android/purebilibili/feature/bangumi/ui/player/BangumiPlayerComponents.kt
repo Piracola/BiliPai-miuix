@@ -468,7 +468,9 @@ fun BangumiPlayerView(
                     android.util.Log.w("BangumiPlayer", "🎬 PlayerView FACTORY: creating new view, player=${exoPlayer.hashCode()}, isFullscreen=$isFullscreen")
                     PlayerView(ctx).apply {
                         playerViewRef = this
-                        player = null
+                        // 普通直出必须显式绑定 player，否则未启用 Anime4K 时无视频输出
+                        //（只有音频）。Anime4K 启用后由 VideoOutputRouter 主动解除本绑定并接管 surface。
+                        player = exoPlayer
                         useController = false
                         keepScreenOn = true
                         resizeMode = currentAspectRatio.playerResizeMode
@@ -480,6 +482,11 @@ fun BangumiPlayerView(
                     playerViewRef = view
                     view.resizeMode = currentAspectRatio.playerResizeMode
                     view.visibility = if (anime4kFrameVisible) View.INVISIBLE else View.VISIBLE
+                    // MediaSource/Player 变化后确保直出绑定仍与播放器同步；
+                    // Anime4K 接管期间不抢回绑定，避免与路由争抢 Surface。
+                    if (view.player !== exoPlayer && !shouldRenderAnime4kPipeline) {
+                        view.player = exoPlayer
+                    }
                 },
                 modifier = with(density) {
                     Modifier.requiredSize(
