@@ -7,8 +7,11 @@ import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
 internal fun resolveNavigation3SaveableStateKey(key: BiliPaiNavKey): String {
-    // Story 带 seed 时按 openId 隔离会话，避免同视频再进复用坏掉的播放器状态。
+    // 带 openId 的媒体详情按进入会话隔离，避免同视频再进复用已退出页面的播放器状态。
     return when (key) {
+        is BiliPaiNavKey.VideoDetail -> {
+            "video:${key.bvid}:${key.cid}:${key.openId}"
+        }
         is BiliPaiNavKey.Story -> {
             if (key.seedBvid.isBlank()) {
                 "story:tab"

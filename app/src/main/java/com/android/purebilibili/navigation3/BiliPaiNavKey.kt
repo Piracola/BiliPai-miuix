@@ -335,7 +335,9 @@ internal sealed interface BiliPaiNavKey : NavKey {
         val initialVertical: Boolean = false,
         /** 「竖屏直达」+ 卡片过渡：放大进详情壳后立刻进 standalone 竖屏全屏，不进内联详情。 */
         val directPortraitEntry: Boolean = false,
-        val sourceRoute: String? = null
+        val sourceRoute: String? = null,
+        /** 每次进入详情时刷新，避免同一视频复用已退出会话的 SaveableState。 */
+        val openId: Long = 0L,
     ) : BiliPaiNavKey {
         override val routeBase: String = "video"
     }

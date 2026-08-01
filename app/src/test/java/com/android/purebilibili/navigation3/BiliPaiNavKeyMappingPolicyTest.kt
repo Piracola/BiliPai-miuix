@@ -9,9 +9,15 @@ import kotlin.test.assertNotEquals
 class BiliPaiNavKeyMappingPolicyTest {
 
     @Test
-    fun `navigation state keys distinguish detail entries`() {
-        val first = BiliPaiNavKey.VideoDetail(bvid = "BV1", cid = 1L, coverUrl = "", sourceRoute = "video/BV0")
-        val second = first.copy(sourceRoute = "video/BV2")
+    fun `navigation state keys distinguish detail sessions for the same video`() {
+        val first = BiliPaiNavKey.VideoDetail(
+            bvid = "BV1",
+            cid = 1L,
+            coverUrl = "",
+            sourceRoute = "home",
+            openId = 101L,
+        )
+        val second = first.copy(openId = 102L)
 
         assertEquals(resolveNavigation3SaveableStateKey(first), resolveNavigation3SaveableStateKey(first))
         assertNotEquals(resolveNavigation3SaveableStateKey(first), resolveNavigation3SaveableStateKey(second))
