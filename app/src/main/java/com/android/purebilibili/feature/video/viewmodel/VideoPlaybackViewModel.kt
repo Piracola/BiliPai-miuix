@@ -7658,6 +7658,11 @@ class VideoPlaybackViewModel : ViewModel() {
             }.onFailure { error ->
                 Logger.w("PlayerVM", "记录空降助手跳过历史失败: ${error.message}")
             }
+            PluginManager.getEnabledPlayerPlugins()
+                .filterIsInstance<com.android.purebilibili.feature.plugin.SponsorBlockPlugin>()
+                .forEach { plugin ->
+                    plugin.uploadViewedSegmentIfEnabled(capturedSegmentId)
+                }
         }
     }
 
