@@ -758,13 +758,20 @@ class VideoPlaybackUseCase(
      * Play video with DASH format
      */
     @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
-    fun playDashVideo(videoUrl: String, audioUrl: String?, seekTo: Long = 0L, playWhenReady: Boolean = true) {
+    fun playDashVideo(
+        videoUrl: String,
+        audioUrl: String?,
+        seekTo: Long = 0L,
+        playWhenReady: Boolean = true,
+        cdnCacheKeysByUrl: Map<String, String> = emptyMap()
+    ) {
         playDashVideo(
             videoUrl = videoUrl,
             audioUrl = audioUrl,
             adaptiveDashSource = null,
             seekTo = seekTo,
-            playWhenReady = playWhenReady
+            playWhenReady = playWhenReady,
+            cdnCacheKeysByUrl = cdnCacheKeysByUrl
         )
     }
 
@@ -774,7 +781,8 @@ class VideoPlaybackUseCase(
         audioUrl: String?,
         adaptiveDashSource: AdaptiveDashPlaybackSource?,
         seekTo: Long = 0L,
-        playWhenReady: Boolean = true
+        playWhenReady: Boolean = true,
+        cdnCacheKeysByUrl: Map<String, String> = emptyMap()
     ) {
         val player = exoPlayer ?: return
         com.android.purebilibili.core.player.PlayerVolumeController.applyPreferredVolume(player)
@@ -787,10 +795,10 @@ class VideoPlaybackUseCase(
                 dashSegmentRequestsEnabled = dashSegmentRequestsEnabled
             )
         ) {
-            createAdaptiveDashMediaSource(adaptiveDashSource)
-                ?: createLegacyDashMediaSource(videoUrl, audioUrl)
+            createAdaptiveDashMediaSource(adaptiveDashSource, cdnCacheKeysByUrl)
+                ?: createLegacyDashMediaSource(videoUrl, audioUrl, cdnCacheKeysByUrl)
         } else {
-            createLegacyDashMediaSource(videoUrl, audioUrl)
+            createLegacyDashMediaSource(videoUrl, audioUrl, cdnCacheKeysByUrl)
         }
 
         player.setMediaSource(finalSource)
@@ -1197,7 +1205,11 @@ class VideoPlaybackUseCase(
     }
 
     @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
-    private fun createLegacyDashMediaSource(videoUrl: String, audioUrl: String?): MediaSource {
+    private fun createLegacyDashMediaSource(
+        videoUrl: String,
+        audioUrl: String?,
+        cdnCacheKeysByUrl: Map<String, String>
+    ): MediaSource {
         val headers = mapOf(
             "Referer" to "https://www.bilibili.com",
             "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
@@ -1205,7 +1217,7 @@ class VideoPlaybackUseCase(
         val upstreamFactory = androidx.media3.datasource.okhttp.OkHttpDataSource.Factory(
             NetworkModule.playbackOkHttpClient
         ).setDefaultRequestProperties(headers)
-        val dataSourceFactory = buildCachedPlaybackDataSourceFactory(upstreamFactory)
+        val dataSourceFactory = buildCachedPlaybackDataSourceFactory(upstreamFactory, cdnCacheKeysByUrl)
 
         val mediaSourceFactory = androidx.media3.exoplayer.source.ProgressiveMediaSource.Factory(dataSourceFactory)
         val videoSource = mediaSourceFactory.createMediaSource(MediaItem.fromUri(videoUrl))
@@ -1220,7 +1232,8 @@ class VideoPlaybackUseCase(
 
     @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
     private fun createAdaptiveDashMediaSource(
-        adaptiveDashSource: AdaptiveDashPlaybackSource?
+        adaptiveDashSource: AdaptiveDashPlaybackSource?,
+        cdnCacheKeysByUrl: Map<String, String>
     ): MediaSource? {
         val source = adaptiveDashSource ?: return null
         val context = appContext ?: NetworkModule.appContext ?: return null
@@ -1234,7 +1247,11 @@ class VideoPlaybackUseCase(
         ).setDefaultRequestProperties(headers)
         val dataSourceFactory = androidx.media3.datasource.DefaultDataSource.Factory(
             context,
-            PlaybackMediaCache.buildCachedDataSourceFactory(context, upstreamFactory)
+            PlaybackMediaCache.buildCdnOptimizedDataSourceFactory(
+                context = context,
+                upstreamFactory = upstreamFactory,
+                cacheKeysByUrl = cdnCacheKeysByUrl
+            )
         )
         val mediaItem = MediaItem.Builder()
             .setUri(manifestUri)
@@ -1244,10 +1261,15 @@ class VideoPlaybackUseCase(
     }
 
     private fun buildCachedPlaybackDataSourceFactory(
-        upstreamFactory: DataSource.Factory
+        upstreamFactory: DataSource.Factory,
+        cdnCacheKeysByUrl: Map<String, String> = emptyMap()
     ): DataSource.Factory {
         val context = appContext ?: NetworkModule.appContext ?: return upstreamFactory
-        return PlaybackMediaCache.buildCachedDataSourceFactory(context, upstreamFactory)
+        return PlaybackMediaCache.buildCdnOptimizedDataSourceFactory(
+            context = context,
+            upstreamFactory = upstreamFactory,
+            cacheKeysByUrl = cdnCacheKeysByUrl
+        )
     }
 
     private fun resolveDashSegmentRequestsEnabled(): Boolean {

@@ -9,6 +9,7 @@ import androidx.media3.datasource.ResolvingDataSource
 import androidx.media3.datasource.TransferListener
 import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.cache.CacheKeyFactory
+import androidx.media3.datasource.cache.CacheWriter
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import com.android.purebilibili.core.util.Logger
@@ -97,6 +98,36 @@ internal object PlaybackMediaCache {
             val cacheKey = cacheKeysByUrl[dataSpec.uri.toString()]
             if (cacheKey.isNullOrBlank()) dataSpec else dataSpec.buildUpon().setKey(cacheKey).build()
         }
+    }
+
+    /** Must be called from an IO dispatcher. CacheWriter only commits complete bytes it reads. */
+    fun prefetchRange(
+        context: Context,
+        upstreamFactory: DataSource.Factory,
+        url: Uri,
+        cacheKey: String,
+        position: Long,
+        length: Long
+    ) {
+        if (length <= 0L) return
+        val cache = getOrCreateCache(context) ?: return
+        val cacheDataSource = CacheDataSource.Factory()
+            .setCache(cache)
+            .setUpstreamDataSourceFactory(upstreamFactory)
+            .setCacheKeyFactory(playbackCacheKeyFactory)
+            .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+            .createDataSourceForDownloading()
+        CacheWriter(
+            cacheDataSource,
+            DataSpec.Builder()
+                .setUri(url)
+                .setKey(cacheKey)
+                .setPosition(position)
+                .setLength(length)
+                .build(),
+            null,
+            null
+        ).cache()
     }
 
     fun estimateBytes(context: Context): Long {

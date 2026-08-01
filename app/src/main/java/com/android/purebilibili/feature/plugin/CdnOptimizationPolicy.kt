@@ -36,6 +36,13 @@ data class CdnDashIndex(
     val timescale: Long
 )
 
+internal fun parseCdnByteRange(raw: String?): CdnByteRange? {
+    val parts = raw?.trim()?.split('-', limit = 2) ?: return null
+    val start = parts.getOrNull(0)?.toLongOrNull() ?: return null
+    val end = parts.getOrNull(1)?.toLongOrNull() ?: return null
+    return CdnByteRange(start, end).takeIf { it.length > 0L }
+}
+
 internal fun buildAuthorizedCdnCandidates(urls: List<String>): List<CdnAuthorizedCandidate> {
     return urls.asSequence()
         .filter { it.isNotBlank() }
@@ -69,6 +76,19 @@ internal fun sortSafeSignedPlaybackCandidates(
         pinnedHost = pinnedHost
     ).map { it.url }
     return order.mapNotNull { url -> candidates.firstOrNull { it.videoUrl == url } }
+}
+
+internal fun buildPlaybackCdnCacheKeys(candidates: List<PlaybackCdnCandidate>): Map<String, String> {
+    return buildMap {
+        candidates.forEach { candidate ->
+            if (candidate.videoUrl.isNotBlank()) {
+                put(candidate.videoUrl, buildCdnTrackCacheKey(trackId = "video", url = candidate.videoUrl))
+            }
+            candidate.audioUrl?.takeIf { it.isNotBlank() }?.let { audioUrl ->
+                put(audioUrl, buildCdnTrackCacheKey(trackId = "audio", url = audioUrl))
+            }
+        }
+    }
 }
 
 internal fun isRiskyCdnHost(host: String): Boolean {

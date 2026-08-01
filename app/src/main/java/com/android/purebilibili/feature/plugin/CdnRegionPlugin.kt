@@ -51,7 +51,8 @@ private const val CDN_PROBE_SAMPLE_BYTES = 64 * 1024
 
 data class PlaybackCdnRewriteResult(
     val candidates: List<PlaybackCdnCandidate>,
-    val regionLabel: String?
+    val regionLabel: String?,
+    val cacheKeysByUrl: Map<String, String> = emptyMap()
 ) {
     val videoUrls: List<String> get() = candidates.map { it.videoUrl }
     val audioUrls: List<String> get() = candidates.map { it.audioUrl.orEmpty() }
@@ -89,6 +90,8 @@ interface PlaybackCdnPlugin : Plugin {
         url: String,
         event: CdnHealthEvent
     ) = Unit
+
+    fun isAdaptivePrefetchEnabled(): Boolean = false
 }
 
 class CdnRegionPlugin : PlaybackCdnPlugin {
@@ -143,12 +146,14 @@ class CdnRegionPlugin : PlaybackCdnPlugin {
         val snapshot = cache
         val originalCandidates = buildPlaybackCdnCandidates(videoUrls, audioUrls)
         if (!snapshot.experimentalRewriteEnabled) {
+            val safeCandidates = sortSafeSignedPlaybackCandidates(
+                candidates = originalCandidates,
+                healthByHost = snapshot.healthByHost
+            )
             return PlaybackCdnRewriteResult(
-                candidates = sortSafeSignedPlaybackCandidates(
-                    candidates = originalCandidates,
-                    healthByHost = snapshot.healthByHost
-                ),
-                regionLabel = null
+                candidates = safeCandidates,
+                regionLabel = null,
+                cacheKeysByUrl = buildPlaybackCdnCacheKeys(safeCandidates)
             )
         }
         val customCandidates = rewritePlaybackCdnCandidatesForCompiledCustomRules(
@@ -162,15 +167,17 @@ class CdnRegionPlugin : PlaybackCdnPlugin {
             isp = snapshot.location.isp
         )
         val regionCandidates = rewritePlaybackCdnCandidatesForRegion(originalCandidates, hosts)
-        return PlaybackCdnRewriteResult(
-            candidates = selectPlaybackCdnCandidatesForMode(
+        val candidates = selectPlaybackCdnCandidatesForMode(
                 customCandidates = customCandidates,
                 regionCandidates = regionCandidates,
                 originalCandidates = originalCandidates,
                 strictCustomCdn = snapshot.strictCustomCdn,
                 healthByHost = snapshot.healthByHost
-            ),
-            regionLabel = snapshot.selectedRegion.takeIf { hosts.isNotEmpty() }
+            )
+        return PlaybackCdnRewriteResult(
+            candidates = candidates,
+            regionLabel = snapshot.selectedRegion.takeIf { hosts.isNotEmpty() },
+            cacheKeysByUrl = buildPlaybackCdnCacheKeys(candidates)
         )
     }
 
@@ -226,6 +233,10 @@ class CdnRegionPlugin : PlaybackCdnPlugin {
         AppScope.ioScope.launch {
             CdnRegionPluginStore.write(PluginManager.getContext(), next)
         }
+    }
+
+    override fun isAdaptivePrefetchEnabled(): Boolean {
+        return cache.prefetchEnabled && !cache.experimentalRewriteEnabled
     }
 
     @Composable
