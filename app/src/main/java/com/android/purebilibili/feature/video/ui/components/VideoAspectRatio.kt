@@ -152,7 +152,19 @@ internal fun applyPlayerViewResizeMode(
         playerView.resizeMode = resizeMode
     }
     playerView.requestLayout()
+    playerView.findViewById<android.view.View>(androidx.media3.ui.R.id.exo_content_frame)
+        ?.requestLayout()
     playerView.invalidate()
+}
+
+internal fun shouldRefreshMeasuredPlayerViewport(
+    expectedWidth: Int,
+    expectedHeight: Int,
+    measuredWidth: Int,
+    measuredHeight: Int
+): Boolean {
+    if (expectedWidth <= 0 || expectedHeight <= 0) return true
+    return expectedWidth != measuredWidth || expectedHeight != measuredHeight
 }
 
 /**
@@ -162,6 +174,8 @@ internal fun applyPlayerViewResizeMode(
 internal fun schedulePlayerViewViewportRefresh(
     playerView: androidx.media3.ui.PlayerView,
     resizeMode: Int,
+    expectedWidth: Int = 0,
+    expectedHeight: Int = 0,
 ) {
     applyPlayerViewResizeMode(
         playerView = playerView,
@@ -174,6 +188,21 @@ internal fun schedulePlayerViewViewportRefresh(
             resizeMode = resizeMode,
             forceRelayout = true,
         )
+        playerView.postOnAnimation {
+            if (shouldRefreshMeasuredPlayerViewport(
+                    expectedWidth = expectedWidth,
+                    expectedHeight = expectedHeight,
+                    measuredWidth = playerView.width,
+                    measuredHeight = playerView.height
+                )
+            ) {
+                applyPlayerViewResizeMode(
+                    playerView = playerView,
+                    resizeMode = resizeMode,
+                    forceRelayout = true,
+                )
+            }
+        }
     }
 }
 

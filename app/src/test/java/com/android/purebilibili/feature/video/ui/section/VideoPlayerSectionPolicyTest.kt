@@ -1321,7 +1321,39 @@ class VideoPlayerSectionPolicyTest {
         assertTrue(visual.centerMarkerAlpha > visual.edgeGradientAlpha)
         assertEquals(4, visual.centerMarkerHeightDp)
         assertEquals(0.22f, visual.centerMarkerWidthFraction)
-        assertEquals(10, visual.bottomVisualOffsetDp)
+        assertEquals(0, visual.bottomVisualOffsetDp)
+    }
+
+    @Test
+    fun subtitleBottomOffset_tracksChromeAndSafeInsetsAcrossScreenShapes() {
+        val density = 3f
+        val hidden = resolveSubtitleBottomOffsetPx(
+            isFullscreen = true,
+            controlsVisible = false,
+            navigationInsetPx = 0,
+            bottomControlsHeightPx = 180,
+            density = density
+        )
+        val visible = resolveSubtitleBottomOffsetPx(
+            isFullscreen = true,
+            controlsVisible = true,
+            navigationInsetPx = 24,
+            bottomControlsHeightPx = 132,
+            density = density
+        )
+
+        assertEquals(72, hidden)
+        assertEquals(180, visible)
+        assertEquals(
+            144,
+            resolveSubtitleBottomOffsetPx(
+                isFullscreen = false,
+                controlsVisible = false,
+                navigationInsetPx = 0,
+                bottomControlsHeightPx = 0,
+                density = density
+            )
+        )
     }
 
     @Test

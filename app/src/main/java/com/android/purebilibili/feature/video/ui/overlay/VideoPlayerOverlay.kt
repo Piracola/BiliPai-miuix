@@ -107,6 +107,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import com.android.purebilibili.core.ui.rememberAppBookmarkIcon
 import com.android.purebilibili.core.ui.rememberAppCoinIcon
@@ -459,6 +460,7 @@ fun VideoPlayerOverlay(
     realResolution: String = "",
     isQualitySwitching: Boolean = false,
     isBuffering: Boolean = false,  // 缓冲状态
+    onBottomControlsSizeChanged: (Int) -> Unit = {},
     isVip: Boolean = false,
     //  [新增] 弹幕开关和设置
     danmakuEnabled: Boolean = true,
@@ -1364,7 +1366,9 @@ fun VideoPlayerOverlay(
                 }
                 
                 Column(
-                    modifier = Modifier.align(Alignment.BottomStart)
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .onSizeChanged { onBottomControlsSizeChanged(it.height) }
                 ) {
                     if (isFullscreen && danmakuComposerVisible) {
                         LandscapeDanmakuComposer(

@@ -67,8 +67,26 @@ internal fun resolveLongPressSpeedLockZoneVisualPolicy(): LongPressSpeedLockZone
         edgeGradientHeightDp = 16,
         centerMarkerHeightDp = 4,
         centerMarkerWidthFraction = 0.22f,
-        bottomVisualOffsetDp = 10
+        bottomVisualOffsetDp = 0
     )
+}
+
+internal fun resolveSubtitleBottomOffsetPx(
+    isFullscreen: Boolean,
+    controlsVisible: Boolean,
+    navigationInsetPx: Int,
+    bottomControlsHeightPx: Int,
+    density: Float
+): Int {
+    val safeDensity = density.takeIf { it.isFinite() && it > 0f } ?: 1f
+    fun dp(value: Int): Int = (value * safeDensity).roundToInt()
+    if (!isFullscreen) return dp(48)
+    val safeInset = navigationInsetPx.coerceAtLeast(0)
+    return if (controlsVisible) {
+        maxOf(safeInset + bottomControlsHeightPx.coerceAtLeast(0) + dp(8), dp(56))
+    } else {
+        maxOf(safeInset + dp(16), dp(24))
+    }
 }
 
 internal fun resolveLongPressSpeedLockSensitivityPolicy(

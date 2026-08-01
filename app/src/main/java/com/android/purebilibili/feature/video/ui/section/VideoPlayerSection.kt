@@ -117,6 +117,7 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
@@ -133,6 +134,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.currentStateAsState
 import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.media3.common.Player
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.VideoSize
@@ -993,6 +995,8 @@ fun VideoPlayerSection(
         mutableStateOf(INITIAL_PLAYER_CHROME_AUTO_HIDE_HANDLED)
     }
     var playerViewRef by remember { mutableStateOf<PlayerView?>(null) }
+    var measuredPlayerViewportSize by remember(bvid) { mutableStateOf(IntSize.Zero) }
+    var measuredBottomControlsHeightPx by remember(bvid) { mutableIntStateOf(0) }
     
     // 🔒 [新增] 屏幕锁定状态（全屏时防误触）
     var isScreenLocked by remember { mutableStateOf(false) }
@@ -2860,11 +2864,14 @@ fun VideoPlayerSection(
                     isPortraitFullscreen,
                     playerVideoSize.width,
                     playerVideoSize.height,
+                    measuredPlayerViewportSize,
                 ) {
                     val playerView = playerViewRef ?: return@LaunchedEffect
                     schedulePlayerViewViewportRefresh(
                         playerView = playerView,
                         resizeMode = targetResizeMode,
+                        expectedWidth = measuredPlayerViewportSize.width,
+                        expectedHeight = measuredPlayerViewportSize.height,
                     )
                 }
 
@@ -2950,6 +2957,7 @@ fun VideoPlayerSection(
                             )
                         }
                         sizeModifier
+                            .onSizeChanged { measuredPlayerViewportSize = it }
                             .alpha(playerSurfaceAlpha)
                             .graphicsLayer {
                                 val revealAwareScaleX = scale * playerSurfaceScale
@@ -3874,29 +3882,33 @@ fun VideoPlayerSection(
                     suppressOverlay = suppressSubtitleOverlay,
                 )
         if (keepSubtitleOverlayMounted) {
-            // 控件显隐只微调底边距，用固定基准减少整段字幕上下跳动造成的「闪」。
-            val subtitleBottomPadding = when {
-                isFullscreen -> 72.dp
-                else -> 48.dp
-            }
+            val navigationBottomInsetPx = WindowInsets.navigationBars.getBottom(localDensity)
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(end = animatedEndDrawerReservedWidth)
                     .offset {
+                        val viewportHeightPx = measuredPlayerViewportSize.height
+                            .takeIf { it > 0 }
+                            ?: with(localDensity) { configuration.screenHeightDp.dp.roundToPx() }
+                        val subtitleBottomOffsetPx = resolveSubtitleBottomOffsetPx(
+                            isFullscreen = isFullscreen,
+                            controlsVisible = showControls,
+                            navigationInsetPx = navigationBottomInsetPx,
+                            bottomControlsHeightPx = measuredBottomControlsHeightPx,
+                            density = localDensity.density
+                        )
                         IntOffset(
                             x = 0,
-                            y = (configuration.screenHeightDp * subtitleVerticalOffsetFraction)
-                                .dp
-                                .roundToPx()
+                            y = (viewportHeightPx * subtitleVerticalOffsetFraction).roundToInt() -
+                                subtitleBottomOffsetPx
                         )
                     }
                     .fillMaxWidth(0.9f)
                     .padding(horizontal = 10.dp)
-                    .padding(bottom = subtitleBottomPadding)
                     .padding(horizontal = 12.dp, vertical = 8.dp)
                     // 横屏全屏 / 详情播放器均可拖动字幕纵向位置，松手写入偏好。
-                    .pointerInput(configuration.screenHeightDp) {
+                    .pointerInput(measuredPlayerViewportSize.height) {
                         detectDragGestures(
                             onDragStart = {
                                 isDraggingSubtitleOffset = true
@@ -3914,9 +3926,12 @@ fun VideoPlayerSection(
                                 isDraggingSubtitleOffset = false
                             },
                             onDrag = { change, dragAmount ->
-                                val screenHeightPx = with(localDensity) {
-                                    configuration.screenHeightDp.dp.toPx()
-                                }.coerceAtLeast(1f)
+                                val screenHeightPx = measuredPlayerViewportSize.height
+                                    .takeIf { it > 0 }
+                                    ?.toFloat()
+                                    ?: with(localDensity) {
+                                        configuration.screenHeightDp.dp.toPx()
+                                    }.coerceAtLeast(1f)
                                 subtitleVerticalOffsetFraction =
                                     normalizeSubtitleVerticalOffsetFraction(
                                         subtitleVerticalOffsetFraction + dragAmount.y / screenHeightPx
@@ -4339,6 +4354,7 @@ fun VideoPlayerSection(
                 //  [新增] 传入清晰度切换状态和会员状态
                 isQualitySwitching = uiState.isQualitySwitching,
                 isBuffering = isBuffering,  // 缓冲状态
+                onBottomControlsSizeChanged = { measuredBottomControlsHeightPx = it },
                 isLoggedIn = uiState.isLoggedIn,
                 isVip = uiState.isVip,
                 //  [新增] 弹幕开关和设置

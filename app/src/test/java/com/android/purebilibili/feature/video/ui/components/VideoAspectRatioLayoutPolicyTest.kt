@@ -102,6 +102,13 @@ class VideoAspectRatioLayoutPolicyTest {
     }
 
     @Test
+    fun `measured viewport refreshes until Android view matches Compose size`() {
+        assertTrue(shouldRefreshMeasuredPlayerViewport(2400, 1080, 1920, 1080))
+        assertFalse(shouldRefreshMeasuredPlayerViewport(2400, 1080, 2400, 1080))
+        assertTrue(shouldRefreshMeasuredPlayerViewport(0, 0, 2400, 1080))
+    }
+
+    @Test
     fun `fullscreen ratios should map to expected player resize modes`() {
         assertEquals(AspectRatioFrameLayout.RESIZE_MODE_FIT, VideoAspectRatio.FIT.playerResizeMode)
         assertEquals(AspectRatioFrameLayout.RESIZE_MODE_ZOOM, VideoAspectRatio.FILL.playerResizeMode)
