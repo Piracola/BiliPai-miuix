@@ -1503,6 +1503,20 @@ class VideoPlayerSectionPolicyTest {
     }
 
     @Test
+    fun playerReplacement_restartsVideoOutputRouterBindingEffect() {
+        val outputBindingBlock = loadVideoPlayerSectionSource()
+            .substringAfter("val shouldBindDirectPlayerView")
+            .substringBefore("// 进度手势相关状态")
+
+        assertTrue(
+            outputBindingBlock.contains("LaunchedEffect(\n        videoOutputRouter,"),
+            "Replacing the player creates a new VideoOutputRouter, so the binding effect must " +
+                "restart even when the existing PlayerView and output mode are unchanged."
+        )
+        assertTrue(outputBindingBlock.contains("videoOutputRouter.update("))
+    }
+
+    @Test
     fun lockedLongPressSpeed_reappliesWhenPlaybackSpeedUnexpectedlyResets() {
         assertTrue(
             shouldReapplyLockedLongPressSpeed(

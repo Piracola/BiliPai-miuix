@@ -1044,7 +1044,10 @@ fun VideoPlayerSection(
     val anime4kSurfaceReady = shouldUseAnime4kPipeline && anime4kInputSurface != null
     val anime4kFrameVisible = anime4kSurfaceReady && anime4kDisplayedFirstFrame
     val shouldBindDirectPlayerView = shouldBindInlinePlayerView && !anime4kSurfaceReady
+    // In-page collection switches replace the player/router while reusing the same PlayerView.
+    // Key the effect by the router so the new player always receives the existing video surface.
     LaunchedEffect(
+        videoOutputRouter,
         playerViewRef,
         anime4kInputSurface,
         shouldBindInlinePlayerView,
