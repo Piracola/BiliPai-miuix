@@ -138,7 +138,6 @@ class AppUpdateCheckerTest {
     }
 
     @Test
-    @Test
     fun `parseReleaseAssets should keep apk metadata and sidecar assets`() {
         val assets = AppUpdateChecker.parseReleaseAssets(
             """
