@@ -306,7 +306,10 @@ dependencies {
     implementation(project(":design-system"))
 
     // --- 1. Compose UI ---
-    implementation(platform("androidx.compose:compose-bom:2026.06.01"))
+    // Material3 1.5.0-alpha25 is built against Compose 1.12.0-beta01. Use the
+    // matching beta BOM so Compose groups are intentionally aligned instead of
+    // being upgraded transitively past the stable BOM's 1.11.4 constraints.
+    implementation(platform(libs.androidx.compose.bom))
     implementation("androidx.activity:activity-compose:1.13.0")
     implementation("androidx.appcompat:appcompat:1.7.1")  // 🚀 For AppCompatDelegate night mode
     implementation("androidx.biometric:biometric:1.1.0")
@@ -482,7 +485,7 @@ dependencies {
     // --- 13. Android Instrumented Tests ---
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
-    androidTestImplementation(platform("androidx.compose:compose-bom:2026.06.01"))
+    androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
 }
 

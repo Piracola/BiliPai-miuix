@@ -44,7 +44,7 @@ kotlin {
 }
 
 dependencies {
-    api(platform("androidx.compose:compose-bom:2026.06.01"))
+    api(platform(libs.androidx.compose.bom))
     api("androidx.compose.ui:ui")
     api("androidx.compose.foundation:foundation")
     api("androidx.compose.animation:animation")
