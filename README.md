@@ -246,6 +246,7 @@ BiliPai 依赖并参考了多个优秀开源项目：
 | [DanmakuRenderEngine](https://github.com/bytedance/DanmakuRenderEngine) | 高性能弹幕渲染参考 |
 | [bilibili-API-collect](https://github.com/SocialSisterYi/bilibili-API-collect) | B 站 API 文档 |
 | [PiliPlus](https://github.com/bggRGjQaUbCoE/PiliPlus) | 播放链路与移动端体验参考 |
+| [Bili Pilot](https://github.com/siwei-yuan/bili-pilot) | 签名 CDN 候选、分片级选线与预缓存设计参考；BiliPai 为独立 Kotlin 实现，未复制其 JavaScript 代码 |
 | [BilibiliSponsorBlock](https://github.com/hanydd/BilibiliSponsorBlock) | 空降助手数据与 API |
 | [Haze](https://github.com/chrisbanes/haze) | 毛玻璃效果 |
 | [AndroidLiquidGlass](https://github.com/Kyant0/AndroidLiquidGlass) | 液态玻璃效果 |

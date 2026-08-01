@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
+import androidx.media3.datasource.ResolvingDataSource
 import androidx.media3.datasource.TransferListener
 import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.cache.CacheKeyFactory
@@ -79,6 +80,23 @@ internal object PlaybackMediaCache {
             .setCacheKeyFactory(playbackCacheKeyFactory)
             .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
             .setEventListener(cacheEventListener)
+    }
+
+    /**
+     * Gives mirrors of one authorized DASH track the same cache spans without changing the URL
+     * used for the actual request. Unknown URLs retain the normal cache-key behavior.
+     */
+    fun buildCdnOptimizedDataSourceFactory(
+        context: Context,
+        upstreamFactory: DataSource.Factory,
+        cacheKeysByUrl: Map<String, String>
+    ): DataSource.Factory {
+        val cachedFactory = buildCachedDataSourceFactory(context, upstreamFactory)
+        if (cacheKeysByUrl.isEmpty()) return cachedFactory
+        return ResolvingDataSource.Factory(cachedFactory) { dataSpec ->
+            val cacheKey = cacheKeysByUrl[dataSpec.uri.toString()]
+            if (cacheKey.isNullOrBlank()) dataSpec else dataSpec.buildUpon().setKey(cacheKey).build()
+        }
     }
 
     fun estimateBytes(context: Context): Long {

@@ -9,6 +9,7 @@ import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.store.TokenManager
 import com.android.purebilibili.core.store.player.PlayerSettingsStore
 import com.android.purebilibili.core.util.MediaUtils
+import com.android.purebilibili.core.plugin.PluginManager
 import com.android.purebilibili.data.model.response.*
 import com.android.purebilibili.data.repository.ActionRepository
 import com.android.purebilibili.data.repository.BangumiRepository
@@ -22,6 +23,7 @@ import com.android.purebilibili.feature.video.playback.audio.resolveAudioStreamS
 import com.android.purebilibili.feature.video.playback.audio.resolveRequestedAudioQuality
 import com.android.purebilibili.feature.video.playback.policy.shouldRefreshPremiumAudioForPlaybackSpeedChange
 import com.android.purebilibili.feature.video.usecase.VideoInteractionUseCase
+import com.android.purebilibili.feature.plugin.PlaybackCdnPlugin
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -402,6 +404,24 @@ class BangumiPlayerViewModel : BasePlayerViewModel() {
                 if (audioUrl.isNullOrEmpty() && audio?.backupUrl?.isNotEmpty() == true) {
                     audioUrl = audio.backupUrl.firstOrNull()
                 }
+
+                // Keep the complete signed playurl candidates intact. The CDN plugin may only
+                // reorder these addresses in its safe mode; it never synthesizes a new host.
+                PluginManager.getEnabledPlugins(PlaybackCdnPlugin::class).firstOrNull()
+                    ?.rewritePlaybackCandidates(
+                        videoUrls = buildList {
+                            videoUrl?.takeIf { it.isNotBlank() }?.let(::add)
+                            video?.backupUrl.orEmpty().filter { it.isNotBlank() }.forEach(::add)
+                        },
+                        audioUrls = buildList {
+                            audioUrl?.takeIf { it.isNotBlank() }?.let(::add)
+                            audio?.backupUrl.orEmpty().filter { it.isNotBlank() }.forEach(::add)
+                        }
+                    )
+                    ?.let { rewrite ->
+                        videoUrl = rewrite.videoUrls.firstOrNull() ?: videoUrl
+                        audioUrl = rewrite.audioUrls.firstOrNull()?.takeIf { it.isNotBlank() } ?: audioUrl
+                    }
                 
                 com.android.purebilibili.core.util.Logger.d("BangumiPlayerVM", " DASH: video=${videoUrl?.take(60)}..., audio=${audioUrl?.take(40)}...")
                 

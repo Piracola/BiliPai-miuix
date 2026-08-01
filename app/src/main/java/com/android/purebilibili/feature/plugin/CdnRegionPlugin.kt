@@ -93,9 +93,9 @@ interface PlaybackCdnPlugin : Plugin {
 
 class CdnRegionPlugin : PlaybackCdnPlugin {
     override val id: String = CDN_REGION_PLUGIN_ID
-    override val name: String = "CDN 属地优选"
-    override val description: String = "按当前 IP 属地优选 B 站视频 CDN，并支持高级 URL 替换规则"
-    override val version: String = "1.2.0"
+    override val name: String = "CDN 智能选线"
+    override val description: String = "在 B 站当前授权的签名 CDN 候选中选线，并可选预缓存未来 DASH 分片"
+    override val version: String = "1.3.0"
     override val author: String = "BiliPai项目组"
     override val icon: ImageVector = CupertinoIcons.Outlined.ServerRack
     override val capabilityManifest: PluginCapabilityManifest = PluginCapabilityManifest(
@@ -142,6 +142,15 @@ class CdnRegionPlugin : PlaybackCdnPlugin {
     ): PlaybackCdnRewriteResult {
         val snapshot = cache
         val originalCandidates = buildPlaybackCdnCandidates(videoUrls, audioUrls)
+        if (!snapshot.experimentalRewriteEnabled) {
+            return PlaybackCdnRewriteResult(
+                candidates = sortSafeSignedPlaybackCandidates(
+                    candidates = originalCandidates,
+                    healthByHost = snapshot.healthByHost
+                ),
+                regionLabel = null
+            )
+        }
         val customCandidates = rewritePlaybackCdnCandidatesForCompiledCustomRules(
             candidates = originalCandidates,
             compiledRules = compiledCustomRules
@@ -228,6 +237,10 @@ class CdnRegionPlugin : PlaybackCdnPlugin {
         var probing by remember { mutableStateOf(false) }
         var customRules by remember(snapshot.customRules) { mutableStateOf(snapshot.customRules) }
         var strictCustomCdn by remember(snapshot.strictCustomCdn) { mutableStateOf(snapshot.strictCustomCdn) }
+        var prefetchEnabled by remember(snapshot.prefetchEnabled) { mutableStateOf(snapshot.prefetchEnabled) }
+        var experimentalRewriteEnabled by remember(snapshot.experimentalRewriteEnabled) {
+            mutableStateOf(snapshot.experimentalRewriteEnabled)
+        }
         var customRuleError by remember { mutableStateOf<String?>(null) }
 
         LaunchedEffect(Unit) {
@@ -250,6 +263,64 @@ class CdnRegionPlugin : PlaybackCdnPlugin {
                 .fillMaxWidth()
                 .padding(12.dp)
         ) {
+            AppText(
+                text = "安全签名选线",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            AppText(
+                text = "默认只比较当前 playurl 返回的完整签名主/备地址，不会替换 Host 或发现任意 CDN 节点。",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(modifier = Modifier.fillMaxWidth()) {
+                AppText(
+                    text = "自适应预缓存",
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                AppSwitch(
+                    checked = prefetchEnabled,
+                    onCheckedChange = { enabled ->
+                        prefetchEnabled = enabled
+                        val next = snapshot.copy(prefetchEnabled = enabled)
+                        snapshot = next
+                        cache = next
+                        scope.launch { CdnRegionPluginStore.write(context, next) }
+                    }
+                )
+            }
+            AppText(
+                text = "仅在 DASH 可读取分片索引且播放器已有至少 15 秒缓冲时下载未来分片；默认关闭以避免额外流量、电量和磁盘消耗。",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(modifier = Modifier.fillMaxWidth()) {
+                AppText(
+                    text = "实验性属地 / URL 改写",
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                AppSwitch(
+                    checked = experimentalRewriteEnabled,
+                    onCheckedChange = { enabled ->
+                        experimentalRewriteEnabled = enabled
+                        val next = snapshot.copy(experimentalRewriteEnabled = enabled)
+                        snapshot = next
+                        cache = next
+                        scope.launch { CdnRegionPluginStore.write(context, next) }
+                    }
+                )
+            }
+            AppText(
+                text = "兼容旧版地域 Host 表和高级 URL 替换。它不参与安全自动选线或预缓存，可能因签名与线路策略变化而不可用。",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            AppHorizontalDivider(modifier = Modifier.padding(top = 10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             AppText(
                 text = "属地：${snapshot.location.province.ifBlank { "未知" }} / ${snapshot.location.city.ifBlank { "未知" }}",
                 style = MaterialTheme.typography.bodySmall,
@@ -661,7 +732,9 @@ internal data class CdnRegionPluginCache(
     val lastError: String? = null,
     val healthByHost: Map<String, CdnCandidateHealth> = emptyMap(),
     val customRules: List<CdnCustomRule> = emptyList(),
-    val strictCustomCdn: Boolean = false
+    val strictCustomCdn: Boolean = false,
+    val prefetchEnabled: Boolean = false,
+    val experimentalRewriteEnabled: Boolean = false
 )
 
 internal object CdnRegionPluginStore {

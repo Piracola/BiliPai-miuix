@@ -475,6 +475,7 @@ Issues and Pull Requests are welcome!
 | Project | Description |
 |-----|-----|
 | [PiliPlus](https://github.com/bggRGjQaUbCoE/PiliPlus) | Playback flow, comment presentation, and mobile UX reference |
+| [Bili Pilot](https://github.com/siwei-yuan/bili-pilot) | Signed CDN candidate, segment-level routing, and prefetch design reference; independently implemented in Kotlin without copying its JavaScript |
 | [biliSendCommAntifraud](https://github.com/freedom-introvert/biliSendCommAntifraud) | Reference implementation for comment anti-fraud detection |
 | [BilibiliSponsorBlock](https://github.com/hanydd/BilibiliSponsorBlock) | Sponsor skip segment data and API reference |
 | [DanmakuRenderEngine](https://github.com/bytedance/DanmakuRenderEngine) | High-performance danmaku rendering engine |

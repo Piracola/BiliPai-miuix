@@ -4,6 +4,7 @@ package com.android.purebilibili.feature.live
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.purebilibili.core.network.NetworkModule
+import com.android.purebilibili.core.plugin.PluginManager
 import com.android.purebilibili.core.store.TokenManager
 import com.android.purebilibili.core.util.CrashReporter
 import com.android.purebilibili.data.model.response.LiveQuality
@@ -17,6 +18,7 @@ import com.android.purebilibili.data.repository.LiveReportReason
 import com.android.purebilibili.data.repository.LiveRepository
 import com.android.purebilibili.data.repository.LiveShieldInfo
 import com.android.purebilibili.data.repository.LiveSuperChatReportRequest
+import com.android.purebilibili.feature.plugin.PlaybackCdnPlugin
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -629,7 +631,17 @@ class LivePlayerViewModel : ViewModel() {
         danmakuPermission: LiveDanmakuPermission
     ): Boolean {
         val danmakuEnabled = (_uiState.value as? LivePlayerState.Success)?.isDanmakuEnabled ?: true
-        val resolved = resolveLivePlayback(data, requestedQn)
+        val resolved = resolveLivePlayback(data, requestedQn)?.let { playback ->
+            val plugin = PluginManager.getEnabledPlugins(PlaybackCdnPlugin::class).firstOrNull()
+                ?: return@let playback
+            playback.copy(
+                candidates = playback.candidates.map { candidate ->
+                    candidate.copy(
+                        urls = plugin.rewritePlaybackCandidates(candidate.urls, emptyList()).videoUrls
+                    )
+                }
+            )
+        }
         val primaryUrl = resolved?.primaryUrl
         if (resolved != null && primaryUrl != null) {
             resolvedPlayback = resolved
