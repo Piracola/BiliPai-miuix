@@ -160,8 +160,10 @@ import com.android.purebilibili.core.util.rememberHapticFeedback
 import com.android.purebilibili.feature.screenshot.AppScreenshotGestureBlockState
 import com.android.purebilibili.feature.anime4k.Anime4KConfig
 import com.android.purebilibili.feature.anime4k.Anime4KBypassReason
+import com.android.purebilibili.feature.anime4k.ANIME4K_FIRST_FRAME_FALLBACK_TIMEOUT_MS
 import com.android.purebilibili.feature.anime4k.isAnime4KGles3Available
 import com.android.purebilibili.feature.anime4k.resolveAnime4KOutputDecision
+import com.android.purebilibili.feature.anime4k.shouldFallbackAnime4KBeforeFirstFrame
 import com.android.purebilibili.feature.anime4k.gl.Anime4KGLSurfaceView
 import com.android.purebilibili.feature.plugin.Anime4KPlugin
 import com.android.purebilibili.feature.video.subtitle.SubtitleDisplayMode
@@ -1059,6 +1061,43 @@ fun VideoPlayerSection(
             shouldBindDirectPlayerView = shouldBindInlinePlayerView,
             shouldUseAnime4K = shouldUseAnime4kPipeline
         )
+    }
+    LaunchedEffect(playerState.player, anime4kSurfaceReady, shouldUseAnime4kPipeline) {
+        if (!anime4kSurfaceReady || !shouldUseAnime4kPipeline) return@LaunchedEffect
+        var playbackIntentStartedAtMs: Long? = null
+        while (isActive && shouldUseAnime4kPipeline && !anime4kDisplayedFirstFrame) {
+            delay(120L)
+            val player = playerState.player
+            val hasPlaybackIntent = player.playWhenReady && player.mediaItemCount > 0
+            if (!hasPlaybackIntent) {
+                playbackIntentStartedAtMs = null
+                continue
+            }
+            val nowMs = android.os.SystemClock.elapsedRealtime()
+            val startedAtMs = playbackIntentStartedAtMs ?: nowMs.also {
+                playbackIntentStartedAtMs = it
+            }
+            val elapsedMs = nowMs - startedAtMs
+            if (
+                shouldFallbackAnime4KBeforeFirstFrame(
+                    pipelineRequested = shouldUseAnime4kPipeline,
+                    inputSurfaceReady = anime4kInputSurface != null,
+                    displayedFirstFrame = anime4kDisplayedFirstFrame,
+                    playWhenReady = player.playWhenReady,
+                    mediaItemCount = player.mediaItemCount,
+                    elapsedMs = elapsedMs,
+                )
+            ) {
+                Logger.w(
+                    "VideoPlayerSection",
+                    "Anime4K first frame timed out after ${ANIME4K_FIRST_FRAME_FALLBACK_TIMEOUT_MS}ms; " +
+                        "falling back to direct PlayerView output for bvid=$bvid"
+                )
+                anime4kPipelineFailed = true
+                anime4kInputSurface = null
+                break
+            }
+        }
     }
 
     // 进度手势相关状态
