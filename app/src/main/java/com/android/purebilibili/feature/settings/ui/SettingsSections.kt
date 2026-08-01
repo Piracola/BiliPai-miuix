@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.android.purebilibili.R
 import com.android.purebilibili.core.ui.rememberAppCollectionIcon
 import com.android.purebilibili.core.ui.rememberAppDynamicIcon
@@ -1661,13 +1662,13 @@ fun AboutSection(
 internal data class AboutContributor(
     val name: String,
     val githubLogin: String,
-    val avatarResId: Int
+    val avatarResId: Int? = null,
+    val avatarUrl: String? = null
 ) {
     val profileUrl: String get() = "https://github.com/$githubLogin"
 }
 
-// ponytail: 静态列表避免关于页每次打开都请求 GitHub；需要实时同步时再接 contributors API。
-// 头像已预置为本地图片资源，无需网络请求。
+// 默认使用本地头像以避免进入关于页时请求 GitHub；个别新贡献者可使用其公开头像链接。
 internal val AboutContributors = listOf(
     AboutContributor("jay3-yy", "jay3-yy", R.drawable.avatar_jay3_yy),
     AboutContributor("Chenx Dust", "chenx-dust", R.drawable.avatar_chenx_dust),
@@ -1675,7 +1676,12 @@ internal val AboutContributors = listOf(
     AboutContributor("Leko", "lekoOwO", R.drawable.avatar_lekoowo),
     AboutContributor("TanakaLun", "TanakaLun", R.drawable.avatar_tanakalun),
     AboutContributor("Matt Van Horn", "mvanhorn", R.drawable.avatar_mvanhorn),
-    AboutContributor("qyo123oyq", "qyo123oyq", R.drawable.avatar_qyo123oyq)
+    AboutContributor("qyo123oyq", "qyo123oyq", R.drawable.avatar_qyo123oyq),
+    AboutContributor(
+        name = "maxzrb",
+        githubLogin = "maxzrb",
+        avatarUrl = "https://avatars.githubusercontent.com/u/114979598?v=4"
+    )
 )
 
 private val AboutSlogans = listOf(
@@ -1797,12 +1803,21 @@ private fun AboutContributorItem(
                 .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center
         ) {
-            Image(
-                painter = painterResource(id = contributor.avatarResId),
-                contentDescription = "${contributor.name} 头像",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.matchParentSize()
-            )
+            contributor.avatarUrl?.let { avatarUrl ->
+                AsyncImage(
+                    model = avatarUrl,
+                    contentDescription = "${contributor.name} 头像",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.matchParentSize()
+                )
+            } ?: contributor.avatarResId?.let { avatarResId ->
+                Image(
+                    painter = painterResource(id = avatarResId),
+                    contentDescription = "${contributor.name} 头像",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.matchParentSize()
+                )
+            }
         }
         Spacer(modifier = Modifier.height(8.dp))
         AppText(
