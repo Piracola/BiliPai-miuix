@@ -90,6 +90,7 @@ internal fun VideoDetailInputOverlayAdapter(
     isPortraitFullscreen: Boolean,
     videoPlayerRootBottomPx: Int,
     hideStatusBars: Boolean,
+    immersiveStatusBarBackdropEnabled: Boolean,
     currentVideoPositionMsProvider: () -> Long,
 ): VideoDetailInputOverlayLayoutInfo {
     val showDanmakuDialog by viewModel.showDanmakuDialog.collectAsStateWithLifecycle()
@@ -113,6 +114,7 @@ internal fun VideoDetailInputOverlayAdapter(
         val playerTopInset = resolveVideoDetailPortraitPlayerTopInsetDp(
             stableStatusBarHeightDp = stableStatusBar,
             hideStatusBars = hideStatusBars,
+            immersiveStatusBarBackdropEnabled = immersiveStatusBarBackdropEnabled,
         ).dp
         (playerHeight + playerTopInset).toPx().toInt()
     }
@@ -122,6 +124,7 @@ internal fun VideoDetailInputOverlayAdapter(
         isPortraitFullscreen,
         videoPlayerRootBottomPx,
         fallbackPlayerBottomPx,
+        immersiveStatusBarBackdropEnabled,
     ) {
         resolveDanmakuDialogTopReservePx(
             isLandscape = isLandscape,

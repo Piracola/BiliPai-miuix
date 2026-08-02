@@ -410,6 +410,19 @@ class SubReplyDetailPresentationPolicyTest {
     }
 
     @Test
+    fun `auxiliary decoration remains visible when an image has no fan number`() {
+        val decoration = resolveSubReplyAuxiliaryDecoration(
+            item = buildReply(
+                message = "test",
+                garbCardImage = "https://example.com/decoration.png"
+            )
+        )
+
+        assertEquals("https://example.com/decoration.png", decoration?.imageUrl)
+        assertEquals(null, decoration?.label)
+    }
+
+    @Test
     fun `auxiliary label should read user sailing fan number when legacy garb field is missing`() {
         assertEquals(
             "CO.008502",
@@ -437,11 +450,24 @@ class SubReplyDetailPresentationPolicyTest {
     fun `auxiliary badge visual spec keeps decoration legible`() {
         val spec = resolveSubReplyAuxiliaryBadgeVisualSpec()
 
-        assertEquals(46, spec.imageSizeDp)
-        assertEquals(12, spec.imageCornerRadiusDp)
-        assertEquals(8, spec.imageLabelSpacingDp)
-        assertEquals(12, spec.labelFontSizeSp)
-        assertEquals(12, spec.labelLineHeightSp)
+        assertEquals(36, spec.imageSizeDp)
+        assertEquals(10, spec.imageCornerRadiusDp)
+        assertEquals(4, spec.imageLabelSpacingDp)
+        assertEquals(10, spec.labelFontSizeSp)
+        assertEquals(10, spec.labelLineHeightSp)
+    }
+
+    @Test
+    fun `thread auxiliary decoration crops transparent canvas before fitting`() {
+        val source = File("src/main/java/com/android/purebilibili/feature/video/ui/components/SubReplyDetailComponents.kt")
+            .readText()
+        val badgeSource = source
+            .substringAfter("private fun SubReplyAuxiliaryBadge(")
+            .substringBefore("private fun SubReplyTextAction(")
+
+        assertTrue(badgeSource.contains(".size(Size.ORIGINAL)"))
+        assertTrue(badgeSource.contains(".transformations(TransparentBoundsCropTransformation)"))
+        assertTrue(badgeSource.contains("contentScale = ContentScale.Fit"))
     }
 
     @Test
@@ -488,6 +514,7 @@ class SubReplyDetailPresentationPolicyTest {
     private fun buildReply(
         rpid: Long = 200L,
         message: String,
+        garbCardImage: String = "",
         garbCardNumber: String = "",
         userSailingV2: ReplyUserSailing? = null,
         parent: Long = 0L,
@@ -500,6 +527,7 @@ class SubReplyDetailPresentationPolicyTest {
             member = ReplyMember(
                 mid = "12",
                 uname = "ReplyUser",
+                garbCardImage = garbCardImage,
                 garbCardNumber = garbCardNumber,
                 userSailingV2 = userSailingV2
             ),

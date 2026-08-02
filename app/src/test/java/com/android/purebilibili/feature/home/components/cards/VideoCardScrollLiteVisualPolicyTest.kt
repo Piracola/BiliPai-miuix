@@ -118,6 +118,39 @@ class VideoCardScrollLiteVisualPolicyTest {
     }
 
     @Test
+    fun `elegant video card groups the cover and metadata in one card surface`() {
+        val source = File("src/main/java/com/android/purebilibili/feature/home/components/cards/VideoCard.kt")
+            .readText()
+
+        val cardContainerBlock = source
+            .substringAfter("val cardContainerModifier = Modifier")
+            .substringBefore("Column(\n            modifier = cardContainerModifier")
+        assertTrue(cardContainerBlock.contains(".clip(cardShellShape)"))
+        assertTrue(cardContainerBlock.contains(".background(AppSurfaceTokens.cardContainer())"))
+
+        val coverShapeBlock = source
+            .substringAfter("val coverShape = remember(cardCornerRadius)")
+            .substringBefore("val coverSharedBoundsEnabled")
+        assertTrue(coverShapeBlock.contains("bottomStart = AppSpacingTokens.None"))
+        assertTrue(coverShapeBlock.contains("bottomEnd = AppSpacingTokens.None"))
+    }
+
+    @Test
+    fun `video card keeps the title width while placing overflow action at the bottom end`() {
+        val source = File("src/main/java/com/android/purebilibili/feature/home/components/cards/VideoCard.kt")
+            .readText()
+        val titleBlock = source
+            .substringAfter("// 标题独占整行")
+            .substringBefore("Spacer(modifier = Modifier.height(if (compactMetadata)")
+
+        assertTrue(titleBlock.contains(".fillMaxWidth()"))
+        assertFalse(titleBlock.contains(".weight(1f)"))
+        assertTrue(source.contains("modifier = Modifier.align(Alignment.BottomEnd)"))
+        assertTrue(source.contains("contentAlignment = Alignment.BottomEnd"))
+        assertTrue(source.contains("Modifier.padding(end = AppChromeSizeTokens.MinimumTouchTarget)"))
+    }
+
+    @Test
     fun `cover stats do not claim separate shared bounds when shell owns morph`() {
         // CARD_SHELL 容器已接管共享元素；封面上的播放量/弹幕不再挂独立 sharedBounds，
         // 避免与 shell morph / 冻结景深叠层抢 key。

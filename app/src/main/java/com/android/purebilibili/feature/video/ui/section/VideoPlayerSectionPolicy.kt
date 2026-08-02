@@ -632,15 +632,11 @@ internal fun shouldToggleAutoFullscreenForCurrentPlaybackSnapshot(
             com.android.purebilibili.core.store.AutoExitFullscreenMode.OFF
         },
 ): Boolean {
-    if (!allowPlaybackStateAutoFullscreen) return false
-
-    // 组合重建可能发生在上一集仍为 ENDED、下一集状态已进入 UI 之前。
-    // 自动退出只能响应真实的播放器结束事件，不能由这类快照触发。
-    return autoEnterFullscreenEnabled &&
-        playbackState == Player.STATE_READY &&
-        playWhenReady &&
-        !hasAutoEnteredFullscreen &&
-        !isFullscreen
+    // 这里的快照会在全屏/内嵌播放器切换时重新采样。若播放器仍处于
+    // READY + playWhenReady，退出全屏后会把一次「重新组合」误认成一次
+    // 「开始播放」，从而马上再次进入全屏。自动全屏只能由 Player 的实际
+    // 状态事件处理，不能从当前快照补发。
+    return false
 }
 
 internal fun shouldToggleAutoFullscreenForPlaybackEvent(

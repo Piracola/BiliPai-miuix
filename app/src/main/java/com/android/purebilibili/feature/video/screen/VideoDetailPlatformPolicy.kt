@@ -76,6 +76,7 @@ internal data class VideoDetailSystemBarsApplySpec(
     val lightNavigationBars: Boolean
 )
 
+@Suppress("UNUSED_PARAMETER")
 internal fun resolveVideoDetailSystemBarsVisibilityPolicy(
     isFullscreenMode: Boolean,
     hideVideoPageStatusBar: Boolean,
@@ -110,8 +111,10 @@ internal fun resolveVideoDetailSystemBarsVisibilityPolicy(
             hideNavigationBars = true
         )
     }
+    // This preference used to hide the status bar. It now controls the Compose Haze backdrop
+    // above the inline player, so the system icons remain visible and readable.
     return VideoDetailSystemBarsVisibilityPolicy(
-        hideStatusBars = hideVideoPageStatusBar,
+        hideStatusBars = false,
         hideNavigationBars = false
     )
 }
@@ -181,27 +184,34 @@ internal fun resolveVideoDetailStableStatusBarHeightDp(
 }
 
 /**
- * 竖屏详情播放器顶部 inset（letterbox）。
+ * 竖屏详情播放器顶部沉浸带高度。
  *
- * 画面始终 edge-to-edge 沉浸：不再用状态栏高度把整块播放器顶下去。
- * 系统状态栏若仍显示，由顶栏 chrome 自己 [statusBarsPadding] 避让，避免
- * 「返回 / 在线人数」与状态栏图标重叠。
+ * 开启「播放页沉浸状态栏」时，播放器容器额外增加状态栏高度，视频内容从
+ * 状态栏下方开始；状态栏区域由实时取色视频背景填充。关闭时仍保持原有
+ * edge-to-edge 布局。
  *
- * [isSharedCardTransition] 保留参数兼容；shared morph 同样需要 0 inset，
- * 否则飞行中顶部会出现黑条。
+ * [isSharedCardTransition] 保留参数兼容；共享转场与落位后的几何保持一致，
+ * 避免动画结束时播放器高度突然跳变。
  */
 @Suppress("UNUSED_PARAMETER")
 internal fun resolveVideoDetailPortraitPlayerTopInsetDp(
     stableStatusBarHeightDp: Float,
     hideStatusBars: Boolean,
+    immersiveStatusBarBackdropEnabled: Boolean = false,
     isSharedCardTransition: Boolean = false,
-): Float = 0f
+): Float {
+    if (hideStatusBars || !immersiveStatusBarBackdropEnabled) return 0f
+    return stableStatusBarHeightDp
+        .takeIf { it.isFinite() }
+        ?.coerceAtLeast(0f)
+        ?: 0f
+}
 
 /**
  * 播放器顶部控件是否应避让系统状态栏。
  *
- * - 状态栏可见（普通详情且未开「播放页隐藏状态栏」）→ 必须 padding，防重叠
- * - 状态栏已隐藏（全屏 / 竖屏沉浸 / 设置隐藏）→ 不 padding，保持贴顶沉浸
+ * - 状态栏可见（普通详情和「播放页沉浸状态栏」）→ 必须 padding，防重叠
+ * - 状态栏已隐藏（横屏全屏 / 竖屏全屏）→ 不 padding，保持贴顶沉浸
  */
 internal fun shouldApplyStatusBarPaddingToVideoPlayerChrome(
     statusBarVisible: Boolean,

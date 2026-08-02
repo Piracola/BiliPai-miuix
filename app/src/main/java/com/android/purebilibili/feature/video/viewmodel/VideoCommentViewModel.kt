@@ -145,9 +145,10 @@ internal fun resolveSubReplyRemoteTotalCount(
     data: ReplyData,
     rootReply: ReplyItem? = null
 ): Int {
-    // x/v2/reply/reply 文档中 data.page.count 才是二级评论总数。
-    if (data.page.count > 0) return data.page.count
+    // 不同接口会把分页窗口大小也写进 page.count；不能把单页数量当总数。
+    // 取所有可用声明中的最大值，避免“显示还有 N 条，详情却在首屏结束”。
     return listOf(
+        data.page.count,
         data.root?.rcount ?: 0,
         data.root?.count ?: 0,
         data.cursor.allCount,
@@ -186,16 +187,16 @@ internal fun resolveSubReplyPageEnd(
     restPage: ReplyPage = ReplyPage()
 ): Boolean {
     val safeLoadedCount = loadedReplyCount.coerceAtLeast(0)
-    val declaredTotal = restPage.count.takeIf { it > 0 } ?: remoteReplyCount
+    val declaredTotal = maxOf(restPage.count, remoteReplyCount).coerceAtLeast(0)
     if (declaredTotal > 0 && safeLoadedCount >= declaredTotal) {
         return true
     }
-    // x/v2/reply/reply: page.num / page.size / page.count 表示 REST 分页进度。
+    // x/v2/reply/reply 的 page.count 可能只是窗口上限；分页进度必须以已解析总数为准。
     if (restPage.count > 0 && restPage.num > 0 && restPage.size > 0) {
-        if (restPage.num * restPage.size < restPage.count) {
+        if (restPage.num * restPage.size < declaredTotal) {
             return false
         }
-        return fetchedReplyCount <= 0 || safeLoadedCount >= restPage.count
+        return fetchedReplyCount <= 0 || safeLoadedCount >= declaredTotal
     }
     if (declaredTotal > safeLoadedCount) {
         // 楼中楼接口可能因审核或折叠导致中间页很稀疏，不能因单页为空提前结束。

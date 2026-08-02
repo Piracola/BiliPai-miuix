@@ -983,7 +983,8 @@ private fun VideoCommentTab(
                 lastVisibleItemIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1,
                 totalItemsCount = listState.layoutInfo.totalItemsCount,
                 isLoading = isRepliesLoading,
-                isEnd = isRepliesEnd || replies.isEmpty() || replyCount <= 0 || replies.size >= replyCount
+                // 置顶/热评会额外插入列表，已渲染条数不能推断服务端分页已结束。
+                isEnd = isRepliesEnd
             )
         }
     }
@@ -1091,7 +1092,7 @@ private fun VideoCommentTab(
                     ) {
                         when {
                             isRepliesLoading -> AdaptiveLoadingIndicator()
-                            isRepliesEnd || replies.size >= replyCount -> {
+                            isRepliesEnd -> {
                                 AppText("—— end ——", color = commentAppearance.secondaryTextColor, fontSize = 12.sp)
                             }
                             // 当 shouldLoadMore 为 true 时才显示加载指示器

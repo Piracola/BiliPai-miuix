@@ -191,6 +191,16 @@ class CommentPaginationPolicyTest {
     }
 
     @Test
+    fun `sub reply remote total count ignores a smaller page window`() {
+        val data = ReplyData(
+            page = com.android.purebilibili.data.model.response.ReplyPage(count = 20),
+            root = ReplyItem(count = 80, rcount = 80)
+        )
+
+        assertEquals(80, resolveSubReplyRemoteTotalCount(data))
+    }
+
+    @Test
     fun `sub reply remote total count falls back to root reply declared count`() {
         val data = ReplyData(
             cursor = ReplyCursor(allCount = 0),
@@ -224,6 +234,24 @@ class CommentPaginationPolicyTest {
                 loadedReplyCount = 8,
                 remoteReplyCount = 8,
                 requestedPage = 1
+            )
+        )
+    }
+
+    @Test
+    fun `sub reply page does not treat a smaller page count as the total`() {
+        assertFalse(
+            resolveSubReplyPageEnd(
+                cursorIsEnd = true,
+                fetchedReplyCount = 20,
+                loadedReplyCount = 20,
+                remoteReplyCount = 80,
+                requestedPage = 1,
+                restPage = com.android.purebilibili.data.model.response.ReplyPage(
+                    num = 1,
+                    size = 20,
+                    count = 20
+                )
             )
         )
     }

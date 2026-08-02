@@ -623,8 +623,7 @@ internal fun ElegantVideoCard(
         animationEnabled && transitionEnabled
     }
     Box(
-        modifier = Modifier
-            .then(modifier)
+        modifier = modifier
             .fillMaxWidth()
             // 进场动画：挂载门控已含滚动/返回/切分类；与过渡并存时仅淡入不改几何
             .animateEnter(
@@ -726,25 +725,19 @@ internal fun ElegantVideoCard(
                 motionSpec = homeSharedTransitionMotionSpec,
                 clipShape = cardShellShape
             )
+            .clip(cardShellShape)
+            .background(AppSurfaceTokens.cardContainer())
         Column(
             modifier = cardContainerModifier
         ) {
         //  [性能优化] 封面圆角形状缓存（避免重组时重复创建）
-        val coverShape = remember(
-            cardCornerRadius,
-            infoSurfaceAppearance.useTintedSurface,
-            homeSharedTransitionVisualSpec
-        ) {
-            if (infoSurfaceAppearance.useTintedSurface) {
-                RoundedCornerShape(
-                    topStart = cardCornerRadius,
-                    topEnd = cardCornerRadius,
-                    bottomStart = AppSpacingTokens.None,
-                    bottomEnd = AppSpacingTokens.None
-                )
-            } else {
-                RoundedCornerShape(homeSharedTransitionVisualSpec.sourceCornerDp.dp)
-            }
+        val coverShape = remember(cardCornerRadius) {
+            RoundedCornerShape(
+                topStart = cardCornerRadius,
+                topEnd = cardCornerRadius,
+                bottomStart = AppSpacingTokens.None,
+                bottomEnd = AppSpacingTokens.None
+            )
         }
 
         val coverSharedBoundsModifier = Modifier
@@ -1098,10 +1091,24 @@ internal fun ElegantVideoCard(
                     vertical = if (compactMetadata) AppSpacingTokens.ExtraSmall + AppSpacingTokens.Micro else AppSpacingTokens.Small
                 )
         } else {
-            Modifier.fillMaxWidth()
+            Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = AppSpacingTokens.Small + AppSpacingTokens.Micro,
+                    top = AppSpacingTokens.None,
+                    end = AppSpacingTokens.Small + AppSpacingTokens.Micro,
+                    bottom = if (compactMetadata) {
+                        AppSpacingTokens.ExtraSmall + AppSpacingTokens.Micro
+                    } else {
+                        AppSpacingTokens.Small
+                    }
+                )
         }
 
-        Column(
+        val hasOverflowMenu = onDismiss != null || onWatchLater != null
+        val hasTrailingCardAction = onUnfavorite != null || hasOverflowMenu
+
+        Box(
             modifier = infoContainerModifier.videoCardShellReturnChromeAlpha(
                 enabled = useCardShellSharedBounds,
                 bvid = video.bvid,
@@ -1110,114 +1117,60 @@ internal fun ElegantVideoCard(
                 isQuickReturnFromDetail = isQuickReturningFromVideoDetail,
             )
         ) {
+        Column {
         if (!infoSurfaceAppearance.useTintedSurface) {
             Spacer(modifier = Modifier.height(if (compactMetadata) AppSpacingTokens.ExtraSmall + AppSpacingTokens.Micro else AppSpacingTokens.Small))
         }
         
-        // 标题行：标题 + 更多按钮
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
-        ) {
-            //  [HIG] 标题 - 15sp Medium, 行高 20sp
-            //  共享元素过渡 - 标题
-            val titleModifier = Modifier
-                .weight(1f)
+        // 标题独占整行：更多操作移至右下角，不再挤占两行标题的可用宽度。
+        AppText(
+            text = highlightedTitle ?: AnnotatedString(video.title),
+            maxLines = 2,
+            minLines = titleMinLines,
+            overflow = TextOverflow.Ellipsis,
+            style = contentTypography.title.copy(
+                color = MaterialTheme.colorScheme.onSurface
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
                 .semantics { contentDescription = "视频标题: ${video.title}" }
-
-            AppText(
-                text = highlightedTitle ?: AnnotatedString(video.title),
-                maxLines = 2,
-                minLines = titleMinLines,
-                overflow = TextOverflow.Ellipsis,
-                style = contentTypography.title.copy(
-                    color = MaterialTheme.colorScheme.onSurface
-                ),
-                modifier = titleModifier
-                    .onGloballyPositioned { coordinates ->
-                        titleCoordsRef.value = coordinates
-                    }
-                    //  [交互优化] 标题区域：长按弹出菜单，点击跳转
-                    .pointerInput(onDismiss, onWatchLater, onUnfavorite) {
-                        val hasPreviewAction = onLongClick != null
-                        val hasLongPressMenu = onDismiss != null || onWatchLater != null || onUnfavorite != null
-                        detectTapGestures(
-                            onLongPress = { pressOffset ->
-                                if (hasPreviewAction) {
-                                  haptic(HapticType.HEAVY)
-                                  onLongClick(video)
-                                } else if (shouldOpenLongPressMenu(hasPreviewAction, hasLongPressMenu)) {
-                                    haptic(HapticType.HEAVY)
-                                    if (onUnfavorite != null && onDismiss == null && onWatchLater == null) {
-                                        showUnfavoriteDialog = true
-                                    } else {
-                                        openDismissMenu(titleCoordsRef.value, pressOffset)
-                                    }
+                .onGloballyPositioned { coordinates ->
+                    titleCoordsRef.value = coordinates
+                }
+                //  [交互优化] 标题区域：长按弹出菜单，点击跳转
+                .pointerInput(onDismiss, onWatchLater, onUnfavorite) {
+                    val hasPreviewAction = onLongClick != null
+                    val hasLongPressMenu = onDismiss != null || onWatchLater != null || onUnfavorite != null
+                    detectTapGestures(
+                        onLongPress = { pressOffset ->
+                            if (hasPreviewAction) {
+                              haptic(HapticType.HEAVY)
+                              onLongClick(video)
+                            } else if (shouldOpenLongPressMenu(hasPreviewAction, hasLongPressMenu)) {
+                                haptic(HapticType.HEAVY)
+                                if (onUnfavorite != null && onDismiss == null && onWatchLater == null) {
+                                    showUnfavoriteDialog = true
+                                } else {
+                                    openDismissMenu(titleCoordsRef.value, pressOffset)
                                 }
-                            },
-                            onTap = {
-                                triggerCardClick()
                             }
-                        )
-                    }
-            )
-
-            //  [新增] 更多按钮 / 取消收藏按钮
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // 如果提供了取消收藏回调，直接显示取消按钮 (优先于更多菜单显示，或者并存)
-                if (onUnfavorite != null) {
-                    Box(
-                        modifier = Modifier
-                            .padding(end = AppSpacingTokens.ExtraSmall, top = AppSpacingTokens.Micro)
-                            .size(AppChromeSizeTokens.MinimumTouchTarget)
-                            .clickable { 
-                                haptic(HapticType.MEDIUM)
-                                // onUnfavorite.invoke() -> 改为弹窗确认
-                                showUnfavoriteDialog = true
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        AppIcon(
-                            imageVector = CupertinoIcons.Filled.HandThumbsup,
-                            contentDescription = "取消收藏",
-                            modifier = Modifier.size(AppSpacingTokens.Large),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                        )
-                    }
+                        },
+                        onTap = {
+                            triggerCardClick()
+                        }
+                    )
                 }
-
-                val hasMenu = onDismiss != null || onWatchLater != null
-                if (hasMenu) {
-                    Box(
-                        modifier = Modifier
-                            .padding(start = AppSpacingTokens.ExtraSmall, top = AppSpacingTokens.Micro) // 微调位置对齐第一行文字
-                            .size(AppChromeSizeTokens.MinimumTouchTarget)
-                            .semantics { contentDescription = "更多操作" }
-                            .onGloballyPositioned { coordinates ->
-                                menuButtonCoordsRef.value = coordinates
-                            }
-                            .clickable { 
-                                haptic(HapticType.LIGHT)
-                                openDismissMenu(menuButtonCoordsRef.value, null)
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        AppText(
-                            text = "⋮",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = MaterialTheme.typography.labelMedium.fontSize,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
-        }
+        )
         
         Spacer(modifier = Modifier.height(if (compactMetadata) AppSpacingTokens.ExtraSmall else AppSpacingTokens.ExtraSmall + AppSpacingTokens.Micro))
-        
+
+        Column(
+            modifier = if (hasTrailingCardAction) {
+                Modifier.padding(end = AppChromeSizeTokens.MinimumTouchTarget)
+            } else {
+                Modifier
+            }
+        ) {
         val metadataColors = resolveHomeVideoCardMetadataColors(
             onSurfaceColor = MaterialTheme.colorScheme.onSurface
         )
@@ -1391,7 +1344,62 @@ internal fun ElegantVideoCard(
             }
         }
         }
+        }
 
+        if (hasTrailingCardAction) {
+            Row(
+                modifier = Modifier.align(Alignment.BottomEnd),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (onUnfavorite != null) {
+                    Box(
+                        modifier = Modifier
+                            .size(AppChromeSizeTokens.MinimumTouchTarget)
+                            .clickable {
+                                haptic(HapticType.MEDIUM)
+                                showUnfavoriteDialog = true
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        AppIcon(
+                            imageVector = CupertinoIcons.Filled.HandThumbsup,
+                            contentDescription = "取消收藏",
+                            modifier = Modifier.size(AppSpacingTokens.Large),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+
+                if (hasOverflowMenu) {
+                    Box(
+                        modifier = Modifier
+                            .size(AppChromeSizeTokens.MinimumTouchTarget)
+                            .semantics { contentDescription = "更多操作" }
+                            .onGloballyPositioned { coordinates ->
+                                menuButtonCoordsRef.value = coordinates
+                            }
+                            .clickable {
+                                haptic(HapticType.LIGHT)
+                                openDismissMenu(menuButtonCoordsRef.value, null)
+                            },
+                        contentAlignment = Alignment.BottomEnd
+                    ) {
+                        AppText(
+                            text = "⋮",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = MaterialTheme.typography.labelMedium.fontSize,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(
+                                end = AppSpacingTokens.ExtraSmall,
+                                bottom = AppSpacingTokens.ExtraSmall
+                            )
+                        )
+                    }
+                }
+            }
+        }
+
+    }
     }
         
         // 菜单需要挂在一个本地小锚点上，避免 DropdownMenu 在整张卡片根节点右侧 fallback 时反向偏移。

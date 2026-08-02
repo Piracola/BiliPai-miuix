@@ -101,7 +101,7 @@ internal enum class SettingsIconRole {
     FULLSCREEN_ORIENTATION,
     HORIZONTAL_ADAPTATION,
     FULLSCREEN_GESTURE_REVERSE,
-    HIDE_STATUS_BAR,
+    IMMERSIVE_STATUS_BAR,
     AUTO_ENTER_FULLSCREEN,
     AUTO_EXIT_FULLSCREEN,
     FULLSCREEN_LOCK,
@@ -277,7 +277,7 @@ private fun resolveMd3SettingsSemanticIcon(role: SettingsIconRole): ImageVector 
     SettingsIconRole.FULLSCREEN_ORIENTATION -> Icons.Outlined.ScreenRotation
     SettingsIconRole.HORIZONTAL_ADAPTATION -> Icons.Outlined.AspectRatio
     SettingsIconRole.FULLSCREEN_GESTURE_REVERSE -> Icons.Outlined.SwipeVertical
-    SettingsIconRole.HIDE_STATUS_BAR -> Icons.Outlined.VisibilityOff
+    SettingsIconRole.IMMERSIVE_STATUS_BAR -> Icons.Outlined.Fullscreen
     SettingsIconRole.AUTO_ENTER_FULLSCREEN -> Icons.Outlined.Fullscreen
     SettingsIconRole.AUTO_EXIT_FULLSCREEN -> Icons.Outlined.FullscreenExit
     SettingsIconRole.FULLSCREEN_LOCK -> Icons.Outlined.ScreenLockRotation
@@ -396,7 +396,7 @@ private fun resolveIosSettingsSemanticIcon(role: SettingsIconRole): ImageVector 
     SettingsIconRole.FULLSCREEN_ORIENTATION -> CupertinoIcons.Outlined.RotateRight
     SettingsIconRole.HORIZONTAL_ADAPTATION -> CupertinoIcons.Outlined.IpadAndIphone
     SettingsIconRole.FULLSCREEN_GESTURE_REVERSE -> CupertinoIcons.Outlined.ArrowUpArrowDown
-    SettingsIconRole.HIDE_STATUS_BAR -> CupertinoIcons.Outlined.Menucard
+    SettingsIconRole.IMMERSIVE_STATUS_BAR -> CupertinoIcons.Outlined.Menucard
     SettingsIconRole.AUTO_ENTER_FULLSCREEN -> CupertinoIcons.Outlined.RectanglePortraitArrowtriangle2Outward
     SettingsIconRole.AUTO_EXIT_FULLSCREEN -> CupertinoIcons.Outlined.ArrowDownRightAndArrowUpLeft
     SettingsIconRole.FULLSCREEN_LOCK -> CupertinoIcons.Outlined.LockCircle

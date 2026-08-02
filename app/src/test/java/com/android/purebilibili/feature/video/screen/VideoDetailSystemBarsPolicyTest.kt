@@ -66,7 +66,7 @@ class VideoDetailSystemBarsPolicyTest {
     }
 
     @Test
-    fun visibilityPolicy_hideSettingOnlyHidesStatusBarOnOrdinaryPage() {
+    fun visibilityPolicy_immersiveSettingKeepsStatusBarVisibleOnOrdinaryPage() {
         val policy = resolveVideoDetailSystemBarsVisibilityPolicy(
             isFullscreenMode = false,
             hideVideoPageStatusBar = true,
@@ -74,7 +74,7 @@ class VideoDetailSystemBarsPolicyTest {
             isScreenActive = true
         )
 
-        assertEquals(true, policy.hideStatusBars)
+        assertEquals(false, policy.hideStatusBars)
         assertEquals(false, policy.hideNavigationBars)
     }
 
@@ -267,20 +267,13 @@ class VideoDetailSystemBarsPolicyTest {
     }
 
     @Test
-    fun portraitPlayerTopInset_alwaysZeroForEdgeToEdgeImmersion() {
-        // 画面沉浸铺满；状态栏可见时由顶栏 chrome 自己 pad，不再 letterbox 整块播放器。
+    fun portraitPlayerTopInset_reservesSolidBackdropOnlyWhenImmersiveSettingIsEnabled() {
         assertEquals(
             0f,
             resolveVideoDetailPortraitPlayerTopInsetDp(
                 stableStatusBarHeightDp = 24f,
-                hideStatusBars = true
-            )
-        )
-        assertEquals(
-            0f,
-            resolveVideoDetailPortraitPlayerTopInsetDp(
-                stableStatusBarHeightDp = 24f,
-                hideStatusBars = false
+                hideStatusBars = true,
+                immersiveStatusBarBackdropEnabled = true,
             )
         )
         assertEquals(
@@ -288,6 +281,15 @@ class VideoDetailSystemBarsPolicyTest {
             resolveVideoDetailPortraitPlayerTopInsetDp(
                 stableStatusBarHeightDp = 24f,
                 hideStatusBars = false,
+                immersiveStatusBarBackdropEnabled = false,
+            )
+        )
+        assertEquals(
+            24f,
+            resolveVideoDetailPortraitPlayerTopInsetDp(
+                stableStatusBarHeightDp = 24f,
+                hideStatusBars = false,
+                immersiveStatusBarBackdropEnabled = true,
                 isSharedCardTransition = true,
             )
         )

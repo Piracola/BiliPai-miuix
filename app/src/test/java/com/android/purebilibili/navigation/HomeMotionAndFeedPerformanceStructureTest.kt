@@ -29,10 +29,10 @@ class HomeMotionAndFeedPerformanceStructureTest {
     }
 
     @Test
-    fun homeFeed_externalStatsAvoidPerBadgeHaze() {
+    fun homeFeed_compactStatsFollowTheAppearanceSettingWithoutInfoBadgeHaze() {
         val source = sourceFile("feature/home/HomeScreen.kt")
 
-        assertTrue(source.contains("compactStatsOnCover = false"))
+        assertTrue(source.contains("compactStatsOnCover = homeSettings.compactVideoStatsOnCover"))
         assertTrue(source.contains("showInfoGlassBadges = false"))
     }
 

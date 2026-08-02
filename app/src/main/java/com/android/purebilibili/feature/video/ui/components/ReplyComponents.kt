@@ -117,6 +117,45 @@ const val COMMENT_VIEW_ALL_REPLIES_TAG_PREFIX = "comment_view_all_replies_"
 
 private val replyVideoTitleCache = ConcurrentHashMap<String, String>()
 
+<<<<<<< HEAD
+=======
+/**
+ * 官方 cardbg 经常是 972×162 的透明画布，实际角色图案只占其中一小部分。
+ * 在解码线程裁掉全透明边缘，才能以官方预期的视觉尺寸显示内容而不裁掉图案。
+ */
+internal object TransparentBoundsCropTransformation : Transformation {
+    override val cacheKey: String = "comment_transparent_bounds_crop_v1"
+
+    override suspend fun transform(input: Bitmap, size: Size): Bitmap {
+        if (!input.hasAlpha()) return input
+
+        var left = input.width
+        var top = input.height
+        var right = -1
+        var bottom = -1
+        for (y in 0 until input.height) {
+            for (x in 0 until input.width) {
+                if ((input.getPixel(x, y) ushr 24) > 4) {
+                    left = minOf(left, x)
+                    top = minOf(top, y)
+                    right = maxOf(right, x)
+                    bottom = maxOf(bottom, y)
+                }
+            }
+        }
+        if (right < left || bottom < top) return input
+
+        val cropWidth = right - left + 1
+        val cropHeight = bottom - top + 1
+        return if (cropWidth == input.width && cropHeight == input.height) {
+            input
+        } else {
+            Bitmap.createBitmap(input, left, top, cropWidth, cropHeight)
+        }
+    }
+}
+
+>>>>>>> ab3edbc9e (fix: stabilize player and comment presentation)
 internal data class ReplyItemLayoutPolicy(
     val horizontalPaddingDp: Int,
     val avatarSizeDp: Int,
@@ -139,10 +178,17 @@ internal fun resolveReplyItemLayoutPolicy(): ReplyItemLayoutPolicy {
         avatarSizeDp = 36,
         avatarContentSpacingDp = 8,
         actionButtonSizeDp = 40,
+<<<<<<< HEAD
         decorationWidthReserveDp = 78,
         decorationImageWidthDp = 64,
         decorationImageHeightDp = 46,
         decorationMinWidthDp = 78
+=======
+        decorationWidthReserveDp = 64,
+        decorationImageWidthDp = 44,
+        decorationImageHeightDp = 36,
+        decorationMinWidthDp = 64
+>>>>>>> ab3edbc9e (fix: stabilize player and comment presentation)
     )
 }
 
@@ -835,8 +881,8 @@ internal fun resolveVisibleSubReplies(
 }
 
 internal fun resolveInitialSubReplyPreviewExpanded(
-    previewReplyCount: Int
-): Boolean = previewReplyCount > 0
+    @Suppress("UNUSED_PARAMETER") previewReplyCount: Int
+): Boolean = false
 
 internal fun shouldShowInlineSubReplyToggle(
     previewReplyCount: Int,

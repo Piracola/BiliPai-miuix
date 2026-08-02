@@ -1798,9 +1798,9 @@ fun HomeScreen(
                                      smartVisualGuardEnabled = false,
                                      isDataSaverActive = isDataSaverActive,
                                      preferLowQualityCover = homeSettings.lowQualityHomeCoverInDataSaver,
-                                     compactStatsOnCover = false,
+                                     compactStatsOnCover = homeSettings.compactVideoStatsOnCover,
                                      showCoverGlassBadges = homeSettings.showHomeCoverGlassBadges,
-                                     // 统计行位于封面外时保持轻量，避免每个胶囊在滚动期持续采样 Haze。
+                                     // 信息区标签保持轻量；贴封面统计由卡片复用封面标签样式渲染。
                                      showInfoGlassBadges = false,
                                      badgeEffectMode = homeSettings.homeCardBadgeEffectMode,
                                      infoGlassMode = homeSettings.homeCardInfoGlassMode,
