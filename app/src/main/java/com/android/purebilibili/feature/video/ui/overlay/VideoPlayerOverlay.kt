@@ -438,6 +438,7 @@ fun VideoPlayerOverlay(
     onQualitySelected: (Int) -> Unit,
 
     onBack: () -> Unit,
+    onLandscapeCommentClick: () -> Unit = {},
     onHomeClick: () -> Unit = onBack,
     onToggleFullscreen: () -> Unit,
     // [New] Player Data for Download
@@ -1394,6 +1395,7 @@ fun VideoPlayerOverlay(
                                 ShareUtils.shareVideo(context, title, bvid)
                             }
                         },
+                        onCommentClick = onLandscapeCommentClick,
                         onCastClick = onCastClickAction,
                         showCastButton = playerControlVisibility.showCastButton,
                         onMoreClick = {

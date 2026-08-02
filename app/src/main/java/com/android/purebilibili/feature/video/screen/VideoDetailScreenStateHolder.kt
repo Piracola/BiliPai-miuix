@@ -400,6 +400,8 @@ internal fun VideoDetailScreenStateHolder(
     // 🔄 [Seamless Playback] Internal BVID state to support seamless switching in portrait mode
     var currentBvid by presentationState.currentBvidState
     var currentBvidCid by presentationState.currentCidState
+    var landscapeCommentPanelVisible by rememberSaveable(currentBvid) { mutableStateOf(false) }
+    var landscapeCommentPanelOnLeft by rememberSaveable(currentBvid) { mutableStateOf(true) }
     // Episode cover captured at collection/playlist in-page switch (survives Loading.Initial).
     var pendingInPageSwitchCoverUrl by rememberSaveable { mutableStateOf("") }
     var isPipMode by presentationState.pipModeState
@@ -2146,6 +2148,9 @@ internal fun VideoDetailScreenStateHolder(
                     onHomeClick = {
                         handleTopBarAction(resolveVideoDetailTopBarAction(isHomeButton = true))
                     },
+                    onLandscapeCommentClick = {
+                        landscapeCommentPanelVisible = !landscapeCommentPanelVisible
+                    },
                     onDanmakuInputClick = { viewModel.showDanmakuSendDialog() },
                     danmakuComposerVisible = showDanmakuDialog && useInlineDanmakuComposer,
                     onDismissDanmakuComposer = { viewModel.hideDanmakuSendDialog() },
@@ -2281,6 +2286,48 @@ internal fun VideoDetailScreenStateHolder(
                     onSubtitleDisplayModePreferenceOverrideChange = { subtitleDisplayModeOverride = it },
                         onSubtitleTrackSelected = viewModel::selectSubtitleTrack
                     )
+                    val success = uiState as? VideoPlaybackUiState.Success
+                    if (landscapeCommentPanelVisible && success != null) {
+                        LandscapeCommentPanel(
+                            info = success.info,
+                            listState = commentListState,
+                            replies = commentState.replies,
+                            replyCount = commentState.replyCount,
+                            emoteMap = success.emoteMap,
+                            isRepliesLoading = commentState.isRepliesLoading,
+                            isRepliesEnd = commentState.isRepliesEnd,
+                            videoTags = success.videoTags,
+                            sortMode = commentState.sortMode,
+                            upOnlyFilter = commentState.upOnlyFilter,
+                            currentMid = commentState.currentMid,
+                            showUpFlag = commentState.showUpFlag,
+                            showIdentityDecorations = commentMemberDecorationsEnabled,
+                            dissolvingIds = commentState.dissolvingIds,
+                            likedComments = commentState.likedComments,
+                            onSortModeChange = commentActions.setSortMode,
+                            onUpOnlyToggle = commentActions.toggleUpOnly,
+                            onUpClick = navigateToUserSpaceFromVideo,
+                            onSubReplyClick = { reply, _ -> commentActions.openSubReply(reply) },
+                            onCommentReplyClick = playbackActions.replyTo,
+                            onLoadMoreReplies = commentActions.loadComments,
+                            onDeleteComment = commentActions.deleteComment,
+                            onDissolveStart = commentActions.startDissolve,
+                            onCommentLike = commentActions.likeComment,
+                            onCommentUrlClick = openCommentUrl,
+                            onReportComment = commentActions.reportComment,
+                            onToggleTopComment = commentActions.toggleTopComment,
+                            onTimestampClick = { position -> seekPlayerFromUserAction(playerState.player, position) },
+                            onDismiss = { landscapeCommentPanelVisible = false },
+                            onSwitchSide = { landscapeCommentPanelOnLeft = !landscapeCommentPanelOnLeft },
+                            isOnLeft = landscapeCommentPanelOnLeft,
+                            modifier = Modifier
+                                .align(
+                                    if (landscapeCommentPanelOnLeft) Alignment.CenterStart else Alignment.CenterEnd
+                                )
+                                .fillMaxHeight()
+                                .widthIn(min = 320.dp, max = 420.dp),
+                        )
+                    }
                 }
 
             } else {

@@ -45,6 +45,7 @@ import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Cast
+import androidx.compose.material.icons.outlined.Comment
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -156,6 +157,7 @@ fun TopControlBar(
     onDislikeClick: () -> Unit = {},
     onCoinClick: () -> Unit = {},
     onShareClick: () -> Unit = {},
+    onCommentClick: () -> Unit = {},
     onCastClick: () -> Unit = {}, // Added Cast callback
     showCastButton: Boolean = true,
     onMoreClick: () -> Unit = {},
@@ -330,6 +332,15 @@ fun TopControlBar(
                         iconSizeDp = layoutPolicy.iconSizeDp
                     )
                 }
+
+                ActionIcon(
+                    icon = Icons.Outlined.Comment,
+                    contentDescription = "评论区",
+                    isActive = false,
+                    onClick = onCommentClick,
+                    buttonSizeDp = layoutPolicy.buttonSizeDp,
+                    iconSizeDp = layoutPolicy.iconSizeDp
+                )
                 
                 // More (Three dots)
                 AppIconButton(

@@ -385,6 +385,7 @@ fun VideoPlayerSection(
     onQualityChange: (Int) -> Unit,
     onBack: () -> Unit,
     onHomeClick: (() -> Unit)? = null,
+    onLandscapeCommentClick: () -> Unit = {},
     onDanmakuInputClick: () -> Unit = {},
     danmakuComposerVisible: Boolean = false,
     onDismissDanmakuComposer: () -> Unit = {},
@@ -4931,6 +4932,7 @@ fun VideoPlayerSection(
                 drawerHazeState = overlayDrawerHazeState,
                 statusBarAmbientFrame = statusBarAmbientFrame,
                 statusBarBackdropHeight = contentTopInset,
+                onLandscapeCommentClick = onLandscapeCommentClick,
             )
             }
 
