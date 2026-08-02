@@ -2,11 +2,14 @@
 package com.android.purebilibili.core.util
 
 import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
@@ -16,7 +19,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
+import androidx.window.layout.FoldingFeature
+import androidx.window.layout.WindowInfoTracker
 import androidx.window.layout.WindowMetrics
+import kotlinx.coroutines.flow.collect
 import kotlin.math.min
 
 /**
@@ -111,6 +117,39 @@ val LocalWindowSizeClass = compositionLocalOf {
         widthDp = 360.dp,
         heightDp = 800.dp
     )
+}
+
+/**
+ * Returns true only while the current activity is on a foldable's fully opened inner display.
+ *
+ * A window's width cannot distinguish an unfolded foldable from a tablet (or a large phone), and
+ * it also changes while the activity rotates. WindowManager's folding posture is therefore the
+ * only input used for foldable-specific orientation behavior.
+ */
+@Composable
+fun rememberIsFlatFoldable(): Boolean {
+    val context = LocalContext.current
+    val activity = remember(context) { context.findActivity() }
+    val isFlatFoldable = produceState(initialValue = false, activity) {
+        val hostActivity = activity ?: return@produceState
+        WindowInfoTracker.getOrCreate(hostActivity)
+            .windowLayoutInfo(hostActivity)
+            .collect { layoutInfo ->
+                value = layoutInfo.displayFeatures
+                    .filterIsInstance<FoldingFeature>()
+                    .any { feature -> feature.state == FoldingFeature.State.FLAT }
+            }
+    }
+    return isFlatFoldable.value
+}
+
+private fun Context.findActivity(): Activity? {
+    var currentContext = this
+    while (currentContext is ContextWrapper) {
+        if (currentContext is Activity) return currentContext
+        currentContext = currentContext.baseContext
+    }
+    return currentContext as? Activity
 }
 
 /**
