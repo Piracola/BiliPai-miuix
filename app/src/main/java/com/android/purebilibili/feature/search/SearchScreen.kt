@@ -56,6 +56,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.android.purebilibili.core.ui.components.AppIcon
+import com.android.purebilibili.core.ui.components.AppContentStateAction
+import com.android.purebilibili.core.ui.components.AppContentStatePresentation
+import com.android.purebilibili.core.ui.components.AppEmptyState
+import com.android.purebilibili.core.ui.components.AppErrorState
 import androidx.compose.material3.MaterialTheme
 import com.android.purebilibili.core.ui.components.AppScrollableTabRow
 import androidx.compose.material3.TabRowDefaults
@@ -80,6 +84,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.SpanStyle
@@ -91,6 +96,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.activity.compose.BackHandler
 import com.android.purebilibili.R
 import com.android.purebilibili.core.ui.AppScaffold
 import com.android.purebilibili.core.ui.AppShapes
@@ -554,9 +560,11 @@ fun SearchScreen(
     val searchChromeSpec = remember(topChromePolicy) { resolveSearchChromeVisualSpec(topChromePolicy) }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
     val configuration = LocalConfiguration.current
     val windowSizeClass = LocalWindowSizeClass.current
     var startupSettled by remember { mutableStateOf(false) }
+    var searchFieldFocused by remember { mutableStateOf(false) }
     val searchLayoutPolicy = remember(configuration.screenWidthDp) {
         resolveSearchLayoutPolicy(
             widthDp = configuration.screenWidthDp
@@ -765,6 +773,20 @@ fun SearchScreen(
             )
         }
     }
+
+    val handleSearchBack = {
+        val shouldDismissSearchChrome = state.suggestions.isNotEmpty() || searchFieldFocused
+        if (shouldDismissSearchChrome) {
+            viewModel.dismissSuggestions()
+            keyboardController?.hide()
+            focusManager.clearFocus(force = true)
+            searchFieldFocused = false
+        } else {
+            onBack()
+        }
+    }
+
+    BackHandler(onBack = handleSearchBack)
     
     //  [埋点] 页面浏览追踪
     LaunchedEffect(Unit) {
@@ -832,17 +854,10 @@ fun SearchScreen(
         ) {
             // --- 列表内容层 ---
             if (state.showResults) {
-                if (state.error != null) {
-                    AppText(
-                        text = state.error ?: "未知错误",
-                        modifier = Modifier.align(Alignment.Center),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                } else {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                        ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                    ) {
                             Spacer(modifier = Modifier.height(contentTopPadding + 8.dp))
                             //  搜索彩蛋消息横幅
                             val easterEggMsg = state.easterEggMessage
@@ -928,6 +943,25 @@ fun SearchScreen(
                                 )
                             }
                         }
+                        val pagePresentation = remember(
+                            pageResultState.totalCount,
+                            pageResultState.isSearching,
+                            pageResultState.error,
+                            pageResultState.emptyStateReason,
+                            pageResultState.isLoadingMore,
+                            pageResultState.loadMoreError,
+                            pageResultState.hasMoreResults
+                        ) {
+                            resolveSearchResultPresentation(
+                                itemCount = pageResultState.totalCount,
+                                isSearching = pageResultState.isSearching,
+                                error = pageResultState.error,
+                                emptyStateReason = pageResultState.emptyStateReason,
+                                isLoadingMore = pageResultState.isLoadingMore,
+                                loadMoreError = pageResultState.loadMoreError,
+                                hasMoreResults = pageResultState.hasMoreResults
+                            )
+                        }
                         val pageGridState = rememberSaveable(
                             pageResultState.query,
                             targetSearchType.value,
@@ -951,7 +985,7 @@ fun SearchScreen(
                                 }
                             }
                         }
-                        if (pageResultState.isSearching) {
+                        if (pagePresentation.body == SearchResultBodyMode.LOADING) {
                             Box(
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
@@ -959,6 +993,31 @@ fun SearchScreen(
                                 LoadingAnimation(
                                     size = 80.dp,
                                     text = "搜索中..."
+                                )
+                            }
+                        } else if (pagePresentation.body == SearchResultBodyMode.ERROR) {
+                            AppErrorState(
+                                title = "搜索失败",
+                                message = pageResultState.error,
+                                primaryAction = AppContentStateAction(
+                                    label = "重试",
+                                    onClick = { viewModel.search(pageResultState.query) }
+                                ),
+                                modifier = Modifier.fillMaxSize(),
+                                presentation = AppContentStatePresentation.PAGE
+                            )
+                        } else if (pagePresentation.body == SearchResultBodyMode.EMPTY) {
+                            val copy = pageEmptyStateCopy
+                            if (copy != null) {
+                                AppEmptyState(
+                                    title = copy.title,
+                                    message = copy.subtitle,
+                                    primaryAction = AppContentStateAction(
+                                        label = "重新搜索",
+                                        onClick = { viewModel.search(pageResultState.query) }
+                                    ),
+                                    modifier = Modifier.fillMaxSize(),
+                                    presentation = AppContentStatePresentation.PAGE
                                 )
                             }
                         } else {
@@ -1073,25 +1132,29 @@ fun SearchScreen(
                                     }
                                     
                                     //  [新增] 加载更多指示器
-                                    if (pageResultState.isLoadingMore) {
-                                        item {
+                                    if (pagePresentation.footer == SearchResultFooterMode.LOADING || pagePresentation.footer == SearchResultFooterMode.ERROR) {
+                                        item(span = { GridItemSpan(maxLineSpan) }) {
                                             Box(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
                                                     .padding(16.dp),
                                                 contentAlignment = Alignment.Center
                                             ) {
-                                                AdaptiveLoadingIndicator(
-                                                    size = 24.dp,
-                                                    strokeWidth = 2.dp
-                                                )
+                                                if (pagePresentation.footer == SearchResultFooterMode.ERROR) {
+                                                    SearchLoadMoreIndicator(
+                                                        error = pageResultState.loadMoreError,
+                                                        onRetry = viewModel::loadMoreResults
+                                                    )
+                                                } else {
+                                                    AdaptiveLoadingIndicator(size = 24.dp, strokeWidth = 2.dp)
+                                                }
                                             }
                                         }
                                     }
                                     
                                     //  [新增] 已加载全部提示
-                                    if (!pageResultState.hasMoreResults && pageResultState.searchResults.isNotEmpty() && !pageResultState.isLoadingMore) {
-                                        item {
+                                    if (pagePresentation.footer == SearchResultFooterMode.END) {
+                                        item(span = { GridItemSpan(maxLineSpan) }) {
                                             AppText(
                                                 text = "已加载全部 ${pageResultState.searchResults.size} 条结果",
                                                 modifier = Modifier
@@ -1163,7 +1226,7 @@ fun SearchScreen(
                                         }
                                     }
                                     
-                                    if (pageResultState.isLoadingMore) {
+                                    if (pagePresentation.footer == SearchResultFooterMode.LOADING || pagePresentation.footer == SearchResultFooterMode.ERROR) {
                                         item {
                                             Box(
                                                 modifier = Modifier
@@ -1171,10 +1234,14 @@ fun SearchScreen(
                                                     .padding(vertical = 16.dp),
                                                 contentAlignment = Alignment.Center
                                             ) {
-                                                AdaptiveLoadingIndicator(
-                                                    size = 24.dp,
-                                                    strokeWidth = 2.dp
-                                                )
+                                                if (pagePresentation.footer == SearchResultFooterMode.ERROR) {
+                                                    SearchLoadMoreIndicator(
+                                                        error = pageResultState.loadMoreError,
+                                                        onRetry = viewModel::loadMoreResults
+                                                    )
+                                                } else {
+                                                    AdaptiveLoadingIndicator(size = 24.dp, strokeWidth = 2.dp)
+                                                }
                                             }
                                         }
                                     }
@@ -1219,7 +1286,7 @@ fun SearchScreen(
                                         }
                                     }
 
-                                    if (pageResultState.isLoadingMore) {
+                                    if (pagePresentation.footer == SearchResultFooterMode.LOADING || pagePresentation.footer == SearchResultFooterMode.ERROR) {
                                         item {
                                             Box(
                                                 modifier = Modifier
@@ -1227,10 +1294,14 @@ fun SearchScreen(
                                                     .padding(vertical = 16.dp),
                                                 contentAlignment = Alignment.Center
                                             ) {
-                                                AdaptiveLoadingIndicator(
-                                                    size = 24.dp,
-                                                    strokeWidth = 2.dp
-                                                )
+                                                if (pagePresentation.footer == SearchResultFooterMode.ERROR) {
+                                                    SearchLoadMoreIndicator(
+                                                        error = pageResultState.loadMoreError,
+                                                        onRetry = viewModel::loadMoreResults
+                                                    )
+                                                } else {
+                                                    AdaptiveLoadingIndicator(size = 24.dp, strokeWidth = 2.dp)
+                                                }
                                             }
                                         }
                                     }
@@ -1319,7 +1390,7 @@ fun SearchScreen(
                                         }
                                     }
 
-                                    if (pageResultState.isLoadingMore) {
+                                    if (pagePresentation.footer == SearchResultFooterMode.LOADING || pagePresentation.footer == SearchResultFooterMode.ERROR) {
                                         item {
                                             Box(
                                                 modifier = Modifier
@@ -1327,10 +1398,14 @@ fun SearchScreen(
                                                     .padding(vertical = 16.dp),
                                                 contentAlignment = Alignment.Center
                                             ) {
-                                                AdaptiveLoadingIndicator(
-                                                    size = 24.dp,
-                                                    strokeWidth = 2.dp
-                                                )
+                                                if (pagePresentation.footer == SearchResultFooterMode.ERROR) {
+                                                    SearchLoadMoreIndicator(
+                                                        error = pageResultState.loadMoreError,
+                                                        onRetry = viewModel::loadMoreResults
+                                                    )
+                                                } else {
+                                                    AdaptiveLoadingIndicator(size = 24.dp, strokeWidth = 2.dp)
+                                                }
                                             }
                                         }
                                     }
@@ -1380,8 +1455,13 @@ fun SearchScreen(
                                         }
                                     }
 
-                                    if (pageResultState.isLoadingMore) {
-                                        item { SearchLoadMoreIndicator() }
+                                    if (pagePresentation.footer == SearchResultFooterMode.LOADING || pagePresentation.footer == SearchResultFooterMode.ERROR) {
+                                        item {
+                                            SearchLoadMoreIndicator(
+                                                error = pageResultState.loadMoreError,
+                                                onRetry = viewModel::loadMoreResults
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -1441,7 +1521,7 @@ fun SearchScreen(
                                         }
                                     }
 
-                                    if (pageResultState.isLoadingMore) {
+                                    if (pagePresentation.footer == SearchResultFooterMode.LOADING || pagePresentation.footer == SearchResultFooterMode.ERROR) {
                                         item {
                                             Box(
                                                 modifier = Modifier
@@ -1449,10 +1529,14 @@ fun SearchScreen(
                                                     .padding(vertical = 16.dp),
                                                 contentAlignment = Alignment.Center
                                             ) {
-                                                AdaptiveLoadingIndicator(
-                                                    size = 24.dp,
-                                                    strokeWidth = 2.dp
-                                                )
+                                                if (pagePresentation.footer == SearchResultFooterMode.ERROR) {
+                                                    SearchLoadMoreIndicator(
+                                                        error = pageResultState.loadMoreError,
+                                                        onRetry = viewModel::loadMoreResults
+                                                    )
+                                                } else {
+                                                    AdaptiveLoadingIndicator(size = 24.dp, strokeWidth = 2.dp)
+                                                }
                                             }
                                         }
                                     }
@@ -1491,8 +1575,13 @@ fun SearchScreen(
                                         }
                                     }
 
-                                    if (pageResultState.isLoadingMore) {
-                                        item { SearchLoadMoreIndicator() }
+                                    if (pagePresentation.footer == SearchResultFooterMode.LOADING || pagePresentation.footer == SearchResultFooterMode.ERROR) {
+                                        item {
+                                            SearchLoadMoreIndicator(
+                                                error = pageResultState.loadMoreError,
+                                                onRetry = viewModel::loadMoreResults
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -1527,15 +1616,19 @@ fun SearchScreen(
                                         }
                                     }
 
-                                    if (pageResultState.isLoadingMore) {
-                                        item { SearchLoadMoreIndicator() }
+                                    if (pagePresentation.footer == SearchResultFooterMode.LOADING || pagePresentation.footer == SearchResultFooterMode.ERROR) {
+                                        item {
+                                            SearchLoadMoreIndicator(
+                                                error = pageResultState.loadMoreError,
+                                                onRetry = viewModel::loadMoreResults
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
                         }
                         }
-                    }
                 }
             } else {
                 val useSplitLayout = shouldUseSearchSplitLayout(
@@ -1548,8 +1641,12 @@ fun SearchScreen(
                     contentTopPadding = contentTopPadding,
                     bottomPadding = resultBottomPadding,
                     hotList = state.hotList,
+                    hotListError = state.hotListError,
+                    isRefreshingHotList = state.isRefreshingHotList,
                     discoverTitle = state.discoverTitle,
                     discoverList = state.discoverList,
+                    discoverListError = state.discoverListError,
+                    isRefreshingDiscoverList = state.isRefreshingDiscoverList,
                     historyList = state.historyList,
                     hotSearchEnabled = hotSearchEnabled,
                     discoverSectionEnabled = discoverSectionEnabled,
@@ -1584,13 +1681,14 @@ fun SearchScreen(
             // ---  顶部搜索栏 (常驻顶部) ---
             SearchTopBar(
                 query = state.query,
-                onBack = onBack,
+                onBack = handleSearchBack,
                 onQueryChange = { viewModel.onQueryChange(it) },
                 onSearch = {
                     viewModel.search(it)
                     keyboardController?.hide()
                 },
                 onClearQuery = { viewModel.onQueryChange("") },
+                onFocusChanged = { searchFieldFocused = it },
                 focusRequester = searchFocusRequester,  //  传递 focusRequester
                 placeholder = state.defaultSearchHint.ifBlank { resolveSearchDefaultPlaceholder() },
                 suggestedKeyword = state.defaultSearchHint,
@@ -1672,6 +1770,7 @@ fun SearchTopBar(
     onQueryChange: (String) -> Unit,
     onSearch: (String) -> Unit,
     onClearQuery: () -> Unit,
+    onFocusChanged: (Boolean) -> Unit = {},
     placeholder: String = resolveSearchDefaultPlaceholder(),
     suggestedKeyword: String = "",
     focusRequester: androidx.compose.ui.focus.FocusRequester = remember { androidx.compose.ui.focus.FocusRequester() },
@@ -1749,7 +1848,8 @@ fun SearchTopBar(
                         focusRequester = focusRequester,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(chromeSpec.inputHeightDp.dp),
+                            .height(chromeSpec.inputHeightDp.dp)
+                            .onFocusChanged { onFocusChanged(it.isFocused) },
                         placeholder = placeholder,
                         containerColor = if (liquidChromeActive) {
                             Color.Transparent
@@ -1845,7 +1945,7 @@ fun HistoryChip(
         trailingIcon = {
             AppIconButton(
                 onClick = onDelete,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(48.dp)
             ) {
                 AppIcon(
                     clearIcon,
@@ -1878,7 +1978,7 @@ fun HistoryItem(
         AppIcon(historyIcon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.6f), modifier = Modifier.size(20.dp))
         Spacer(modifier = Modifier.width(12.dp))
         AppText(text = history.keyword, color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp, modifier = Modifier.weight(1f))
-        AppIconButton(onClick = onDelete, modifier = Modifier.size(24.dp)) {
+        AppIconButton(onClick = onDelete, modifier = Modifier.size(48.dp)) {
             AppIcon(clearIcon, contentDescription = deleteLabel, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.6f), modifier = Modifier.size(16.dp))
         }
     }
@@ -1898,6 +1998,7 @@ fun QuickCategory(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .clickable { onClick() }
+            .heightIn(min = 48.dp)
             .padding(8.dp)
     ) {
         AppText(text = emoji, fontSize = 24.sp)
@@ -1941,13 +2042,7 @@ fun SearchDiscoverySection(
             }
             
             // 刷新按钮
-            Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(4.dp))
-                    .clickable { onRefresh() }
-                    .padding(4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            AppTextButton(onClick = onRefresh) {
                 AppText(
                     "换一换",
                     style = MaterialTheme.typography.bodySmall,
@@ -2178,7 +2273,7 @@ private fun SearchResultTypeTabRow(
                 interactionSource = remember { MutableInteractionSource() },
                 selectedContentColor = MaterialTheme.colorScheme.onSurface,
                 unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.height(44.dp)
+                modifier = Modifier.heightIn(min = 48.dp)
             ) {
                 AppText(
                     text = type.displayName,
@@ -3059,17 +3154,29 @@ internal fun LiveSearchResultCard(
 }
 
 @Composable
-private fun SearchLoadMoreIndicator() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        AdaptiveLoadingIndicator(
-                                                    size = 24.dp,
-                                                    strokeWidth = 2.dp
-                                                )
+private fun SearchLoadMoreIndicator(
+    error: String? = null,
+    onRetry: (() -> Unit)? = null,
+) {
+    if (error != null) {
+        AppErrorState(
+            title = "加载更多失败",
+            message = error,
+            presentation = AppContentStatePresentation.INLINE,
+            showIcon = false,
+            primaryAction = onRetry?.let {
+                AppContentStateAction(label = "重试", onClick = it)
+            }
+        )
+    } else {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            AdaptiveLoadingIndicator(size = 24.dp, strokeWidth = 2.dp)
+        }
     }
 }
 

@@ -34,6 +34,10 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
 import com.android.purebilibili.core.ui.components.AppIcon
 import com.android.purebilibili.core.ui.components.AppIconButton
+import com.android.purebilibili.core.ui.components.AppContentStateAction
+import com.android.purebilibili.core.ui.components.AppContentStatePresentation
+import com.android.purebilibili.core.ui.components.AppEmptyState
+import com.android.purebilibili.core.ui.components.AppErrorState
 import androidx.compose.material3.MaterialTheme
 import com.android.purebilibili.core.ui.components.AppSurface
 import com.android.purebilibili.core.ui.components.AppSuggestionChip
@@ -123,8 +127,12 @@ fun SearchLandingContent(
     contentTopPadding: Dp,
     bottomPadding: Dp,
     hotList: List<SearchKeywordUiModel>,
+    hotListError: String? = null,
+    isRefreshingHotList: Boolean = false,
     discoverTitle: String,
     discoverList: List<SearchKeywordUiModel>,
+    discoverListError: String? = null,
+    isRefreshingDiscoverList: Boolean = false,
     historyList: List<SearchHistory>,
     hotSearchEnabled: Boolean,
     discoverSectionEnabled: Boolean,
@@ -164,6 +172,8 @@ fun SearchLandingContent(
                         onToggleEnabled = onToggleHotSearch,
                         onOpenTrending = onOpenTrending,
                         onRefresh = onRefreshHot,
+                        error = hotListError,
+                        isRefreshing = isRefreshingHotList,
                         onKeywordClick = onKeywordClick
                     )
                 }
@@ -176,6 +186,8 @@ fun SearchLandingContent(
                         showTrendingAction = false,
                         onToggleEnabled = onToggleDiscoverSection,
                         onRefresh = onRefreshDiscover,
+                        error = discoverListError,
+                        isRefreshing = isRefreshingDiscoverList,
                         onKeywordClick = onKeywordClick
                     )
                 }
@@ -227,6 +239,8 @@ fun SearchLandingContent(
                     onToggleEnabled = onToggleHotSearch,
                     onOpenTrending = onOpenTrending,
                     onRefresh = onRefreshHot,
+                    error = hotListError,
+                    isRefreshing = isRefreshingHotList,
                     onKeywordClick = onKeywordClick
                 )
             }
@@ -239,6 +253,8 @@ fun SearchLandingContent(
                     showTrendingAction = false,
                     onToggleEnabled = onToggleDiscoverSection,
                     onRefresh = onRefreshDiscover,
+                    error = discoverListError,
+                    isRefreshing = isRefreshingDiscoverList,
                     onKeywordClick = onKeywordClick
                 )
             }
@@ -319,6 +335,8 @@ private fun SearchKeywordSection(
     showTrendingAction: Boolean,
     onRefresh: () -> Unit,
     onKeywordClick: (String) -> Unit,
+    error: String? = null,
+    isRefreshing: Boolean = false,
     onToggleEnabled: (() -> Unit)? = null,
     onOpenTrending: (() -> Unit)? = null
 ) {
@@ -334,7 +352,13 @@ private fun SearchKeywordSection(
             onOpenTrending = onOpenTrending,
             onRefresh = onRefresh
         )
-        if (enabled && items.isNotEmpty()) {
+        val sectionMode = resolveSearchLandingSectionMode(
+            enabled = enabled,
+            itemCount = items.size,
+            isRefreshing = isRefreshing,
+            error = error
+        )
+        if (sectionMode == SearchLandingSectionMode.CONTENT) {
             Spacer(modifier = Modifier.height(if (useOriginalDiscoverStyle) 12.dp else 10.dp))
             Column(
                 verticalArrangement = Arrangement.spacedBy(if (useOriginalDiscoverStyle) 12.dp else 6.dp)
@@ -365,6 +389,45 @@ private fun SearchKeywordSection(
                     }
                 }
             }
+            if (error != null) {
+                AppErrorState(
+                    title = "刷新失败",
+                    message = error,
+                    presentation = AppContentStatePresentation.INLINE,
+                    showIcon = false,
+                    primaryAction = AppContentStateAction(
+                        label = "重试",
+                        onClick = onRefresh
+                    )
+                )
+            }
+        } else if (sectionMode == SearchLandingSectionMode.LOADING) {
+            AppEmptyState(
+                title = "正在加载",
+                presentation = AppContentStatePresentation.INLINE,
+                showIcon = false
+            )
+        } else if (sectionMode == SearchLandingSectionMode.ERROR) {
+            AppErrorState(
+                title = "加载失败",
+                message = error,
+                presentation = AppContentStatePresentation.INLINE,
+                showIcon = false,
+                primaryAction = AppContentStateAction(
+                    label = "重试",
+                    onClick = onRefresh
+                )
+            )
+        } else if (sectionMode == SearchLandingSectionMode.EMPTY) {
+            AppEmptyState(
+                title = "暂无内容",
+                message = "稍后再试或直接输入关键词",
+                presentation = AppContentStatePresentation.INLINE,
+                primaryAction = AppContentStateAction(
+                    label = "刷新",
+                    onClick = onRefresh
+                )
+            )
         } else if (!enabled) {
             Spacer(modifier = Modifier.height(12.dp))
             AppText(
