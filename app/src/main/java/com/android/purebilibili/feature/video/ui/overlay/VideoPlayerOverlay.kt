@@ -439,6 +439,8 @@ fun VideoPlayerOverlay(
 
     onBack: () -> Unit,
     onLandscapeCommentClick: () -> Unit = {},
+    landscapeCommentPanelVisible: Boolean = false,
+    landscapeCommentPanelOnLeft: Boolean = true,
     onHomeClick: () -> Unit = onBack,
     onToggleFullscreen: () -> Unit,
     // [New] Player Data for Download
@@ -1021,9 +1023,18 @@ fun VideoPlayerOverlay(
             widthDp = configuration.screenWidthDp
         )
     }
+    val landscapeCommentReservedWidth = if (landscapeCommentPanelVisible) {
+        resolveLandscapeEndDrawerLayoutPolicy(configuration.screenWidthDp).drawerWidthDp.dp
+    } else {
+        0.dp
+    }
     val overlayContentModifier = Modifier
         .fillMaxSize()
-        .padding(end = endDrawerReservedWidth)
+        .padding(
+            start = if (landscapeCommentPanelOnLeft) landscapeCommentReservedWidth else 0.dp,
+            end = endDrawerReservedWidth +
+                if (landscapeCommentPanelOnLeft) 0.dp else landscapeCommentReservedWidth,
+        )
 
     // 📺 按需权限请求
     val dlnaPermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(

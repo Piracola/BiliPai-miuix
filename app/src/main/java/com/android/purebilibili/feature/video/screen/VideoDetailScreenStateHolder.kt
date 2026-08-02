@@ -2107,6 +2107,8 @@ internal fun VideoDetailScreenStateHolder(
                 onLandscapeCommentClick = {
                     landscapeCommentPanelVisible = !landscapeCommentPanelVisible
                 },
+                landscapeCommentPanelVisible = landscapeCommentPanelVisible,
+                landscapeCommentPanelOnLeft = landscapeCommentPanelOnLeft,
             ),
         )
     }
@@ -2160,8 +2162,14 @@ internal fun VideoDetailScreenStateHolder(
                             onDismiss = { landscapeCommentPanelVisible = false },
                             onSwitchSide = { landscapeCommentPanelOnLeft = !landscapeCommentPanelOnLeft },
                             isOnLeft = landscapeCommentPanelOnLeft,
-                            modifier = Modifier.align(if (landscapeCommentPanelOnLeft) Alignment.CenterStart else Alignment.CenterEnd)
-                                .fillMaxHeight().widthIn(min = 320.dp, max = 420.dp),
+                            modifier = Modifier
+                                .align(if (landscapeCommentPanelOnLeft) Alignment.CenterStart else Alignment.CenterEnd)
+                                .fillMaxHeight()
+                                .width(
+                                    com.android.purebilibili.feature.video.ui.overlay
+                                        .resolveLandscapeEndDrawerLayoutPolicy(configuration.screenWidthDp)
+                                        .drawerWidthDp.dp
+                                ),
                         )
                     }
                 } else {
@@ -2180,6 +2188,8 @@ internal fun VideoDetailScreenStateHolder(
                     onLandscapeCommentClick = {
                         landscapeCommentPanelVisible = !landscapeCommentPanelVisible
                     },
+                    landscapeCommentPanelVisible = landscapeCommentPanelVisible,
+                    landscapeCommentPanelOnLeft = landscapeCommentPanelOnLeft,
                     onDanmakuInputClick = { viewModel.showDanmakuSendDialog() },
                     danmakuComposerVisible = showDanmakuDialog && useInlineDanmakuComposer,
                     onDismissDanmakuComposer = { viewModel.hideDanmakuSendDialog() },
@@ -2354,7 +2364,11 @@ internal fun VideoDetailScreenStateHolder(
                                     if (landscapeCommentPanelOnLeft) Alignment.CenterStart else Alignment.CenterEnd
                                 )
                                 .fillMaxHeight()
-                                .widthIn(min = 320.dp, max = 420.dp),
+                                .width(
+                                    com.android.purebilibili.feature.video.ui.overlay
+                                        .resolveLandscapeEndDrawerLayoutPolicy(configuration.screenWidthDp)
+                                        .drawerWidthDp.dp
+                                ),
                         )
                     }
                 }

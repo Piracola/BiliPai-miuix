@@ -24,6 +24,7 @@ import com.android.purebilibili.feature.video.ui.overlay.resolveFullscreenDouble
 import com.android.purebilibili.feature.video.ui.overlay.resolveBottomControlBarLayoutPolicy
 import com.android.purebilibili.feature.video.ui.overlay.resolveVideoProgressBarLayoutPolicy
 import com.android.purebilibili.feature.video.ui.overlay.resolveLandscapeEndDrawerReservedWidthDp
+import com.android.purebilibili.feature.video.ui.overlay.resolveLandscapeEndDrawerLayoutPolicy
 import com.android.purebilibili.feature.video.ui.components.SponsorSkipButton
 import com.android.purebilibili.feature.video.ui.components.SponsorContributionOverlay
 import com.android.purebilibili.feature.video.viewmodel.SponsorContributionUiState
@@ -386,6 +387,8 @@ fun VideoPlayerSection(
     onBack: () -> Unit,
     onHomeClick: (() -> Unit)? = null,
     onLandscapeCommentClick: () -> Unit = {},
+    landscapeCommentPanelVisible: Boolean = false,
+    landscapeCommentPanelOnLeft: Boolean = true,
     onDanmakuInputClick: () -> Unit = {},
     danmakuComposerVisible: Boolean = false,
     onDismissDanmakuComposer: () -> Unit = {},
@@ -1295,6 +1298,22 @@ fun VideoPlayerSection(
         animationSpec = tween(durationMillis = 220),
         label = "landscape_end_drawer_reserved_width"
     )
+    val landscapeCommentReservedWidthDp = remember(
+        isFullscreen,
+        landscapeCommentPanelVisible,
+        configuration.screenWidthDp,
+    ) {
+        if (isFullscreen && landscapeCommentPanelVisible) {
+            resolveLandscapeEndDrawerLayoutPolicy(configuration.screenWidthDp).drawerWidthDp
+        } else {
+            0
+        }
+    }
+    val animatedLandscapeCommentReservedWidth by animateDpAsState(
+        targetValue = landscapeCommentReservedWidthDp.dp,
+        animationSpec = tween(durationMillis = 220),
+        label = "landscape_comment_panel_reserved_width",
+    )
 
     fun commitExplicitSeek(positionMs: Long) {
         val commitResult = commitPlaybackSeekInteraction(
@@ -1489,7 +1508,11 @@ fun VideoPlayerSection(
     val playerContentModifier = Modifier
         .fillMaxSize()
         .padding(top = contentTopInset)
-        .padding(end = animatedEndDrawerReservedWidth)
+        .padding(
+            start = if (landscapeCommentPanelOnLeft) animatedLandscapeCommentReservedWidth else 0.dp,
+            end = animatedEndDrawerReservedWidth +
+                if (landscapeCommentPanelOnLeft) 0.dp else animatedLandscapeCommentReservedWidth,
+        )
 
     // 应用共享元素
     val livePlayerSharedElementEnabled = shouldEnableLivePlayerSharedElement(
@@ -4933,6 +4956,8 @@ fun VideoPlayerSection(
                 statusBarAmbientFrame = statusBarAmbientFrame,
                 statusBarBackdropHeight = contentTopInset,
                 onLandscapeCommentClick = onLandscapeCommentClick,
+                landscapeCommentPanelVisible = landscapeCommentPanelVisible,
+                landscapeCommentPanelOnLeft = landscapeCommentPanelOnLeft,
             )
             }
 
