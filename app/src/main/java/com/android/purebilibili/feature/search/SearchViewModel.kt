@@ -458,6 +458,14 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                 hasMoreResults = false,
                 isLoadingMore = false,
                 emptyStateReason = SearchEmptyStateReason.NONE,
+                searchResults = if (shouldClearCachedPages) emptyList() else it.searchResults,
+                upResults = if (shouldClearCachedPages) emptyList() else it.upResults,
+                bangumiResults = if (shouldClearCachedPages) emptyList() else it.bangumiResults,
+                liveResults = if (shouldClearCachedPages) emptyList() else it.liveResults,
+                liveUserResults = if (shouldClearCachedPages) emptyList() else it.liveUserResults,
+                articleResults = if (shouldClearCachedPages) emptyList() else it.articleResults,
+                topicResults = if (shouldClearCachedPages) emptyList() else it.topicResults,
+                photoResults = if (shouldClearCachedPages) emptyList() else it.photoResults,
                 resultPages = if (shouldClearCachedPages) emptyMap() else it.resultPages
             )
         }
