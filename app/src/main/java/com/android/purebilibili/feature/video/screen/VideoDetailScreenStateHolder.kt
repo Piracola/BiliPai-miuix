@@ -401,7 +401,7 @@ internal fun VideoDetailScreenStateHolder(
     var currentBvid by presentationState.currentBvidState
     var currentBvidCid by presentationState.currentCidState
     var landscapeCommentPanelVisible by rememberSaveable(currentBvid) { mutableStateOf(false) }
-    var landscapeCommentPanelOnLeft by rememberSaveable(currentBvid) { mutableStateOf(true) }
+    var landscapeCommentPanelOnLeft by rememberSaveable(currentBvid) { mutableStateOf(false) }
     // Episode cover captured at collection/playlist in-page switch (survives Loading.Initial).
     var pendingInPageSwitchCoverUrl by rememberSaveable { mutableStateOf("") }
     var isPipMode by presentationState.pipModeState
