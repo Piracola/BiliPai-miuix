@@ -52,6 +52,8 @@ import com.android.purebilibili.core.ui.blur.unifiedBlur
 import com.android.purebilibili.core.ui.rememberAppDrawerVisualPolicy
 import com.android.purebilibili.feature.home.UserState
 import dev.chrisbanes.haze.HazeState
+import io.github.alexzhirkevich.cupertino.icons.CupertinoIcons
+import io.github.alexzhirkevich.cupertino.icons.outlined.ArrowLeftArrowRight
 import kotlinx.coroutines.launch
 
 /**
@@ -73,6 +75,7 @@ fun MineSideDrawer(
     onInboxClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onProfileClick: () -> Unit,
+    onAccountSwitchClick: (() -> Unit)? = null,
     hazeState: HazeState? = null, // 毛玻璃效果状态
     isBlurEnabled: Boolean = true, // [新增] 模糊开关状态
     bottomOverlayHeight: Dp = AppSpacingTokens.None
@@ -134,6 +137,7 @@ fun MineSideDrawer(
     val inboxIcon = rememberAppInboxIcon()
     val logoutIcon = rememberAppLogoutIcon()
     val chevronForwardIcon = rememberAppChevronForwardIcon()
+    val accountSwitchIcon = CupertinoIcons.Outlined.ArrowLeftArrowRight
 
     // 动态文字颜色
     val activeContentColor = colorScheme.onSurface
@@ -291,6 +295,27 @@ fun MineSideDrawer(
                         contentDescription = null,
                         tint = secondaryContentColor,
                         modifier = Modifier.size(visualPolicy.profileChevronSizeDp.dp)
+                    )
+                }
+            }
+
+            if (onAccountSwitchClick != null) {
+                AppSurface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = layoutPolicy.sectionHorizontalPaddingDp.dp),
+                    shape = RoundedCornerShape(layoutPolicy.sectionCornerRadiusDp.dp),
+                    color = itemSurfaceColor,
+                    border = BorderStroke(AppSpacingTokens.Micro * 0.4f, itemBorderColor)
+                ) {
+                    AppPreference(
+                        icon = accountSwitchIcon,
+                        title = "切换账号",
+                        onClick = { closeAndRun(onAccountSwitchClick) },
+                        iconTint = iOSBlue,
+                        textColor = activeContentColor,
+                        valueColor = secondaryContentColor,
+                        chevronTint = chevronColor
                     )
                 }
             }

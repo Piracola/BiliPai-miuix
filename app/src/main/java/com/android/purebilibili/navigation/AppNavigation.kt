@@ -1435,6 +1435,13 @@ fun AppNavigation(
                                         homeViewModel.refresh()
                                     }
                                 },
+                                onAccountSwitchClick = if (
+                                    appNavigationSettings.sidebarAccountSwitcherEnabled
+                                ) {
+                                    { sidebarAccountSwitcherVisible = true }
+                                } else {
+                                    null
+                                },
                                 onSettingsClick = { pushNavigation3Route(ScreenRoutes.Settings.route) },
                                 onPluginsClick = { pushNavigation3Key(BiliPaiNavKey.PluginsSettings()) },
                                 onDynamicClick = { pushNavigation3Route(ScreenRoutes.Dynamic.route) },

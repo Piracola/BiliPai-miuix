@@ -191,6 +191,7 @@ fun HomeScreen(
     onAvatarClick: () -> Unit,
     onProfileClick: () -> Unit,
     onLogout: (() -> Unit)? = null,
+    onAccountSwitchClick: (() -> Unit)? = null,
     onSettingsClick: () -> Unit,
     onSearchClick: () -> Unit,
     //  新增：动态页面回调
@@ -2248,6 +2249,7 @@ fun HomeScreen(
                         onInboxClick = onInboxClick,
                         onSettingsClick = onSettingsClick,
                         onProfileClick = onProfileClick,
+                        onAccountSwitchClick = onAccountSwitchClick,
                         hazeState = hazeState,
                         isBlurEnabled = isHeaderBlurEnabled,
                         bottomOverlayHeight = drawerBottomOverlayHeight
