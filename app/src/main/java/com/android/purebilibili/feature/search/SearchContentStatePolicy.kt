@@ -30,6 +30,26 @@ data class SearchResultPresentation(
     val footer: SearchResultFooterMode,
 )
 
+internal fun SearchUiState.withLoadMoreStarted(): SearchUiState = copy(
+    isLoadingMore = true,
+    loadMoreError = null,
+)
+
+internal fun SearchUiState.withLoadMoreFailure(message: String): SearchUiState = copy(
+    isLoadingMore = false,
+    loadMoreError = message,
+)
+
+internal fun SearchResultPageUiState.withLoadMoreStarted(): SearchResultPageUiState = copy(
+    isLoadingMore = true,
+    loadMoreError = null,
+)
+
+internal fun SearchResultPageUiState.withLoadMoreFailure(message: String): SearchResultPageUiState = copy(
+    isLoadingMore = false,
+    loadMoreError = message,
+)
+
 internal fun resolveSearchResultPresentation(
     itemCount: Int,
     isSearching: Boolean,

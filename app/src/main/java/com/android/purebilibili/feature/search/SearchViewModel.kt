@@ -840,7 +840,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
             return
         }
         
-        _uiState.update { it.copy(isLoadingMore = true, loadMoreError = null) }
+        _uiState.update { it.withLoadMoreStarted() }
         val searchSessionId = activeSearchSessionId
         val nextPage = state.currentPage + 1
         
@@ -875,7 +875,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                         }
                     }.onFailure { e ->
                         if (!shouldApplySearchResult(searchSessionId, activeSearchSessionId, state.query, _uiState.value.query, state.searchType, _uiState.value.searchType)) return@onFailure
-                        _uiState.update { it.copy(isLoadingMore = false, loadMoreError = "加载更多失败: ${e.message}") }
+                        _uiState.update { it.withLoadMoreFailure("加载更多失败: ${e.message}") }
                     }
                 }
                 SearchType.UP -> {
@@ -901,7 +901,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                         }
                     }.onFailure { e ->
                         if (!shouldApplySearchResult(searchSessionId, activeSearchSessionId, state.query, _uiState.value.query, state.searchType, _uiState.value.searchType)) return@onFailure
-                        _uiState.update { it.copy(isLoadingMore = false, loadMoreError = "加载更多失败: ${e.message}") }
+                        _uiState.update { it.withLoadMoreFailure("加载更多失败: ${e.message}") }
                     }
                 }
                 SearchType.BANGUMI -> {
@@ -920,7 +920,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                         }
                     }.onFailure { e ->
                         if (!shouldApplySearchResult(searchSessionId, activeSearchSessionId, state.query, _uiState.value.query, state.searchType, _uiState.value.searchType)) return@onFailure
-                        _uiState.update { it.copy(isLoadingMore = false, loadMoreError = "加载更多失败: ${e.message}") }
+                        _uiState.update { it.withLoadMoreFailure("加载更多失败: ${e.message}") }
                     }
                 }
                 SearchType.MEDIA_FT -> {
@@ -939,7 +939,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                         }
                     }.onFailure { e ->
                         if (!shouldApplySearchResult(searchSessionId, activeSearchSessionId, state.query, _uiState.value.query, state.searchType, _uiState.value.searchType)) return@onFailure
-                        _uiState.update { it.copy(isLoadingMore = false, loadMoreError = "加载更多失败: ${e.message}") }
+                        _uiState.update { it.withLoadMoreFailure("加载更多失败: ${e.message}") }
                     }
                 }
                 SearchType.LIVE -> {
@@ -963,7 +963,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                         }
                     }.onFailure { e ->
                         if (!shouldApplySearchResult(searchSessionId, activeSearchSessionId, state.query, _uiState.value.query, state.searchType, _uiState.value.searchType)) return@onFailure
-                        _uiState.update { it.copy(isLoadingMore = false, loadMoreError = "加载更多失败: ${e.message}") }
+                        _uiState.update { it.withLoadMoreFailure("加载更多失败: ${e.message}") }
                     }
                 }
                 SearchType.LIVE_USER -> {
@@ -986,7 +986,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                         }
                     }.onFailure { e ->
                         if (!shouldApplySearchResult(searchSessionId, activeSearchSessionId, state.query, _uiState.value.query, state.searchType, _uiState.value.searchType)) return@onFailure
-                        _uiState.update { it.copy(isLoadingMore = false, loadMoreError = "加载更多失败: ${e.message}") }
+                        _uiState.update { it.withLoadMoreFailure("加载更多失败: ${e.message}") }
                     }
                 }
                 SearchType.ARTICLE -> {
@@ -1008,7 +1008,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                         }
                     }.onFailure { e ->
                         if (!shouldApplySearchResult(searchSessionId, activeSearchSessionId, state.query, _uiState.value.query, state.searchType, _uiState.value.searchType)) return@onFailure
-                        _uiState.update { it.copy(isLoadingMore = false, loadMoreError = "加载更多失败: ${e.message}") }
+                        _uiState.update { it.withLoadMoreFailure("加载更多失败: ${e.message}") }
                     }
                 }
                 SearchType.TOPIC -> {
@@ -1030,7 +1030,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                         }
                     }.onFailure { e ->
                         if (!shouldApplySearchResult(searchSessionId, activeSearchSessionId, state.query, _uiState.value.query, state.searchType, _uiState.value.searchType)) return@onFailure
-                        _uiState.update { it.copy(isLoadingMore = false, loadMoreError = "加载更多失败: ${e.message}") }
+                        _uiState.update { it.withLoadMoreFailure("加载更多失败: ${e.message}") }
                     }
                 }
                 SearchType.PHOTO -> {
@@ -1052,7 +1052,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                         }
                     }.onFailure { e ->
                         if (!shouldApplySearchResult(searchSessionId, activeSearchSessionId, state.query, _uiState.value.query, state.searchType, _uiState.value.searchType)) return@onFailure
-                        _uiState.update { it.copy(isLoadingMore = false, loadMoreError = "加载更多失败: ${e.message}") }
+                        _uiState.update { it.withLoadMoreFailure("加载更多失败: ${e.message}") }
                     }
                 }
             }

@@ -2,6 +2,8 @@ package com.android.purebilibili.feature.search
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class SearchContentStatePolicyTest {
 
@@ -112,5 +114,40 @@ class SearchContentStatePolicyTest {
                 error = null,
             )
         )
+    }
+
+    @Test
+    fun `load more failure preserves existing results and retry metadata`() {
+        val original = SearchUiState(
+            query = "kotlin",
+            searchResults = listOf(),
+            currentPage = 3,
+            totalPages = 8,
+            hasMoreResults = true,
+            isLoadingMore = true,
+        )
+
+        val failed = original.withLoadMoreFailure("network")
+
+        assertEquals(original.searchResults, failed.searchResults)
+        assertEquals(original.currentPage, failed.currentPage)
+        assertEquals(original.totalPages, failed.totalPages)
+        assertTrue(failed.hasMoreResults)
+        assertFalse(failed.isLoadingMore)
+        assertEquals("network", failed.loadMoreError)
+    }
+
+    @Test
+    fun `starting load more clears only the previous pagination error`() {
+        val started = SearchUiState(
+            query = "kotlin",
+            error = "blocking error",
+            loadMoreError = "old page error",
+            isLoadingMore = false,
+        ).withLoadMoreStarted()
+
+        assertTrue(started.isLoadingMore)
+        assertEquals(null, started.loadMoreError)
+        assertEquals("blocking error", started.error)
     }
 }
