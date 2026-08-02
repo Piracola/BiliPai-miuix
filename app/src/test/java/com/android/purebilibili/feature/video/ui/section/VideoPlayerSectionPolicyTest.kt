@@ -368,6 +368,31 @@ class VideoPlayerSectionPolicyTest {
     }
 
     @Test
+    fun danmakuSettingsScope_keepsPortraitProfileDuringPortraitFullscreenTransition() {
+        assertEquals(
+            com.android.purebilibili.core.store.DanmakuSettingsScope.LANDSCAPE,
+            resolveVideoPlayerDanmakuSettingsScope(
+                isFullscreen = true,
+                isPortraitFullscreen = false
+            )
+        )
+        assertEquals(
+            com.android.purebilibili.core.store.DanmakuSettingsScope.PORTRAIT,
+            resolveVideoPlayerDanmakuSettingsScope(
+                isFullscreen = true,
+                isPortraitFullscreen = true
+            )
+        )
+        assertEquals(
+            com.android.purebilibili.core.store.DanmakuSettingsScope.PORTRAIT,
+            resolveVideoPlayerDanmakuSettingsScope(
+                isFullscreen = false,
+                isPortraitFullscreen = false
+            )
+        )
+    }
+
+    @Test
     fun inlinePlayerTakeover_disablesKeepingLastFrame_whenPortraitFullscreenOwnsPlayback() {
         assertFalse(
             shouldKeepInlinePlayerContentOnReset(

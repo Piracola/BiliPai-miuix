@@ -9,8 +9,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.purebilibili.core.store.SettingsManager
-import com.android.purebilibili.core.store.resolveDanmakuSettingsScope
 import com.android.purebilibili.feature.video.danmaku.DanmakuManager
+import com.android.purebilibili.feature.video.ui.section.resolveVideoPlayerDanmakuSettingsScope
 import com.android.purebilibili.feature.video.viewmodel.VideoPlaybackViewModel
 
 @Composable
@@ -18,6 +18,7 @@ internal fun VideoDetailPlayerSettingsOverlayAdapter(
     context: Context,
     viewModel: VideoPlaybackViewModel,
     isFullscreenMode: Boolean,
+    isPortraitFullscreen: Boolean,
     danmakuManager: DanmakuManager,
 ) {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -47,8 +48,11 @@ internal fun VideoDetailPlayerSettingsOverlayAdapter(
         qualitySwitchDialogScope = qualitySwitchDialogScope,
     )
 
-    val activeDanmakuScope = remember(isFullscreenMode) {
-        resolveDanmakuSettingsScope(isLandscape = isFullscreenMode)
+    val activeDanmakuScope = remember(isFullscreenMode, isPortraitFullscreen) {
+        resolveVideoPlayerDanmakuSettingsScope(
+            isFullscreen = isFullscreenMode,
+            isPortraitFullscreen = isPortraitFullscreen
+        )
     }
     val activeDanmakuBlockRulesRaw by SettingsManager
         .getDanmakuBlockRulesRaw(context, activeDanmakuScope)

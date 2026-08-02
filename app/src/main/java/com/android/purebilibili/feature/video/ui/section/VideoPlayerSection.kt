@@ -2213,8 +2213,11 @@ fun VideoPlayerSection(
             }
     ) {
         val scope = rememberCoroutineScope()  //  用于设置弹幕开关
-        val activeDanmakuScope = remember(isFullscreen) {
-            com.android.purebilibili.core.store.resolveDanmakuSettingsScope(isLandscape = isFullscreen)
+        val activeDanmakuScope = remember(isFullscreen, isPortraitFullscreen) {
+            resolveVideoPlayerDanmakuSettingsScope(
+                isFullscreen = isFullscreen,
+                isPortraitFullscreen = isPortraitFullscreen
+            )
         }
 
         val danmakuSettings by com.android.purebilibili.core.store.SettingsManager
@@ -4423,6 +4426,7 @@ fun VideoPlayerSection(
                 danmakuSmartOcclusion = danmakuSmartOcclusion,
                 danmakuFullscreenPanelWidthMode = danmakuFullscreenPanelWidthMode,
                 portraitDanmakuDisplayAreaMode = portraitDanmakuDisplayAreaMode,
+                danmakuSettingsScope = activeDanmakuScope,
                 showDanmakuSyncSection = isLoggedIn,
                 danmakuCloudSyncEnabled = danmakuCloudSyncEnabled,
                 danmakuSyncUiState = danmakuCloudSyncUiState,
