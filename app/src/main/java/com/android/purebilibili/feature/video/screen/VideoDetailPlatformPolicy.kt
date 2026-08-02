@@ -530,6 +530,10 @@ internal fun resolvePhoneVideoRequestedOrientation(
     // preference out of compact layouts even if an upstream caller misclassifies the device.
     val preferPortraitForFoldableInnerScreen =
         !isCompactDevice && preferPortraitForFlatFoldable
+    // Player/API dimensions describe the encoded video, not the requested device posture. On a
+    // tablet they must never turn a manual landscape fullscreen request into portrait (metadata
+    // may be stale or rotated). Video-directed orientation remains a phone-only behavior.
+    val isVerticalVideoForOrientation = isCompactDevice && isVerticalVideo
     if (isInMultiWindowMode) {
         return null
     }
@@ -541,7 +545,7 @@ internal fun resolvePhoneVideoRequestedOrientation(
         return if (isFullscreenMode || manualFullscreenRequested) {
             resolvePhoneFullscreenEnterOrientation(
                 fullscreenMode = fullscreenMode,
-                isVerticalVideo = isVerticalVideo,
+                isVerticalVideo = isVerticalVideoForOrientation,
                 preferPortraitForFlatFoldable = preferPortraitForFoldableInnerScreen
             )
         } else {

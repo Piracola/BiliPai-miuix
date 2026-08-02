@@ -389,7 +389,7 @@ class VideoDetailLayoutModePolicyTest {
     }
 
     @Test
-    fun tabletAutoFullscreenStillUsesLandscape() {
+    fun tabletAutoFullscreenStillUsesLandscapeWhenVideoReportsVertical() {
         assertEquals(
             ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE,
             resolvePhoneVideoRequestedOrientation(
@@ -398,6 +398,7 @@ class VideoDetailLayoutModePolicyTest {
                 isCompactDevice = false,
                 isOrientationDrivenFullscreen = false,
                 isFullscreenMode = true,
+                isVerticalVideo = true,
                 preferPortraitForFlatFoldable = false
             )
         )
