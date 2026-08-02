@@ -144,6 +144,7 @@ import com.android.purebilibili.feature.video.ui.components.ReplyHeader
 import com.android.purebilibili.feature.video.ui.components.ReplyItemView
 import com.android.purebilibili.feature.video.ui.components.CommentFraudResultDialog
 import com.android.purebilibili.feature.video.ui.components.VideoCommentSheetHost
+import com.android.purebilibili.feature.video.ui.components.VideoInlineSubReplyDetailContent
 
 import com.android.purebilibili.feature.video.viewmodel.CommentSortMode  //  新增
 import com.android.purebilibili.feature.video.ui.components.LikeBurstAnimation
@@ -2159,17 +2160,51 @@ internal fun VideoDetailScreenStateHolder(
                             onCommentLike = commentActions.likeComment, onCommentUrlClick = openCommentUrl,
                             onReportComment = commentActions.reportComment, onToggleTopComment = commentActions.toggleTopComment,
                             onTimestampClick = { position -> seekPlayerFromUserAction(playerState.player, position) },
-                            onDismiss = { landscapeCommentPanelVisible = false },
+                            onDismiss = {
+                                commentActions.closeSubReply()
+                                landscapeCommentPanelVisible = false
+                            },
                             onSwitchSide = { landscapeCommentPanelOnLeft = !landscapeCommentPanelOnLeft },
                             isOnLeft = landscapeCommentPanelOnLeft,
+                            drawerWidth = com.android.purebilibili.feature.video.ui.overlay
+                                .resolveLandscapeEndDrawerLayoutPolicy(configuration.screenWidthDp)
+                                .drawerWidthDp.dp,
+                            threadContent = if (subReplyState.visible && subReplyState.rootReply != null) {
+                                { onImagePreview ->
+                                    VideoInlineSubReplyDetailContent(
+                                        state = subReplyState,
+                                        commentState = commentState,
+                                        emoteMap = success.emoteMap,
+                                        maxTimestampMs = success.videoDurationMs.takeIf { it > 0L },
+                                        onLoadMore = commentActions.loadMoreSubReplies,
+                                        onDismiss = commentActions.closeSubReply,
+                                        onRootCommentClick = playbackActions.openRootCommentComposer,
+                                        onTimestampClick = { positionMs ->
+                                            seekPlayerFromUserAction(playerState.player, positionMs)
+                                            commentActions.closeSubReply()
+                                        },
+                                        onImagePreview = onImagePreview,
+                                        onReplyClick = playbackActions.replyTo,
+                                        onConversationClick = commentActions.openSubReplyConversation,
+                                        onConversationBack = commentActions.closeSubReplyConversation,
+                                        onDissolveStart = commentActions.startSubDissolve,
+                                        onDeleteComment = commentActions.deleteSubComment,
+                                        onCommentLike = commentActions.likeComment,
+                                        onReportComment = commentActions.reportComment,
+                                        onUrlClick = openCommentUrl,
+                                        showIdentityDecorations = commentMemberDecorationsEnabled,
+                                        onAvatarClick = { mid ->
+                                            mid.toLongOrNull()?.let(navigateToUserSpaceFromVideo) ?: Unit
+                                        },
+                                        modifier = Modifier.fillMaxSize(),
+                                    )
+                                }
+                            } else {
+                                null
+                            },
                             modifier = Modifier
                                 .align(if (landscapeCommentPanelOnLeft) Alignment.CenterStart else Alignment.CenterEnd)
-                                .fillMaxHeight()
-                                .width(
-                                    com.android.purebilibili.feature.video.ui.overlay
-                                        .resolveLandscapeEndDrawerLayoutPolicy(configuration.screenWidthDp)
-                                        .drawerWidthDp.dp
-                                ),
+                                .fillMaxHeight(),
                         )
                     }
                 } else {
@@ -2356,19 +2391,53 @@ internal fun VideoDetailScreenStateHolder(
                             onReportComment = commentActions.reportComment,
                             onToggleTopComment = commentActions.toggleTopComment,
                             onTimestampClick = { position -> seekPlayerFromUserAction(playerState.player, position) },
-                            onDismiss = { landscapeCommentPanelVisible = false },
+                            onDismiss = {
+                                commentActions.closeSubReply()
+                                landscapeCommentPanelVisible = false
+                            },
                             onSwitchSide = { landscapeCommentPanelOnLeft = !landscapeCommentPanelOnLeft },
                             isOnLeft = landscapeCommentPanelOnLeft,
+                            drawerWidth = com.android.purebilibili.feature.video.ui.overlay
+                                .resolveLandscapeEndDrawerLayoutPolicy(configuration.screenWidthDp)
+                                .drawerWidthDp.dp,
+                            threadContent = if (subReplyState.visible && subReplyState.rootReply != null) {
+                                { onImagePreview ->
+                                    VideoInlineSubReplyDetailContent(
+                                        state = subReplyState,
+                                        commentState = commentState,
+                                        emoteMap = success.emoteMap,
+                                        maxTimestampMs = success.videoDurationMs.takeIf { it > 0L },
+                                        onLoadMore = commentActions.loadMoreSubReplies,
+                                        onDismiss = commentActions.closeSubReply,
+                                        onRootCommentClick = playbackActions.openRootCommentComposer,
+                                        onTimestampClick = { positionMs ->
+                                            seekPlayerFromUserAction(playerState.player, positionMs)
+                                            commentActions.closeSubReply()
+                                        },
+                                        onImagePreview = onImagePreview,
+                                        onReplyClick = playbackActions.replyTo,
+                                        onConversationClick = commentActions.openSubReplyConversation,
+                                        onConversationBack = commentActions.closeSubReplyConversation,
+                                        onDissolveStart = commentActions.startSubDissolve,
+                                        onDeleteComment = commentActions.deleteSubComment,
+                                        onCommentLike = commentActions.likeComment,
+                                        onReportComment = commentActions.reportComment,
+                                        onUrlClick = openCommentUrl,
+                                        showIdentityDecorations = commentMemberDecorationsEnabled,
+                                        onAvatarClick = { mid ->
+                                            mid.toLongOrNull()?.let(navigateToUserSpaceFromVideo) ?: Unit
+                                        },
+                                        modifier = Modifier.fillMaxSize(),
+                                    )
+                                }
+                            } else {
+                                null
+                            },
                             modifier = Modifier
                                 .align(
                                     if (landscapeCommentPanelOnLeft) Alignment.CenterStart else Alignment.CenterEnd
                                 )
-                                .fillMaxHeight()
-                                .width(
-                                    com.android.purebilibili.feature.video.ui.overlay
-                                        .resolveLandscapeEndDrawerLayoutPolicy(configuration.screenWidthDp)
-                                        .drawerWidthDp.dp
-                                ),
+                                .fillMaxHeight(),
                         )
                     }
                 }
@@ -3206,7 +3275,8 @@ internal fun VideoDetailScreenStateHolder(
 
         val successState = uiState as? VideoPlaybackUiState.Success
         DetachedVideoCommentThreadHost(
-            visible = shouldShowDetachedVideoCommentThreadHost(useTabletLayout = useTabletLayout),
+            visible = shouldShowDetachedVideoCommentThreadHost(useTabletLayout = useTabletLayout) &&
+                !(isFullscreenMode && landscapeCommentPanelVisible),
             successState = successState,
             commentState = commentState,
             commentViewModel = commentViewModel,

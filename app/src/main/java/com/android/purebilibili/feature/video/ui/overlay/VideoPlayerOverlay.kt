@@ -63,6 +63,8 @@ import com.android.purebilibili.feature.video.ui.components.VideoSettingsPanel
 import com.android.purebilibili.feature.video.ui.components.ChapterListPanel
 import com.android.purebilibili.feature.video.ui.components.PagesSelector
 import com.android.purebilibili.feature.video.ui.components.resolveCurrentUgcEpisodeLazyListIndex
+import com.android.purebilibili.feature.video.ui.components.LandscapeSidePanel
+import com.android.purebilibili.feature.video.ui.components.LandscapeSidePanelEdge
 import com.android.purebilibili.data.model.response.SponsorProgressMarker
 import com.android.purebilibili.data.model.response.ViewPoint
 import com.android.purebilibili.data.repository.VideoRepository
@@ -2678,6 +2680,7 @@ fun LandscapeEndDrawer(
     } else {
         Color.Black.copy(alpha = 0.10f)
     }
+    var requestDrawerDismiss by remember { mutableStateOf<(() -> Unit)?>(null) }
     AnimatedVisibility(
         visible = visible,
         enter = fadeIn(transientVisibilitySpec),
@@ -2693,18 +2696,24 @@ fun LandscapeEndDrawer(
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                        onClick = onDismiss
+                        onClick = { requestDrawerDismiss?.invoke() ?: onDismiss() }
                     )
             )
             
-            // 抽屉内容
-            AppSurface(
-                modifier = Modifier
-                    .width(layoutPolicy.drawerWidthDp.dp)
-                    .fillMaxHeight(),
-                color = Color.Transparent,
-                contentColor = MaterialTheme.colorScheme.onSurface
-            ) {
+            // 抽屉内容：横向拖动会跟手，松开后根据距离和速度回弹或关闭。
+            LandscapeSidePanel(
+                visible = true,
+                edge = LandscapeSidePanelEdge.End,
+                width = layoutPolicy.drawerWidthDp.dp,
+                onDismiss = onDismiss,
+                modifier = Modifier.fillMaxHeight(),
+            ) { requestDismiss ->
+                SideEffect { requestDrawerDismiss = requestDismiss }
+                AppSurface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = Color.Transparent,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                ) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -2903,6 +2912,7 @@ fun LandscapeEndDrawer(
                             }
                         }
                     }
+                }
                 }
             }
         }

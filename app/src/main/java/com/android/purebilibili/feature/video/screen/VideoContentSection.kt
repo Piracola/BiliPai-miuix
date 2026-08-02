@@ -100,6 +100,8 @@ import com.android.purebilibili.feature.video.ui.components.rememberVideoComment
 import com.android.purebilibili.feature.video.ui.components.resolveReplyItemContentType
 import com.android.purebilibili.feature.video.ui.components.shouldShowReplyTopAction
 import com.android.purebilibili.feature.video.ui.components.shouldShowVideoCommentBackToTop
+import com.android.purebilibili.feature.video.ui.components.LandscapeSidePanel
+import com.android.purebilibili.feature.video.ui.components.LandscapeSidePanelEdge
 import com.android.purebilibili.core.ui.transition.LocalVideoCardSharedElementSourceRoute
 import com.android.purebilibili.feature.video.viewmodel.CommentSortMode
 import com.android.purebilibili.feature.dynamic.components.ImagePreviewDialog
@@ -1167,6 +1169,8 @@ internal fun LandscapeCommentPanel(
     onDismiss: () -> Unit,
     onSwitchSide: () -> Unit,
     isOnLeft: Boolean,
+    drawerWidth: Dp,
+    threadContent: (@Composable ((List<String>, Int, Rect?, ImagePreviewTextContent?) -> Unit) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     var previewImages by remember { mutableStateOf(emptyList<String>()) }
@@ -1176,62 +1180,80 @@ internal fun LandscapeCommentPanel(
     var showImagePreview by remember { mutableStateOf(false) }
     val commentAppearance = rememberVideoCommentAppearance()
 
-    AppSurface(
+    LandscapeSidePanel(
+        visible = true,
+        edge = if (isOnLeft) LandscapeSidePanelEdge.Start else LandscapeSidePanelEdge.End,
+        width = drawerWidth,
+        onDismiss = onDismiss,
         modifier = modifier,
-        color = MaterialTheme.colorScheme.surface,
-    ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                AppText("评论 $replyCount", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                AppTextButton(onClick = onSwitchSide) { AppText(if (isOnLeft) "移至右侧" else "移至左侧") }
-                AppTextButton(onClick = onDismiss) { AppText("关闭") }
+    ) { requestDismiss ->
+        AppSurface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.surface,
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    AppText("评论 $replyCount", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                    AppTextButton(onClick = onSwitchSide) { AppText(if (isOnLeft) "移至右侧" else "移至左侧") }
+                    AppTextButton(onClick = requestDismiss) { AppText("关闭") }
+                }
+                AppHorizontalDivider(color = commentAppearance.secondaryTextColor.copy(alpha = 0.18f))
+                if (threadContent != null) {
+                    threadContent { images, index, rect, textContent ->
+                        previewImages = images
+                        previewInitialIndex = index
+                        previewSourceRect = rect
+                        previewTextContent = textContent
+                        showImagePreview = true
+                    }
+                } else {
+                    VideoCommentTab(
+                        listState = listState,
+                        modifier = Modifier.weight(1f),
+                        info = info,
+                        replies = replies,
+                        replyCount = replyCount,
+                        emoteMap = emoteMap,
+                        isRepliesLoading = isRepliesLoading,
+                        isRepliesEnd = isRepliesEnd,
+                        videoTags = videoTags,
+                        sortMode = sortMode,
+                        upOnlyFilter = upOnlyFilter,
+                        onSortModeChange = onSortModeChange,
+                        onUpOnlyToggle = onUpOnlyToggle,
+                        onUpClick = onUpClick,
+                        onSubReplyClick = onSubReplyClick,
+                        onCommentReplyClick = onCommentReplyClick,
+                        onLoadMoreReplies = onLoadMoreReplies,
+                        onImagePreview = { images, index, rect, textContent ->
+                            previewImages = images
+                            previewInitialIndex = index
+                            previewSourceRect = rect
+                            previewTextContent = textContent
+                            showImagePreview = true
+                        },
+                        onTimestampClick = onTimestampClick,
+                        contentPadding = PaddingValues(bottom = 16.dp),
+                        currentMid = currentMid,
+                        showUpFlag = showUpFlag,
+                        dissolvingIds = dissolvingIds,
+                        onDeleteComment = onDeleteComment,
+                        onDissolveStart = onDissolveStart,
+                        onCommentLike = onCommentLike,
+                        likedComments = likedComments,
+                        onCommentUrlClick = onCommentUrlClick,
+                        onReportComment = onReportComment,
+                        onToggleTopComment = onToggleTopComment,
+                        showIdentityDecorations = showIdentityDecorations,
+                        lightweightCommentRendering = false,
+                    )
+                }
             }
-            AppHorizontalDivider(color = commentAppearance.secondaryTextColor.copy(alpha = 0.18f))
-            VideoCommentTab(
-                listState = listState,
-                modifier = Modifier.weight(1f),
-                info = info,
-                replies = replies,
-                replyCount = replyCount,
-                emoteMap = emoteMap,
-                isRepliesLoading = isRepliesLoading,
-                isRepliesEnd = isRepliesEnd,
-                videoTags = videoTags,
-                sortMode = sortMode,
-                upOnlyFilter = upOnlyFilter,
-                onSortModeChange = onSortModeChange,
-                onUpOnlyToggle = onUpOnlyToggle,
-                onUpClick = onUpClick,
-                onSubReplyClick = onSubReplyClick,
-                onCommentReplyClick = onCommentReplyClick,
-                onLoadMoreReplies = onLoadMoreReplies,
-                onImagePreview = { images, index, rect, textContent ->
-                    previewImages = images
-                    previewInitialIndex = index
-                    previewSourceRect = rect
-                    previewTextContent = textContent
-                    showImagePreview = true
-                },
-                onTimestampClick = onTimestampClick,
-                contentPadding = PaddingValues(bottom = 16.dp),
-                currentMid = currentMid,
-                showUpFlag = showUpFlag,
-                dissolvingIds = dissolvingIds,
-                onDeleteComment = onDeleteComment,
-                onDissolveStart = onDissolveStart,
-                onCommentLike = onCommentLike,
-                likedComments = likedComments,
-                onCommentUrlClick = onCommentUrlClick,
-                onReportComment = onReportComment,
-                onToggleTopComment = onToggleTopComment,
-                showIdentityDecorations = showIdentityDecorations,
-                lightweightCommentRendering = false,
-            )
         }
     }
     if (showImagePreview && previewImages.isNotEmpty()) {

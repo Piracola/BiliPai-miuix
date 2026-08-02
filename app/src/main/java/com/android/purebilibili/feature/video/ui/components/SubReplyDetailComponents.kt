@@ -412,7 +412,8 @@ internal fun VideoInlineSubReplyDetailContent(
     onReportComment: (Long, Int) -> Unit,
     onUrlClick: (String) -> Unit,
     showIdentityDecorations: Boolean,
-    onAvatarClick: (String) -> Unit
+    onAvatarClick: (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val rootReply = state.rootReply
     if (!state.visible || rootReply == null) return
@@ -451,7 +452,8 @@ internal fun VideoInlineSubReplyDetailContent(
         showIdentityDecorations = showIdentityDecorations,
         onAvatarClick = onAvatarClick,
         maxTimestampMs = maxTimestampMs,
-        targetReplyId = state.targetReplyId
+        targetReplyId = state.targetReplyId,
+        modifier = modifier,
     )
 }
 
@@ -486,7 +488,8 @@ internal fun SubReplyDetailContent(
     onAvatarClick: ((String) -> Unit)? = null,
     maxTimestampMs: Long? = null,
     remoteReplyCount: Int = 0,
-    targetReplyId: Long = 0
+    targetReplyId: Long = 0,
+    modifier: Modifier = Modifier,
 ) {
     val layoutPolicy = remember {
         resolveSubReplyDetailLayoutPolicy(showRootCommentEntry = false)
@@ -660,7 +663,7 @@ internal fun SubReplyDetailContent(
     }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(appearance.panelColor)
     ) {
