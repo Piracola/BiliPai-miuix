@@ -333,6 +333,26 @@ object DynamicRepository {
     ): Result<Int> = withContext(Dispatchers.IO) {
         try {
             val updateBaseline = feedPagination.updateBaseline(scope, type)
+            if (!advanceBaseline) {
+                // 轻量未读接口：只返回新动态条数，避免轮询时拉全量 feed。
+                val updateResponse = NetworkModule.dynamicApi.getDynamicUpdateCount(
+                    type = type,
+                    updateBaseline = updateBaseline
+                )
+                if (updateResponse.code != 0) {
+                    return@withContext Result.failure(
+                        Exception(
+                            resolveDynamicFriendlyErrorMessage(
+                                updateResponse.code,
+                                updateResponse.message
+                            )
+                        )
+                    )
+                }
+                val updateData = updateResponse.data
+                    ?: return@withContext Result.failure(Exception("动态更新数为空"))
+                return@withContext Result.success(updateData.update_num.coerceAtLeast(0))
+            }
             val response = fetchDynamicFeedPageWithRetry {
                 NetworkModule.dynamicApi.getDynamicFeed(
                     type = type,

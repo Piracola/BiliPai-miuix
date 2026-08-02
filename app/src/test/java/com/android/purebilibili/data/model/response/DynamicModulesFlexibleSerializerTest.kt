@@ -120,6 +120,23 @@ class DynamicModulesFlexibleSerializerTest {
                         "forward": { "count": 3 },
                         "like": { "count": 11 }
                       }
+                    },
+                    {
+                      "module_tag": { "text": "置顶" }
+                    },
+                    {
+                      "module_fold": {
+                        "ids": ["1", "2"],
+                        "statement": "展开2条相关动态",
+                        "users": [{ "mid": 11, "face": "https://a" }]
+                      }
+                    },
+                    {
+                      "module_dispute": {
+                        "title": "风险提示",
+                        "desc": "desc",
+                        "jump_url": "//www.bilibili.com/"
+                      }
                     }
                   ]
                 }
@@ -135,6 +152,12 @@ class DynamicModulesFlexibleSerializerTest {
         assertEquals(7, modules?.module_stat?.comment?.count)
         assertEquals(3, modules?.module_stat?.forward?.count)
         assertEquals(11, modules?.module_stat?.like?.count)
+        assertEquals("置顶", modules?.module_tag?.text)
+        assertEquals("展开2条相关动态", modules?.module_fold?.statement)
+        assertEquals(listOf("1", "2"), modules?.module_fold?.ids)
+        assertEquals(11L, modules?.module_fold?.users?.single()?.mid)
+        assertEquals("风险提示", modules?.module_dispute?.title)
+        assertEquals("//www.bilibili.com/", modules?.module_dispute?.jump_url)
     }
 
     @Test

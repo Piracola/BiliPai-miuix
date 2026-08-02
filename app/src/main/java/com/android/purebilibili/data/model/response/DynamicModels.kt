@@ -41,6 +41,23 @@ data class DynamicFeedData(
     val update_num: Int = 0
 )
 
+/**
+ * 动态未读数（红点）轻量接口
+ * API: x/polymer/web-dynamic/v1/feed/all/update
+ * 只返回本次更新基线以上的新动态条数，避免轮询时拉全量 feed。
+ */
+@Serializable
+data class DynamicUpdateCountResponse(
+    val code: Int = 0,
+    val message: String = "",
+    val data: DynamicUpdateCountData? = null
+)
+
+@Serializable
+data class DynamicUpdateCountData(
+    val update_num: Int = 0
+)
+
 @Serializable
 data class DynamicDetailResponse(
     val code: Int = 0,
@@ -162,7 +179,10 @@ object DynamicModulesFlexibleSerializer : KSerializer<DynamicModules> {
                         module_author = parsed.module_author ?: merged.module_author,
                         module_dynamic = parsed.module_dynamic ?: merged.module_dynamic,
                         module_more = parsed.module_more ?: merged.module_more,
-                        module_stat = parsed.module_stat ?: merged.module_stat
+                        module_stat = parsed.module_stat ?: merged.module_stat,
+                        module_fold = parsed.module_fold ?: merged.module_fold,
+                        module_tag = parsed.module_tag ?: merged.module_tag,
+                        module_dispute = parsed.module_dispute ?: merged.module_dispute
                     )
 
                     val moduleType = obj["module_type"]?.jsonPrimitive?.contentOrNull.orEmpty()
@@ -514,7 +534,38 @@ data class DynamicModules(
     val module_author: DynamicAuthorModule? = null,
     val module_dynamic: DynamicContentModule? = null,
     val module_more: DynamicMoreModule? = null,
-    val module_stat: DynamicStatModule? = null
+    val module_stat: DynamicStatModule? = null,
+    // 相关动态折叠条（"展开x条相关动态"）
+    val module_fold: DynamicFoldModule? = null,
+    // 置顶标记（text == "置顶" 时置顶）
+    val module_tag: DynamicTagModule? = null,
+    // 违规/风险提示条
+    val module_dispute: DynamicDisputeModule? = null
+)
+
+@Serializable
+data class DynamicFoldModule(
+    val ids: List<String> = emptyList(),
+    val statement: String = "",
+    val users: List<DynamicFoldUser> = emptyList()
+)
+
+@Serializable
+data class DynamicFoldUser(
+    val mid: Long = 0,
+    val face: String = ""
+)
+
+@Serializable
+data class DynamicTagModule(
+    val text: String = ""
+)
+
+@Serializable
+data class DynamicDisputeModule(
+    val title: String = "",
+    val desc: String = "",
+    val jump_url: String = ""
 )
 
 @Serializable

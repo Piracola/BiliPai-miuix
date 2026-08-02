@@ -1463,6 +1463,15 @@ interface DynamicApi {
         @QueryMap params: Map<String, String>
     ): DynamicFeedResponse
 
+    //  [新增] 动态未读数（红点）轻量接口：只返回更新基线以上的新动态条数，
+    //  供底部导航轮询使用，避免每次拉全量 feed。
+    @GET("x/polymer/web-dynamic/v1/feed/all/update")
+    suspend fun getDynamicUpdateCount(
+        @Query("type") type: String = "all",
+        @Query("update_baseline") updateBaseline: String,
+        @Query("web_location") webLocation: String = "333.1365"
+    ): DynamicUpdateCountResponse
+
     //  [新增] 获取单条动态详情（桌面端详情接口）
     @GET("x/polymer/web-dynamic/desktop/v1/detail")
     suspend fun getDynamicDetail(

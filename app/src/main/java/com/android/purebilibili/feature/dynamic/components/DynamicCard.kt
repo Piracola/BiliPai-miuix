@@ -12,6 +12,7 @@ import com.android.purebilibili.core.ui.ContainerLevel
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
@@ -47,6 +48,8 @@ import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.ui.common.CopySelectionDialog
 import com.android.purebilibili.core.ui.rememberAppMoreIcon
 import com.android.purebilibili.core.ui.rememberAppVisibilityOffIcon
+import com.android.purebilibili.core.ui.rememberAppWarningIcon
+import com.android.purebilibili.core.ui.rememberAppChevronDownIcon
 import com.android.purebilibili.core.ui.AppAlertDialog
 import com.android.purebilibili.core.ui.AppDialogAction
 import com.android.purebilibili.core.ui.rememberAppHistoryIcon
@@ -232,6 +235,29 @@ fun DynamicCardV2(
                     )
                 }
                 
+                //  置顶标（module_tag：B 站固定返回 "置顶"，对齐 PiliPlus 作者区头部样式）
+                if (shouldShowDynamicPinnedTag(item.modules.module_tag)) {
+                    Box(
+                        modifier = Modifier
+                            .padding(start = AppSpacingTokens.ExtraSmall)
+                            .border(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.primary,
+                                shape = RoundedCornerShape(4.dp)
+                            )
+                            .padding(
+                                horizontal = AppSpacingTokens.ExtraSmall,
+                                vertical = AppSpacingTokens.Micro
+                            )
+                    ) {
+                        AppText(
+                            item.modules.module_tag?.text.orEmpty(),
+                            fontSize = MaterialTheme.typography.labelSmall.fontSize,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                
                 //  [修复] 更多按钮 + 下拉菜单
                 Box {
                     AppIconButton(onClick = { showMoreMenu = true }) {
@@ -325,6 +351,50 @@ fun DynamicCardV2(
                 }
             }
             Spacer(modifier = Modifier.height(AppSpacingTokens.Medium))
+        }
+        
+        //  风险提示条（module_dispute：如“视频内含有危险行为，请勿模仿”，点击打开 jump_url）
+        item.modules.module_dispute?.let { dispute ->
+            if (shouldShowDynamicDispute(dispute)) {
+                val disputeClickModifier = if (dispute.jump_url.isNotBlank()) {
+                    Modifier.clickable {
+                        val target = if (dispute.jump_url.startsWith("//")) {
+                            "https:${dispute.jump_url}"
+                        } else {
+                            dispute.jump_url
+                        }
+                        uriHandler.openUri(target)
+                    }
+                } else {
+                    Modifier
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = AppSpacingTokens.Medium)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f))
+                        .then(disputeClickModifier)
+                        .padding(
+                            horizontal = AppSpacingTokens.Small,
+                            vertical = AppSpacingTokens.Small
+                        ),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    AppIcon(
+                        rememberAppWarningIcon(),
+                        contentDescription = null,
+                        modifier = Modifier.size(AppSpacingTokens.Small + AppSpacingTokens.Micro),
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                    Spacer(modifier = Modifier.width(AppSpacingTokens.ExtraSmall))
+                    AppText(
+                        dispute.title.ifBlank { dispute.desc },
+                        fontSize = MaterialTheme.typography.labelMedium.fontSize,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
+            }
         }
         
         //  动态内容文字（支持@高亮 / 表情）；优先可渲染表情的 desc 或 opus summary
@@ -721,6 +791,56 @@ fun DynamicCardV2(
                 onClick = { onLikeClick(item.id_str) },
                 modifier = Modifier.weight(actionButtonWeight)
             )
+        }
+        
+        //  相关动态折叠条（module_fold：如“展开3条相关动态”，点击进动态详情）
+        if (!isDetail && onDynamicDetailClick != null) {
+            val foldStatement = resolveDynamicFoldStatement(item.modules.module_fold)
+            if (foldStatement != null) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { onDynamicDetailClick(item.id_str) }
+                        .padding(vertical = AppSpacingTokens.Small),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val foldUsers = item.modules.module_fold?.users.orEmpty().take(3)
+                    if (foldUsers.isNotEmpty()) {
+                        Box(modifier = Modifier.height(22.dp)) {
+                            foldUsers.forEachIndexed { index, user ->
+                                AsyncImage(
+                                    model = coil.request.ImageRequest.Builder(LocalContext.current)
+                                        .data(user.face.let { if (it.startsWith("http://")) it.replace("http://", "https://") else it })
+                                        .crossfade(true)
+                                        .build(),
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .offset(x = (index * 14).dp)
+                                        .size(22.dp)
+                                        .clip(CircleShape)
+                                        .border(1.dp, MaterialTheme.colorScheme.surface, CircleShape),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(AppSpacingTokens.Small))
+                    }
+                    AppText(
+                        foldStatement,
+                        fontSize = MaterialTheme.typography.labelSmall.fontSize,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.width(AppSpacingTokens.ExtraSmall))
+                    AppIcon(
+                        rememberAppChevronDownIcon(),
+                        contentDescription = null,
+                        modifier = Modifier.size(AppSpacingTokens.Small + AppSpacingTokens.ExtraSmall),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
         }
 
