@@ -32,6 +32,7 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.exoplayer.ExoPlaybackException
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.LoadControl
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import coil.imageLoader
 import coil.request.ImageRequest
@@ -79,7 +80,9 @@ internal data class PlayerBufferPolicy(
     val minBufferMs: Int,
     val maxBufferMs: Int,
     val bufferForPlaybackMs: Int,
-    val bufferForPlaybackAfterRebufferMs: Int
+    val bufferForPlaybackAfterRebufferMs: Int,
+    /** Keep the initial part of a video close to the viewer's actual progress. */
+    val earlyPlaybackMaxBufferMs: Int
 )
 
 internal fun resolvePlayerBufferPolicy(isOnWifi: Boolean): PlayerBufferPolicy {
@@ -88,15 +91,58 @@ internal fun resolvePlayerBufferPolicy(isOnWifi: Boolean): PlayerBufferPolicy {
             minBufferMs = 10000,
             maxBufferMs = 40000,
             bufferForPlaybackMs = 700,
-            bufferForPlaybackAfterRebufferMs = 1400
+            bufferForPlaybackAfterRebufferMs = 1400,
+            earlyPlaybackMaxBufferMs = 2000
         )
     } else {
         PlayerBufferPolicy(
             minBufferMs = 12000,
             maxBufferMs = 45000,
             bufferForPlaybackMs = 1000,
-            bufferForPlaybackAfterRebufferMs = 2200
+            bufferForPlaybackAfterRebufferMs = 2200,
+            earlyPlaybackMaxBufferMs = 2000
         )
+    }
+}
+
+/**
+ * Avoid downloading far ahead until the viewer has committed to the first quarter of a VOD.
+ *
+ * Streams and media periods with an unknown duration keep the regular load-control behavior.
+ */
+internal fun shouldLimitEarlyPlaybackBuffer(
+    playbackPositionUs: Long,
+    mediaPeriodDurationUs: Long
+): Boolean {
+    if (playbackPositionUs < 0L || mediaPeriodDurationUs <= 0L) return false
+    return playbackPositionUs < mediaPeriodDurationUs / 4L
+}
+
+/**
+ * [DefaultLoadControl] has static duration thresholds. This wrapper caps only the forward
+ * buffer for the first quarter, then delegates to the regular fast-buffering policy.
+ */
+private class FirstQuarterAwareLoadControl(
+    private val delegate: LoadControl,
+    private val earlyPlaybackMaxBufferMs: Int
+) : LoadControl by delegate {
+    private val period = androidx.media3.common.Timeline.Period()
+
+    override fun shouldContinueLoading(parameters: LoadControl.Parameters): Boolean {
+        val periodDurationUs = runCatching {
+            parameters.timeline
+                .getPeriodByUid(parameters.mediaPeriodId.periodUid, period)
+                .durationUs
+        }.getOrDefault(C.TIME_UNSET)
+        val limitEarlyBuffer = shouldLimitEarlyPlaybackBuffer(
+            playbackPositionUs = parameters.playbackPositionUs,
+            mediaPeriodDurationUs = periodDurationUs
+        )
+        return if (limitEarlyBuffer) {
+            parameters.bufferedDurationUs < earlyPlaybackMaxBufferMs * 1_000L
+        } else {
+            delegate.shouldContinueLoading(parameters)
+        }
     }
 }
 
@@ -907,7 +953,8 @@ fun rememberVideoPlayerState(
             Logger.d(
                 "VideoPlayerState",
                 "🎬 BufferPolicy: min=${bufferPolicy.minBufferMs}, max=${bufferPolicy.maxBufferMs}, " +
-                    "start=${bufferPolicy.bufferForPlaybackMs}, rebuffer=${bufferPolicy.bufferForPlaybackAfterRebufferMs}"
+                    "start=${bufferPolicy.bufferForPlaybackMs}, rebuffer=${bufferPolicy.bufferForPlaybackAfterRebufferMs}, " +
+                    "firstQuarterMax=${bufferPolicy.earlyPlaybackMaxBufferMs}"
             )
 
             //  根据设置选择 RenderersFactory
@@ -925,17 +972,20 @@ fun rememberVideoPlayerState(
             ExoPlayer.Builder(context)
                 .setRenderersFactory(renderersFactory)
                 .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
-                //  性能优化：自定义缓冲策略，改善播放流畅度
+                // 前 1/4 仅保留很短的前向缓冲，确认继续观看后再按常规策略快速预缓冲。
                 .setLoadControl(
-                    androidx.media3.exoplayer.DefaultLoadControl.Builder()
-                        .setBufferDurationsMs(
-                            bufferPolicy.minBufferMs,
-                            bufferPolicy.maxBufferMs,
-                            bufferPolicy.bufferForPlaybackMs,
-                            bufferPolicy.bufferForPlaybackAfterRebufferMs
-                        )
-                        .setPrioritizeTimeOverSizeThresholds(true)  // 优先保证播放时长
-                        .build()
+                    FirstQuarterAwareLoadControl(
+                        delegate = androidx.media3.exoplayer.DefaultLoadControl.Builder()
+                            .setBufferDurationsMs(
+                                bufferPolicy.minBufferMs,
+                                bufferPolicy.maxBufferMs,
+                                bufferPolicy.bufferForPlaybackMs,
+                                bufferPolicy.bufferForPlaybackAfterRebufferMs
+                            )
+                            .setPrioritizeTimeOverSizeThresholds(true)
+                            .build(),
+                        earlyPlaybackMaxBufferMs = bufferPolicy.earlyPlaybackMaxBufferMs
+                    )
                 )
                 //  [性能优化] 快速 Seek：跳转到最近的关键帧而非精确位置
                 .setSeekParameters(

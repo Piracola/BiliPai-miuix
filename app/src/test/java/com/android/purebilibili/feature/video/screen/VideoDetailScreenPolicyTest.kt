@@ -229,6 +229,7 @@ class VideoDetailScreenPolicyTest {
         assertTrue(source.contains("val bottomInputBarBackdrop = rememberLayerBackdrop()"))
         assertTrue(source.contains(".layerBackdrop(bottomInputBarBackdrop)"))
         assertTrue(source.contains("backdrop = if (floatingLiquidBottomInputBar)"))
+        assertTrue(source.contains("hazeState = hazeState"))
     }
 
     @Test
