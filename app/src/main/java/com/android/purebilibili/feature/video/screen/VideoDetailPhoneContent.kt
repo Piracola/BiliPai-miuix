@@ -318,7 +318,6 @@ internal fun VideoDetailPhoneSuccessContentLayer(
                                 } else {
                                     null
                                 },
-                                hazeState = hazeState,
                                 isScrollInProgressProvider = {
                                     introListState.isScrollInProgress ||
                                         commentListState.isScrollInProgress ||

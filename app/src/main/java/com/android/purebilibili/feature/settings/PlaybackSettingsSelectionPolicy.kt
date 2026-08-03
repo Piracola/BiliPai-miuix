@@ -63,12 +63,12 @@ internal fun resolveDefaultPlaybackQualityOptions(): List<AppSegmentOption<Int>>
     )
 }
 
-internal fun resolveDefaultAudioQualityOptions(): List<PlaybackSegmentOption<Int>> {
+internal fun resolveDefaultAudioQualityOptions(): List<AppSegmentOption<Int>> {
     return listOf(
-        PlaybackSegmentOption(DEFAULT_AUDIO_QUALITY_FOLLOW_LAST, "跟随上次"),
-        PlaybackSegmentOption(30251, "Hi-Res 无损"),
-        PlaybackSegmentOption(30250, "杜比全景声"),
-        PlaybackSegmentOption(-1, "AAC")
+        AppSegmentOption(DEFAULT_AUDIO_QUALITY_FOLLOW_LAST, "跟随上次"),
+        AppSegmentOption(30251, "Hi-Res 无损"),
+        AppSegmentOption(30250, "杜比全景声"),
+        AppSegmentOption(-1, "AAC")
     )
 }
 

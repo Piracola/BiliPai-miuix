@@ -53,6 +53,7 @@ import com.android.purebilibili.feature.home.resolveHomeWallpaperUri
 import com.android.purebilibili.feature.home.shouldExposeGlobalHomeWallpaperChrome
 import com.android.purebilibili.feature.home.shouldRenderGlobalHomeWallpaperBackdrop
 import com.android.purebilibili.feature.login.LoginScreen
+import com.android.purebilibili.feature.profile.AccountSwitchDialog
 import com.android.purebilibili.feature.profile.ProfileScreen
 import com.android.purebilibili.feature.search.ArticleNavigationTarget
 import com.android.purebilibili.feature.search.resolveArticleNavigationTarget
@@ -143,6 +144,7 @@ import com.android.purebilibili.feature.home.components.BottomBarMatchedDockEdge
 import com.android.purebilibili.feature.home.components.BottomBarMatchedDockVisibility
 import com.android.purebilibili.feature.home.components.rememberBottomBarUiSkinDecoration
 import com.android.purebilibili.feature.profile.shouldShowProfileHistoryService
+import com.android.purebilibili.core.store.AccountSessionStore
 import com.android.purebilibili.core.store.AppNavigationSettings
 import com.android.purebilibili.core.store.HomeWallpaperEffectScope
 import com.android.purebilibili.core.store.SettingsManager
@@ -430,6 +432,27 @@ fun AppNavigation(
             BiliPaiProgrammaticBackDispatcher()
         }
         var accountSessionRefreshGeneration by remember { mutableIntStateOf(0) }
+        var sidebarAccountSwitcherVisible by rememberSaveable { mutableStateOf(false) }
+        var sidebarAccountSessionGeneration by remember { mutableIntStateOf(0) }
+        val sidebarAccounts = remember(
+            accountSessionRefreshGeneration,
+            sidebarAccountSessionGeneration,
+        ) {
+            AccountSessionStore.getAccounts(context)
+        }
+        val sidebarActiveAccountMid = remember(
+            accountSessionRefreshGeneration,
+            sidebarAccountSessionGeneration,
+        ) {
+            AccountSessionStore.getActiveAccountMid(context)
+        }
+        val sidebarPlaybackAccountMid = remember(
+            accountSessionRefreshGeneration,
+            sidebarAccountSessionGeneration,
+        ) {
+            AccountSessionStore.getPlaybackAccountMid(context)
+        }
+        val accountSwitchScope = rememberCoroutineScope()
         val currentNavigation3Key = navigation3BackStack.lastOrNull()
         val currentRoute = currentNavigation3Key?.toLegacyRoute()
         val configuredHomeWallpaperUri by SettingsManager.getHomeWallpaperUri(context).collectAsStateWithLifecycle(initialValue = ""
@@ -755,6 +778,7 @@ fun AppNavigation(
             }
             miniPlayerManager?.isNavigatingToVideo = true
             // 合集列表 / 详情压详情：进新片前立刻挂起上一级仍在响的 player，避免只听见旧声音。
+            val videoBvid = (parsedKey as? BiliPaiNavKey.VideoDetail)?.bvid.orEmpty()
             if (videoBvid.isNotBlank()) {
                 miniPlayerManager?.haltForeignPlaybackForIncomingVideo(videoBvid)
             }
@@ -1283,6 +1307,13 @@ fun AppNavigation(
                 // 这个 Box 包裹全局壁纸和所有导航内容，作为底栏模糊/折射的源
                 // [LayerBackdrop] Apply layerBackdrop before the bottom bar sibling so the dock
                 // captures wallpaper + page content, but never captures itself.
+                val wallpaperHazeState = if (mainHazeState != null) {
+                    com.android.purebilibili.core.ui.blur.rememberRecoverableHazeState(
+                        initialBlurEnabled = true
+                    )
+                } else {
+                    null
+                }
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -1417,7 +1448,8 @@ fun AppNavigation(
                                 }
                             }
                         }
-                        BiliPaiNavEntryContentRole.HOME -> HomeScreen(
+                        BiliPaiNavEntryContentRole.HOME -> {
+                            HomeScreen(
                                 viewModel = homeViewModel,
                                 onVideoClick = { request -> navigateToHomeVideoInNavigation3(request) },
                                 onSearchClick = { pushNavigation3Key(BiliPaiNavKey.Search) },
@@ -1480,6 +1512,50 @@ fun AppNavigation(
                                 isTopLevelActive = currentNavigation3Key == BiliPaiNavKey.MainHost &&
                                     currentBottomNavItem == BottomNavItem.HOME,
                             )
+                            if (sidebarAccountSwitcherVisible) {
+                                AccountSwitchDialog(
+                                accounts = sidebarAccounts,
+                                activeAccountMid = sidebarActiveAccountMid,
+                                playbackAccountMid = sidebarPlaybackAccountMid,
+                                onDismiss = { sidebarAccountSwitcherVisible = false },
+                                onAddAccount = {
+                                    sidebarAccountSwitcherVisible = false
+                                    pushNavigation3Key(BiliPaiNavKey.Login)
+                                },
+                                onSwitch = { mid ->
+                                    accountSwitchScope.launch {
+                                        if (!AccountSessionStore.activateAccount(context, mid)) {
+                                            Toast.makeText(context, "切换账号失败", Toast.LENGTH_SHORT).show()
+                                            return@launch
+                                        }
+                                        sidebarAccountSessionGeneration += 1
+                                        accountSessionRefreshGeneration += 1
+                                        homeViewModel.refresh()
+                                        sidebarAccountSwitcherVisible = false
+                                        Toast.makeText(context, "已切换账号", Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                                onSetPlayback = { mid ->
+                                    if (AccountSessionStore.setPlaybackAccountMid(context, mid)) {
+                                        sidebarAccountSessionGeneration += 1
+                                    } else {
+                                        Toast.makeText(context, "播放账号不可用，请重新登录后再试", Toast.LENGTH_SHORT)
+                                            .show()
+                                    }
+                                },
+                                onRemove = { mid ->
+                                    if (mid == sidebarActiveAccountMid) {
+                                        Toast.makeText(context, "请先切换到其他账号后再移除当前账号", Toast.LENGTH_SHORT)
+                                            .show()
+                                    } else if (AccountSessionStore.removeAccount(context, mid)) {
+                                        sidebarAccountSessionGeneration += 1
+                                    } else {
+                                        Toast.makeText(context, "移除账号失败", Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                            )
+                            }
+                        }
                         BiliPaiNavEntryContentRole.LISTEN_VIDEO ->
                             ListenVideoRoute(
                                 onNowPlayingClick = { bvid, coverUrl ->

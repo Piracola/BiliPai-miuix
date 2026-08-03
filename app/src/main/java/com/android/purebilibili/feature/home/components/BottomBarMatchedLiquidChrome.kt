@@ -274,6 +274,7 @@ internal fun BottomBarMatchedReusableLiquidDock(
     backdrop: Backdrop? = null,
     liquidGlassEffectsEnabled: Boolean = true,
     isScrollInProgressProvider: () -> Boolean = { false },
+    drawShellLens: Boolean = true,
     content: @Composable BoxScope.(liquidChromeActive: Boolean) -> Unit
 ) {
     val context = LocalContext.current

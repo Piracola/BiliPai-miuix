@@ -2829,7 +2829,6 @@ internal fun VideoDetailScreenStateHolder(
                                         alpha = inlinePlayerAlpha,
                                         scale = inlinePlayerScale,
                                         isFullscreen = false,
-                                        contentTopInset = playerTopInset,
                                     )
                                 )
                             } else {

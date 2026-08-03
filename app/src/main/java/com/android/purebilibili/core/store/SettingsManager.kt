@@ -802,6 +802,7 @@ data class AppNavigationSettings(
     val orderedVisibleTabIds: List<String> = listOf("HOME", "DYNAMIC", "HISTORY", "LISTEN_VIDEO", "PROFILE"),
     val bottomBarItemColors: Map<String, Int> = emptyMap(),
     val tabletUseSidebar: Boolean = false,
+    val sidebarAccountSwitcherEnabled: Boolean = true,
     val predictiveBackEnabled: Boolean = true,
     val predictiveBackAnimationStyle: String = "scale",
     val predictiveBackExitDirection: String = "auto",
@@ -6011,6 +6012,7 @@ object SettingsManager {
     
     private val KEY_TABLET_NAVIGATION_MODE = booleanPreferencesKey("tablet_use_sidebar")
     private val KEY_PREDICTIVE_BACK_ENABLED = booleanPreferencesKey("predictive_back_enabled")
+    private val KEY_SIDEBAR_ACCOUNT_SWITCHER_ENABLED = booleanPreferencesKey("sidebar_account_switcher_enabled")
     private val KEY_PREDICTIVE_BACK_ANIMATION_STYLE = stringPreferencesKey("predictive_back_animation_style")
     private val KEY_PREDICTIVE_BACK_EXIT_DIRECTION = stringPreferencesKey("predictive_back_exit_direction")
     
@@ -6034,6 +6036,7 @@ object SettingsManager {
             orderedVisibleTabIds = resolveOrderedVisibleBottomTabs(order, visible),
             bottomBarItemColors = parseBottomBarItemColors(preferences[KEY_BOTTOM_BAR_ITEM_COLORS] ?: ""),
             tabletUseSidebar = preferences[KEY_TABLET_NAVIGATION_MODE] ?: false,
+            sidebarAccountSwitcherEnabled = preferences[KEY_SIDEBAR_ACCOUNT_SWITCHER_ENABLED] ?: true,
             predictiveBackEnabled = preferences[KEY_PREDICTIVE_BACK_ENABLED] ?: true,
             predictiveBackAnimationStyle = preferences[KEY_PREDICTIVE_BACK_ANIMATION_STYLE] ?: "scale",
             predictiveBackExitDirection = preferences[KEY_PREDICTIVE_BACK_EXIT_DIRECTION] ?: "auto",

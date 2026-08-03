@@ -4059,7 +4059,7 @@ private fun ProfileFavoriteFolderMoreChip(
 }
 
 @Composable
-private fun AccountSwitchDialog(
+internal fun AccountSwitchDialog(
     accounts: List<StoredAccountSession>,
     activeAccountMid: Long?,
     playbackAccountMid: Long?,
