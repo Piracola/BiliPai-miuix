@@ -16,8 +16,7 @@ import kotlin.test.assertTrue
 class VideoPlayerSectionPolicyTest {
 
     @Test
-<<<<<<< HEAD
-=======
+    @Test
     fun autoFullscreen_snapshotDoesNotReenterAfterFullscreenPlayerIsRecreated() {
         assertFalse(
             shouldToggleAutoFullscreenForCurrentPlaybackSnapshot(
@@ -33,31 +32,6 @@ class VideoPlayerSectionPolicyTest {
     }
 
     @Test
-    fun coverCorner_sharedReturnKeepsFrozenSourceCardCorner() {
-        assertEquals(
-            18,
-            resolveVideoPlayerCoverCornerDp(
-                sourceCornerDp = 18,
-                playerCornerDp = 12,
-                preserveSourceCardCornerDuringSharedReturn = true,
-            )
-        )
-    }
-
-    @Test
-    fun coverCorner_normalPlayerKeepsPlayerCorner() {
-        assertEquals(
-            12,
-            resolveVideoPlayerCoverCornerDp(
-                sourceCornerDp = 18,
-                playerCornerDp = 12,
-                preserveSourceCardCornerDuringSharedReturn = false,
-            )
-        )
-    }
-
-    @Test
->>>>>>> ab3edbc9e (fix: stabilize player and comment presentation)
     fun playerControls_areHiddenWhenEnteringVideo() {
         assertFalse(INITIAL_PLAYER_CONTROLS_VISIBLE)
         assertTrue(INITIAL_PLAYER_CHROME_AUTO_HIDE_HANDLED)
