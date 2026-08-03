@@ -117,8 +117,6 @@ const val COMMENT_VIEW_ALL_REPLIES_TAG_PREFIX = "comment_view_all_replies_"
 
 private val replyVideoTitleCache = ConcurrentHashMap<String, String>()
 
-<<<<<<< HEAD
-=======
 /**
  * 官方 cardbg 经常是 972×162 的透明画布，实际角色图案只占其中一小部分。
  * 在解码线程裁掉全透明边缘，才能以官方预期的视觉尺寸显示内容而不裁掉图案。
@@ -155,7 +153,6 @@ internal object TransparentBoundsCropTransformation : Transformation {
     }
 }
 
->>>>>>> ab3edbc9e (fix: stabilize player and comment presentation)
 internal data class ReplyItemLayoutPolicy(
     val horizontalPaddingDp: Int,
     val avatarSizeDp: Int,
@@ -178,17 +175,10 @@ internal fun resolveReplyItemLayoutPolicy(): ReplyItemLayoutPolicy {
         avatarSizeDp = 36,
         avatarContentSpacingDp = 8,
         actionButtonSizeDp = 40,
-<<<<<<< HEAD
-        decorationWidthReserveDp = 78,
-        decorationImageWidthDp = 64,
-        decorationImageHeightDp = 46,
-        decorationMinWidthDp = 78
-=======
         decorationWidthReserveDp = 64,
         decorationImageWidthDp = 44,
         decorationImageHeightDp = 36,
         decorationMinWidthDp = 64
->>>>>>> ab3edbc9e (fix: stabilize player and comment presentation)
     )
 }
 

@@ -675,11 +675,7 @@ class ReplyComponentsPolicyTest {
         assertEquals(36, policy.avatarSizeDp)
         assertEquals(8, policy.avatarContentSpacingDp)
         assertEquals(40, policy.actionButtonSizeDp)
-<<<<<<< HEAD
-        assertEquals(78, policy.decorationWidthReserveDp)
-=======
         assertEquals(64, policy.decorationWidthReserveDp)
->>>>>>> ab3edbc9e (fix: stabilize player and comment presentation)
         assertEquals(56, policy.dividerStartPaddingDp)
         assertEquals(
             292,
