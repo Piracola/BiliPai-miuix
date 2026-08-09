@@ -430,7 +430,7 @@ fun PlaybackSettingsContent(
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
-                                        text = "长按倍速浮层与全局提示的背景不透明度",
+                                        text = "长按倍速浮层与全局提示的整体不透明度（背景、文字与图标）",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )

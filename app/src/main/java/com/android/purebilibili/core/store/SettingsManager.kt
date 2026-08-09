@@ -133,20 +133,20 @@ internal fun normalizeLiquidGlassStrength(value: Float): Float = value.coerceIn(
 
 internal fun normalizeLiquidGlassProgress(value: Float): Float = value.coerceIn(0f, 1f)
 
-/** 长按倍速提示整体缩放（0.8×–1.5×，默认 1.0×）。 */
-internal const val LONG_PRESS_SPEED_HINT_SCALE_MIN = 0.8f
+/** 长按倍速提示整体缩放（0.5×–1.5×，默认 1.0×）。 */
+internal const val LONG_PRESS_SPEED_HINT_SCALE_MIN = 0.5f
 internal const val LONG_PRESS_SPEED_HINT_SCALE_MAX = 1.5f
 internal const val LONG_PRESS_SPEED_HINT_DEFAULT_SCALE = 1.0f
-internal const val LONG_PRESS_SPEED_HINT_ALPHA_MIN = 0.3f
+internal const val LONG_PRESS_SPEED_HINT_ALPHA_MIN = 0.1f
 internal const val LONG_PRESS_SPEED_HINT_ALPHA_MAX = 1.0f
 internal const val LONG_PRESS_SPEED_HINT_DEFAULT_ALPHA = 0.5f
-internal const val LONG_PRESS_SPEED_HINT_STEP = 0.05f
+internal const val LONG_PRESS_SPEED_HINT_STEP = 0.025f
 
 internal fun normalizeLongPressSpeedHintScale(value: Float): Float =
     if (!value.isFinite()) LONG_PRESS_SPEED_HINT_DEFAULT_SCALE
     else value.coerceIn(LONG_PRESS_SPEED_HINT_SCALE_MIN, LONG_PRESS_SPEED_HINT_SCALE_MAX)
 
-/** 长按倍速提示背景/内容透明度（0.3–1.0，默认 0.5）。 */
+/** 长按倍速提示整体透明度（背景、文字与图标，0.1–1.0，默认 0.5）。 */
 internal fun normalizeLongPressSpeedHintAlpha(value: Float): Float =
     if (!value.isFinite()) LONG_PRESS_SPEED_HINT_DEFAULT_ALPHA
     else value.coerceIn(LONG_PRESS_SPEED_HINT_ALPHA_MIN, LONG_PRESS_SPEED_HINT_ALPHA_MAX)

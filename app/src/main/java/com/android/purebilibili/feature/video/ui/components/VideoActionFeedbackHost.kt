@@ -69,7 +69,8 @@ fun BoxScope.VideoActionFeedbackHost(
         ) {
         AppSurface(
             color = Color.Black.copy(alpha = backgroundAlpha),
-            contentColor = Color.White,
+            // 整体透明度：文字随背景一起变淡。
+            contentColor = Color.White.copy(alpha = 0.98f * backgroundAlpha),
             shape = RoundedCornerShape(22.dp),
             tonalElevation = 0.dp,
             shadowElevation = 12.dp,
@@ -80,7 +81,7 @@ fun BoxScope.VideoActionFeedbackHost(
         ) {
             AppText(
                 text = message.orEmpty(),
-                color = Color.White.copy(alpha = 0.98f),
+                color = Color.White.copy(alpha = 0.98f * backgroundAlpha),
                 fontSize = fontSize,
                 fontWeight = fontWeight,
                 textAlign = TextAlign.Center,

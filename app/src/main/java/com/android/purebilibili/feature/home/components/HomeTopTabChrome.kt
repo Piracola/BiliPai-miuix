@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.input.pointer.pointerInput
@@ -179,11 +180,14 @@ internal fun HomeTopTabChrome(
             }
             // 包裹 dock 始终在可用顶部区域内居中，不受标签样式和数量影响。
             val dockAlignment = Alignment.Center
+            // clipToBounds：文字、选中态与阴影一律裁剪在胶囊容器边界内，
+            // 不再溢出到屏幕边缘（首尾 tab 的选中态阴影此前会撞屏）。
             val dockModifier = Modifier
                 .align(dockAlignment)
                 .width(dockWidth)
                 .widthIn(max = maxDockWidth)
                 .fillMaxHeight()
+                .clipToBounds()
 
             Box(
                 modifier = dockModifier

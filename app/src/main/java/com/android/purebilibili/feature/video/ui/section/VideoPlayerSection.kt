@@ -4411,7 +4411,8 @@ fun VideoPlayerSection(
             AppSurface(
                 shape = RoundedCornerShape(10.dp * longPressSpeedHintScale),
                 color = Color.Black.copy(alpha = longPressSpeedHintAlpha),
-                contentColor = Color.White,
+                // 整体透明度：文字与图标随设置一起变淡。
+                contentColor = Color.White.copy(alpha = longPressSpeedHintAlpha),
                 tonalElevation = 0.dp
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -4444,7 +4445,7 @@ fun VideoPlayerSection(
                             AppIcon(
                                 imageVector = Icons.Outlined.Close,
                                 contentDescription = "关闭倍速提示",
-                                tint = Color.White,
+                                tint = Color.White.copy(alpha = longPressSpeedHintAlpha),
                                 modifier = Modifier.size(14.dp * longPressSpeedHintScale),
                             )
                         }
@@ -4469,7 +4470,7 @@ fun VideoPlayerSection(
             AppSurface(
                 shape = RoundedCornerShape(20.dp * longPressSpeedHintScale),
                 color = Color.Black.copy(alpha = (0.62f * longPressSpeedHintAlpha).coerceIn(0f, 1f)),
-                contentColor = Color.White,
+                contentColor = Color.White.copy(alpha = longPressSpeedHintAlpha),
                 tonalElevation = 0.dp
             ) {
                 Column(
@@ -4497,7 +4498,9 @@ fun VideoPlayerSection(
                                         .setLongPressSpeedLockHintShown(context, true)
                                 }
                             },
-                            colors = ButtonDefaults.textButtonColors(contentColor = Color.White)
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = Color.White.copy(alpha = longPressSpeedHintAlpha)
+                            )
                         ) {
                             AppText("开启锁定")
                         }
@@ -4511,7 +4514,9 @@ fun VideoPlayerSection(
                                         .setLongPressSpeedLockHintShown(context, true)
                                 }
                             },
-                            colors = ButtonDefaults.textButtonColors(contentColor = Color.White)
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = Color.White.copy(alpha = longPressSpeedHintAlpha)
+                            )
                         ) {
                             AppText("不再提示")
                         }

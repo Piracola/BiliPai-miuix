@@ -1335,23 +1335,37 @@ private fun LightweightHomeTopTabs(
             hasBackdrop = backdrop != null || miuixBackdrop != null,
             indicatorVisualPolicy = topTabIndicatorVisualPolicy
         )
+        // 跟手/滑动/settle 动画期间禁用导出捕获：捕获帧是定格快照，胶囊平移时
+        // 快照内容不随胶囊移动，会导致「图标+文字」被错误地多渲染一份
+        // （主层原位一份 + 胶囊内旧快照一份）。过渡中回退纯色胶囊，settle 后恢复。
+        val topTabIndicatorTransitioning = indicatorIsInteracting ||
+            topTabShouldStretchIndicator ||
+            topTabMotionProgress < 0.999f
         // Match the bottom bar's two-source topology. The local source first records the
         // already-frosted dock material and tinted labels, so the indicator never falls
         // back to a raw-page-only frame during idle/gesture transitions.
-        val effectiveTopTabMiuixContentBackdrop =
-            if (topTabIndicatorBackdropPolicy.useCombinedBackdrop && miuixBackdrop != null) {
+        // 过渡中 contentBackdrop 也置 null：KernelSu 层在 combined preset 下优先取
+        // contentBackdrop 作为捕获源，仅置空 backdrop 无法真正降级。
+        val effectiveTopTabMiuixContentBackdrop = when {
+            topTabIndicatorTransitioning -> null
+            topTabIndicatorBackdropPolicy.useCombinedBackdrop && miuixBackdrop != null ->
                 rememberMiuixCombinedBackdrop(miuixBackdrop, topTabMiuixContentBackdrop)
-            } else {
-                topTabMiuixContentBackdrop
-            }
+            else -> topTabMiuixContentBackdrop
+        }
         val topTabIndicatorMiuixBackdrop =
-            if (topTabIndicatorBackdropPolicy.useIndicatorBackdrop && miuixBackdrop != null) {
+            if (!topTabIndicatorTransitioning &&
+                topTabIndicatorBackdropPolicy.useIndicatorBackdrop &&
+                miuixBackdrop != null
+            ) {
                 miuixBackdrop
             } else {
                 null
             }
         val topTabIndicatorLegacyBackdrop =
-            if (topTabIndicatorBackdropPolicy.useIndicatorBackdrop && backdrop != null) {
+            if (!topTabIndicatorTransitioning &&
+                topTabIndicatorBackdropPolicy.useIndicatorBackdrop &&
+                backdrop != null
+            ) {
                 topTabContentBackdrop
             } else {
                 null
@@ -1373,8 +1387,10 @@ private fun LightweightHomeTopTabs(
             preset = liquidGlassPreset,
             darkTheme = isDarkTheme
         )
+        // 过渡中退出玻璃颜色路径：内容层回到胶囊上方（zIndex 2f），
+        // 降级为纯色胶囊 + 主层文字，避免纯色胶囊盖住选中项。
         val useTopTabGlassColorPath = resolveSharedLiquidIndicatorUseGlassColorPath(
-            liquidGlassEnabled = shouldUseLiquidGlassIndicator,
+            liquidGlassEnabled = shouldUseLiquidGlassIndicator && !topTabIndicatorTransitioning,
             lensProgress = topTabLensProgress
         )
         val topTabVisibleContentZIndex = if (useTopTabGlassColorPath) 0f else 2f
