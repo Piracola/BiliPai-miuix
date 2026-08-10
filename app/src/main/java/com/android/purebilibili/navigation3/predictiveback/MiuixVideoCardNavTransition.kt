@@ -144,6 +144,12 @@ internal class MiuixVideoCardTransitionProgress {
         ?: fallback.coerceIn(0f, 1f)
 
     fun isGestureInProgress(): Boolean = topScope?.gesture != null
+
+    /**
+     * 预测返回手势进度（0=开始 → 1=完全提交），无手势时为 null。
+     * 供预测返回背景模糊（predictiveBackBackgroundEffect）随手势映射，恢复 0.2.2 链路。
+     */
+    fun gestureBackProgress(): Float? = topScope?.gesture?.progress
 }
 
 /**

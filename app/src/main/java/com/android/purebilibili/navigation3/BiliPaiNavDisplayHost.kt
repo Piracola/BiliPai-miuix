@@ -37,12 +37,15 @@ import com.android.purebilibili.core.ui.transition.MiuixVideoCardTransitionState
 import com.android.purebilibili.core.ui.transition.VideoCardTransitionBackgroundState
 import com.android.purebilibili.core.ui.transition.VideoCardTransitionExposure
 import com.android.purebilibili.core.ui.transition.LocalVideoCardTransitionClock
+import com.android.purebilibili.core.ui.transition.LocalPredictiveBackBackgroundState
+import com.android.purebilibili.core.ui.transition.PredictiveBackBackgroundState
 import com.android.purebilibili.core.ui.transition.VideoCardTransitionClock
 import com.android.purebilibili.core.ui.transition.VideoCardTransitionHostDepthLayer
 import com.android.purebilibili.core.ui.transition.VideoCardTransitionNavBackdrop
 import com.android.purebilibili.core.ui.transition.rememberVideoCardTransitionSnapshotHandle
 import com.android.purebilibili.core.ui.transition.resolveVideoCardTransitionExposure
 import com.android.purebilibili.core.ui.transition.resolveVideoCardTimelineSpec
+import com.android.purebilibili.core.ui.transition.resolvePredictiveBackGestureBlurProgress
 import com.android.purebilibili.core.ui.transition.shouldReleaseHostOwnedDepthLayer
 import com.android.purebilibili.core.ui.transition.shouldShowVideoCardTransitionNavBackdrop
 import com.android.purebilibili.core.ui.adaptive.MotionTier
@@ -287,6 +290,25 @@ internal fun BiliPaiNavDisplayHost(
             isGestureInProgressProvider = videoCardGestureProvider,
         )
     }
+    // 恢复 0.2.2 的预测返回背景链路：目标返回页（栈前一 key）在预测返回手势中
+    // 随手势进度模糊/消退，迁移到 Miuix 导航时该 provide 曾丢失。
+    val predictiveBackBackgroundState = remember(
+        videoCardTransitionProgress,
+        currentBackTarget,
+        transitionMotionTier,
+        isLightBackground,
+    ) {
+        PredictiveBackBackgroundState(
+            progressProvider = {
+                videoCardTransitionProgress.gestureBackProgress()
+                    ?.let { resolvePredictiveBackGestureBlurProgress(it) }
+                    ?: 0f
+            },
+            targetKeyProvider = { currentBackTarget },
+            motionTierProvider = { transitionMotionTier },
+            isLightBackgroundProvider = { isLightBackground },
+        )
+    }
 
     val navCornerRadius = rememberDeviceCornerRadius(defaultRadius = 0.dp)
     val roundAllCorners = style == BiliPaiPredictiveBackAnimationStyle.AOSP ||
@@ -389,6 +411,7 @@ internal fun BiliPaiNavDisplayHost(
                         LocalVideoCardTransitionClock provides videoCardClock,
                         LocalVideoCardTransitionBackgroundState provides transitionBackgroundState,
                         LocalMiuixVideoCardTransitionState provides miuixCardTransitionState,
+                        LocalPredictiveBackBackgroundState provides predictiveBackBackgroundState,
                     ) {
                         ProvideMiuixNavViewModelApplicationExtras(application) {
                             content(key)

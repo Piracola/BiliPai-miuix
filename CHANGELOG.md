@@ -1,5 +1,30 @@
 # Changelog
 
+## v0.2.3-beta.2 (2026-08-10)
+
+更新日志(ChangeLog)
+
+[更改] 版本号 0.2.3-beta.2，versionCode 291
+[更改] 正式包 BiliPai-0.2.3-beta.2.apk，Dev 包 BiliPai-0.2.3-beta.2-dev.apk
+[更改] 基准 v0.2.3-beta.1，比较区间见 GitHub Compare
+[修复] 满级用户（6 级）next_exp 返回 "--" 导致首页/登录解析崩溃，level_info 全字段容错
+[修复] 直播分区互跳后同一分区重复入栈崩溃（LiveAreaDetail 增加实例标识）
+[修复] 后台保存导航栈时 SeasonSeriesDetail 与 JSON discriminator 冲突闪退
+[修复] 历史/收藏/稍后再看搜索页进入时「未注册导航目的地」闪退
+[修复] Miuix 主题下顶栏标题被截断（如「历史记录」只显示「历史…」），按钮间距与标题宽度重排
+[修复] 官方单色图标预设下侧边栏/列表图标透明消失，恢复 MD3 单色图标
+[修复] 番剧页顶部频道切换均分并 pill 化，时间表「今天 8/10」文字不再截断，骨架屏圆角统一
+[修复] 拖动进度条后弹幕重复且不跟随进度（seek 重同步前先清空渲染队列）
+[修复] 预测性返回手势中播放器画面实时消失；相关推荐宽卡返回尾段画面提前淡出被源卡色块替换
+[修复] 预测返回背景模糊随手势（恢复 0.2.2 链路，导航迁移回归）
+[添加] 视频详情页状态栏顶部实时 haze 模糊回归（「播放页沉浸状态栏」开关，默认关闭=纯黑）
+[更改] 详情页内联播放器始终沉浸，开关仅切换状态栏背景样式
+v0.2.3-beta.2(1cbaca498)
+
+格式规范见 [docs/wiki/CHANGELOG_GUIDE.md](docs/wiki/CHANGELOG_GUIDE.md)。社群：频道 [t.me/bilipai666](https://t.me/bilipai666) / 群 [t.me/bilipai888](https://t.me/bilipai888/1)。比较：[`v0.2.3-beta.1...main`](https://github.com/jay3-yy/BiliPai/compare/v0.2.3-beta.1...main)。
+
+---
+
 ## v0.2.3-beta.1 (2026-08-10)
 
 更新日志(ChangeLog)
