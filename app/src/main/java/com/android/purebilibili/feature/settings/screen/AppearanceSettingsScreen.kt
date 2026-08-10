@@ -19,6 +19,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.animation.*
@@ -238,19 +239,19 @@ fun AppearanceSettingsContent(
     val configuration = LocalConfiguration.current
     val displayMetricsSnapshot = LocalDisplayMetricsSnapshot.current
     val isTablet = configuration.screenWidthDp >= 600 // Material Design 3 中型屏幕断点
-    LaunchedEffect(focusRequest?.token, isTablet) {
+    LaunchedEffect(focusRequest?.token) {
         val request = focusRequest ?: return@LaunchedEffect
         val expectedTarget = when (contentMode) {
             AppearanceSettingsContentMode.APPEARANCE -> SettingsSearchTarget.APPEARANCE
             AppearanceSettingsContentMode.HOME -> SettingsSearchTarget.HOME_FEED
         }
         if (request.target != expectedTarget) return@LaunchedEffect
-        val index = when (contentMode) {
+        val focusKey = when (contentMode) {
             AppearanceSettingsContentMode.APPEARANCE ->
-                resolveAppearanceSettingsScrollIndex(request.focusId, isTablet)
-            AppearanceSettingsContentMode.HOME -> resolveHomeSettingsScrollIndex(request.focusId)
+                resolveAppearanceSettingsFocusKey(request.focusId)
+            AppearanceSettingsContentMode.HOME -> resolveHomeSettingsFocusKey(request.focusId)
         } ?: return@LaunchedEffect
-        listState.animateScrollToItem(index)
+        listState.animateScrollToItemByKey(focusKey)
         SettingsSearchFocusController.clear(request.token)
     }
     val windowSizeClass = LocalWindowSizeClass.current
@@ -290,14 +291,8 @@ fun AppearanceSettingsContent(
             miuixSummary = uiPresetAndroidMiuixSummary
         )
     }
-    val selectedUiStyleLabel = uiStyleOptions
-        .first { it.value == state.themeSelection }
-        .label
     val themeModeTitle = stringResource(R.string.appearance_theme_mode_title)
     val themeModeSubtitle = stringResource(R.string.appearance_theme_mode_subtitle)
-    val themeModeFollowSystemLabel = stringResource(R.string.theme_mode_follow_system)
-    val themeModeLightLabel = stringResource(R.string.theme_mode_light)
-    val themeModeDarkLabel = stringResource(R.string.theme_mode_dark)
     val themeModeFollowSystemShortLabel = stringResource(R.string.theme_mode_follow_system_short)
     val themeModeLightShortLabel = stringResource(R.string.theme_mode_light_short)
     val themeModeDarkShortLabel = stringResource(R.string.theme_mode_dark_short)
@@ -312,22 +307,8 @@ fun AppearanceSettingsContent(
             darkLabel = themeModeDarkShortLabel
         )
     }
-    val selectedThemeModeLabel = remember(
-        state.themeMode,
-        themeModeFollowSystemLabel,
-        themeModeLightLabel,
-        themeModeDarkLabel
-    ) {
-        when (state.themeMode) {
-            AppThemeMode.FOLLOW_SYSTEM -> themeModeFollowSystemLabel
-            AppThemeMode.LIGHT -> themeModeLightLabel
-            AppThemeMode.DARK -> themeModeDarkLabel
-        }
-    }
     val darkThemeStyleTitle = stringResource(R.string.appearance_dark_theme_style_title)
     val darkThemeStyleSubtitle = stringResource(R.string.appearance_dark_theme_style_subtitle)
-    val darkThemeStyleDefaultLabel = stringResource(R.string.dark_theme_style_default)
-    val darkThemeStyleAmoledLabel = stringResource(R.string.dark_theme_style_amoled)
     val darkThemeStyleDefaultShortLabel = stringResource(R.string.dark_theme_style_default_short)
     val darkThemeStyleAmoledShortLabel = stringResource(R.string.dark_theme_style_amoled_short)
     val darkThemeStyleOptions = remember(
@@ -339,22 +320,8 @@ fun AppearanceSettingsContent(
             amoledLabel = darkThemeStyleAmoledShortLabel
         )
     }
-    val selectedDarkThemeStyleLabel = remember(
-        state.darkThemeStyle,
-        darkThemeStyleDefaultLabel,
-        darkThemeStyleAmoledLabel
-    ) {
-        when (state.darkThemeStyle) {
-            DarkThemeStyle.DEFAULT -> darkThemeStyleDefaultLabel
-            DarkThemeStyle.AMOLED -> darkThemeStyleAmoledLabel
-        }
-    }
     val appLanguageTitle = stringResource(R.string.appearance_app_language_title)
     val appLanguageSubtitle = stringResource(R.string.appearance_app_language_subtitle)
-    val appLanguageFollowSystemLabel = stringResource(R.string.app_language_follow_system)
-    val appLanguageSimplifiedLabel = stringResource(R.string.app_language_simplified_chinese)
-    val appLanguageTraditionalLabel = stringResource(R.string.app_language_traditional_chinese)
-    val appLanguageEnglishLabel = stringResource(R.string.app_language_english)
     val appLanguageFollowSystemShortLabel = stringResource(R.string.app_language_follow_system_short)
     val appLanguageSimplifiedShortLabel = stringResource(R.string.app_language_simplified_chinese_short)
     val appLanguageTraditionalShortLabel = stringResource(R.string.app_language_traditional_chinese_short)
@@ -371,20 +338,6 @@ fun AppearanceSettingsContent(
             traditionalChineseLabel = appLanguageTraditionalShortLabel,
             englishLabel = appLanguageEnglishShortLabel
         )
-    }
-    val selectedAppLanguageLabel = remember(
-        state.appLanguage,
-        appLanguageFollowSystemLabel,
-        appLanguageSimplifiedLabel,
-        appLanguageTraditionalLabel,
-        appLanguageEnglishLabel
-    ) {
-        when (state.appLanguage) {
-            AppLanguage.FOLLOW_SYSTEM -> appLanguageFollowSystemLabel
-            AppLanguage.SIMPLIFIED_CHINESE -> appLanguageSimplifiedLabel
-            AppLanguage.TRADITIONAL_CHINESE_TAIWAN -> appLanguageTraditionalLabel
-            AppLanguage.ENGLISH -> appLanguageEnglishLabel
-        }
     }
     val navigationBarBottomPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val contentBottomPadding = resolveAppearanceBottomPadding(
@@ -464,9 +417,19 @@ fun AppearanceSettingsContent(
     var showMd3ColorPickerDialog by remember { mutableStateOf(false) }
     var roleColorTarget by remember { mutableStateOf<ThemeRoleColorTarget?>(null) }
     val md3ColorSourceOptions = remember { resolveMd3ColorSourceOptions() }
-    val selectedMd3ColorSourceLabel = md3ColorSourceOptions
-        .firstOrNull { it.value == state.md3ColorSource }
-        ?.label ?: state.md3ColorSource.label
+    // D2：是否存在视觉覆盖（图标样式/列表条目/单选呈现/高级配色），
+    // 决定"恢复主题推荐"入口是否可见。
+    val hasAppearanceOverrides = remember(
+        state.appIconStyle,
+        state.appListItemStyle,
+        singleChoicePresentation,
+        themeRoleOverrides.enabled,
+    ) {
+        state.appIconStyle != AppIconStyle.AUTO ||
+            state.appListItemStyle != AppListItemStyle.AUTO ||
+            singleChoicePresentation != AppSingleChoicePresentation.WINDOW_POPUP ||
+            themeRoleOverrides.enabled
+    }
     val selectedCustomThemeColor = remember(state.md3CustomColorHex) {
         parseMd3CustomColorHex(state.md3CustomColorHex)
     }
@@ -508,47 +471,31 @@ fun AppearanceSettingsContent(
     ) {
         if (contentMode == AppearanceSettingsContentMode.APPEARANCE) {
 
-        //  主题与颜色
-        item { 
+        // ========== 界面与明暗 ==========
+        item(key = "appearance_group_ui_dark_title") {
             Box(modifier = Modifier.entrance()) {
-                AppPreferenceSectionTitle("显示模式")
+                AppPreferenceSectionTitle("界面与明暗")
             }
         }
-        item {
+        item(key = AppearanceSettingsGroupKeys.UI_AND_DARK) {
             Box(modifier = Modifier.entrance()) {
                 AppPreferenceGroup {
-                    // 主题模式选择 (横向卡片)
                     Column(modifier = Modifier.padding(16.dp)) {
+                        // 界面预设（标题不再拼接当前值，当前值由 trailing/选项弹层呈现）
                         SettingsSingleChoicePreference(
-                            title = "${uiPresetTitle}：$selectedUiStyleLabel",
+                            title = uiPresetTitle,
                             subtitle = uiPresetSubtitle,
                             options = uiStyleOptions,
                             selectedValue = state.themeSelection,
                             onSelectionChange = viewModel::setThemeSelection,
                         )
 
-                        Column(modifier = Modifier.padding(top = 16.dp)) {
-                            AppPreferenceDivider()
-                            Spacer(modifier = Modifier.height(8.dp))
-                            AppSwitchPreference(
-                                icon = rememberSettingsSemanticIcon(SettingsIconRole.ANDROID_LIQUID_GLASS),
-                                title = "安卓原生液态玻璃",
-                                subtitle = if (isLiquidGlassAvailable) {
-                                    "全局开启后，顶部 Dock、搜索框、底栏、分段控件与评论区统一复用底栏液态玻璃材质"
-                                } else {
-                                    "当前 Android 版本暂不支持液态玻璃效果"
-                                },
-                                checked = state.androidNativeLiquidGlassEnabled,
-                                onCheckedChange = { viewModel.toggleAndroidNativeLiquidGlass(it) },
-                                enabled = isLiquidGlassAvailable,
-                                iconTint = iOSBlue
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-                        AppearanceUiPresetDescriptionCard(
-                            title = uiPresetDescription.title,
-                            summary = uiPresetDescription.summary
+                        // D3：说明卡降级为小字说明，只承担一个影响，不占视觉层级
+                        Spacer(modifier = Modifier.height(8.dp))
+                        AppText(
+                            text = uiPresetDescription.summary,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -556,60 +503,11 @@ fun AppearanceSettingsContent(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         SettingsSingleChoicePreference(
-                            title = "${themeModeTitle}：$selectedThemeModeLabel",
+                            title = themeModeTitle,
                             subtitle = themeModeSubtitle,
                             options = themeModeOptions,
                             selectedValue = state.themeMode,
-                            onSelectionChange = { mode ->
-                                viewModel.setThemeMode(mode)
-                            }
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-                        AppPreferenceDivider()
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        SettingsSingleChoicePreference(
-                            title = "图标样式",
-                            subtitle = "主题色容器：图标置于主题色圆角容器内；MD3 官方推荐：onSurfaceVariant 单色图标（全局生效）",
-                            options = resolveAppIconStyleOptions(),
-                            selectedValue = state.appIconStyle,
-                            onSelectionChange = { style ->
-                                viewModel.setAppIconStyle(style)
-                            }
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-                        AppPreferenceDivider()
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        SettingsSingleChoicePreference(
-                            title = "列表条目样式",
-                            subtitle = "自定义条目：圆角图标容器；原生组件：各预设原生条目（MIUIX/MD3 均可选用）",
-                            options = resolveAppListItemStyleOptions(),
-                            selectedValue = state.appListItemStyle,
-                            onSelectionChange = { style ->
-                                viewModel.setAppListItemStyle(style)
-                            }
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-                        AppPreferenceDivider()
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        SettingsSingleChoicePreference(
-                            title = "单选项展示方式",
-                            subtitle = "跟随选项弹出与截图一致；也可切回居中弹窗",
-                            options = singleChoicePresentationOptions,
-                            selectedValue = singleChoicePresentation,
-                            onSelectionChange = { presentation ->
-                                scope.launch {
-                                    SettingsManager.setSingleChoicePresentation(
-                                        context = context,
-                                        presentation = presentation,
-                                    )
-                                }
-                            },
+                            onSelectionChange = viewModel::setThemeMode,
                         )
 
                         androidx.compose.animation.AnimatedVisibility(
@@ -621,37 +519,31 @@ fun AppearanceSettingsContent(
                                 AppPreferenceDivider()
                                 Spacer(modifier = Modifier.height(8.dp))
                                 SettingsSingleChoicePreference(
-                                    title = "${darkThemeStyleTitle}：$selectedDarkThemeStyleLabel",
+                                    title = darkThemeStyleTitle,
                                     subtitle = darkThemeStyleSubtitle,
                                     options = darkThemeStyleOptions,
                                     selectedValue = state.darkThemeStyle,
-                                    onSelectionChange = { style ->
-                                        viewModel.setDarkThemeStyle(style)
-                                    }
+                                    onSelectionChange = viewModel::setDarkThemeStyle,
                                 )
                             }
                         }
+                    }
+                }
+            }
+        }
 
-                        Spacer(modifier = Modifier.height(16.dp))
-                        AppPreferenceDivider()
-                        Spacer(modifier = Modifier.height(8.dp))
-
+        // ========== 颜色 ==========
+        item(key = "appearance_group_color_title") {
+            Box(modifier = Modifier.entrance()) {
+                AppPreferenceSectionTitle("颜色")
+            }
+        }
+        item(key = AppearanceSettingsGroupKeys.COLOR) {
+            Box(modifier = Modifier.entrance()) {
+                AppPreferenceGroup {
+                    Column(modifier = Modifier.padding(16.dp)) {
                         SettingsSingleChoicePreference(
-                            title = "${appLanguageTitle}：$selectedAppLanguageLabel",
-                            subtitle = appLanguageSubtitle,
-                            options = appLanguageOptions,
-                            selectedValue = state.appLanguage,
-                            onSelectionChange = { language ->
-                                onAppLanguageChange(language)
-                            }
-                        )
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        AppPreferenceDivider()
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        SettingsSingleChoicePreference(
-                            title = "MD3 颜色来源：$selectedMd3ColorSourceLabel",
+                            title = "MD3 颜色来源",
                             subtitle = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                                 "可跟随系统壁纸，也可使用自定义主题色"
                             } else {
@@ -687,6 +579,421 @@ fun AppearanceSettingsContent(
                             iconTint = selectedCustomThemeColor
                         )
 
+                        // 主题色选择 (仅当自定义颜色时显示)
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = showThemeColorPicker,
+                            enter =   androidx.compose.animation.expandVertically() +   androidx.compose.animation.fadeIn(),
+                            exit =   androidx.compose.animation.shrinkVertically() +   androidx.compose.animation.fadeOut()
+                        ) {
+                            Column(modifier = Modifier.padding(top = 16.dp)) {
+                                AppPreferenceDivider()
+                                AppPreference(
+                                    icon = rememberSettingsSemanticIcon(SettingsIconRole.THEME_COLOR_PICKER),
+                                    title = "主题色",
+                                    subtitle = if (themeColorPaletteExpanded) {
+                                        "当前 ${state.md3CustomColorHex}；点按收起色板"
+                                    } else {
+                                        "当前 ${state.md3CustomColorHex}；点按展开预设色板"
+                                    },
+                                    value = if (themeColorPaletteExpanded) "收起" else "展开",
+                                    onClick = { themeColorPaletteExpanded = !themeColorPaletteExpanded },
+                                    iconTint = selectedCustomThemeColor,
+                                )
+
+                                AnimatedVisibility(
+                                    visible = themeColorPaletteExpanded,
+                                    enter = expandVertically() + fadeIn(),
+                                    exit = shrinkVertically() + fadeOut(),
+                                ) {
+                                    Column(modifier = Modifier.padding(top = 12.dp)) {
+                                        // 实时主题色预览
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(bottom = 24.dp)
+                                                .height(140.dp)
+                                                .clip(AppShapes.container(ContainerLevel.Sheet))
+                                                .background(
+                                                    brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                                                        colors = listOf(
+                                                            selectedCustomThemeColor.copy(alpha = 0.15f),
+                                                            selectedCustomThemeColor.copy(alpha = 0.05f)
+                                                        )
+                                                    )
+                                                )
+                                                .border(
+                                                    width = 1.dp,
+                                                    color = selectedCustomThemeColor.copy(alpha = 0.3f),
+                                                    shape = AppShapes.borderedContainer(ContainerLevel.Sheet)
+                                                ),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(60.dp)
+                                                        .padding(bottom = 12.dp)
+                                                        .background(
+                                                            brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                                                                colors = listOf(
+                                                                    selectedCustomThemeColor,
+                                                                    selectedCustomThemeColor.copy(alpha = 0.8f)
+                                                                )
+                                                            ),
+                                                            shape = AppShapes.container(ContainerLevel.Dialog)
+                                                        ),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    AppIcon(
+                                                        Icons.Filled.PlayArrow,
+                                                        contentDescription = null,
+                                                        tint = Color.White,
+                                                        modifier = Modifier.size(32.dp)
+                                                    )
+                                                }
+                                                AppText(
+                                                    text = state.md3CustomColorHex,
+                                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                                    color = MaterialTheme.colorScheme.onSurface
+                                                )
+                                                AppText(
+                                                    text = "正在预览自定义 MD3 主题色",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                        }
+
+                                        // Theme Color Grid - Strict 2 Rows x 5 Columns
+                                        val spacing = 12.dp
+                                        Column(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                                        ) {
+                                            ThemeColors.chunked(5).forEach { rowColors ->
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.spacedBy(spacing)
+                                                ) {
+                                                    rowColors.forEach { color ->
+                                                        val index = ThemeColors.indexOf(color)
+                                                        val isSelected = selectedCustomThemeColor == color
+                                                        Column(
+                                                            modifier = Modifier.weight(1f),
+                                                            horizontalAlignment = Alignment.CenterHorizontally
+                                                        ) {
+                                                            val scale by androidx.compose.animation.core.animateFloatAsState(
+                                                                targetValue = if (isSelected) 1.1f else 1.0f,
+                                                                label = "scale",
+                                                                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
+                                                            )
+                                                            Box(
+                                                                modifier = Modifier
+                                                                    .aspectRatio(1f)
+                                                                    .graphicsLayer {
+                                                                        scaleX = scale
+                                                                        scaleY = scale
+                                                                    }
+                                                                    .border(
+                                                                        width = if (isSelected) 2.dp else 0.dp,
+                                                                        color = if (isSelected) color.copy(alpha = 0.5f) else Color.Transparent,
+                                                                        shape = CircleShape
+                                                                    )
+                                                                    .padding(3.dp)
+                                                                    .clip(CircleShape)
+                                                                    .background(
+                                                                        brush = androidx.compose.ui.graphics.Brush.radialGradient(
+                                                                            colors = listOf(
+                                                                                color.copy(alpha = 0.9f),
+                                                                                color
+                                                                            ),
+                                                                            center = androidx.compose.ui.geometry.Offset.Unspecified,
+                                                                            radius = Float.POSITIVE_INFINITY
+                                                                        )
+                                                                    )
+                                                                    .background(
+                                                                        brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                                                                            colors = listOf(
+                                                                                Color.White.copy(alpha = 0.2f),
+                                                                                Color.Transparent
+                                                                            ),
+                                                                            start = androidx.compose.ui.geometry.Offset(0f, 0f),
+                                                                            end = androidx.compose.ui.geometry.Offset(100f, 100f)
+                                                                        )
+                                                                    )
+                                                                    .clickable {
+                                                                        viewModel.setThemeColorIndex(index)
+                                                                        viewModel.setMd3CustomColorHex(formatMd3CustomColorHex(color))
+                                                                    },
+                                                                contentAlignment = Alignment.Center
+                                                            ) {
+                                                                androidx.compose.animation.AnimatedVisibility(
+                                                                    visible = isSelected,
+                                                                    enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.scaleIn(),
+                                                                    exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.scaleOut()
+                                                                ) {
+                                                                    AppIcon(
+                                                                        Icons.Outlined.Check,
+                                                                        contentDescription = null,
+                                                                        tint = Color.White,
+                                                                        modifier = Modifier.size(18.dp)
+                                                                    )
+                                                                }
+                                                            }
+                                                            Spacer(modifier = Modifier.height(8.dp))
+                                                            AppText(
+                                                                text = ThemeColorNames.getOrElse(index) { "" },
+                                                                style = MaterialTheme.typography.labelSmall,
+                                                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                                                maxLines = 1
+                                                            )
+                                                        }
+                                                    }
+                                                    if (rowColors.size < 5) {
+                                                        repeat(5 - rowColors.size) {
+                                                            Spacer(modifier = Modifier.weight(1f))
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        AppPreferenceDivider()
+                        ThemePresetChoiceSetting(
+                            icon = rememberSettingsSemanticIcon(SettingsIconRole.COLOR_STYLE),
+                            title = "色彩风格",
+                            selectedValue = state.colorStyle,
+                            options = colorStyleOptions,
+                            onSelectionChange = viewModel::setThemeColorStyle,
+                            iconTint = iOSPurple
+                        )
+
+                        AppPreferenceDivider()
+                        ThemePresetChoiceSetting(
+                            icon = rememberSettingsSemanticIcon(SettingsIconRole.COLOR_SPEC),
+                            title = "色彩标准",
+                            selectedValue = state.colorSpec,
+                            options = colorSpecOptions,
+                            onSelectionChange = viewModel::setThemeColorSpec,
+                            iconTint = iOSBlue
+                        )
+                    }
+                }
+            }
+        }
+
+        // ========== 表面与效果 ==========
+        item(key = "appearance_group_surface_effects_title") {
+            Box(modifier = Modifier.entrance()) {
+                AppPreferenceSectionTitle("表面与效果")
+            }
+        }
+        item(key = AppearanceSettingsGroupKeys.SURFACE_AND_EFFECTS) {
+            Box(modifier = Modifier.entrance()) {
+                AppPreferenceGroup {
+                    AppSwitchPreference(
+                        icon = rememberSettingsSemanticIcon(SettingsIconRole.ANDROID_LIQUID_GLASS),
+                        title = "安卓原生液态玻璃",
+                        subtitle = if (isLiquidGlassAvailable) {
+                            "全局开启后，顶部 Dock、搜索框、底栏、分段控件与评论区统一复用底栏液态玻璃材质"
+                        } else {
+                            "当前 Android 版本暂不支持液态玻璃效果"
+                        },
+                        checked = state.androidNativeLiquidGlassEnabled,
+                        onCheckedChange = { viewModel.toggleAndroidNativeLiquidGlass(it) },
+                        enabled = isLiquidGlassAvailable,
+                        iconTint = iOSBlue
+                    )
+                }
+            }
+        }
+
+        // ========== 文字与显示 ==========
+        item(key = "appearance_group_text_display_title") {
+            Box(modifier = Modifier.entrance()) {
+                AppPreferenceSectionTitle("文字与显示")
+            }
+        }
+        item(key = AppearanceSettingsGroupKeys.TEXT_AND_DISPLAY) {
+            Box(modifier = Modifier.entrance()) {
+                AppPreferenceGroup {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        SettingsSingleChoicePreference(
+                            title = "字体大小",
+                            subtitle = "仅调整应用内文字比例",
+                            options = resolveAppFontSizeSegmentOptions(),
+                            selectedValue = state.appFontSizePreset,
+                            onSelectionChange = viewModel::setAppFontSizePreset,
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                        AppPreferenceDivider()
+                        AppPreference(
+                            icon = rememberSettingsSemanticIcon(SettingsIconRole.FONT_FILE),
+                            title = "应用字体",
+                            subtitle = if (state.appFontDisplayName.isBlank()) {
+                                "使用系统默认字体，或从本地导入 .ttf / .otf / .ttc"
+                            } else {
+                                "当前：${state.appFontDisplayName}"
+                            },
+                            value = if (state.appFontDisplayName.isBlank()) "默认" else "更换",
+                            onClick = {
+                                fontPickerLauncher.launch(arrayOf("*/*"))
+                            },
+                            iconTint = iOSPurple
+                        )
+
+                        AnimatedVisibility(
+                            visible = state.appFontFileName.isNotBlank(),
+                            enter = expandVertically() + fadeIn(),
+                            exit = shrinkVertically() + fadeOut()
+                        ) {
+                            Column {
+                                AppPreferenceDivider()
+                                AppPreference(
+                                    icon = rememberSettingsSemanticIcon(SettingsIconRole.REPLAY_ONBOARDING),
+                                    title = "恢复默认字体",
+                                    subtitle = "移除已导入字体文件，立即回到系统字体",
+                                    onClick = {
+                                        deleteStoredAppFont(context, state.appFontFileName)
+                                        viewModel.clearAppFontFile()
+                                        Toast.makeText(context, "已恢复默认字体", Toast.LENGTH_SHORT).show()
+                                    },
+                                    iconTint = iOSOrange,
+                                    showChevron = false
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                        AppPreferenceDivider()
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        SettingsSingleChoicePreference(
+                            title = "界面缩放",
+                            subtitle = "调整列表、卡片与控件的整体密度",
+                            options = resolveAppUiScaleSegmentOptions(),
+                            selectedValue = state.appUiScalePreset,
+                            onSelectionChange = viewModel::setAppUiScalePreset,
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                        AppPreferenceDivider()
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        AppSwitchPreference(
+                            icon = rememberSettingsSemanticIcon(SettingsIconRole.DISPLAY_STYLE),
+                            title = "应用显示缩放（高级）",
+                            subtitle = resolveDpiOverrideSubtitle(
+                                systemDensityDpi = displayMetricsSnapshot.systemDensityDpi,
+                                systemSmallestWidthDp = displayMetricsSnapshot.systemSmallestWidthDp,
+                                currentOverridePercent = state.appDpiOverridePercent
+                            ),
+                            checked = state.appDpiOverridePercent > 0,
+                            onCheckedChange = { enabled ->
+                                viewModel.setAppDpiOverridePercent(
+                                    if (enabled) DEFAULT_APP_DPI_OVERRIDE_PERCENT else 0
+                                )
+                            },
+                            iconTint = iOSTeal
+                        )
+
+                        AnimatedVisibility(
+                            visible = state.appDpiOverridePercent > 0,
+                            enter = androidx.compose.animation.expandVertically() + androidx.compose.animation.fadeIn(),
+                            exit = androidx.compose.animation.shrinkVertically() + androidx.compose.animation.fadeOut()
+                        ) {
+                            Column(modifier = Modifier.padding(top = 16.dp)) {
+                                SettingsSingleChoicePreference(
+                                    title = "显示缩放",
+                                    subtitle = "只调整 BiliPai 内文字和控件的整体大小，不修改系统显示设置",
+                                    options = resolveAppDpiOverrideSegmentOptions(),
+                                    selectedValue = resolveDisplayedAppDpiPercent(state.appDpiOverridePercent),
+                                    onSelectionChange = { percent ->
+                                        viewModel.setAppDpiOverridePercent(percent)
+                                    }
+                                )
+
+                                Spacer(modifier = Modifier.height(16.dp))
+                                AppText(
+                                    text = resolveDisplayMetricsSummary(displayMetricsSnapshot),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                        AppPreferenceDivider()
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        SettingsSingleChoicePreference(
+                            title = appLanguageTitle,
+                            subtitle = appLanguageSubtitle,
+                            options = appLanguageOptions,
+                            selectedValue = state.appLanguage,
+                            onSelectionChange = onAppLanguageChange,
+                        )
+                    }
+                }
+            }
+        }
+
+        // ========== 高级外观覆盖 ==========
+        item(key = "appearance_group_advanced_overrides_title") {
+            Box(modifier = Modifier.entrance()) {
+                AppPreferenceSectionTitle("高级外观覆盖")
+            }
+        }
+        item(key = AppearanceSettingsGroupKeys.ADVANCED_OVERRIDES) {
+            Box(modifier = Modifier.entrance()) {
+                AppPreferenceGroup {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        SettingsSingleChoicePreference(
+                            title = "图标样式",
+                            subtitle = "主题色容器：图标置于主题色圆角容器内；MD3 官方推荐：onSurfaceVariant 单色图标（全局生效）",
+                            options = resolveAppIconStyleOptions(),
+                            selectedValue = state.appIconStyle,
+                            onSelectionChange = viewModel::setAppIconStyle,
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                        AppPreferenceDivider()
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        SettingsSingleChoicePreference(
+                            title = "列表条目样式",
+                            subtitle = "自定义条目：圆角图标容器；原生组件：各预设原生条目（MIUIX/MD3 均可选用）",
+                            options = resolveAppListItemStyleOptions(),
+                            selectedValue = state.appListItemStyle,
+                            onSelectionChange = viewModel::setAppListItemStyle,
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                        AppPreferenceDivider()
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        SettingsSingleChoicePreference(
+                            title = "单选项展示方式",
+                            subtitle = "跟随选项弹出与截图一致；也可切回居中弹窗",
+                            options = singleChoicePresentationOptions,
+                            selectedValue = singleChoicePresentation,
+                            onSelectionChange = { presentation ->
+                                scope.launch {
+                                    SettingsManager.setSingleChoicePresentation(
+                                        context = context,
+                                        presentation = presentation,
+                                    )
+                                }
+                            },
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
                         AppPreferenceDivider()
                         AppSwitchPreference(
                             icon = rememberSettingsSemanticIcon(SettingsIconRole.ADVANCED_COLOR),
@@ -719,342 +1026,33 @@ fun AppearanceSettingsContent(
                             )
                         }
 
-                        AppPreferenceDivider()
-	                        ThemePresetChoiceSetting(
-	                            icon = rememberSettingsSemanticIcon(SettingsIconRole.COLOR_STYLE),
-                            title = "色彩风格",
-                            selectedValue = state.colorStyle,
-                            options = colorStyleOptions,
-                            onSelectionChange = viewModel::setThemeColorStyle,
-                            iconTint = iOSPurple
-                        )
-
-                        AppPreferenceDivider()
-	                        ThemePresetChoiceSetting(
-	                            icon = rememberSettingsSemanticIcon(SettingsIconRole.COLOR_SPEC),
-                            title = "色彩标准",
-                            selectedValue = state.colorSpec,
-                            options = colorSpecOptions,
-                            onSelectionChange = viewModel::setThemeColorSpec,
-                            iconTint = iOSBlue
-                        )
-
-                        // 主题色选择 (仅当动态取色关闭时显示)
-                        androidx.compose.animation.AnimatedVisibility(
-                            visible = showThemeColorPicker,
-                            enter =   androidx.compose.animation.expandVertically() +   androidx.compose.animation.fadeIn(),
-                            exit =   androidx.compose.animation.shrinkVertically() +   androidx.compose.animation.fadeOut()
-	                        ) {
-	                            Column(modifier = Modifier.padding(top = 16.dp)) {
-	                                AppPreferenceDivider()
-		                                AppPreference(
-		                                    icon = rememberSettingsSemanticIcon(SettingsIconRole.THEME_COLOR_PICKER),
-		                                    title = "主题色：$selectedThemeColorName",
-	                                    subtitle = if (themeColorPaletteExpanded) {
-	                                        "当前 ${state.md3CustomColorHex}；点按收起色板"
-	                                    } else {
-	                                        "当前 ${state.md3CustomColorHex}；点按展开预设色板"
-	                                    },
-	                                    value = if (themeColorPaletteExpanded) "收起" else "展开",
-	                                    onClick = { themeColorPaletteExpanded = !themeColorPaletteExpanded },
-	                                    iconTint = selectedCustomThemeColor,
-	                                )
-
-	                                AnimatedVisibility(
-	                                    visible = themeColorPaletteExpanded,
-	                                    enter = expandVertically() + fadeIn(),
-	                                    exit = shrinkVertically() + fadeOut(),
-	                                ) {
-	                                    Column(modifier = Modifier.padding(top = 12.dp)) {
-                                
-	                                //  [新增] 实时主题色预览
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(bottom = 24.dp)
-                                        .height(140.dp)
-                                        .clip(AppShapes.container(ContainerLevel.Sheet))
-                                        .background(
-                                            brush = androidx.compose.ui.graphics.Brush.verticalGradient(
-                                                colors = listOf(
-                                                    selectedCustomThemeColor.copy(alpha = 0.15f),
-                                                    selectedCustomThemeColor.copy(alpha = 0.05f)
-                                                )
-                                            )
-                                        )
-                                        .border(
-                                            width = 1.dp,
-                                            color = selectedCustomThemeColor.copy(alpha = 0.3f),
-                                            shape = AppShapes.borderedContainer(ContainerLevel.Sheet)
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        // 模拟应用图标/Logo
-                                        Box(
-                                            modifier = Modifier
-                                                .size(60.dp)
-                                                .padding(bottom = 12.dp)
-                                                .background(
-                                                    brush = androidx.compose.ui.graphics.Brush.linearGradient(
-                                                        colors = listOf(
-                                                            selectedCustomThemeColor,
-                                                            selectedCustomThemeColor.copy(alpha = 0.8f)
-                                                        )
-                                                    ),
-                                                    shape = AppShapes.container(ContainerLevel.Dialog)
-                                                ),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            AppIcon(
-                                                Icons.Filled.PlayArrow,
-                                                contentDescription = null,
-                                                tint = Color.White,
-                                                modifier = Modifier.size(32.dp)
-                                            )
-                                        }
-                                        
-                                        // 当前选中颜色名称
-                                        AppText(
-                                            text = state.md3CustomColorHex,
-                                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
-                                        AppText(
-                                            text = "正在预览自定义 MD3 主题色",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
-
-                                //  [Redesign] Theme Color Grid - Strict 2 Rows x 5 Columns
-                                val spacing = 12.dp
-                                
-                                Column(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalArrangement = Arrangement.spacedBy(16.dp) // 增加行间距以容纳文字
-                                ) {
-                                    ThemeColors.chunked(5).forEach { rowColors ->
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.spacedBy(spacing)
-                                        ) {
-                                            rowColors.forEach { color ->
-                                                val index = ThemeColors.indexOf(color)
-                                                val isSelected = selectedCustomThemeColor == color
-                                                
-                                                Column(
-                                                    modifier = Modifier.weight(1f),
-                                                    horizontalAlignment = Alignment.CenterHorizontally
-                                                ) {
-                                                    // 选中状态动画
-                                                    val scale by androidx.compose.animation.core.animateFloatAsState(
-                                                        targetValue = if (isSelected) 1.1f else 1.0f,
-                                                        label = "scale",
-                                                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
-                                                    )
-                                                    
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .aspectRatio(1f) // Ensure square aspect ratio for perfect circles
-                                                            .graphicsLayer {
-                                                                scaleX = scale
-                                                                scaleY = scale
-                                                            }
-                                                            // 选中时的外光环 (圆形)
-                                                            .border(
-                                                                width = if (isSelected) 2.dp else 0.dp,
-                                                                color = if (isSelected) color.copy(alpha = 0.5f) else Color.Transparent,
-                                                                shape = CircleShape
-                                                            )
-                                                            .padding(3.dp) // 光环与色块的间距
-                                                            .clip(CircleShape) // 裁剪为圆形
-                                                            .background(
-                                                                brush = androidx.compose.ui.graphics.Brush.radialGradient(
-                                                                    colors = listOf(
-                                                                        color.copy(alpha = 0.9f), // 中心稍亮
-                                                                        color // 边缘原色
-                                                                    ),
-                                                                    center = androidx.compose.ui.geometry.Offset.Unspecified,
-                                                                    radius = Float.POSITIVE_INFINITY
-                                                                )
-                                                            )
-                                                            // 添加个内部高光，增加球体质感
-                                                            .background(
-                                                                brush = androidx.compose.ui.graphics.Brush.linearGradient(
-                                                                    colors = listOf(
-                                                                        Color.White.copy(alpha = 0.2f),
-                                                                        Color.Transparent
-                                                                    ),
-                                                                    start = androidx.compose.ui.geometry.Offset(0f, 0f),
-                                                                    end = androidx.compose.ui.geometry.Offset(100f, 100f)
-                                                                )
-                                                            )
-                                                            .clickable {
-                                                                viewModel.setThemeColorIndex(index)
-                                                                viewModel.setMd3CustomColorHex(formatMd3CustomColorHex(color))
-                                                            },
-                                                        contentAlignment = Alignment.Center
-                                                    ) {
-                                                        androidx.compose.animation.AnimatedVisibility(
-                                                            visible = isSelected,
-                                                            enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.scaleIn(),
-                                                            exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.scaleOut()
-                                                        ) {
-                                                            AppIcon(
-                                                                Icons.Outlined.Check,
-                                                                contentDescription = null,
-                                                                tint = Color.White,
-                                                                modifier = Modifier.size(18.dp)
-                                                            )
-                                                        }
-                                                    }
-                                                    
-                                                    // 颜色名称
-                                                    Spacer(modifier = Modifier.height(8.dp))
-                                                    AppText(
-                                                        text = ThemeColorNames.getOrElse(index) { "" },
-                                                        style = MaterialTheme.typography.labelSmall,
-                                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                                        maxLines = 1
-                                                    )
-                                                }
-                                            }
-                                            
-                                            // Fill empty spots if last row has fewer than 5 items
-                                            if (rowColors.size < 5) {
-                                                repeat(5 - rowColors.size) {
-                                                    Spacer(modifier = Modifier.weight(1f))
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        item {
-            Box(modifier = Modifier.entrance()) {
-                AppPreferenceSectionTitle("字体与密度")
-            }
-        }
-        item {
-            Box(modifier = Modifier.entrance()) {
-                AppPreferenceGroup {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        SettingsSingleChoicePreference(
-                            title = "字体大小：${state.appFontSizePreset.label}",
-                            subtitle = "仅调整应用内文字比例",
-                            options = resolveAppFontSizeSegmentOptions(),
-                            selectedValue = state.appFontSizePreset,
-                            onSelectionChange = { preset ->
-                                viewModel.setAppFontSizePreset(preset)
-                            }
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-                        AppPreferenceDivider()
-	                        AppPreference(
-	                            icon = rememberSettingsSemanticIcon(SettingsIconRole.FONT_FILE),
-                            title = "应用字体",
-                            subtitle = if (state.appFontDisplayName.isBlank()) {
-                                "使用系统默认字体，或从本地导入 .ttf / .otf / .ttc"
-                            } else {
-                                "当前：${state.appFontDisplayName}"
-                            },
-                            value = if (state.appFontDisplayName.isBlank()) "默认" else "更换",
-                            onClick = {
-                                fontPickerLauncher.launch(arrayOf("*/*"))
-                            },
-                            iconTint = iOSPurple
-                        )
-
+                        // D2：恢复主题推荐——用户主动操作，仅清除视觉覆盖字段并恢复 AUTO，
+                        // 不改变主题选择、明暗模式、语言、字号等业务偏好；无覆盖时不显示。
                         AnimatedVisibility(
-                            visible = state.appFontFileName.isNotBlank(),
+                            visible = hasAppearanceOverrides,
                             enter = expandVertically() + fadeIn(),
                             exit = shrinkVertically() + fadeOut()
                         ) {
                             Column {
                                 AppPreferenceDivider()
-	                                AppPreference(
-	                                    icon = rememberSettingsSemanticIcon(SettingsIconRole.REPLAY_ONBOARDING),
-                                    title = "恢复默认字体",
-                                    subtitle = "移除已导入字体文件，立即回到系统字体",
+                                AppPreference(
+                                    icon = Icons.Outlined.Restore,
+                                    title = "恢复主题推荐",
+                                    subtitle = "仅清除图标样式、列表条目、单选呈现与高级配色覆盖，不影响主题、明暗、语言与字体",
+                                    showChevron = false,
                                     onClick = {
-                                        deleteStoredAppFont(context, state.appFontFileName)
-                                        viewModel.clearAppFontFile()
-                                        Toast.makeText(context, "已恢复默认字体", Toast.LENGTH_SHORT).show()
+                                        viewModel.setAppIconStyle(AppIconStyle.AUTO)
+                                        viewModel.setAppListItemStyle(AppListItemStyle.AUTO)
+                                        scope.launch {
+                                            SettingsManager.setSingleChoicePresentation(
+                                                context,
+                                                AppSingleChoicePresentation.WINDOW_POPUP,
+                                            )
+                                            SettingsManager.setThemeRoleOverrides(context, ThemeRoleOverrides())
+                                        }
+                                        Toast.makeText(context, "已恢复主题推荐", Toast.LENGTH_SHORT).show()
                                     },
-                                    iconTint = iOSOrange,
-                                    showChevron = false
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-                        AppPreferenceDivider()
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        SettingsSingleChoicePreference(
-                            title = "界面缩放：${state.appUiScalePreset.label}",
-                            subtitle = "调整列表、卡片与控件的整体密度",
-                            options = resolveAppUiScaleSegmentOptions(),
-                            selectedValue = state.appUiScalePreset,
-                            onSelectionChange = { preset ->
-                                viewModel.setAppUiScalePreset(preset)
-                            }
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-                        AppPreferenceDivider()
-                        Spacer(modifier = Modifier.height(8.dp))
-
-	                        AppSwitchPreference(
-	                            icon = rememberSettingsSemanticIcon(SettingsIconRole.DISPLAY_STYLE),
-                            title = "应用显示缩放（高级）",
-                            subtitle = resolveDpiOverrideSubtitle(
-                                systemDensityDpi = displayMetricsSnapshot.systemDensityDpi,
-                                systemSmallestWidthDp = displayMetricsSnapshot.systemSmallestWidthDp,
-                                currentOverridePercent = state.appDpiOverridePercent
-                            ),
-                            checked = state.appDpiOverridePercent > 0,
-                            onCheckedChange = { enabled ->
-                                viewModel.setAppDpiOverridePercent(
-                                    if (enabled) DEFAULT_APP_DPI_OVERRIDE_PERCENT else 0
-                                )
-                            },
-                            iconTint = iOSTeal
-                        )
-
-                        AnimatedVisibility(
-                            visible = state.appDpiOverridePercent > 0,
-                            enter = androidx.compose.animation.expandVertically() + androidx.compose.animation.fadeIn(),
-                            exit = androidx.compose.animation.shrinkVertically() + androidx.compose.animation.fadeOut()
-                        ) {
-                            Column(modifier = Modifier.padding(top = 16.dp)) {
-                                SettingsSingleChoicePreference(
-                                    title = "显示缩放：${resolveDisplayedAppDpiPercent(state.appDpiOverridePercent)}%",
-                                    subtitle = "只调整 BiliPai 内文字和控件的整体大小，不修改系统显示设置",
-                                    options = resolveAppDpiOverrideSegmentOptions(),
-                                    selectedValue = resolveDisplayedAppDpiPercent(state.appDpiOverridePercent),
-                                    onSelectionChange = { percent ->
-                                        viewModel.setAppDpiOverridePercent(percent)
-                                    }
-                                )
-
-                                Spacer(modifier = Modifier.height(16.dp))
-                                AppText(
-                                    text = resolveDisplayMetricsSummary(displayMetricsSnapshot),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    iconTint = MaterialTheme.colorScheme.primary,
                                 )
                             }
                         }
@@ -1062,14 +1060,14 @@ fun AppearanceSettingsContent(
                 }
             }
         }
-        
+
         //  启动画面
-        item { 
+        item(key = "appearance_group_splash_title") { 
             Box(modifier = Modifier.entrance()) {
                 AppPreferenceSectionTitle("启动画面")
             }
         }
-        item {
+        item(key = AppearanceSettingsGroupKeys.SPLASH) {
             Box(modifier = Modifier.entrance()) {
                 AppPreferenceGroup {
                     val isSplashEnabled by com.android.purebilibili.core.store.SettingsManager.isSplashEnabled(context).collectAsStateWithLifecycle(initialValue = false)
@@ -1263,12 +1261,12 @@ fun AppearanceSettingsContent(
         }
         
         //  个性化
-        item { 
+        item(key = "appearance_group_personalization_title") { 
             Box(modifier = Modifier.entrance()) {
                 AppPreferenceSectionTitle("开屏与图标")
             }
         }
-        item {
+        item(key = AppearanceSettingsGroupKeys.PERSONALIZATION) {
             Box(modifier = Modifier.entrance()) {
                 AppPreferenceGroup {
                     // 图标设置
@@ -1303,12 +1301,12 @@ fun AppearanceSettingsContent(
 
         if (contentMode == AppearanceSettingsContentMode.HOME) {
             //  首页与列表
-            item { 
+            item(key = "appearance_group_home_overview_title") { 
                 Box(modifier = Modifier.entrance()) {
                     AppPreferenceSectionTitle("首页与列表")
                 }
             }
-            item {
+            item(key = AppearanceSettingsGroupKeys.HOME_OVERVIEW) {
                 Box(modifier = Modifier.entrance()) {
                     AppPreferenceGroup {
                         val displayMode = state.displayMode
@@ -1328,7 +1326,7 @@ fun AppearanceSettingsContent(
                         
                         AppPreferenceDivider(modifier = Modifier.padding(start = 16.dp))
                         SettingsSingleChoicePreference(
-                            title = "列表顶部栏：${commonListHeaderCollapseMode.label}",
+                            title = "列表顶部栏",
                             subtitle = commonListHeaderCollapseMode.description,
                             options = commonListHeaderCollapseOptions,
                             selectedValue = commonListHeaderCollapseMode,
@@ -1399,7 +1397,7 @@ fun AppearanceSettingsContent(
 
                         AppPreferenceDivider(modifier = Modifier.padding(start = 16.dp))
                         SettingsSingleChoicePreference(
-                            title = "卡片封面比例：${homeFeedCardStyle.label}",
+                            title = "卡片封面比例",
                             subtitle = homeFeedCardStyle.subtitle + "（首页、搜索、列表、相关推荐等同步）",
                             options = HomeFeedCardStyle.entries.map {
                                 AppSegmentOption(it, it.label)
@@ -1413,7 +1411,7 @@ fun AppearanceSettingsContent(
                         )
                         AppPreferenceDivider(modifier = Modifier.padding(start = 16.dp))
                         SettingsSingleChoicePreference(
-                            title = "首页视频时长：${homeDurationStyle.label}",
+                            title = "首页视频时长",
                             subtitle = "可显示在统计行、仅显示无底色文字或完全隐藏",
                             options = HomeDurationStyle.entries.map {
                                 AppSegmentOption(it, it.label)
@@ -2072,65 +2070,29 @@ private fun Md3ColorPickerSliderFrame(
     }
 }
 
-@Composable
-private fun AppearanceUiPresetDescriptionCard(
-    title: String,
-    summary: String
-) {
-    val icon = rememberAppSparklesIcon()
-    val containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.44f)
-    val contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-    val borderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)
-
-    AdaptivePlainTooltipBox(text = summary) {
-        AppSurface(
-            shape = AppShapes.borderedContainer(ContainerLevel.Dialog),
-            color = containerColor,
-            contentColor = contentColor,
-            tonalElevation = 0.dp,
-            border = androidx.compose.foundation.BorderStroke(1.dp, borderColor)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.Top
-            ) {
-                AppSurface(
-                    modifier = Modifier.size(34.dp),
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f),
-                    contentColor = MaterialTheme.colorScheme.primary
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        AppIcon(
-                            imageVector = icon,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    AppText(
-                        text = title,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    AppText(
-                        text = summary,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = contentColor.copy(alpha = 0.82f)
-                    )
-                }
-            }
+/**
+ * 按稳定 item key 定位（P3 前置条件：替代固定 LazyColumn 索引表）。
+ *
+ * 从顶部逐屏探测 key 所在 index 后再动画滚动到位；内容数量有限（约 8-10 个
+ * 顶层 item），探测次数有上限兜底。条件项显隐、HOME 内容模式与 840dp 双栏
+ * 详情面板下 item key 不变，均定位到同一语义目标。
+ */
+private suspend fun LazyListState.animateScrollToItemByKey(key: Any) {
+    scrollToItem(0)
+    repeat(PROBE_PAGE_LIMIT) {
+        val found = layoutInfo.visibleItemsInfo.firstOrNull { it.key == key }
+        if (found != null) {
+            animateScrollToItem(found.index)
+            return
         }
+        val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull() ?: return
+        val lastIndex = layoutInfo.totalItemsCount - 1
+        if (lastVisible.index >= lastIndex) return
+        scrollToItem((lastVisible.index + 1).coerceAtMost(lastIndex))
     }
 }
+
+private const val PROBE_PAGE_LIMIT = 64
 
 internal fun restartApp(context: android.content.Context) {
     val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return
