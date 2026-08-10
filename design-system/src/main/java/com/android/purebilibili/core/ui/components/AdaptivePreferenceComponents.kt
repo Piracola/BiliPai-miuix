@@ -2,7 +2,6 @@ package com.android.purebilibili.core.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -164,7 +163,7 @@ internal fun resolveAdaptiveListComponentVisualSpec(
             gridCornerRadiusDp = chromeTokens.containerCornerRadiusDp,
             searchBarCornerRadiusDp = compactChrome.primaryCornerRadiusDp,
             searchBarHeightDp = compactChrome.primaryHeightDp,
-            dividerThicknessDp = 0f,
+            dividerThicknessDp = 1f,
             dividerStartIndentDp = chromeTokens.denseHorizontalSpacingDp
         )
     }
@@ -216,7 +215,7 @@ internal fun resolveAdaptiveGroupContainerColor(
 ): Color {
     val resolvedColor = when (uiStyle) {
         AppUiStyle.MIUIX -> colorScheme.surfaceContainer
-        AppUiStyle.MATERIAL3 -> colorScheme.surfaceContainerLow
+        AppUiStyle.MATERIAL3 -> colorScheme.surfaceContainer
     }
     return resolveGlobalWallpaperListContainerColor(
         containerColor = resolvedColor,
@@ -557,10 +556,7 @@ fun AdaptivePreferenceGroupRenderer(
         color = resolvedContainerColor,
         shadowElevation = 0.dp,
         tonalElevation = visualSpec.groupTonalElevationDp.dp,
-        border = androidx.compose.foundation.BorderStroke(
-            0.8.dp,
-            colorScheme.outlineVariant.copy(alpha = 0.6f)
-        )
+        border = border,
     ) {
         Column(content = content)
     }
@@ -1481,8 +1477,17 @@ fun AdaptivePreferenceDividerRenderer(
     modifier: Modifier = Modifier,
     startIndent: androidx.compose.ui.unit.Dp = 66.dp
 ) {
-    // 迁移后所有样式统一使用 0.dp 分隔线，渲染器保持空操作。
-    return
+    val uiStyle = LocalAppUiStyle.current
+    val visualSpec = remember(uiStyle) {
+        resolveAdaptiveListComponentVisualSpec(uiStyle)
+    }
+    if (visualSpec.dividerThicknessDp > 0f) {
+        HorizontalDivider(
+            modifier = modifier.padding(start = startIndent),
+            thickness = visualSpec.dividerThicknessDp.dp,
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+        )
+    }
 }
 
 

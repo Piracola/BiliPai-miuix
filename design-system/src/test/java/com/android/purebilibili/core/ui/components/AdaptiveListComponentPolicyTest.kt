@@ -27,7 +27,7 @@ class AdaptiveListComponentPolicyTest {
         assertEquals(22, spec.iconGlyphSizeDp)
         assertEquals(24, spec.groupCornerRadiusDp)
         assertEquals(0.14f, spec.iconBackgroundAlpha, 0.0001f)
-        assertEquals(0f, spec.dividerThicknessDp, 0.0001f)
+        assertEquals(1f, spec.dividerThicknessDp, 0.0001f)
         assertEquals(18, spec.dividerStartIndentDp)
         assertEquals(3, spec.groupTonalElevationDp)
     }
@@ -264,7 +264,7 @@ class AdaptiveListComponentPolicyTest {
         )
 
         assertEquals(
-            colorScheme.surfaceContainerLow,
+            colorScheme.surfaceContainer,
             resolveAdaptiveGroupContainerColor(
                 uiStyle = AppUiStyle.MATERIAL3,
                 colorScheme = colorScheme,
@@ -334,7 +334,7 @@ class AdaptiveListComponentPolicyTest {
             )
         )
         assertEquals(
-            colorScheme.surfaceContainerLow.copy(alpha = 0.62f),
+            colorScheme.surfaceContainer.copy(alpha = 0.62f),
             resolveAdaptiveGroupContainerColor(
                 uiStyle = AppUiStyle.MATERIAL3,
                 colorScheme = colorScheme,

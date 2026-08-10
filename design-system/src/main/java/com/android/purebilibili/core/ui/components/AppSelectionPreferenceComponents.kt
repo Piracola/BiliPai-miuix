@@ -43,6 +43,8 @@ import androidx.compose.ui.window.DialogProperties
 import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.ui.ContainerLevel
+import com.android.purebilibili.core.theme.AppUiStyle
+import com.android.purebilibili.core.theme.LocalAppUiStyle
 import com.android.purebilibili.core.ui.appContentDialogWidth
 import com.android.purebilibili.core.ui.resolveAppContentDialogLayoutPolicy
 import com.android.purebilibili.core.ui.resolveAppContentDialogProperties
@@ -58,6 +60,22 @@ enum class AppSingleChoicePresentation(val storageValue: String) {
         fun fromStorageValue(value: String?): AppSingleChoicePresentation =
             entries.firstOrNull { it.storageValue == value } ?: WINDOW_POPUP
     }
+}
+
+internal enum class AppSingleChoiceRenderer {
+    MIUIX_WINDOW_POPUP,
+    LIST_ITEM_DIALOG,
+}
+
+internal fun resolveAppSingleChoiceRenderer(
+    uiStyle: AppUiStyle,
+    presentation: AppSingleChoicePresentation,
+): AppSingleChoiceRenderer = if (
+    uiStyle == AppUiStyle.MATERIAL3 || presentation == AppSingleChoicePresentation.CENTERED_DIALOG
+) {
+    AppSingleChoiceRenderer.LIST_ITEM_DIALOG
+} else {
+    AppSingleChoiceRenderer.MIUIX_WINDOW_POPUP
 }
 
 val LocalAppSingleChoicePresentation = compositionLocalOf {
@@ -85,7 +103,11 @@ fun <T> AppSingleChoicePreference(
     dialogTitle: String = title,
     presentation: AppSingleChoicePresentation = LocalAppSingleChoicePresentation.current,
 ) {
-    if (presentation == AppSingleChoicePresentation.WINDOW_POPUP) {
+    val renderer = resolveAppSingleChoiceRenderer(
+        uiStyle = LocalAppUiStyle.current,
+        presentation = presentation,
+    )
+    if (renderer == AppSingleChoiceRenderer.MIUIX_WINDOW_POPUP) {
         val selectedIndex = options.indexOfFirst { it.value == selectedValue }.coerceAtLeast(0)
         val dropdownItems = remember(options) {
             options.map { option ->

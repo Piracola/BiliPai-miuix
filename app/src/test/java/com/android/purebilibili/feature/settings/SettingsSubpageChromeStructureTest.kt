@@ -75,6 +75,18 @@ class SettingsSubpageChromeStructureTest {
     }
 
     @Test
+    fun settingsSectionGroups_keepTheThemeResolvedCardPresentation() {
+        val source = loadSource(
+            "app/src/main/java/com/android/purebilibili/feature/settings/ui/SettingsSections.kt",
+        )
+
+        assertFalse(
+            source.contains("presentation = AppPreferenceGroupPresentation.FLAT"),
+            "业务设置分组不得绕过主题解析强制降级为扁平列表",
+        )
+    }
+
+    @Test
     fun detailPaneSuppressesSecondTopBar_inSplitLayout() {
         val scaffold = loadSource(
             "app/src/main/java/com/android/purebilibili/feature/settings/ui/SettingsPageScaffold.kt",

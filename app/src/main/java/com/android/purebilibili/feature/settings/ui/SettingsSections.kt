@@ -99,7 +99,6 @@ import com.android.purebilibili.core.ui.components.AppPreference as SettingClick
 import com.android.purebilibili.core.ui.common.rememberClipboardCopyHandler
 import com.android.purebilibili.core.ui.components.AppPreferenceDivider as SettingsDivider
 import com.android.purebilibili.core.ui.components.AppSliderDialogPreference as SettingSliderItem
-import com.android.purebilibili.core.ui.components.AppPreferenceGroupPresentation
 
 
 
@@ -117,9 +116,7 @@ private fun SettingsAdaptiveDivider() {
 private fun SettingsCardGroup(
     content: @Composable ColumnScope.() -> Unit
 ) {
-    SettingsGroup(
-        presentation = AppPreferenceGroupPresentation.FLAT,
-    ) {
+    SettingsGroup {
         content()
     }
 }

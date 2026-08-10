@@ -480,7 +480,7 @@ fun AppearanceSettingsContent(
         item(key = AppearanceSettingsGroupKeys.UI_AND_DARK) {
             Box(modifier = Modifier.entrance()) {
                 AppPreferenceGroup {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                    Column {
                         // 界面预设（标题不再拼接当前值，当前值由 trailing/选项弹层呈现）
                         SettingsSingleChoicePreference(
                             title = uiPresetTitle,
@@ -541,7 +541,7 @@ fun AppearanceSettingsContent(
         item(key = AppearanceSettingsGroupKeys.COLOR) {
             Box(modifier = Modifier.entrance()) {
                 AppPreferenceGroup {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                    Column {
                         SettingsSingleChoicePreference(
                             title = "MD3 颜色来源",
                             subtitle = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -822,7 +822,7 @@ fun AppearanceSettingsContent(
         item(key = AppearanceSettingsGroupKeys.TEXT_AND_DISPLAY) {
             Box(modifier = Modifier.entrance()) {
                 AppPreferenceGroup {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                    Column {
                         SettingsSingleChoicePreference(
                             title = "字体大小",
                             subtitle = "仅调整应用内文字比例",
@@ -953,7 +953,7 @@ fun AppearanceSettingsContent(
         item(key = AppearanceSettingsGroupKeys.ADVANCED_OVERRIDES) {
             Box(modifier = Modifier.entrance()) {
                 AppPreferenceGroup {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                    Column {
                         SettingsSingleChoicePreference(
                             title = "图标样式",
                             subtitle = "主题色容器：图标置于主题色圆角容器内；MD3 官方推荐：onSurfaceVariant 单色图标（全局生效）",
