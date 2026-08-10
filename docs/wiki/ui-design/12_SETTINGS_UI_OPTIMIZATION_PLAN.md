@@ -1,16 +1,25 @@
 # 12 设置页 UI 优化计划
 
 > 文档编号：UI-12<br>
-> 规范版本：1.1.0-draft<br>
+> 规范版本：1.2.0-draft<br>
 > 状态：草案<br>
 > 最后核对日期：2026-08-10<br>
-> 适用提交：146819292<br>
+> 适用提交：78e923f0f<br>
 > 维护角色：设置维护者、设计系统维护者、QA 维护者<br>
-> 相关文档：[设计方向](01_DIRECTION.md) · [主题规范](03_THEMES.md) · [设置页档案](pages/SETTINGS.md) · [差距台账](10_GAP_LEDGER.md)
+> 相关文档：[设计方向](01_DIRECTION.md) · [主题规范](03_THEMES.md) · [设置页档案](pages/SETTINGS.md) · [差距台账](10_GAP_LEDGER.md) · [变更日志](CHANGELOG.md)
+
+## 修订记录
+
+| 版本 | 日期 | 修订内容 | 依据 |
+|---|---|---|---|
+| 1.1.0-draft | 2026-08-10 | 首版：设置页双主题视觉合同与分阶段计划 | 双主题规范统一 |
+| 1.2.0-draft | 2026-08-10 | 评审修订：澄清目标架构、补齐搜索定位/平板/首页设置联动/恢复语义/验收缺口；P4 显式延期 | 评审结论与决策记录 |
 
 ## 初学者解释
 
 本计划把设置页从“同一套扁平列表换主题色”改为“一套设置语义、两套官方视觉语法”。实施时先建立可测试的视觉策略，再改共享外壳，最后以外观页为试点逐步迁移，避免一次改动所有设置页面。
+
+**本计划中的“目标架构”是逐步收敛的方向，不是当前代码的事实**：仓库现在没有统一的 `SettingsUiState` 或单一 Settings Screen，各设置页是独立 Screen + 各自 ViewModel/Store。实施时禁止为满足目标架构图新建全局状态层或统一 MVI 框架，只能在现有独立 Screen、ViewModel、`AppPreference*` 语义与纯 Policy 上渐进改造。
 
 ## 规范要求
 
@@ -40,6 +49,8 @@
 - `AppListItemStyle.AUTO` 当前为 Material 3 解析 `CUSTOM`、MIUIX 解析 `NATIVE`，与“两个主题默认均遵循官方设置行”目标不一致。
 
 ## 目标架构
+
+> 该图只描述最终收敛方向。当前不存在统一的 SettingsUiState 与单一 Screen；实现时必须复用现有独立 Screen、ViewModel 和 Policy，不得为满足此图新增全局状态层。
 
 ```mermaid
 flowchart TD
@@ -108,8 +119,9 @@ data class SettingsVisualPolicy(
 2. `AUTO/跟随预设` 在设置页解析为主题官方默认。
 3. 评估 `AppListItemStyle.AUTO -> NATIVE` 的全局影响；若影响非设置业务列表，则把官方默认限制在 Preference 范围，不机械修改所有列表。
 4. 保留显式 `CUSTOM/NATIVE` 和图标覆盖的持久化兼容。
+5. 必须新增一条“设置页之外 `AppListItemStyle.AUTO` 行为不变”的回归测试，把影响面锁死；不得只靠评审口头评估。
 
-**自动验证**：两主题策略参数、默认值、显式覆盖和非法值回退的纯 Kotlin 测试。
+**自动验证**：两主题策略参数、默认值、显式覆盖和非法值回退的纯 Kotlin 测试；非设置列表 AUTO 语义不变的回归测试。
 
 ### P2 共享设置页外壳
 
@@ -119,6 +131,7 @@ data class SettingsVisualPolicy(
 - `AppPreferenceComponents.kt`
 - `AdaptivePreferenceComponents.kt`
 - `AdaptiveChrome.kt` / `AppTopBar`
+- `SettingsTabletShell.kt` / 双栏详情面板契约
 
 **工作**：
 
@@ -127,29 +140,41 @@ data class SettingsVisualPolicy(
 3. Material 3 使用 Material TopAppBar、分组 surface 和单色图标。
 4. 统一内容最大宽度、屏幕边距、组间距和底部安全区。
 5. 保留 External/LazyColumn 两种 scroll host，不改变搜索定位和滚动所有权。
+6. **顶部栏能力确认（capability spike）**：`AppTopBarStyle.CENTERED` 在 MIUIX 分支当前与 `SMALL` 渲染同一 `MiuixSmallTopAppBar`，“MIUIX 居中标题”不是切换枚举即可完成。先确认现有 Miuix 组件是否提供居中或大标题变体；没有时再在 design-system 增加受控适配器，禁止在 feature 层自造顶部栏。
+7. **840dp 双栏顶部栏契约**：子页面 Screen 在 `SettingsTabletShell` 的详情面板（`rightPane`）内仍渲染自身 `SettingsPageScaffold` 顶栏，双顶栏由此而来。策略需要感知“是否处于双栏详情面板”：详情面板内抑制/降级 Scaffold 顶栏，仅保留一套顶部栏和一套详情表面。
 
-**风险**：共享 Scaffold 影响设置搜索、权限、播放、插件、备份等约 16 个入口。必须先完成策略测试，再迁移试点。
+**风险**：共享 Scaffold 影响设置搜索、权限、播放、插件、备份等约 16 个入口；`SettingsTabletShell` 不消费 Scaffold，需通过策略或面板上下文联动，不能只改壳。必须先完成策略测试，再迁移试点。
 
 ### P3 外观页试点
 
 **建议修改入口**：
 
-- `AppearanceSettingsScreen.kt`
+- `AppearanceSettingsScreen.kt`（含 `AppearanceSettingsContentMode.HOME` 共享路径）
 - `SettingsSelectionComponents.kt`
+- `SettingsSearchFocusPolicy.kt`（搜索定位映射）
 - 外观页相关 policy 与字符串资源
+
+**P3 前置条件（必须先行完成并测试）**：
+
+- 保持既有 focusId 字符串与搜索语义不变；将外观页搜索定位从固定 LazyColumn 位置索引改为“focusId → 稳定行/组 key”的声明式映射，滚动时按 key 求当前 index 定位。
+- 条件项显隐、`HOME` 内容模式和 840dp 双栏详情面板下都必须定位到同一语义目标。
+- 不得在重组后继续维护新的硬编码索引表。
 
 **工作**：
 
 1. 按五组信息架构拆分超长“显示模式”组。
 2. 标题不再拼接当前值；当前值只放 trailing、选中状态或选项弹层。
-3. 把“安卓原生 · Material 3/MIUIX”常驻说明卡改为简短 supporting text、tooltip 或一次性说明。
+3. 把“安卓原生 · Material 3/MIUIX”常驻说明卡降级为简短 supporting text 或问号提示（tooltip/一次性说明），保留关键信息但不占视觉层级（见决策记录 D3）。
 4. 将图标、列表条目、单选呈现和高级角色编辑移到“高级外观覆盖”。
 5. 颜色入口使用 swatch + 文本值；动态取色不可用时显示原因但不阻塞自定义色。
 6. 说明最多承担一个影响或限制，默认不超过两行。
+7. **首页设置联动**：`HomeSettingsScreen` 复用本 Screen（`contentMode = HOME`），五组重组、说明卡降级和 trailing 改动会同时作用于首页设置页；`HOME_OVERVIEW` 定位与 `resolveHomeSettingsScrollIndex` 必须纳入同样验证，不得只验收外观模式。
 
-**自动验证**：信息架构顺序、搜索 focusId 到目标组的映射、主题切换不重置状态、文案不重复当前值。
+**自动验证**：信息架构顺序、搜索 focusId 到目标组的稳定 key 映射（含条件项/Home/双栏三场景）、主题切换不重置状态、文案不重复当前值。
 
-### P4 其余设置页面
+### P4 其余设置页面（本次范围外，显式延期）
+
+**状态**：本阶段不在当前评审修订后的执行范围内；P1-P3 全部验证通过后另行开任务。
 
 **顺序**：设置首页/分类 → 搜索 → 播放/动画/权限 → 插件/备份/长尾工具。
 
@@ -157,7 +182,7 @@ data class SettingsVisualPolicy(
 
 1. 迁移标准组和标准行，删除页面私有的等价 padding/divider。
 2. 危险操作、外部链接、只读诊断和富编辑器保留明确领域变体。
-3. 840dp 双栏中只保留一套顶部栏和一套详情表面。
+3. 840dp 双栏中只保留一套顶部栏和一套详情表面（消费 P2 的面板契约）。
 4. 不在普通行中重复图标、当前值或组件实现说明。
 
 ### P5 验收与收尾
@@ -168,17 +193,22 @@ data class SettingsVisualPolicy(
 - `AdaptivePreference` 结构/策略测试。
 - `SettingsSubpageChromeStructureTest` 与文档结构测试。
 - `:design-system:compileDebugKotlin` 和 `:app:compileDebugKotlin`，按修改范围选择最小任务。
+- 非设置列表 `AppListItemStyle.AUTO` 行为不变的回归测试。
+
+**前置环境检查**：P1 开工前确认 GitHub Packages 的 MIUIX SNAPSHOT 依赖可解析（`compileDebugKotlin` 可成功拉取）；若返回 401，属于依赖认证问题，需先解决或记录阻塞，不得把该失败当作产品测试结果。
 
 **人工矩阵**：
 
 | 主题 | 宽度/模式 | 最小范围 |
 |---|---|---|
 | MIUIX | 360dp 浅/深/AMOLED | 设置首页、外观、播放、权限、搜索 |
-| MIUIX | 840dp 浅/深 | 双栏、切分类、返回、滚动状态 |
+| MIUIX | 840dp 浅/深 | 双栏、切分类、返回、滚动状态、详情面板仅一套顶栏 |
 | Material 3 | 360dp 浅/深 | 与 MIUIX 相同页面和设置项 |
-| Material 3 | 840dp 浅/深 | 双栏和长文案 |
+| Material 3 | 840dp 浅/深 | 双栏和长文案、深色 `surfaceContainer` 分组层级 |
 
 设备记录只写环境、步骤、预期和实际结果，不要求截图。
+
+**无障碍补项**：两主题抽读屏（TalkBack）检查外观页与搜索定位——读出标题、开关状态、当前值、禁用原因和选中分类，不只靠颜色表达状态。
 
 ## 里程碑与提交边界
 
@@ -190,6 +220,17 @@ data class SettingsVisualPolicy(
 | M3 | 外观页信息架构 | 其他设置页批量迁移 |
 | M4 | 每批 2-4 个设置页面 | 无关页面重构 |
 | M5 | 验收修复与文档收尾 | 新功能 |
+
+## 决策记录
+
+评审修订时由产品方拍板的决定，实施与验收必须遵守：
+
+| 编号 | 决策 | 内容 |
+|---|---|---|
+| D1 | 执行范围 | 本次只做 P1-P3（视觉策略、共享外壳、外观页试点）；P4 批量迁移显式延期，P1-P3 验证通过后另行开任务 |
+| D2 | 恢复主题推荐的语义 | “恢复主题推荐”是用户主动操作：仅清除视觉覆盖字段（图标样式、列表条目样式、单选呈现、高级颜色角色）并恢复 `AUTO`，不改变主题选择、明暗模式、语言、字号等业务偏好；主题切换绝不清除用户显式覆盖 |
+| D3 | 说明卡去向 | 外观页“界面预设”说明卡降级为小字说明或问号提示（tooltip/一次性说明），保留关键信息但不占视觉层级 |
+| D4 | 顶部栏目标 | 两主题分别使用官方顶部栏语法（MIUIX 居中标题 + 充足顶部留白、Material TopAppBar）；在未确认 Miuix 现有能力前不假定可枚举切换 |
 
 ## 代码映射
 
@@ -203,8 +244,8 @@ data class SettingsVisualPolicy(
 
 ## 当前差距
 
-P0 之外尚未修改生产 UI。现有实现具备双主题状态和底层组件能力，但 shared Scaffold、默认 Preference 策略、外观页信息架构与双主题验收证据仍未达到本计划目标。
+P0（规范基线）已随本次评审修订完成并通过文档结构测试；生产 UI 尚未修改。现有实现具备双主题状态和底层组件能力，但 shared Scaffold 仍强制 `FLAT/FILLED`、默认 Preference 策略、外观页信息架构与双主题验收证据仍未达到本计划目标。P1-P3 为本轮执行范围，P4 已显式延期。
 
 ## 验收方法
 
-每个阶段必须满足自己的退出条件，并在差距台账更新状态。只有当默认路径、显式高级覆盖、两主题、明暗模式、360/840dp、搜索定位和状态持久化均有证据时，设置页优化才能标为完成。
+每个阶段必须满足自己的退出条件，并在差距台账更新状态。P1-P3 全部通过后：默认路径、显式高级覆盖（D2 语义）、两主题、明暗模式、360/840dp（含详情面板单顶栏）、稳定 key 搜索定位（含条件项/HOME/双栏三场景）和状态持久化均有证据时，外观页试点才能标为完成；P4 另行开任务。

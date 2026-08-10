@@ -152,13 +152,13 @@
 | 领域 / 优先级 / 状态 | 设置/设计系统 / P1 / 待实施 |
 | 维护角色 | 设置维护者、设计系统维护者 |
 | 现状证据 | `SettingsPageScaffold` 无条件提供 `AppPreferenceGroupPresentation.FLAT` 与 `AppPreferenceIconTreatment.FILLED`；约 16 个设置入口复用该外壳 |
-| 目标 | 由纯 `SettingsVisualPolicy` 按 MIUIX/Material 3 解析顶部栏、分组、图标、divider、宽度和默认 Preference Renderer |
+| 目标 | 由纯 `SettingsVisualPolicy` 按 MIUIX/Material 3 解析顶部栏、分组、图标、divider、宽度和默认 Preference Renderer；覆盖双栏详情面板顶部栏契约（详情面板内仅一套顶栏） |
 | Why | 当前两主题只在局部控件和标题位置上不同，无法形成各自完整的官方设置页语法 |
-| 影响 | 设置首页、外观、播放、动画、权限、搜索、插件、备份等所有共享 Scaffold 页面 |
-| 修改入口 | `SettingsPageScaffold.kt`、`AppSemanticVisualPolicy.kt`、`AdaptivePreferenceComponents.kt`、`AppListItemPolicy.kt` |
-| 依赖 / 风险 | Scaffold 影响面大；必须先建立纯策略测试，不能直接全局翻转列表默认值 |
-| 实施步骤 | 建 policy → 测试双主题/覆盖 → Scaffold 消费 → 外观页试点 → 分批迁移 |
-| 自动验证 | policy 单测、Preference 结构测试、Scaffold 结构测试、最小模块编译 |
+| 影响 | 设置首页、外观、播放、动画、权限、搜索、插件、备份等所有共享 Scaffold 页面，以及 840dp 双栏详情面板 |
+| 修改入口 | `SettingsPageScaffold.kt`、`AppSemanticVisualPolicy.kt`、`AdaptivePreferenceComponents.kt`、`AppListItemPolicy.kt`、`AdaptiveChrome.kt`、`SettingsTabletShell.kt` 面板契约 |
+| 依赖 / 风险 | Scaffold 影响面大；必须先建立纯策略测试，不能直接全局翻转列表默认值。`AppTopBarStyle.CENTERED` 在 MIUIX 分支当前与 `SMALL` 渲染相同（能力缺口，需 capability spike）；`SettingsTabletShell` 不消费 Scaffold，需策略/面板上下文联动 |
+| 实施步骤 | 建 policy（含非设置列表 AUTO 行为不变的回归测试）→ 测试双主题/覆盖 → Scaffold 消费 → 顶部栏能力确认 → 双栏面板契约 → 外观页试点 → P4 分批迁移（显式延期） |
+| 自动验证 | policy 单测、Preference 结构测试、Scaffold 结构测试、非设置列表 AUTO 回归测试、最小模块编译 |
 | 人工验证 | 360/840dp，MIUIX/Material 3，浅/深，检查标题、分组、图标、长文案和返回 |
 
 ### UI-GAP-009：外观页信息架构与文案
@@ -168,13 +168,13 @@
 | 领域 / 优先级 / 状态 | 设置/内容设计 / P1 / 待实施 |
 | 维护角色 | 设置维护者、设计系统维护者 |
 | 现状证据 | “显示模式”组包含主题、玻璃、说明卡、明暗、图标、列表、弹层、语言、颜色和高级角色；大量手工 Spacer/Divider；标题与 trailing 重复当前值 |
-| 目标 | 重组为界面与明暗、颜色、表面与效果、文字与显示、高级外观覆盖五组；当前值只显示一次，说明最多承担一个影响或限制 |
+| 目标 | 重组为界面与明暗、颜色、表面与效果、文字与显示、高级外观覆盖五组；当前值只显示一次，说明最多承担一个影响或限制；按决策 D2/D3 定义恢复语义与说明卡降级 |
 | Why | 用户首先需要快速找到设置，而不是阅读设计系统实现说明；超长组降低扫读效率并让两主题视觉差异失焦 |
-| 影响 | `AppearanceSettingsScreen`、设置搜索 focusId/scroll index、字符串资源与高级覆盖入口 |
-| 修改入口 | `AppearanceSettingsScreen.kt`、`SettingsSelectionComponents.kt`、外观设置 policy/tests |
-| 依赖 / 风险 | 重组必须保持搜索定位、状态持久化、条件显示和主题切换滚动状态 |
-| 实施步骤 | 建分组清单 → 更新搜索映射 → 迁移标准行 → 收起高级项 → 文案审查 |
-| 自动验证 | 信息顺序、搜索定位、条件项、重复当前值和持久化 policy 测试 |
+| 影响 | `AppearanceSettingsScreen`（含 `AppearanceSettingsContentMode.HOME` 共享路径，首页设置页同步受影响）、设置搜索 focusId/稳定 key 映射、字符串资源与高级覆盖入口 |
+| 修改入口 | `AppearanceSettingsScreen.kt`、`SettingsSelectionComponents.kt`、`SettingsSearchFocusPolicy.kt`、外观设置 policy/tests |
+| 依赖 / 风险 | 重组必须保持搜索定位、状态持久化、条件显示和主题切换滚动状态；搜索定位从固定 LazyColumn 索引改为稳定行/组 key 映射，条件项显隐、HOME 模式与 840dp 双栏三场景须定位同一语义目标 |
+| 实施步骤 | 建分组清单 → 稳定 key 搜索映射（先行）→ 迁移标准行 → 收起高级项 → 说明卡降级（D3）→ “恢复主题推荐”仅清视觉覆盖（D2）→ 文案审查 → HomeSettings 联动验收 |
+| 自动验证 | 信息顺序、稳定 key 定位（三场景）、条件项、重复当前值和持久化 policy 测试 |
 | 人工验证 | 两主题切换、长文本、动态色不可用、显式覆盖、返回与重进 |
 
 ## Compose 短示例

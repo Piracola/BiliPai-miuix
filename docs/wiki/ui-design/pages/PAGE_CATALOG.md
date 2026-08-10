@@ -22,7 +22,7 @@
 - **应该**以 `BiliPaiNavEntryContentRole` 与实际渲染符号作为当前代码映射。
 - **禁止**把旧 `ScreenRoutes` 单独当成第二份页面目录。
 
-## 62 个页面 Key
+## 65 个页面 Key
 
 | ID / Key | 中文名称 | `routeBase` | 当前内容入口 | 母版 | 完整档案 | 状态 / 最后核对 |
 |---|---|---|---|---|---|---|
@@ -88,6 +88,9 @@
 | P060 `[NAVKEY:Web]` | 应用内网页 | `web` | `WEB` / `WebViewScreen` | T05 内容详情 | [P060](ACCOUNT_TOOLS_WEB.md#p060) | 当前 / 2026-08-02 |
 | P061 `[NAVKEY:Unknown]` | 未知旧路由兼容入口 | 动态解析 | 当前回退 `HOME` 内容角色 | T10 兼容回退 | [P061](ACCOUNT_TOOLS_WEB.md#p061) | 兼容 / 2026-08-02 |
 | P062 `[NAVKEY:HomeSettings]` | 首页设置 | `home_settings` | `HOME_SETTINGS` / `HomeSettingsScreen` | T08 设置 | [P062](SETTINGS.md#p062) | 当前 / 2026-08-04 |
+| P063 `[NAVKEY:HistorySearch]` | 历史搜索 | `history_search` | `HISTORY` / `CommonListScreen` 搜索模式 | T04 搜索发现 | [P063](PROFILE_LIBRARY.md#p063) | 当前 / 2026-08-10 |
+| P064 `[NAVKEY:FavoriteSearch]` | 收藏搜索 | `favorite_search` | `FAVORITE` / `CommonListScreen` 搜索模式 | T04 搜索发现 | [P064](PROFILE_LIBRARY.md#p064) | 当前 / 2026-08-10 |
+| P065 `[NAVKEY:WatchLaterSearch]` | 稍后再看搜索 | `watch_later_search` | `WATCH_LATER` / `CommonListScreen` 搜索模式 | T04 搜索发现 | [P065](PROFILE_LIBRARY.md#p065) | 当前 / 2026-08-10 |
 
 ## Compose 短示例
 
@@ -109,5 +112,5 @@ val key: BiliPaiNavKey = BiliPaiNavKey.VideoDetail(bvid = bvid)
 
 ## 验收方法
 
-运行结构测试，源码 Key 集合与 `[NAVKEY:*]` 集合必须完全相等且数量为 62；每个 P 编号必须链接到存在的领域文件锚点，领域档案必须包含固定字段。
+运行结构测试，源码 Key 集合与 `[NAVKEY:*]` 集合必须完全相等且数量为 65；每个 P 编号必须链接到存在的领域文件锚点，领域档案必须包含固定字段。
 
