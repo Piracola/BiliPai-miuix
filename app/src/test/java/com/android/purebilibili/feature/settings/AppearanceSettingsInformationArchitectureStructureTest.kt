@@ -114,6 +114,19 @@ class AppearanceSettingsInformationArchitectureStructureTest {
         assertFalse(source.contains("setThemeMode("))
     }
 
+    @Test
+    fun singleChoicePresentationOverride_isExposedOnlyForMiuix() {
+        val source = loadSource(appearanceScreen)
+
+        assertTrue(source.contains("val isMiuixUi = LocalAppUiStyle.current == AppUiStyle.MIUIX"))
+        assertTrue(
+            source.contains(
+                "(isMiuixUi && singleChoicePresentation != AppSingleChoicePresentation.WINDOW_POPUP)"
+            )
+        )
+        assertTrue(source.contains("if (isMiuixUi) {"))
+    }
+
     private fun loadSource(path: String): String {
         val normalizedPath = path.removePrefix("app/")
         return listOf(File(path), File(normalizedPath), File("../$path"))

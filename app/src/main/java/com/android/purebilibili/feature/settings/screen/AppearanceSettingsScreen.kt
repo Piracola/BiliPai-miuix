@@ -231,6 +231,7 @@ fun AppearanceSettingsContent(
             AppSegmentOption(AppSingleChoicePresentation.CENTERED_DIALOG, "居中弹窗"),
         )
     }
+    val isMiuixUi = LocalAppUiStyle.current == AppUiStyle.MIUIX
     val listState = rememberLazyListState()
     val focusRequest by SettingsSearchFocusController.request.collectAsStateWithLifecycle()
     // Animation Trigger
@@ -424,10 +425,11 @@ fun AppearanceSettingsContent(
         state.appListItemStyle,
         singleChoicePresentation,
         themeRoleOverrides.enabled,
+        isMiuixUi,
     ) {
         state.appIconStyle != AppIconStyle.AUTO ||
             state.appListItemStyle != AppListItemStyle.AUTO ||
-            singleChoicePresentation != AppSingleChoicePresentation.WINDOW_POPUP ||
+            (isMiuixUi && singleChoicePresentation != AppSingleChoicePresentation.WINDOW_POPUP) ||
             themeRoleOverrides.enabled
     }
     val selectedCustomThemeColor = remember(state.md3CustomColorHex) {
@@ -496,6 +498,7 @@ fun AppearanceSettingsContent(
                             text = uiPresetDescription.summary,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 16.dp),
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -923,7 +926,8 @@ fun AppearanceSettingsContent(
                                 AppText(
                                     text = resolveDisplayMetricsSummary(displayMetricsSnapshot),
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(horizontal = 16.dp),
                                 )
                             }
                         }
@@ -974,24 +978,26 @@ fun AppearanceSettingsContent(
                             onSelectionChange = viewModel::setAppListItemStyle,
                         )
 
-                        Spacer(modifier = Modifier.height(16.dp))
-                        AppPreferenceDivider()
-                        Spacer(modifier = Modifier.height(8.dp))
+                        if (isMiuixUi) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            AppPreferenceDivider()
+                            Spacer(modifier = Modifier.height(8.dp))
 
-                        SettingsSingleChoicePreference(
-                            title = "单选项展示方式",
-                            subtitle = "跟随选项弹出与截图一致；也可切回居中弹窗",
-                            options = singleChoicePresentationOptions,
-                            selectedValue = singleChoicePresentation,
-                            onSelectionChange = { presentation ->
-                                scope.launch {
-                                    SettingsManager.setSingleChoicePresentation(
-                                        context = context,
-                                        presentation = presentation,
-                                    )
-                                }
-                            },
-                        )
+                            SettingsSingleChoicePreference(
+                                title = "单选项展示方式",
+                                subtitle = "跟随选项弹出与截图一致；也可切回居中弹窗",
+                                options = singleChoicePresentationOptions,
+                                selectedValue = singleChoicePresentation,
+                                onSelectionChange = { presentation ->
+                                    scope.launch {
+                                        SettingsManager.setSingleChoicePresentation(
+                                            context = context,
+                                            presentation = presentation,
+                                        )
+                                    }
+                                },
+                            )
+                        }
 
                         Spacer(modifier = Modifier.height(16.dp))
                         AppPreferenceDivider()
