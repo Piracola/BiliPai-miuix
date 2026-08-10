@@ -168,7 +168,9 @@ class StyleLintAllowlistRatchetTest {
         const val MAX_COLOR_HITS = 2
         // 6 → 7：上游 LiveHomeSelectableChip 的 compact 纵向 5dp（不在 4dp 刻度上），
         // 取整会改变紧凑态像素布局；迁移到命名 Spec 后调小。
-        const val MAX_SPACING_HITS = 7
+        // 7 → 9：收藏夹转移对话框/下拉菜单的内容语义尺寸（360dp 列表最大高度、
+        // 280–420dp 菜单宽度）收纳进豁免；其余字面量已迁移 token 组合。
+        const val MAX_SPACING_HITS = 9
         const val MAX_TYPOGRAPHY_HITS = 1
 
         // 只能调大。直播与第一轮信息流模块已完成 token 迁移。
@@ -176,16 +178,17 @@ class StyleLintAllowlistRatchetTest {
 
         const val MIGRATED_PREFIXES_SHA256 =
             "9eb8920bc5953589f037ba610fc3a1ec74c98a8a6ce69bb3286f8a31e0501a16"
+        // 040c8c5b1 merge 收纳 SearchLandingUi、移除已 token 化的 bangumi 豁免后重算。
         const val SHAPE_HITS_SHA256 =
-            "aaa828f33ef8722244a70faa3602e25546f0e680db06a94503a7a0ec4b174f82"
+            "8ad8e2bc0e9a71ab3fe5ee7e82f14a0d9b301ae97644ba3ff27882827c045fda"
         const val MOTION_HITS_SHA256 =
-            "eb883a77a6e9e2f94733b73408f83d02a551b475b0cfbe119f5ee432a4df4925"
+            "678c43b168710a36161844b75907292c2b6f422c7ab277dfab6582274f2af800"
         const val SURFACE_HITS_SHA256 =
-            "4655ba41f9fd9c1802650eb2ee526ef9633c9bdb872c0e58a8e90a31306bf6e0"
+            "c6ba14760e3ed7ed6b224bf63e513a51b9fcab30a5a5efc485847642d4b17516"
         const val COLOR_HITS_SHA256 =
             "472bbaea88ea315505d7e5d1cfcc834664bbc0da24b91211bf4c1d3d8f1240d9"
         const val SPACING_HITS_SHA256 =
-            "a05ad9d223632622f6841a35d15dc12ec11cd945d297f533606537a344872c55"
+            "a39457a7945c461f9c967a051403589e1c3da800e7b31277377c44aeb0f33e86"
         const val TYPOGRAPHY_HITS_SHA256 =
             "9da424c82f8cdb1d3429277b6b8bcb9d8a7a6156f8a2cbfb252eb41a7ab3098d"
     }

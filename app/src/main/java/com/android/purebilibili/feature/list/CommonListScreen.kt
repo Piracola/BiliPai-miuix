@@ -4,6 +4,7 @@ import com.android.purebilibili.core.ui.components.AppHorizontalDivider
 import com.android.purebilibili.core.ui.AppSpacingTokens
 import com.android.purebilibili.core.ui.AppChromeSizeTokens
 import com.android.purebilibili.core.ui.AppAlertDialog
+import com.android.purebilibili.core.ui.common.verticalPriorityHorizontalPagerSwipe
 import com.android.purebilibili.core.ui.components.AppAssistChip
 import com.android.purebilibili.core.ui.components.AppButton
 import com.android.purebilibili.core.ui.components.AppCard
@@ -951,7 +952,13 @@ fun CommonListScreen(
                         HorizontalPager(
                             state = pagerState,
                             userScrollEnabled = false,
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                // 共享方向门：垂直子列表优先，横向滑动才交给 pager。
+                                .verticalPriorityHorizontalPagerSwipe(
+                                    state = pagerState,
+                                    enabled = true,
+                                ),
                             beyondViewportPageCount = 1 // 预加载
                         ) { page ->
                             // 获取当前页面的状态
@@ -2071,7 +2078,7 @@ private fun FavoriteFolderSelector(
                 AppIcon(
                     imageVector = rememberAppChevronDownIcon(),
                     contentDescription = "切换收藏夹",
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(AppSpacingTokens.Large + AppSpacingTokens.ExtraSmall),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }

@@ -26,6 +26,8 @@ import com.android.purebilibili.core.plugin.PluginManager
 import com.android.purebilibili.core.plugin.PluginStore
 import com.android.purebilibili.core.ui.AppAlertDialog
 import com.android.purebilibili.core.ui.AppDialogAction
+import com.android.purebilibili.core.ui.AppShapes
+import com.android.purebilibili.core.ui.ContainerLevel
 import com.android.purebilibili.core.ui.components.AppNativeSegmentedControl
 import com.android.purebilibili.core.ui.components.AppOutlinedTextField
 import com.android.purebilibili.core.ui.components.AppSegmentOption
@@ -261,7 +263,7 @@ class PiliNaraFeedFilterPlugin : FeedPlugin {
                 color = MaterialTheme.colorScheme.onSurface
             )
             Surface(
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)),
+                modifier = Modifier.fillMaxWidth().clip(AppShapes.container(ContainerLevel.Dialog)),
                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.38f),
             ) {
                 Column(content = content)

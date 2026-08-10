@@ -140,6 +140,11 @@ internal object StyleLintAllowlist {
         "src/main/java/com/android/purebilibili/feature/live/LiveListScreen.kt",
         "src/main/java/com/android/purebilibili/feature/live/components/LiveStreamSourceSheet.kt",
         "src/main/java/com/android/purebilibili/feature/live/components/LiveSuperChatFlashOverlay.kt",
+        // 收藏夹选择对话框/下拉菜单的内容语义尺寸（列表最大高度 360dp、
+        // 菜单宽度 280–420dp）：不在 4dp 间距刻度上，无 AppSpacingTokens 可映射；
+        // 其余字面量（如 20dp 图标）已迁移到 token 组合。
+        "src/main/java/com/android/purebilibili/feature/list/CommonListScreen.kt",
+        "src/main/java/com/android/purebilibili/feature/watchlater/WatchLaterScreen.kt",
     )
 
     /** 已纳管 feature 前缀下的存量排版字面量（棘轮上限见 StyleLintAllowlistRatchetTest）。 */
