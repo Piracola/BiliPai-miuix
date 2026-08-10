@@ -333,7 +333,7 @@ class VideoCardScrollLiteVisualPolicyTest {
     }
 
     @Test
-    fun homeCardChrome_usesTheSameLiveReturnHandoffAsCover() {
+    fun homeCardChrome_reappearsBeforeTheFinalCoverHandoff() {
         assertTrue(
             shouldSuppressHomeCardVisualDuringShellReturnMorph(
                 useCardContainerSharedBounds = true,
@@ -362,7 +362,7 @@ class VideoCardScrollLiteVisualPolicyTest {
                 isReturningFromDetail = true,
                 transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.RETURNING,
                 isSharedTransitionActive = true,
-                transitionBackgroundProgress = 0.2f,
+                transitionBackgroundProgress = 0.32f,
             ),
             0.001f,
         )
@@ -386,7 +386,7 @@ class VideoCardScrollLiteVisualPolicyTest {
                 isReturningFromDetail = true,
                 transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.RETURNING,
                 isSharedTransitionActive = false,
-                transitionBackgroundProgress = 0.06f,
+                transitionBackgroundProgress = 0.19f,
             ),
             0.001f,
         )
@@ -401,7 +401,18 @@ class VideoCardScrollLiteVisualPolicyTest {
             ),
             0.001f,
         )
-        // 快速返回仍可能保留 LIVE surface，仍须等待同一交接窗口。
+        assertEquals(
+            1f,
+            resolveHomeCardChromeAlphaDuringShellReturnMorph(
+                useCardContainerSharedBounds = true,
+                isSharedMorphSourceCard = true,
+                isReturningFromDetail = true,
+                transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.RETURNING,
+                transitionBackgroundProgress = 0.06f,
+            ),
+            0.001f,
+        )
+        // 快速返回仍可能保留 LIVE surface，正文也使用提前回显窗口。
         assertEquals(
             0f,
             resolveHomeCardChromeAlphaDuringShellReturnMorph(
@@ -450,7 +461,7 @@ class VideoCardScrollLiteVisualPolicyTest {
     }
 
     @Test
-    fun horizontalCardChrome_followsOpeningButStaysAlignedWithCoverOnReturn() {
+    fun horizontalCardChrome_followsOpeningAndReappearsBeforeLanding() {
         val openingStart = resolveHorizontalCardChromeMotionFrame(
             useCardContainerSharedBounds = true,
             isSharedMorphSourceCard = true,
@@ -483,9 +494,9 @@ class VideoCardScrollLiteVisualPolicyTest {
             isSharedMorphSourceCard = true,
             isReturningFromDetail = true,
             transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.RETURNING,
-            transitionBackgroundProgress = 0.16f,
+            transitionBackgroundProgress = 0.19f,
         )
-        assertEquals(0f, returnReveal.alpha, 0.001f)
+        assertEquals(0.5f, returnReveal.alpha, 0.001f)
         assertEquals(0f, returnReveal.translationProgress, 0.001f)
 
         val landed = resolveHorizontalCardChromeMotionFrame(

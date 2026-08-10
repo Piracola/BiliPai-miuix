@@ -31,7 +31,7 @@
     <string name="appearance_ui_preset_android_miuix_summary">保留安卓信息架构，但把顶栏与局部容器切换为更贴近小米系统语义的 Miuix 组件风格。</string>
     <string name="appearance_android_native_variant_title">安卓原生风格</string>
     <string name="appearance_android_native_variant_subtitle">在 Material 3 与 Miuix 安卓原生子风格之间切换</string>
-    <string name="appearance_android_native_variant_material3">Material 3</string>
+    <string name="appearance_android_native_variant_material3">Google Material 3</string>
     <string name="appearance_android_native_variant_miuix">Miuix</string>
     <string name="appearance_theme_mode_title">主题模式</string>
     <string name="appearance_theme_mode_subtitle">支持点击或左右滑动切换</string>

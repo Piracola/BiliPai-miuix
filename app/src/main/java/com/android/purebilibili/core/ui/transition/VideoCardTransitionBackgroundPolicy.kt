@@ -739,6 +739,9 @@ internal fun applyVideoCardTransitionSnapshotFrame(
     frame: VideoCardTransitionBackgroundFrame,
     canvasSize: androidx.compose.ui.geometry.Size,
 ) {
+    // The route draw path may lower alpha during its final live-content handoff. This layer is
+    // shared with the host-owned depth renderer, so every frame starts from an opaque baseline.
+    contentLayer.alpha = 1f
     contentLayer.pivotOffset = Offset(canvasSize.width / 2f, canvasSize.height / 2f)
     contentLayer.scaleX = frame.contentScale
     contentLayer.scaleY = frame.contentScale
@@ -1057,13 +1060,23 @@ internal fun Modifier.videoCardTransitionBackgroundEffect(
             return@drawWithContent
         }
 
+        // 返回末段逐渐把画面交还给 live content。GraphicsLayer 冻结快照无法可靠
+        // 捕获 PlayerView/TextureView 的实时像素，若它一直不透明地盖到 progress=0，
+        // 上一级页面会在手势即将完成时仍发黑、发糊。交接区间与宽卡片的源内容
+        // crossfade 保持一致，使实时页面与返回卡片同步显现。
+        val frozenLayerAlpha = resolveVideoCardTransitionFrozenLayerAlpha(
+            exposure = activeExposure,
+            depthProgress = activeProgress,
+        )
+        val liveHandoffActive = frozenLayerAlpha < 0.999f
+
         // 返回末段 / 预览中段：先画 live content 让 hazeSource 重新登记，
         // 否则顶栏/底栏 unifiedBlur 在预测返回后会一直空白，直到再次进详情 remount。
         val shouldPrimeHazeSources = shouldPrimeLiveContentForHazeDuringDepthDraw(
             exposure = activeExposure,
             depthProgress = activeProgress,
         )
-        if (shouldPrimeHazeSources) {
+        if (shouldPrimeHazeSources || liveHandoffActive) {
             drawContent()
         }
 
@@ -1073,7 +1086,7 @@ internal fun Modifier.videoCardTransitionBackgroundEffect(
             frame = frame,
             canvasSize = size,
         )
-        if (shouldDrawVideoCardTransitionScaleGapFill(frame.contentScale)) {
+        if (!liveHandoffActive && shouldDrawVideoCardTransitionScaleGapFill(frame.contentScale)) {
             drawRect(
                 resolveVideoCardTransitionScaleGapFillColor(
                     isLightBackground = frame.useLightScrimTint,
@@ -1081,9 +1094,11 @@ internal fun Modifier.videoCardTransitionBackgroundEffect(
                 )
             )
         }
-        // 景深层仍叠在 live 之上；末段 depth≈0 时层接近清晰，与 live 一致。
-        drawLayer(contentLayer)
-        VideoCardTransitionDiagnostics.onSourceLayerDrawn()
+        contentLayer.alpha = frozenLayerAlpha
+        if (frozenLayerAlpha > 0.001f) {
+            drawLayer(contentLayer)
+            VideoCardTransitionDiagnostics.onSourceLayerDrawn()
+        }
 
         if (frame.scrimAlpha > 0.001f) {
             val scrimColor = if (frame.useLightScrimTint) {
@@ -1094,6 +1109,31 @@ internal fun Modifier.videoCardTransitionBackgroundEffect(
             drawRect(scrimColor.copy(alpha = frame.scrimAlpha))
         }
     }
+}
+
+/**
+ * Fades the frozen depth snapshot out over the source chrome's 68%–94% settle window.
+ * Depth is 1 at full blur and 0 when the previous page is fully restored.
+ *
+ * Drawing live content underneath this layer is essential for player surfaces: recording an
+ * Android view into a Compose [androidx.compose.ui.graphics.layer.GraphicsLayer] can yield a black
+ * frame even though the actual surface is still rendering.
+ */
+internal fun resolveVideoCardTransitionFrozenLayerAlpha(
+    exposure: VideoCardTransitionExposure,
+    depthProgress: Float,
+): Float {
+    val supportsLiveHandoff = when (exposure) {
+        VideoCardTransitionExposure.BackPreview,
+        VideoCardTransitionExposure.Returning,
+        VideoCardTransitionExposure.Restoring,
+        -> true
+        else -> false
+    }
+    if (!supportsLiveHandoff) return 1f
+    // 与来源卡正文共用 68%–94% settle 窗口。旧实现只在 depth=0 才将冻结层
+    // 完全移除，导致下方已淡入的标题仍被开场时录下的“无正文快照”盖住。
+    return 1f - resolveVideoCardSourceChromeReturnAlpha(depthProgress)
 }
 
 /**

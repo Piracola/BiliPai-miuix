@@ -25,7 +25,7 @@ class AdaptiveGroupSurfaceShapeStructureTest {
     }
 
     @Test
-    fun `miuix grouped settings use native card and preference rows`() {
+    fun `miuix grouped settings use native card and measured preference rows`() {
         val source = loadSource("design-system/src/main/java/com/android/purebilibili/core/ui/components/AdaptivePreferenceComponents.kt")
         val iosGroupSource = source
             .substringAfter("fun AdaptivePreferenceGroupRenderer(")
@@ -39,10 +39,11 @@ class AdaptiveGroupSurfaceShapeStructureTest {
 
         assertTrue(source.contains("Card as MiuixCard"))
         assertTrue(source.contains("SwitchPreference as MiuixSwitchPreference"))
-        assertTrue(source.contains("ArrowPreference as MiuixArrowPreference"))
         assertTrue(iosGroupSource.contains("MiuixCard("))
         assertTrue(switchItemSource.contains("MiuixSwitchPreference("))
-        assertTrue(clickableItemSource.contains("MiuixArrowPreference("))
+        assertTrue(clickableItemSource.contains("BasicComponent("))
+        assertTrue(clickableItemSource.contains("Icons.AutoMirrored.Filled.KeyboardArrowRight"))
+        assertFalse(clickableItemSource.contains("MiuixArrowPreference("))
     }
 
     @Test
@@ -66,7 +67,7 @@ class AdaptiveGroupSurfaceShapeStructureTest {
             .substringBefore("@Composable\nfun AdaptiveSearchFieldRenderer")
         val md3Block = clickableItemSource
             .substringAfter("if (clickableRenderer == AppClickableItemRenderer.MD3_BASIC)")
-            .substringBefore("if (clickableRenderer == AppClickableItemRenderer.MIUIX_BASIC)")
+            .substringBefore("if (clickableRenderer != AppClickableItemRenderer.MD3_BASIC)")
 
         assertTrue(md3Block.contains("Column(modifier = Modifier.weight(1f))"))
         assertTrue(md3Block.contains("text = title"))

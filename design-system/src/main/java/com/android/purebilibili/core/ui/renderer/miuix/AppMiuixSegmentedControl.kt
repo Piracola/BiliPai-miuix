@@ -55,3 +55,38 @@ internal fun <T> AppMiuixSegmentedControl(
         )
     }
 }
+
+@Composable
+internal fun <T> AppMiuixTabRow(
+    options: List<AppSegmentOption<T>>,
+    selectedValue: T,
+    enabled: Boolean,
+    scrollable: Boolean,
+    minTabWidth: Dp,
+    colors: AppSegmentedControlColors,
+    modifier: Modifier,
+    onSelectionChange: (T) -> Unit,
+) {
+    val selectedIndex = resolveAppSegmentedSelectionIndex(options, selectedValue)
+    val tabColors = resolveAppMiuixSegmentedColors(colors)
+    val resolvedMinWidth = if (scrollable) minTabWidth else 48.dp
+    TabRow(
+        tabs = options.map { it.label },
+        selectedTabIndex = selectedIndex,
+        onTabSelected = { index ->
+            if (enabled) options.getOrNull(index)?.let { onSelectionChange(it.value) }
+        },
+        modifier = modifier.fillMaxWidth(),
+        colors = TabRowDefaults.tabRowColors(
+            backgroundColor = tabColors.backgroundColor,
+            contentColor = tabColors.contentColor,
+            selectedBackgroundColor = tabColors.selectedBackgroundColor,
+            selectedContentColor = tabColors.selectedContentColor,
+        ),
+        minWidth = resolvedMinWidth,
+        maxWidth = resolvedMinWidth,
+        height = 48.dp,
+        cornerRadius = 8.dp,
+        itemSpacing = 8.dp,
+    )
+}

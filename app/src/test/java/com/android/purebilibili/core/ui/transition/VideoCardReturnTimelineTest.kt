@@ -386,6 +386,14 @@ class VideoCardReturnTimelineTest {
     }
 
     @Test
+    fun sourceChrome_isFullyVisibleBeforeTheLiveCoverHandoffFinishes() {
+        assertEquals(0f, resolveVideoCardSourceChromeReturnAlpha(0.32f), 0.001f)
+        assertEquals(0.5f, resolveVideoCardSourceChromeReturnAlpha(0.19f), 0.001f)
+        assertEquals(1f, resolveVideoCardSourceChromeReturnAlpha(0.06f), 0.001f)
+        assertEquals(0.5f, resolveVideoCardLiveReturnVisualHandoffAlpha(0.06f), 0.001f)
+    }
+
+    @Test
     fun liveMorphSecondaryContent_yieldsWithinFirstReturnSegment() {
         // settle 0：正文保持完整。
         assertEquals(

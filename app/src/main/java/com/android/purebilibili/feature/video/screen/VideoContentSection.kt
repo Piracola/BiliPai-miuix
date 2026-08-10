@@ -1224,9 +1224,7 @@ internal fun VideoCommentTab(
             ) {
             if (isRepliesLoading && replies.isEmpty()) {
                 item {
-                    Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                        AdaptiveLoadingIndicator()
-                    }
+                    com.android.purebilibili.core.ui.skeleton.CommentListColumnSkeleton()
                 }
             } else if (replies.isEmpty()) {
                 item {

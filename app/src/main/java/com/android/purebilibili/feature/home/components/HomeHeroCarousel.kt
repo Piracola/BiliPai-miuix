@@ -92,6 +92,7 @@ import com.android.purebilibili.feature.home.resolveHomeHeroCarouselItemOrNull
 import com.android.purebilibili.feature.home.resolveHomeHeroCarouselPreviewAlpha
 import com.android.purebilibili.feature.home.resolveHomeHeroCarouselWidthDp
 import kotlin.math.absoluteValue
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -242,6 +243,7 @@ private fun HomeHeroCarouselCard(
     val cardCoordsRef = remember { object { var value: LayoutCoordinates? = null } }
 
     val cardShape = AppShapes.container(ContainerLevel.Card)
+    val cardCornerDp = AppShapes.containerCornerDp(ContainerLevel.Card)
 
     // 记录源卡位置后进入详情。
     val clickAction: () -> Unit = {
@@ -252,7 +254,8 @@ private fun HomeHeroCarouselCard(
                 bounds = bounds,
                 screenWidth = screenWidthPx,
                 screenHeight = screenHeightPx,
-                density = densityValue
+                density = densityValue,
+                sourceCornerDp = cardCornerDp.value.roundToInt(),
             )
         }
         onVideoClick()

@@ -138,6 +138,8 @@ fun SettingsScreen(
     )
     val autoCheckUpdateEnabled by SettingsManager.getAutoCheckAppUpdate(context)
         .collectAsStateWithLifecycle(initialValue = true)
+    val appUpdateChannel by SettingsManager.getAppUpdateChannel(context)
+        .collectAsStateWithLifecycle(initialValue = SettingsManager.AppUpdateChannel.STABLE)
     val incrementalTimelineRefreshEnabled by SettingsManager.getIncrementalTimelineRefresh(context)
         .collectAsStateWithLifecycle(initialValue = false)
     val homeRefreshCount by SettingsManager.getHomeRefreshCount(context)
@@ -323,6 +325,9 @@ fun SettingsScreen(
     val onAutoCheckUpdateChange: (Boolean) -> Unit = { enabled ->
         scope.launch { SettingsManager.setAutoCheckAppUpdate(context, enabled) }
     }
+    val onAppUpdateChannelChange: (SettingsManager.AppUpdateChannel) -> Unit = { channel ->
+        scope.launch { SettingsManager.setAppUpdateChannel(context, channel) }
+    }
     
     val onVersionClickAction: () -> Unit = {
         versionClickCount++
@@ -385,7 +390,8 @@ fun SettingsScreen(
         }
         val result = AppUpdateChecker.check(
             currentVersion = com.android.purebilibili.BuildConfig.VERSION_NAME,
-            currentVersionCode = com.android.purebilibili.BuildConfig.VERSION_CODE
+            currentVersionCode = com.android.purebilibili.BuildConfig.VERSION_CODE,
+            includePrerelease = appUpdateChannel == SettingsManager.AppUpdateChannel.BETA
         )
         result.onSuccess { info ->
             viewModel.recordReleaseEvidence(info)
@@ -1015,6 +1021,7 @@ fun SettingsScreen(
                     onAnalyticsChange = onAnalyticsChange,
                     onEasterEggChange = onEasterEggChange,
                     onAutoCheckUpdateChange = onAutoCheckUpdateChange,
+                    onAppUpdateChannelChange = onAppUpdateChannelChange,
                     privacyModeEnabled = privacyModeEnabled,
                     customDownloadPath = downloadExportTreeUri ?: customDownloadPath,
                     customImageSavePath = imageSaveTreeUri,
@@ -1030,6 +1037,7 @@ fun SettingsScreen(
                     updateStatusText = updateStatusText,
                     isCheckingUpdate = isCheckingUpdate,
                     autoCheckUpdateEnabled = autoCheckUpdateEnabled,
+                    appUpdateChannel = appUpdateChannel,
                     privacyContentAuthenticationEnabled = privacyContentAuthenticationEnabled,
                     verificationLabel = buildVerificationLabel,
                     verificationSubtitle = buildVerificationState.summary,
@@ -1166,6 +1174,7 @@ private fun MobileSettingsNavLayout(
     onAnalyticsChange: (Boolean) -> Unit,
     onEasterEggChange: (Boolean) -> Unit,
     onAutoCheckUpdateChange: (Boolean) -> Unit,
+    onAppUpdateChannelChange: (SettingsManager.AppUpdateChannel) -> Unit,
     privacyModeEnabled: Boolean,
     privacyContentAuthenticationEnabled: Boolean,
     customDownloadPath: String?,
@@ -1182,6 +1191,7 @@ private fun MobileSettingsNavLayout(
     updateStatusText: String,
     isCheckingUpdate: Boolean,
     autoCheckUpdateEnabled: Boolean,
+    appUpdateChannel: SettingsManager.AppUpdateChannel,
     verificationLabel: String,
     verificationSubtitle: String,
     buildSourceValue: String,
@@ -1258,6 +1268,7 @@ private fun MobileSettingsNavLayout(
         onAnalyticsChange = onAnalyticsChange,
         onEasterEggChange = onEasterEggChange,
         onAutoCheckUpdateChange = onAutoCheckUpdateChange,
+        onAppUpdateChannelChange = onAppUpdateChannelChange,
         onFeedApiTypeChange = onFeedApiTypeChange,
         onIncrementalTimelineRefreshChange = onIncrementalTimelineRefreshChange,
         onDynamicImagePreviewTextVisibleChange = onDynamicImagePreviewTextVisibleChange,
@@ -1282,6 +1293,7 @@ private fun MobileSettingsNavLayout(
         updateStatusText = updateStatusText,
         isCheckingUpdate = isCheckingUpdate,
         autoCheckUpdateEnabled = autoCheckUpdateEnabled,
+        appUpdateChannel = appUpdateChannel,
         verificationLabel = verificationLabel,
         verificationSubtitle = verificationSubtitle,
         buildSourceValue = buildSourceValue,

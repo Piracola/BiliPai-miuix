@@ -73,6 +73,9 @@ class LikedVideosViewModel(application: Application) : BaseListViewModel(applica
 
 // --- 历史记录 ViewModel (支持游标分页加载) ---
 class HistoryViewModel(application: Application) : BaseListViewModel(application, "历史记录") {
+    private var historySearchQuery: String = ""
+    private var historySearchPage: Int = 1
+    private var historySearchGeneration: Long = 0L
     
     private val progressManager by lazy {
         com.android.purebilibili.feature.video.controller.PlaybackProgressManager.getInstance(
@@ -142,6 +145,59 @@ class HistoryViewModel(application: Application) : BaseListViewModel(application
         val bvid = video.bvid.trim()
         if (bvid.isNotEmpty()) return bvid
         return resolveHistoryRenderKey(video)
+    }
+
+    fun searchHistory(query: String) {
+        val normalized = query.trim()
+        if (normalized.isBlank()) {
+            if (historySearchQuery.isBlank()) return
+            historySearchQuery = ""
+            historySearchGeneration += 1
+            loadData(showLoading = true)
+            return
+        }
+        historySearchQuery = normalized
+        historySearchPage = 1
+        val generation = ++historySearchGeneration
+        _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+        viewModelScope.launch {
+            loadHistorySearchPage(page = 1, generation = generation, reset = true)
+        }
+    }
+
+    private suspend fun loadHistorySearchPage(page: Int, generation: Long, reset: Boolean) {
+        val result = com.android.purebilibili.data.repository.HistoryRepository.searchHistory(
+            page = page,
+            keyword = historySearchQuery,
+        )
+        if (generation != historySearchGeneration) return
+        result.fold(
+            onSuccess = { searchResult ->
+                val historyItems = enrichHistoryProgress(searchResult.list.map { it.toHistoryItem() })
+                if (reset) {
+                    _historyItemsMap.clear()
+                    _historyItemsByRenderKey.clear()
+                }
+                cacheHistoryItems(historyItems)
+                val videos = historyItems.map { it.videoItem }
+                _uiState.value = _uiState.value.copy(
+                    items = if (reset) videos else (_uiState.value.items + videos).distinctBy(::resolveHistoryRenderKey),
+                    isLoading = false,
+                    error = null,
+                )
+                historySearchPage = page
+                hasMore = videos.size >= 20
+                _hasMoreState.value = hasMore
+            },
+            onFailure = { error ->
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = error.message ?: "搜索历史失败",
+                )
+                hasMore = false
+                _hasMoreState.value = false
+            },
+        )
     }
 
     fun startVideoDissolve(renderKey: String) {
@@ -242,6 +298,24 @@ class HistoryViewModel(application: Application) : BaseListViewModel(application
     //  加载更多
     fun loadMore() {
         if (isLoadingMore || !hasMore) return
+
+        if (historySearchQuery.isNotBlank()) {
+            viewModelScope.launch {
+                isLoadingMore = true
+                _isLoadingMoreState.value = true
+                try {
+                    loadHistorySearchPage(
+                        page = historySearchPage + 1,
+                        generation = historySearchGeneration,
+                        reset = false,
+                    )
+                } finally {
+                    isLoadingMore = false
+                    _isLoadingMoreState.value = false
+                }
+            }
+            return
+        }
         
         viewModelScope.launch {
             isLoadingMore = true
@@ -418,6 +492,47 @@ class HistoryViewModel(application: Application) : BaseListViewModel(application
         }
     }
 
+    fun deleteViewedHistory() {
+        val viewedKeys = _historyItemsByRenderKey
+            .filterValues { item -> item.progress == -1 }
+            .keys
+            .toSet()
+        if (viewedKeys.isEmpty()) {
+            android.widget.Toast.makeText(
+                getApplication(),
+                "无已看记录",
+                android.widget.Toast.LENGTH_SHORT,
+            ).show()
+            return
+        }
+        deleteHistoryItems(viewedKeys)
+    }
+
+    fun addToWatchLater(item: com.android.purebilibili.data.model.response.HistoryItem) {
+        if (!canAddHistoryToWatchLater(item)) {
+            android.widget.Toast.makeText(
+                getApplication(),
+                "该内容无法加入稍后再看",
+                android.widget.Toast.LENGTH_SHORT,
+            ).show()
+            return
+        }
+        viewModelScope.launch {
+            val result = com.android.purebilibili.data.repository.ActionRepository.toggleWatchLater(
+                aid = item.videoItem.id,
+                add = true,
+            )
+            android.widget.Toast.makeText(
+                getApplication(),
+                result.fold(
+                    onSuccess = { "已添加到稍后再看" },
+                    onFailure = { it.message ?: "添加失败" },
+                ),
+                android.widget.Toast.LENGTH_SHORT,
+            ).show()
+        }
+    }
+
     private fun captureHistoryClearSnapshot(): HistoryClearSnapshot {
         return HistoryClearSnapshot(
             items = _uiState.value.items,
@@ -590,6 +705,9 @@ class HistoryViewModel(application: Application) : BaseListViewModel(application
 
 // --- 收藏 ViewModel (支持分页加载所有收藏夹) ---
 class FavoriteViewModel(application: Application) : BaseListViewModel(application, "我的收藏") {
+    private val _searchUiState = MutableStateFlow(ListUiState(title = "收藏搜索"))
+    val searchUiState = _searchUiState.asStateFlow()
+    private var searchGeneration = 0L
     
     // 分页状态
     private var currentPage = 1
@@ -670,6 +788,57 @@ class FavoriteViewModel(application: Application) : BaseListViewModel(applicatio
         if (index < 0 || index >= allFolderIds.size) return
         currentFolderIndex = index
         _selectedFolderIndex.value = index
+    }
+
+    fun searchVideos(
+        keyword: String,
+        scope: com.android.purebilibili.data.model.response.FavoriteSearchScope,
+    ) {
+        val normalized = keyword.trim()
+        if (normalized.isBlank()) {
+            searchGeneration += 1
+            _searchUiState.value = ListUiState(title = "收藏搜索")
+            return
+        }
+        val generation = ++searchGeneration
+        _searchUiState.value = _searchUiState.value.copy(isLoading = true, error = null)
+        viewModelScope.launch {
+            try {
+                fetchFolders()
+                val mediaId = allFolderIds.getOrNull(_selectedFolderIndex.value)
+                    ?: allFolderIds.firstOrNull()
+                    ?: error("没有可搜索的收藏夹")
+                val result = com.android.purebilibili.data.repository.FavoriteRepository.getFavoriteList(
+                    mediaId = mediaId,
+                    pn = 1,
+                    ps = 20,
+                    keyword = normalized,
+                    order = _favoriteOrderState.value.apiValue,
+                    type = resolveFavoriteSearchApiType(scope),
+                )
+                if (generation != searchGeneration) return@launch
+                _searchUiState.value = result.fold(
+                    onSuccess = { data ->
+                        ListUiState(
+                            title = "收藏搜索",
+                            items = data.medias.orEmpty().map { it.toVideoItem() },
+                        )
+                    },
+                    onFailure = { error ->
+                        ListUiState(title = "收藏搜索", error = error.message ?: "搜索失败")
+                    },
+                )
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                if (generation == searchGeneration) {
+                    _searchUiState.value = ListUiState(
+                        title = "收藏搜索",
+                        error = e.message ?: "搜索失败",
+                    )
+                }
+            }
+        }
     }
     
     /**
@@ -1026,6 +1195,172 @@ class FavoriteViewModel(application: Application) : BaseListViewModel(applicatio
                     "清理失败: ${result.exceptionOrNull()?.message ?: "请稍后重试"}",
                     android.widget.Toast.LENGTH_SHORT
                 ).show()
+            }
+            _isFavoriteManagingState.value = false
+        }
+    }
+
+    internal fun shareSelectedFolderToDynamic(content: String) {
+        if (_isFavoriteManagingState.value) return
+        val mediaId = allFolderIds.getOrNull(_selectedFolderIndex.value) ?: return
+        _isFavoriteManagingState.value = true
+        viewModelScope.launch {
+            val result = com.android.purebilibili.data.repository.FavoriteRepository
+                .shareFolderToDynamic(mediaId = mediaId, content = content)
+            android.widget.Toast.makeText(
+                getApplication(),
+                result.fold(
+                    onSuccess = { "已分享至动态" },
+                    onFailure = { it.message ?: "分享失败" },
+                ),
+                android.widget.Toast.LENGTH_SHORT,
+            ).show()
+            _isFavoriteManagingState.value = false
+        }
+    }
+
+    internal fun createFavoriteFolder(
+        title: String,
+        intro: String,
+        isPrivate: Boolean,
+    ) {
+        if (_isFavoriteManagingState.value || title.isBlank()) return
+        _isFavoriteManagingState.value = true
+        viewModelScope.launch {
+            val result = com.android.purebilibili.data.repository.ActionRepository.createFavFolder(
+                title = title.trim(),
+                intro = intro.trim(),
+                isPrivate = isPrivate,
+            )
+            finishFolderMutation(result.map { Unit }, "已创建收藏夹")
+        }
+    }
+
+    internal fun editSelectedFavoriteFolder(
+        title: String,
+        intro: String,
+        isPrivate: Boolean,
+    ) {
+        if (_isFavoriteManagingState.value || title.isBlank()) return
+        val folder = _folders.value.getOrNull(_selectedFolderIndex.value) ?: return
+        _isFavoriteManagingState.value = true
+        viewModelScope.launch {
+            val result = com.android.purebilibili.data.repository.FavoriteRepository.editFolder(
+                mediaId = resolveFavoriteFolderMediaId(folder),
+                title = title.trim(),
+                intro = intro.trim(),
+                isPrivate = isPrivate,
+                cover = folder.cover,
+            )
+            finishFolderMutation(result, "已更新收藏夹")
+        }
+    }
+
+    internal fun deleteSelectedFavoriteFolder() {
+        if (_isFavoriteManagingState.value) return
+        val folderIndex = _selectedFolderIndex.value
+        if (folderIndex <= 0) return
+        val folder = _folders.value.getOrNull(folderIndex) ?: return
+        _isFavoriteManagingState.value = true
+        viewModelScope.launch {
+            val result = com.android.purebilibili.data.repository.FavoriteRepository.deleteFolder(
+                resolveFavoriteFolderMediaId(folder),
+            )
+            finishFolderMutation(result, "已删除收藏夹")
+        }
+    }
+
+    private suspend fun finishFolderMutation(result: Result<Unit>, successMessage: String) {
+        android.widget.Toast.makeText(
+            getApplication(),
+            result.fold(
+                onSuccess = { successMessage },
+                onFailure = { it.message ?: "操作失败" },
+            ),
+            android.widget.Toast.LENGTH_SHORT,
+        ).show()
+        try {
+            if (result.isSuccess) {
+                _folders.value = emptyList()
+                allFolderIds = emptyList()
+                _folderStates.clear()
+                folderPaginationStates.clear()
+                folderLoadedOrders.clear()
+                _fetchingIndices.clear()
+                fetchFolders()
+                currentFolderIndex = currentFolderIndex.coerceIn(0, (allFolderIds.size - 1).coerceAtLeast(0))
+                _selectedFolderIndex.value = currentFolderIndex
+                if (allFolderIds.isNotEmpty()) loadFolder(currentFolderIndex)
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            android.widget.Toast.makeText(
+                getApplication(),
+                e.message ?: "刷新收藏夹失败",
+                android.widget.Toast.LENGTH_SHORT,
+            ).show()
+        } finally {
+            _isFavoriteManagingState.value = false
+        }
+    }
+
+    internal fun deleteSelectedFavoriteResources(resourceIds: Set<Long>) {
+        manageSelectedFavoriteResources(resourceIds = resourceIds, targetMediaId = null, copy = false)
+    }
+
+    internal fun copyOrMoveSelectedFavoriteResources(
+        resourceIds: Set<Long>,
+        targetMediaId: Long,
+        copy: Boolean,
+    ) {
+        manageSelectedFavoriteResources(
+            resourceIds = resourceIds,
+            targetMediaId = targetMediaId,
+            copy = copy,
+        )
+    }
+
+    private fun manageSelectedFavoriteResources(
+        resourceIds: Set<Long>,
+        targetMediaId: Long?,
+        copy: Boolean,
+    ) {
+        if (_isFavoriteManagingState.value || resourceIds.isEmpty()) return
+        val folderIndex = _selectedFolderIndex.value
+        val sourceMediaId = allFolderIds.getOrNull(folderIndex) ?: return
+        _isFavoriteManagingState.value = true
+        viewModelScope.launch {
+            val result = if (targetMediaId == null) {
+                com.android.purebilibili.data.repository.FavoriteRepository.removeResources(
+                    mediaId = sourceMediaId,
+                    resourceIds = resourceIds,
+                )
+            } else {
+                com.android.purebilibili.data.repository.FavoriteRepository.copyOrMoveResources(
+                    sourceMediaId = sourceMediaId,
+                    targetMediaId = targetMediaId,
+                    mid = currentUserMid,
+                    resourceIds = resourceIds,
+                    copy = copy,
+                )
+            }
+            android.widget.Toast.makeText(
+                getApplication(),
+                result.fold(
+                    onSuccess = {
+                        when {
+                            targetMediaId == null -> "已删除 ${resourceIds.size} 个内容"
+                            copy -> "已复制 ${resourceIds.size} 个内容"
+                            else -> "已移动 ${resourceIds.size} 个内容"
+                        }
+                    },
+                    onFailure = { it.message ?: "操作失败" },
+                ),
+                android.widget.Toast.LENGTH_SHORT,
+            ).show()
+            if (result.isSuccess && (targetMediaId == null || !copy)) {
+                reloadFavoriteFolder(folderIndex)
             }
             _isFavoriteManagingState.value = false
         }

@@ -1,11 +1,15 @@
 package com.android.purebilibili.core.ui.renderer.material3
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryScrollableTabRow
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.Tab
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -13,9 +17,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.android.purebilibili.core.ui.components.AppSegmentOption
 import com.android.purebilibili.core.ui.components.AppSegmentedControlColors
 import com.android.purebilibili.core.ui.components.resolveAppSegmentedLabelFontSizeSp
+import com.android.purebilibili.core.ui.components.resolveAppSegmentedSelectionIndex
 
 @Composable
 internal fun <T> AppMaterial3SegmentedControl(
@@ -65,5 +72,55 @@ internal fun <T> AppMaterial3SegmentedControl(
                 )
             }
         }
+    }
+}
+
+@Composable
+internal fun <T> AppMaterial3TabRow(
+    options: List<AppSegmentOption<T>>,
+    selectedValue: T,
+    enabled: Boolean,
+    scrollable: Boolean,
+    minTabWidth: Dp,
+    modifier: Modifier,
+    onSelectionChange: (T) -> Unit,
+) {
+    val selectedIndex = resolveAppSegmentedSelectionIndex(options, selectedValue)
+    val tabs: @Composable () -> Unit = {
+        options.forEach { option ->
+            val selected = option.value == selectedValue
+            Tab(
+                selected = selected,
+                onClick = { onSelectionChange(option.value) },
+                enabled = enabled,
+                modifier = Modifier.heightIn(min = 48.dp),
+                text = {
+                    Text(
+                        text = option.label,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                    )
+                },
+            )
+        }
+    }
+    if (scrollable) {
+        PrimaryScrollableTabRow(
+            selectedTabIndex = selectedIndex,
+            modifier = modifier.fillMaxWidth(),
+            containerColor = Color.Transparent,
+            edgePadding = 0.dp,
+            minTabWidth = minTabWidth,
+            tabs = tabs,
+        )
+    } else {
+        PrimaryTabRow(
+            selectedTabIndex = selectedIndex,
+            modifier = modifier.fillMaxWidth(),
+            containerColor = Color.Transparent,
+            tabs = tabs,
+        )
     }
 }

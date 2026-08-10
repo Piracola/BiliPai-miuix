@@ -4,6 +4,7 @@ import com.android.purebilibili.navigation.ScreenRoutes
 import com.android.purebilibili.navigation.VideoRoute
 import com.android.purebilibili.feature.settings.SettingsRootCategory
 import java.net.URLDecoder
+import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 internal fun resolveNavigation3SaveableStateKey(key: BiliPaiNavKey): String {
@@ -52,9 +53,13 @@ internal fun BiliPaiNavKey.toLegacyRoute(): String {
         BiliPaiNavKey.Login -> ScreenRoutes.Login.route
         BiliPaiNavKey.Profile -> ScreenRoutes.Profile.route
         BiliPaiNavKey.History -> ScreenRoutes.History.route
+        is BiliPaiNavKey.HistorySearch -> "history_search?query=${encodeRouteValue(query)}"
         BiliPaiNavKey.Favorite -> ScreenRoutes.Favorite.route
+        is BiliPaiNavKey.FavoriteSearch ->
+            "favorite_search?query=${encodeRouteValue(query)}&scope=${scope.name}"
         BiliPaiNavKey.LikedVideos -> ScreenRoutes.LikedVideos.route
         BiliPaiNavKey.WatchLater -> ScreenRoutes.WatchLater.route
+        is BiliPaiNavKey.WatchLaterSearch -> "watch_later_search?query=${encodeRouteValue(query)}"
         BiliPaiNavKey.Onboarding -> ScreenRoutes.Onboarding.route
         is BiliPaiNavKey.Following -> ScreenRoutes.Following.createRoute(mid)
         BiliPaiNavKey.DownloadList -> ScreenRoutes.DownloadList.route
@@ -161,9 +166,17 @@ internal fun legacyRouteToBiliPaiNavKey(route: String?): BiliPaiNavKey {
         normalized == ScreenRoutes.Login.route -> BiliPaiNavKey.Login
         normalized == ScreenRoutes.Profile.route -> BiliPaiNavKey.Profile
         normalized == ScreenRoutes.History.route -> BiliPaiNavKey.History
+        routeBase == "history_search" -> BiliPaiNavKey.HistorySearch(query["query"].orEmpty())
         normalized == ScreenRoutes.Favorite.route -> BiliPaiNavKey.Favorite
+        routeBase == "favorite_search" -> BiliPaiNavKey.FavoriteSearch(
+            query = query["query"].orEmpty(),
+            scope = com.android.purebilibili.data.model.response.FavoriteSearchScope.entries
+                .firstOrNull { it.name == query["scope"] }
+                ?: com.android.purebilibili.data.model.response.FavoriteSearchScope.CURRENT_FOLDER,
+        )
         normalized == ScreenRoutes.LikedVideos.route -> BiliPaiNavKey.LikedVideos
         normalized == ScreenRoutes.WatchLater.route -> BiliPaiNavKey.WatchLater
+        routeBase == "watch_later_search" -> BiliPaiNavKey.WatchLaterSearch(query["query"].orEmpty())
         normalized == ScreenRoutes.Onboarding.route -> BiliPaiNavKey.Onboarding
         segments.firstOrNull() == "following" && segments.size >= 2 -> {
             BiliPaiNavKey.Following(mid = segments[1].toLongOrNull() ?: 0L)
@@ -306,9 +319,12 @@ internal fun isCardReturnTargetNavKey(key: BiliPaiNavKey): Boolean {
         BiliPaiNavKey.Dynamic,
         BiliPaiNavKey.Search,
         BiliPaiNavKey.History,
+        is BiliPaiNavKey.HistorySearch,
         BiliPaiNavKey.Favorite,
+        is BiliPaiNavKey.FavoriteSearch,
         BiliPaiNavKey.LikedVideos,
         BiliPaiNavKey.WatchLater,
+        is BiliPaiNavKey.WatchLaterSearch,
         BiliPaiNavKey.Partition,
         is BiliPaiNavKey.DynamicDetail,
         is BiliPaiNavKey.Space,
@@ -333,3 +349,6 @@ private fun parseQuery(query: String): Map<String, String> {
 private fun decodeRouteValue(value: String): String {
     return URLDecoder.decode(value, StandardCharsets.UTF_8.name())
 }
+
+private fun encodeRouteValue(value: String): String =
+    URLEncoder.encode(value, StandardCharsets.UTF_8.name())

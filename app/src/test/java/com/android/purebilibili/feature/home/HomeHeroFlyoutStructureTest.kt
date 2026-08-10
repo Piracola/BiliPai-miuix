@@ -69,6 +69,7 @@ class HomeHeroFlyoutStructureTest {
         assertTrue(source.contains("videoCardShellSharedBoundsOrEmpty("))
         assertTrue(source.contains("resolveVideoCardSharedTransitionMotionSpec("))
         assertTrue(source.contains("LocalSharedTransitionEnabled.current"))
+        assertTrue(source.contains("sourceCornerDp = cardCornerDp.value.roundToInt()"))
         assertFalse(source.contains("videoCoverSharedElementKey("))
         assertFalse(source.contains("videoViewsSharedElementKey("))
         assertFalse(source.contains("videoDanmakuSharedElementKey("))

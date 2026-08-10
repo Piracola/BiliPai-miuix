@@ -46,6 +46,12 @@ internal fun resolveDampedDragVelocityItemsPerSecond(
 internal const val HORIZONTAL_DRAG_DOMINANCE_RATIO = 1.25f
 internal const val HORIZONTAL_DRAG_MIN_DISTANCE_PX = 8f
 
+/** 指示器拖拽的目标跟随方式；InstallerX 模式不做飞掷投影或超滚。 */
+enum class DampedDragTrackingMode {
+    PROJECTED_SNAP,
+    INSTALLER_X_SPRING,
+}
+
 fun shouldEngageHorizontalDrag(
     horizontalDeltaPx: Float,
     verticalDeltaPx: Float,
@@ -93,8 +99,9 @@ internal fun resolveDampedDragReleaseTargetIndex(
  * commit 778fb38bbf0c43f168b8bbd7d9e369d6fb46754b。
  * 底栏、顶部标签、分段控件、分区侧栏共用此内核，避免各自维护一套速度形变。
  *
- * 交互逻辑以 9.0.0 发行版为准（跟手 snapTo + 速度飞掷投影），
- * 拖动手感保持 KSU 风格（KERNEL_SU_PRESSED_SCALE + 速度形变）。
+ * 默认交互逻辑以 9.0.0 发行版为准（跟手 snapTo + 速度飞掷投影）；
+ * 首页底栏可切换 InstallerX 的边界/吸附策略。两种模式都保留 KSU 的按压与速度形变，
+ * 且拖拽阶段一律逐帧跟手，避免指示器在手指停住时仍落后于已切换的页面。
  */
 class DampedDragAnimationState internal constructor(
     initialIndex: Int,
@@ -102,6 +109,8 @@ class DampedDragAnimationState internal constructor(
     private val scope: CoroutineScope,
     private val onIndexChanged: (Int) -> Unit,
     private val motionSpec: BottomBarMotionSpec,
+    private val pressedScale: Float,
+    private val trackingMode: DampedDragTrackingMode,
     private val notifyIndexChangedOnReleaseStart: Boolean = false,
     @Suppress("UNUSED_PARAMETER") private val holdPressUntilReleaseTargetSettles: Boolean = false
 ) {
@@ -166,8 +175,8 @@ class DampedDragAnimationState internal constructor(
         releaseJob?.cancel()
         releaseJob = scope.launch {
             launch { pressProgressAnimation.animateTo(1f, pressProgressAnimationSpec) }
-            launch { scaleXAnimation.animateTo(KERNEL_SU_PRESSED_SCALE, scaleXAnimationSpec) }
-            launch { scaleYAnimation.animateTo(KERNEL_SU_PRESSED_SCALE, scaleYAnimationSpec) }
+            launch { scaleXAnimation.animateTo(pressedScale, scaleXAnimationSpec) }
+            launch { scaleYAnimation.animateTo(pressedScale, scaleYAnimationSpec) }
         }
     }
 
@@ -256,25 +265,39 @@ class DampedDragAnimationState internal constructor(
         }
         velocityPxPerSecond = gestureVelocityPxPerSecond
 
-        // 9.0.0 风格：带阻力和超滚约束的期望位置跟踪
-        val currentValue = desiredValue
-        val isOverscrolling = currentValue < 0f || currentValue > (itemCount - 1).toFloat()
-        val baseResistance = motionSpec.drag.baseResistance
-        val overscrollResistance = motionSpec.drag.overscrollResistance
+        when (trackingMode) {
+            DampedDragTrackingMode.INSTALLER_X_SPRING -> {
+                // 首页底栏：保持 InstallerX 的边界与就近吸附策略，但拖拽中的视觉位置
+                // 必须逐帧贴住手指。若此处 animateTo，1000f 弹簧会在手指停住后仍然追赶，
+                // 而导航已按释放目标切页，造成“页面切换、指示器没跟上”的脱节。
+                desiredValue = (desiredValue + dragAmountPx / itemWidthPx)
+                    .fastCoerceIn(0f, (itemCount - 1).toFloat())
+                valueJob?.cancel()
+                valueJob = scope.launch {
+                    valueAnimation.snapTo(desiredValue)
+                    updateDeformationVelocity(desiredValue)
+                }
+            }
 
-        val newDesiredValue = desiredValue + (dragAmountPx / itemWidthPx) *
-            if (isOverscrolling) overscrollResistance else baseResistance
-        desiredValue = newDesiredValue.fastCoerceIn(
-            -motionSpec.drag.overscrollLimitItems,
-            (itemCount - 1).toFloat() + motionSpec.drag.overscrollLimitItems
-        )
-
-        // 立即 snapTo 保证完全跟手（9.0.0 风格）
-        val clampedValue = desiredValue.fastCoerceIn(0f, (itemCount - 1).toFloat())
-        valueJob?.cancel()
-        valueJob = scope.launch {
-            valueAnimation.snapTo(clampedValue)
-            updateDeformationVelocity(clampedValue)
+            DampedDragTrackingMode.PROJECTED_SNAP -> {
+                // 9.0.0 风格：带阻力和超滚约束的期望位置跟踪。
+                val currentValue = desiredValue
+                val isOverscrolling = currentValue < 0f || currentValue > (itemCount - 1).toFloat()
+                val baseResistance = motionSpec.drag.baseResistance
+                val overscrollResistance = motionSpec.drag.overscrollResistance
+                val newDesiredValue = desiredValue + (dragAmountPx / itemWidthPx) *
+                    if (isOverscrolling) overscrollResistance else baseResistance
+                desiredValue = newDesiredValue.fastCoerceIn(
+                    -motionSpec.drag.overscrollLimitItems,
+                    (itemCount - 1).toFloat() + motionSpec.drag.overscrollLimitItems
+                )
+                val clampedValue = desiredValue.fastCoerceIn(0f, (itemCount - 1).toFloat())
+                valueJob?.cancel()
+                valueJob = scope.launch {
+                    valueAnimation.snapTo(clampedValue)
+                    updateDeformationVelocity(clampedValue)
+                }
+            }
         }
 
         // 面板偏移累计
@@ -292,9 +315,7 @@ class DampedDragAnimationState internal constructor(
         }
     }
 
-    /**
-     * 处理拖拽结束（9.0.0 速度飞掷投影 + KSU 落位形变）。
-     */
+    /** 处理拖拽结束：按 trackingMode 选择就近吸附或速度投影，再执行 KSU 落位形变。 */
     fun onDragEnd(
         velocityX: Float,
         itemWidthPx: Float,
@@ -306,15 +327,17 @@ class DampedDragAnimationState internal constructor(
         val generation = motionGeneration
         velocityPxPerSecond = velocityX
 
-        // 9.0.0 风格：速度飞掷投影确定吸附目标
-        val releaseTargetIndex = settleIndex?.coerceIn(0, itemCount - 1)
-            ?: resolveDampedDragReleaseTargetIndex(
+        val releaseTargetIndex = settleIndex?.coerceIn(0, itemCount - 1) ?: when (trackingMode) {
+            DampedDragTrackingMode.INSTALLER_X_SPRING ->
+                desiredValue.roundToInt().coerceIn(0, itemCount - 1)
+            DampedDragTrackingMode.PROJECTED_SNAP -> resolveDampedDragReleaseTargetIndex(
                 currentValue = desiredValue,
                 velocityPxPerSecond = velocityX,
                 itemWidthPx = itemWidthPx,
                 itemCount = itemCount,
                 motionSpec = motionSpec
             )
+        }
         targetIndex = releaseTargetIndex
         desiredValue = releaseTargetIndex.toFloat()
         if (notifyIndexChanged && notifyIndexChangedOnReleaseStart) {
@@ -364,6 +387,8 @@ fun rememberDampedDragAnimationState(
     itemCount: Int,
     onIndexChanged: (Int) -> Unit,
     motionSpec: BottomBarMotionSpec = resolveBottomBarMotionSpec(),
+    pressedScale: Float = KERNEL_SU_PRESSED_SCALE,
+    trackingMode: DampedDragTrackingMode = DampedDragTrackingMode.PROJECTED_SNAP,
     notifyIndexChangedOnReleaseStart: Boolean = false,
     holdPressUntilReleaseTargetSettles: Boolean = false
 ): DampedDragAnimationState {
@@ -373,6 +398,8 @@ fun rememberDampedDragAnimationState(
     return remember(
         itemCount,
         motionSpec,
+        pressedScale,
+        trackingMode,
         notifyIndexChangedOnReleaseStart,
         holdPressUntilReleaseTargetSettles
     ) {
@@ -382,6 +409,8 @@ fun rememberDampedDragAnimationState(
             scope = scope,
             onIndexChanged = { currentOnIndexChanged(it) },
             motionSpec = motionSpec,
+            pressedScale = pressedScale.coerceAtLeast(1f),
+            trackingMode = trackingMode,
             notifyIndexChangedOnReleaseStart = notifyIndexChangedOnReleaseStart,
             holdPressUntilReleaseTargetSettles = holdPressUntilReleaseTargetSettles
         )

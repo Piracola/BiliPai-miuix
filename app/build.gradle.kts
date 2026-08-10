@@ -118,8 +118,8 @@ android {
         targetSdk = 35  // 保持35以避免Android 16的新运行时行为
         // 版本：语义化 X.Y.Z（MAJOR.MINOR.PATCH）+ versionCode 单调 +1
         // 规范：docs/wiki/VERSIONING.md · 更新日志：CHANGELOG.md
-        versionCode = 288
-        versionName = "0.2.2"
+        versionCode = 290
+        versionName = "0.2.3-beta.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -265,6 +265,11 @@ androidComponents {
             val deliveryFileName = when (variantName) {
                 "release" -> "BiliPai-$biliApkVersionName.apk"
                 else -> "BiliPai-$biliApkVersionName-$variantName.apk"
+            }
+            // 中间产物直接用规范名：beta 等预发布版本不应带 AGP 默认的 -release 后缀
+            // （archivesName 已含完整 versionName）。AGP 9 VariantOutput.outputFileName。
+            variant.outputs.forEach { output ->
+                output.outputFileName.set(deliveryFileName)
             }
             val exportTask = tasks.register<ExportBiliPaiApkTask>(
                 "export${capitalizedVariantName}Apk"

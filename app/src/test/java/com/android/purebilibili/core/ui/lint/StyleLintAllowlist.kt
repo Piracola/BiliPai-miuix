@@ -27,8 +27,6 @@ internal object StyleLintAllowlist {
         "src/main/java/com/android/purebilibili/feature/article/ArticleDetailScreen.kt",
         "src/main/java/com/android/purebilibili/feature/audio/screen/MusicDetailScreen.kt",
         "src/main/java/com/android/purebilibili/feature/bangumi/BangumiDetailScreen.kt",
-        "src/main/java/com/android/purebilibili/feature/bangumi/BangumiScreen.kt",
-        "src/main/java/com/android/purebilibili/feature/bangumi/MyBangumiScreen.kt",
         "src/main/java/com/android/purebilibili/feature/bangumi/ui/player/BangumiPlayerComponents.kt",
         "src/main/java/com/android/purebilibili/feature/download/BatchDownloadDialog.kt",
         "src/main/java/com/android/purebilibili/feature/download/DirectorySelectionDialog.kt",
@@ -151,7 +149,6 @@ internal object StyleLintAllowlist {
 
     /** 迁移到 AppMotionTokens 后从本表移除. */
     val MOTION_HITS: Set<String> = setOf(
-        "src/main/java/com/android/purebilibili/feature/bangumi/BangumiScreen.kt",
         "src/main/java/com/android/purebilibili/feature/login/LoginComponents.kt",
         "src/main/java/com/android/purebilibili/feature/login/LoginScreen.kt",
         "src/main/java/com/android/purebilibili/feature/onboarding/OnboardingBottomSheet.kt",
@@ -172,8 +169,6 @@ internal object StyleLintAllowlist {
     val SURFACE_HITS: Set<String> = setOf(
         "src/main/java/com/android/purebilibili/feature/bangumi/BangumiDetailScreen.kt",
         "src/main/java/com/android/purebilibili/feature/bangumi/BangumiScreen.kt",
-        "src/main/java/com/android/purebilibili/feature/bangumi/ui/components/BangumiFilterComponents.kt",
-        "src/main/java/com/android/purebilibili/feature/bangumi/MyBangumiScreen.kt",
         "src/main/java/com/android/purebilibili/feature/category/CategoryScreen.kt",
         "src/main/java/com/android/purebilibili/feature/download/BatchDownloadDialog.kt",
         "src/main/java/com/android/purebilibili/feature/download/DirectorySelectionDialog.kt",

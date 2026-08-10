@@ -69,7 +69,7 @@ import com.android.purebilibili.core.ui.components.AppOutlinedButton
 import com.android.purebilibili.core.ui.components.AppTextButton
 import com.android.purebilibili.core.ui.components.rememberAdaptivePreferenceIconContentColor
 import com.android.purebilibili.core.ui.components.rememberAdaptivePreferenceIconContainerColor
-import com.android.purebilibili.core.ui.components.rememberAdaptiveSemanticIconTint
+import com.android.purebilibili.core.ui.components.rememberAdaptivePreferenceIconTint
 import com.android.purebilibili.core.ui.components.rememberAdaptiveListVisualCapabilities
 import androidx.compose.ui.res.stringResource
 import com.android.purebilibili.core.ui.AppAlertDialog
@@ -228,6 +228,7 @@ internal data class SettingsRootCategoryActions(
     val onAnalyticsChange: (Boolean) -> Unit,
     val onEasterEggChange: (Boolean) -> Unit,
     val onAutoCheckUpdateChange: (Boolean) -> Unit,
+    val onAppUpdateChannelChange: (com.android.purebilibili.core.store.SettingsManager.AppUpdateChannel) -> Unit,
     val onFeedApiTypeChange: (com.android.purebilibili.core.store.SettingsManager.FeedApiType) -> Unit,
     val onIncrementalTimelineRefreshChange: (Boolean) -> Unit,
     val onDynamicImagePreviewTextVisibleChange: (Boolean) -> Unit,
@@ -253,6 +254,7 @@ internal data class SettingsRootCategoryState(
     val updateStatusText: String,
     val isCheckingUpdate: Boolean,
     val autoCheckUpdateEnabled: Boolean,
+    val appUpdateChannel: com.android.purebilibili.core.store.SettingsManager.AppUpdateChannel,
     val verificationLabel: String,
     val verificationSubtitle: String,
     val buildSourceValue: String,
@@ -1042,6 +1044,8 @@ internal fun SettingsRootCategoryContent(
                             onViewReleaseNotesClick = actions.onViewReleaseNotesClick,
                             autoCheckUpdateEnabled = state.autoCheckUpdateEnabled,
                             onAutoCheckUpdateChange = actions.onAutoCheckUpdateChange,
+                            appUpdateChannel = state.appUpdateChannel,
+                            onAppUpdateChannelChange = actions.onAppUpdateChannelChange,
                             onVersionClick = actions.onVersionClick,
                             onReplayOnboardingClick = actions.onReplayOnboardingClick,
                             onEasterEggChange = actions.onEasterEggChange,
@@ -1109,7 +1113,7 @@ fun ReleaseChannelPinnedCard(
     onTelegramGroupClick: () -> Unit = {},
     onDisclaimerClick: () -> Unit
 ) {
-    val disclaimerTint = rememberAdaptiveSemanticIconTint(iOSBlue)
+    val disclaimerTint = rememberAdaptivePreferenceIconTint(iOSBlue)
     val releaseChannelIcon = rememberAppShareIcon()
     AppCard(
         modifier = Modifier
@@ -1704,6 +1708,8 @@ fun AboutSection(
     onViewReleaseNotesClick: () -> Unit,
     autoCheckUpdateEnabled: Boolean,
     onAutoCheckUpdateChange: (Boolean) -> Unit,
+    appUpdateChannel: SettingsManager.AppUpdateChannel,
+    onAppUpdateChannelChange: (SettingsManager.AppUpdateChannel) -> Unit,
     onVersionClick: () -> Unit,
     onReplayOnboardingClick: () -> Unit,
     onEasterEggChange: (Boolean) -> Unit,
@@ -1924,6 +1930,21 @@ fun AboutSection(
             checked = autoCheckUpdateEnabled,
             onCheckedChange = onAutoCheckUpdateChange,
             iconTint = autoCheckTint
+        )
+        SettingsAdaptiveDivider()
+        SettingsSingleChoicePreference(
+            title = "检测渠道",
+            subtitle = appUpdateChannel.description,
+            options = SettingsManager.AppUpdateChannel.entries.map { channel ->
+                com.android.purebilibili.core.ui.components.AppSegmentOption(
+                    value = channel,
+                    label = channel.label
+                )
+            },
+            selectedValue = appUpdateChannel,
+            icon = checkUpdateVisual.icon,
+            iconTint = autoCheckTint,
+            onSelectionChange = onAppUpdateChannelChange
         )
     }
     Spacer(modifier = Modifier.height(12.dp))

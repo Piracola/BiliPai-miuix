@@ -1810,6 +1810,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                         name = navData.uname,
                         mid = navData.mid,
                         level = navData.level_info.current_level,
+                        currentLevelMinExp = navData.level_info.current_min ?: 0,
+                        currentLevelExp = navData.level_info.current_exp ?: 0,
+                        nextLevelExp = navData.level_info.next_exp ?: 0,
                         coin = navData.money,
                         bcoin = navData.wallet.bcoin_balance,
                         isVip = isVip

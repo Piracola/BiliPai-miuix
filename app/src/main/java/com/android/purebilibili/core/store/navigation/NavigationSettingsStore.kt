@@ -20,6 +20,8 @@ object NavigationSettingsStore {
     private val keyPredictiveBackEnabled = booleanPreferencesKey("predictive_back_enabled")
     private val keyPredictiveBackAnimationStyle = stringPreferencesKey("predictive_back_animation_style")
     private val keyPredictiveBackExitDirection = stringPreferencesKey("predictive_back_exit_direction")
+    private val keyFullScreenSwipeBackEnabled =
+        booleanPreferencesKey("full_screen_swipe_back_enabled")
     private val keyBottomBarOrder = stringPreferencesKey("bottom_bar_order")
     private val keyBottomBarVisibleTabs = stringPreferencesKey("bottom_bar_visible_tabs")
     private val keyListenVideoMigrationComplete = booleanPreferencesKey("listen_video_bottom_tab_migration_complete")
@@ -102,6 +104,17 @@ object NavigationSettingsStore {
     suspend fun setPredictiveBackExitDirection(context: Context, direction: String) {
         context.settingsDataStore.edit { preferences ->
             preferences[keyPredictiveBackExitDirection] = direction
+        }
+    }
+
+    /** Miuix 全屏滑动返回（默认关闭，仅保留系统边缘预测返回）。 */
+    fun getFullScreenSwipeBackEnabled(context: Context): Flow<Boolean> =
+        context.settingsDataStore.data
+            .map { preferences -> preferences[keyFullScreenSwipeBackEnabled] ?: false }
+
+    suspend fun setFullScreenSwipeBackEnabled(context: Context, enabled: Boolean) {
+        context.settingsDataStore.edit { preferences ->
+            preferences[keyFullScreenSwipeBackEnabled] = enabled
         }
     }
 }

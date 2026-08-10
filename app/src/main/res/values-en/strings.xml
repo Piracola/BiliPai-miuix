@@ -31,7 +31,7 @@
     <string name="appearance_ui_preset_android_miuix_summary">Keep the Android information architecture, but switch top chrome and selected containers to a Miuix-style presentation.</string>
     <string name="appearance_android_native_variant_title">Android Native Style</string>
     <string name="appearance_android_native_variant_subtitle">Switch between Material 3 and Miuix under the Android native preset</string>
-    <string name="appearance_android_native_variant_material3">Material 3</string>
+    <string name="appearance_android_native_variant_material3">Google Material 3</string>
     <string name="appearance_android_native_variant_miuix">Miuix</string>
     <string name="appearance_theme_mode_title">Theme Mode</string>
     <string name="appearance_theme_mode_subtitle">Tap or swipe to change</string>

@@ -1137,11 +1137,13 @@ open class MainActivity : AppCompatActivity() {
 
             LaunchedEffect(Unit) {
                 val autoCheckUpdateEnabled = SettingsManager.getAutoCheckAppUpdate(context).first()
+                val updateChannel = SettingsManager.getAppUpdateChannel(context).first()
                 val gateAllowsCheck = AppUpdateAutoCheckGate.tryMarkChecked()
                 if (shouldRunAppEntryAutoCheck(autoCheckUpdateEnabled, gateAllowsCheck)) {
                     AppUpdateChecker.check(
                         currentVersion = BuildConfig.VERSION_NAME,
-                        currentVersionCode = BuildConfig.VERSION_CODE
+                        currentVersionCode = BuildConfig.VERSION_CODE,
+                        includePrerelease = updateChannel == SettingsManager.AppUpdateChannel.BETA
                     ).onSuccess { info ->
                         if (info.isUpdateAvailable) {
                             startupUpdateCheckResult = info

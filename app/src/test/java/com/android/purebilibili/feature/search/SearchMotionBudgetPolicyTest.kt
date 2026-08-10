@@ -120,7 +120,7 @@ class SearchMotionBudgetPolicyTest {
     }
 
     @Test
-    fun autoFocus_waitsUntilStartupSettles() {
+    fun autoFocus_isDisabledForSearchDestinationEntry() {
         assertFalse(
             shouldAutoFocusSearchField(
                 startupSettled = false,
@@ -133,7 +133,7 @@ class SearchMotionBudgetPolicyTest {
                 query = "abc"
             )
         )
-        assertTrue(
+        assertFalse(
             shouldAutoFocusSearchField(
                 startupSettled = true,
                 query = ""
@@ -142,7 +142,7 @@ class SearchMotionBudgetPolicyTest {
     }
 
     @Test
-    fun autoFocus_neverAfterResultsOrWhenConsumed() {
+    fun autoFocus_remainsDisabledForResultsAndConsumedState() {
         assertFalse(
             shouldAutoFocusSearchField(
                 startupSettled = true,
@@ -160,9 +160,9 @@ class SearchMotionBudgetPolicyTest {
     }
 
     @Test
-    fun searchBackAction_prioritizesChromeThenResultsThenLeave() {
+    fun searchBackAction_alwaysLeavesSearchDestination() {
         assertEquals(
-            SearchBackAction.DISMISS_CHROME,
+            SearchBackAction.LEAVE_SEARCH,
             resolveSearchBackAction(
                 showResults = true,
                 suggestionsVisible = true,
@@ -170,7 +170,7 @@ class SearchMotionBudgetPolicyTest {
             )
         )
         assertEquals(
-            SearchBackAction.DISMISS_CHROME,
+            SearchBackAction.LEAVE_SEARCH,
             resolveSearchBackAction(
                 showResults = true,
                 suggestionsVisible = false,
@@ -178,7 +178,7 @@ class SearchMotionBudgetPolicyTest {
             )
         )
         assertEquals(
-            SearchBackAction.EXIT_RESULTS,
+            SearchBackAction.LEAVE_SEARCH,
             resolveSearchBackAction(
                 showResults = true,
                 suggestionsVisible = false,

@@ -103,12 +103,19 @@ object AppUpdateChecker {
 
     suspend fun check(
         currentVersion: String,
-        currentVersionCode: Int
+        currentVersionCode: Int,
+        includePrerelease: Boolean = false
     ): Result<AppUpdateCheckResult> = withContext(Dispatchers.IO) {
         runCatching {
             val release = fetchRemoteText(RELEASES_API, required = false)
-                ?.let(::selectLatestReleaseCandidate)
-                ?: throw IllegalStateException("未获取到包含安装包的稳定版 Release")
+                ?.let { selectLatestReleaseCandidate(it, includePrerelease = includePrerelease) }
+                ?: throw IllegalStateException(
+                    if (includePrerelease) {
+                        "未获取到包含安装包的测试版 Release"
+                    } else {
+                        "未获取到包含安装包的稳定版 Release"
+                    }
+                )
 
             val latestTag = release.tagName
             val latestVersion = normalizeVersion(latestTag)
@@ -290,7 +297,8 @@ object AppUpdateChecker {
     }
 
     internal fun selectLatestReleaseCandidate(
-        rawReleaseJson: String
+        rawReleaseJson: String,
+        includePrerelease: Boolean = false
     ): AppUpdateReleaseCandidate? {
         val releasesJson = runCatching {
             releaseJson.parseToJsonElement(rawReleaseJson).jsonArray
@@ -300,7 +308,7 @@ object AppUpdateChecker {
             .mapNotNull { releaseElement ->
                 parseReleaseCandidateElement(releaseElement)
             }
-            .filter { !it.isPrerelease && it.assets.any(AppUpdateAsset::isApk) }
+            .filter { (includePrerelease || !it.isPrerelease) && it.assets.any(AppUpdateAsset::isApk) }
 
         return candidates
             .mapNotNull { candidate ->

@@ -4,10 +4,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.ui.rememberAppSegmentedControlPolicy
 import com.android.purebilibili.core.ui.renderer.material3.AppMaterial3SegmentedControl
+import com.android.purebilibili.core.ui.renderer.material3.AppMaterial3TabRow
 import com.android.purebilibili.core.ui.renderer.miuix.AppMiuixSegmentedControl
+import com.android.purebilibili.core.ui.renderer.miuix.AppMiuixTabRow
 
 data class AppSegmentOption<T>(
     val value: T,
@@ -182,6 +186,58 @@ fun <T> AppNativeSegmentedControl(
             enabled = enabled,
             colors = colors,
             pillCornerRadius = policy.pillCornerRadius,
+            modifier = modifier,
+            onSelectionChange = onSelectionChange,
+        )
+    }
+}
+
+/**
+ * Theme-adaptive page tabs. Material 3 renders a primary tab row; MIUIX renders
+ * its native TabRow. Use this for sibling pages, and segmented buttons for
+ * compact option selection inside a page.
+ */
+@Composable
+fun <T> AppNativeTabRow(
+    options: List<AppSegmentOption<T>>,
+    selectedValue: T,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    scrollable: Boolean = false,
+    minTabWidth: Dp = 72.dp,
+    onSelectionChange: (T) -> Unit,
+) {
+    if (options.isEmpty()) return
+    val policy = rememberAppSegmentedControlPolicy()
+    val materialColors = MaterialTheme.colorScheme
+    val colors = resolveAppSegmentedControlColors(
+        usesMaterialColorTokens = policy.usesMaterialColorTokens,
+        materialPrimaryContainer = materialColors.primaryContainer,
+        materialOnPrimaryContainer = materialColors.onPrimaryContainer,
+        materialSurfaceContainerHigh = materialColors.surfaceContainerHigh,
+        materialOnSurfaceVariant = materialColors.onSurfaceVariant,
+        miuixSecondaryContainer = AppSurfaceTokens.secondaryContainer(),
+        miuixOnSecondaryContainer = AppSurfaceTokens.onSecondaryContainer(),
+        miuixSurfaceContainerHigh = AppSurfaceTokens.surfaceContainerHigh(),
+        miuixOnSurfaceVariantSummary = AppSurfaceTokens.onSurfaceVariantSummary(),
+    )
+    when (resolveAppSegmentedRenderer(policy.usesNativeTabRow)) {
+        AppSegmentedRenderer.MATERIAL3 -> AppMaterial3TabRow(
+            options = options,
+            selectedValue = selectedValue,
+            enabled = enabled,
+            scrollable = scrollable,
+            minTabWidth = minTabWidth,
+            modifier = modifier,
+            onSelectionChange = onSelectionChange,
+        )
+        AppSegmentedRenderer.MIUIX -> AppMiuixTabRow(
+            options = options,
+            selectedValue = selectedValue,
+            enabled = enabled,
+            scrollable = scrollable,
+            minTabWidth = minTabWidth,
+            colors = colors,
             modifier = modifier,
             onSelectionChange = onSelectionChange,
         )

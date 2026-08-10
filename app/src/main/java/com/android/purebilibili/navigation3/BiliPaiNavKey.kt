@@ -1,6 +1,7 @@
 package com.android.purebilibili.navigation3
 
 import com.android.purebilibili.feature.settings.SettingsRootCategory
+import com.android.purebilibili.data.model.response.FavoriteSearchScope
 import kotlinx.serialization.Serializable
 import top.yukonga.miuix.kmp.nav.core.NavKey
 
@@ -154,8 +155,21 @@ internal sealed interface BiliPaiNavKey : NavKey {
     }
 
     @Serializable
+    data class HistorySearch(val query: String = "") : BiliPaiNavKey {
+        override val routeBase: String = "history_search"
+    }
+
+    @Serializable
     data object Favorite : BiliPaiNavKey {
         override val routeBase: String = "favorite"
+    }
+
+    @Serializable
+    data class FavoriteSearch(
+        val query: String = "",
+        val scope: FavoriteSearchScope = FavoriteSearchScope.CURRENT_FOLDER,
+    ) : BiliPaiNavKey {
+        override val routeBase: String = "favorite_search"
     }
 
     @Serializable
@@ -166,6 +180,11 @@ internal sealed interface BiliPaiNavKey : NavKey {
     @Serializable
     data object WatchLater : BiliPaiNavKey {
         override val routeBase: String = "watch_later"
+    }
+
+    @Serializable
+    data class WatchLaterSearch(val query: String = "") : BiliPaiNavKey {
+        override val routeBase: String = "watch_later_search"
     }
 
     @Serializable

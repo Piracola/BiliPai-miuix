@@ -148,6 +148,20 @@ class DynamicApiContractTest {
     }
 
     @Test
+    fun favoriteFolderDynamicRequest_usesPiliPlusResourcePayload() {
+        val request = buildFavoriteFolderDynamicRequest(
+            mediaId = 12345L,
+            content = "分享收藏夹",
+        )
+
+        assertEquals(5, request.dyn_req.scene)
+        assertEquals(null, request.web_repost_src.dyn_id_str)
+        assertEquals(4300, request.web_repost_src.revs_id?.dyn_type)
+        assertEquals(12345L, request.web_repost_src.revs_id?.rid)
+        assertEquals("分享收藏夹", request.dyn_req.content.contents.single().raw_text)
+    }
+
+    @Test
     fun getDynamicDetail_usesDesktopDetailEndpointAndIdQuery() {
         val method = DynamicApi::class.java.methods.first { it.name == "getDynamicDetail" }
         val get = method.getAnnotation(GET::class.java)

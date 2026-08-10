@@ -5,6 +5,7 @@ import com.android.purebilibili.core.ui.transition.VideoCardTransitionBackground
 import com.android.purebilibili.core.ui.transition.normalizeSharedElementSourceRoute
 import com.android.purebilibili.core.ui.transition.resolveVideoCardLiveReturnVisualHandoffAlpha
 import com.android.purebilibili.core.ui.transition.resolveVideoCardReturnListCoverContract
+import com.android.purebilibili.core.ui.transition.resolveVideoCardSourceChromeReturnAlpha
 
 internal data class VideoCardScrollLiteVisualPolicy(
     val coverShadowElevationDp: Float,
@@ -68,10 +69,10 @@ internal fun shouldPinVideoCardCoverForSharedReturn(
 ).pinCoverSource
 
 /**
- * 来源卡封面与文字在返回期间的可见 alpha。
+ * 来源卡封面在返回期间的可见 alpha。
  *
  * 保留图片请求、缓存和布局以避免卸层黑闪，但 LIVE surface 主导时不绘制来源卡像素；
- * 到最后交接窗口才与详情侧常驻封面使用同一 alpha 一起落位。
+ * 到最后交接窗口才与详情侧常驻封面使用同一 alpha 一起落位；正文另走提前回显窗口。
  */
 internal fun resolveHomeCardReturnSourceVisualAlpha(
     useCardContainerSharedBounds: Boolean,
@@ -123,15 +124,11 @@ internal fun resolveHorizontalCardChromeMotionFrame(
         transitionBackgroundPhase == VideoCardTransitionBackgroundPhase.RETURNING
     if (isReturnContext) {
         return HorizontalCardChromeMotionFrame(
-            alpha = resolveHomeCardReturnSourceVisualAlpha(
-                useCardContainerSharedBounds = useCardContainerSharedBounds,
-                isSharedMorphSourceCard = isSharedMorphSourceCard,
-                isReturningFromDetail = isReturningFromDetail,
-                transitionBackgroundPhase = transitionBackgroundPhase,
-                isVideoCardReturnGestureInProgress = isVideoCardReturnGestureInProgress,
-                transitionBackgroundProgress = transitionBackgroundProgress,
-                preferWholeCardReturn = preferWholeCardReturn,
-            ),
+            alpha = if (preferWholeCardReturn) {
+                1f
+            } else {
+                resolveVideoCardSourceChromeReturnAlpha(transitionBackgroundProgress)
+            },
             translationProgress = 0f,
         )
     }
@@ -160,10 +157,10 @@ internal fun resolveHorizontalCardChromeMotionFrame(
  * 规则（以代码为准，不依赖「morph 结束硬切 1」）：
  * - 非源卡 / 无 shell：恒 1
  * - 进场（OPENING 或 shared 进行中且非返回）：0，避免字叠播放器
- * - 返回上下文：与来源封面共用 live handoff alpha，避免叠实时画面
+ * - 返回上下文：正文使用独立的 68%–94% 落位窗口，在封面像素交接前开始恢复
  * - 整卡回退（关闭 live 预览）可直接全显
  *
- * 返回期间禁止对 chrome 做独立 alpha/位移时间轴，否则会与封面产生不同步。
+ * 正文与封面使用同一 morph 时钟，但各自拥有明确的交接窗口；不再依赖转场结束硬切。
  */
 internal fun resolveHomeCardChromeAlphaDuringShellReturnMorph(
     useCardContainerSharedBounds: Boolean,
@@ -184,15 +181,11 @@ internal fun resolveHomeCardChromeAlphaDuringShellReturnMorph(
         transitionBackgroundPhase == VideoCardTransitionBackgroundPhase.RETURNING
 
     if (isReturnContext) {
-        return resolveHomeCardReturnSourceVisualAlpha(
-            useCardContainerSharedBounds = useCardContainerSharedBounds,
-            isSharedMorphSourceCard = isSharedMorphSourceCard,
-            isReturningFromDetail = isReturningFromDetail,
-            transitionBackgroundPhase = transitionBackgroundPhase,
-            isVideoCardReturnGestureInProgress = isVideoCardReturnGestureInProgress,
-            transitionBackgroundProgress = transitionBackgroundProgress,
-            preferWholeCardReturn = preferWholeCardReturn,
-        )
+        return if (preferWholeCardReturn) {
+            1f
+        } else {
+            resolveVideoCardSourceChromeReturnAlpha(transitionBackgroundProgress)
+        }
     }
 
     // 进场：shared 飞行或 OPENING 时藏字

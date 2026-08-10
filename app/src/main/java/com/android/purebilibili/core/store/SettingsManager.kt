@@ -5250,11 +5250,37 @@ object SettingsManager {
     }
 
     // ==========  应用更新 ==========
+    private val KEY_APP_UPDATE_CHANNEL = intPreferencesKey("app_update_channel")
+
+    /**
+     *  更新检测渠道
+     * - STABLE: 正式版渠道，仅检测稳定版本
+     * - BETA: 测试版渠道，同时检测预发布（Beta / RC）版本
+     */
+    enum class AppUpdateChannel(val value: Int, val label: String, val description: String) {
+        STABLE(0, "正式版", "仅检测稳定版本"),
+        BETA(1, "测试版", "同时检测测试版与预发布版本");
+
+        companion object {
+            fun fromValue(value: Int): AppUpdateChannel = entries.find { it.value == value } ?: STABLE
+        }
+    }
+
     fun getAutoCheckAppUpdate(context: Context): Flow<Boolean> = context.settingsDataStore.data
         .map { preferences -> preferences[KEY_AUTO_CHECK_APP_UPDATE] ?: true } // 默认开启
 
     suspend fun setAutoCheckAppUpdate(context: Context, value: Boolean) {
         context.settingsDataStore.edit { preferences -> preferences[KEY_AUTO_CHECK_APP_UPDATE] = value }
+    }
+
+    // --- 更新检测渠道 (默认正式版) ---
+    fun getAppUpdateChannel(context: Context): Flow<AppUpdateChannel> = context.settingsDataStore.data
+        .map { preferences ->
+            AppUpdateChannel.fromValue(preferences[KEY_APP_UPDATE_CHANNEL] ?: AppUpdateChannel.STABLE.value)
+        }
+
+    suspend fun setAppUpdateChannel(context: Context, channel: AppUpdateChannel) {
+        context.settingsDataStore.edit { preferences -> preferences[KEY_APP_UPDATE_CHANNEL] = channel.value }
     }
     
     // ==========  隐私无痕模式 ==========
@@ -6341,6 +6367,13 @@ object SettingsManager {
 
     suspend fun setPredictiveBackExitDirection(context: Context, direction: String) {
         NavigationSettingsStore.setPredictiveBackExitDirection(context, direction)
+    }
+
+    fun getFullScreenSwipeBackEnabled(context: Context): Flow<Boolean> =
+        NavigationSettingsStore.getFullScreenSwipeBackEnabled(context)
+
+    suspend fun setFullScreenSwipeBackEnabled(context: Context, enabled: Boolean) {
+        NavigationSettingsStore.setFullScreenSwipeBackEnabled(context, enabled)
     }
     
     // ========== [问题12] 视频操作按钮可见性 ==========

@@ -1958,6 +1958,7 @@ fun AppNavigation(
                             )
                         BiliPaiNavEntryContentRole.HISTORY -> {
                                 val historyViewModel: HistoryViewModel = viewModel()
+                                val historySearchKey = key as? BiliPaiNavKey.HistorySearch
                                 val historyNavigationScope = rememberCoroutineScope()
                                 androidx.compose.runtime.LaunchedEffect(
                                     historyViewModel,
@@ -1972,6 +1973,11 @@ fun AppNavigation(
                                     onBack = { performSystemBackAction() },
                                     globalHazeState = mainHazeState,
                                     scrollToTopChannel = historyScrollChannel,
+                                    initialSearchQuery = historySearchKey?.query.orEmpty(),
+                                    isSearchDestination = historySearchKey != null,
+                                    onOpenSearchDestination = if (historySearchKey == null) {
+                                        { query -> pushNavigation3Key(BiliPaiNavKey.HistorySearch(query)) }
+                                    } else null,
                                     onUpClick = { mid -> pushNavigation3Route(ScreenRoutes.Space.createRoute(mid)) },
                                     onVideoClick = { lookupKey, cid, cover, isVertical ->
                                         val historyItem = historyViewModel.getHistoryItem(lookupKey)
@@ -2201,6 +2207,7 @@ fun AppNavigation(
                                 onLogoutSuccess = { homeViewModel.refresh() },
                                 onAccountSwitchSuccess = { homeViewModel.refresh() },
                                 onSettingsClick = { navigateFromProfile(ScreenRoutes.Settings.route) },
+                                onSearchClick = { navigateFromProfile(ScreenRoutes.Search.route) },
                                 onHistoryClick = { navigateFromProfile(ScreenRoutes.History.route) },
                                 showHistoryService = shouldShowProfileHistoryService(
                                     visibleBottomBarItems.map { it.name }
@@ -2598,6 +2605,7 @@ fun AppNavigation(
                             }
                         BiliPaiNavEntryContentRole.WATCH_LATER -> {
                                 val watchLaterViewModel: com.android.purebilibili.feature.watchlater.WatchLaterViewModel = viewModel()
+                                val watchLaterSearchKey = key as? BiliPaiNavKey.WatchLaterSearch
                                 androidx.compose.runtime.LaunchedEffect(
                                     watchLaterViewModel,
                                     isBottomPagerPageActive
@@ -2610,6 +2618,10 @@ fun AppNavigation(
                                 }
                                 com.android.purebilibili.feature.watchlater.WatchLaterScreen(
                                     onBack = { performSystemBackAction() },
+                                    initialSearchQuery = watchLaterSearchKey?.query.orEmpty(),
+                                    onOpenSearchDestination = if (watchLaterSearchKey == null) {
+                                        { query -> pushNavigation3Key(BiliPaiNavKey.WatchLaterSearch(query)) }
+                                    } else null,
                                     onVideoClick = { bvid, cid, resumePositionMs ->
                                         navigateToVideoInNavigation3(
                                             bvid = bvid,
@@ -2792,11 +2804,19 @@ fun AppNavigation(
                             }
                         BiliPaiNavEntryContentRole.FAVORITE -> {
                                 val favoriteViewModel: FavoriteViewModel = viewModel()
+                                val favoriteSearchKey = key as? BiliPaiNavKey.FavoriteSearch
                                 CommonListScreen(
                                     viewModel = favoriteViewModel,
                                     onBack = { performSystemBackAction() },
                                     globalHazeState = mainHazeState,
                                     scrollToTopChannel = favoriteScrollChannel,
+                                    initialSearchQuery = favoriteSearchKey?.query.orEmpty(),
+                                    initialFavoriteSearchScope = favoriteSearchKey?.scope
+                                        ?: com.android.purebilibili.data.model.response.FavoriteSearchScope.CURRENT_FOLDER,
+                                    isSearchDestination = favoriteSearchKey != null,
+                                    onOpenSearchDestination = if (favoriteSearchKey == null) {
+                                        { query -> pushNavigation3Key(BiliPaiNavKey.FavoriteSearch(query)) }
+                                    } else null,
                                     onVideoClick = { bvid, cid, cover, isVertical ->
                                         navigateToVideoInNavigation3(
                                             bvid = bvid,
@@ -2808,6 +2828,22 @@ fun AppNavigation(
                                     },
                                     onUpClick = { mid ->
                                         pushNavigation3Route(ScreenRoutes.Space.createRoute(mid))
+                                    },
+                                    onFavoriteBangumiClick = { seasonId ->
+                                        pushNavigation3Key(BiliPaiNavKey.BangumiDetail(seasonId = seasonId))
+                                    },
+                                    onFavoriteArticleClick = { articleId, title ->
+                                        pushNavigation3Route(
+                                            ScreenRoutes.ArticleDetail.createRoute(articleId, title)
+                                        )
+                                    },
+                                    onFavoriteTopicClick = { topicId ->
+                                        pushNavigation3Key(BiliPaiNavKey.TopicDetail(topicId))
+                                    },
+                                    onFavoriteWebClick = { url, title ->
+                                        if (url.isNotBlank()) {
+                                            pushNavigation3Route(ScreenRoutes.Web.createRoute(url, title))
+                                        }
                                     },
                                     onFavoriteFolderClick = { mediaId, ownerMid, title, ownerName ->
                                         pushNavigation3Key(

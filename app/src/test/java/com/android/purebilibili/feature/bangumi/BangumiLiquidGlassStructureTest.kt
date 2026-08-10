@@ -7,20 +7,22 @@ import kotlin.test.assertTrue
 class BangumiLiquidGlassStructureTest {
 
     @Test
-    fun `bangumi segmented controls reuse home liquid indicator`() {
+    fun `bangumi hub uses adaptive native controls and independent poster ratio`() {
         val screenSource = sourceOf("BangumiScreen.kt")
-        val filterSource = sourceOf("ui/components/BangumiFilterComponents.kt")
-        val followSource = sourceOf("MyBangumiScreen.kt")
+        val contentSource = sourceOf("BangumiHubContent.kt")
 
-        assertTrue(screenSource.contains("fun BangumiTypeTabs("))
-        assertTrue(screenSource.contains("BottomBarLiquidSegmentedControl("))
-        assertTrue(filterSource.contains("fun BangumiModeTabs("))
-        assertTrue(filterSource.contains("fun BangumiIndexFilterRows("))
-        assertTrue(filterSource.contains("BottomBarLiquidSegmentedControl("))
-        assertTrue(followSource.contains("fun MyFollowTypeTabs("))
-        assertTrue(followSource.contains("BottomBarLiquidSegmentedControl("))
-        assertTrue(!filterSource.contains("Modifier.unifiedBlur("))
-        assertTrue(!followSource.contains("Modifier.unifiedBlur("))
+        assertTrue(screenSource.contains("AppNativeTabRow("))
+        assertTrue(contentSource.contains("AppNativeTabRow("))
+        assertTrue(contentSource.contains("AdaptivePullToRefreshBox("))
+        assertTrue(contentSource.contains("AnimatedContent("))
+        assertTrue(contentSource.contains("slideInHorizontally("))
+        assertTrue(contentSource.contains("slideOutHorizontally("))
+        assertTrue(contentSource.contains("BANGUMI_POSTER_ASPECT_RATIO = 0.75f"))
+        assertTrue(!screenSource.contains("BottomBarLiquidSegmentedControl"))
+        assertTrue(!contentSource.contains("BottomBarLiquidSegmentedControl"))
+        assertTrue(!contentSource.contains("HomeFeedCardStyle"))
+        assertTrue(!contentSource.contains("SettingsManager"))
+        assertTrue(!screenSource.contains("TopAppBarScrollBehavior"))
     }
 
     private fun sourceOf(path: String): String =

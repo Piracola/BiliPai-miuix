@@ -71,6 +71,39 @@ data class BangumiIndexData(
 )
 
 @Serializable
+data class BangumiIndexConditionResponse(
+    val code: Int = 0,
+    val message: String = "",
+    val data: BangumiIndexConditionData? = null,
+)
+
+@Serializable
+data class BangumiIndexConditionData(
+    val filter: List<BangumiIndexConditionFilter>? = null,
+    val order: List<BangumiIndexConditionOrder>? = null,
+)
+
+@Serializable
+data class BangumiIndexConditionFilter(
+    val field: String? = null,
+    val name: String? = null,
+    val values: List<BangumiIndexConditionValue>? = null,
+)
+
+@Serializable
+data class BangumiIndexConditionOrder(
+    val field: String? = null,
+    val name: String? = null,
+    val sort: String? = null,
+)
+
+@Serializable
+data class BangumiIndexConditionValue(
+    val keyword: String? = null,
+    val name: String? = null,
+)
+
+@Serializable
 data class BangumiItem(
     @SerialName("season_id")
     val seasonId: Long = 0,

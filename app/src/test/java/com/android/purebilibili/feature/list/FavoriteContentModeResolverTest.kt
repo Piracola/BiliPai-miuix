@@ -3,6 +3,7 @@ package com.android.purebilibili.feature.list
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class FavoriteContentModeResolverTest {
@@ -32,10 +33,19 @@ class FavoriteContentModeResolverTest {
     }
 
     @Test
-    fun favoriteBrowseSegmentedControlForcesLiquidIndicatorFromPageSettings() {
+    fun favoriteHeaderUsesFolderSelectorWithoutOwnedSubscribedSegmentedRow() {
         val listSource = loadSource(
             "app/src/main/java/com/android/purebilibili/feature/list/CommonListScreen.kt"
         )
+
+        assertTrue(listSource.contains("FavoriteFolderSelector("))
+        assertFalse(listSource.contains("selectedValue = favoriteBrowseSection"))
+        assertFalse(listSource.contains("FavoriteFolderSummary("))
+        assertFalse(listSource.contains("AppSegmentOption(FavoriteBrowseSection.OWNED"))
+    }
+
+    @Test
+    fun sharedSegmentedControlForwardsLiquidInteractionOptions() {
         val segmentedSource = loadSource(
             "app/src/main/java/com/android/purebilibili/feature/settings/AppSegmentedControl.kt"
         )
@@ -43,26 +53,6 @@ class FavoriteContentModeResolverTest {
             "app/src/main/java/com/android/purebilibili/feature/home/components/BottomBarLiquidSegmentedControl.kt"
         )
 
-        assertTrue(
-            listSource.contains("forceLiquidIndicator = homeSettings.androidNativeLiquidGlassEnabled"),
-            "Favorite page should pass its already-collected Android native glass setting into the top segmented control"
-        )
-        assertTrue(
-            listSource.contains("height = favoriteHeaderLayout.browseToggleHeightDp.dp"),
-            "Favorite page should use the compact header segmented-control height instead of the bottom-bar default"
-        )
-        assertTrue(
-            listSource.contains("indicatorHeight = favoriteHeaderLayout.browseToggleIndicatorHeightDp.dp"),
-            "Favorite page should size the selected indicator from the header layout policy"
-        )
-        assertTrue(
-            listSource.contains("labelFontSize = favoriteHeaderLayout.browseToggleLabelFontSizeSp.sp"),
-            "Favorite page should size segmented labels from the header layout policy"
-        )
-        assertTrue(
-            listSource.contains("tapPressRefractionEnabled = false"),
-            "Favorite page should not inject tap press into liquid-glass refraction because it causes selection ghosting"
-        )
         assertTrue(
             segmentedSource.contains("forceLiquidIndicator: Boolean = false"),
             "Shared segmented control should expose an explicit liquid-indicator override"
@@ -78,6 +68,10 @@ class FavoriteContentModeResolverTest {
         assertTrue(
             segmentedSource.contains("tapPressRefractionEnabled = tapPressRefractionEnabled"),
             "Shared iOS segmented control should forward tap refraction control into the bottom-bar liquid implementation"
+        )
+        assertTrue(
+            segmentedSource.contains("dragSelectionEnabled = dragSelectionEnabled"),
+            "Shared segmented control should forward drag-selection policy to its liquid implementation"
         )
         assertTrue(
             bottomBarSource.contains("forceLiquidChrome: Boolean = false"),

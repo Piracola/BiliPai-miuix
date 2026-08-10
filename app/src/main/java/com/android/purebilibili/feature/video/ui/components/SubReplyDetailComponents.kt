@@ -870,9 +870,15 @@ internal fun SubReplyDetailContent(
                 }
             }
 
+            if (isLoading && visibleReplies.isEmpty()) {
+                item(key = "subreply_skeleton") {
+                    com.android.purebilibili.core.ui.skeleton.CommentListColumnSkeleton(itemCount = 4)
+                }
+            }
+
             item(key = "footer") {
                 when {
-                    isLoading -> {
+                    isLoading && visibleReplies.isNotEmpty() -> {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()

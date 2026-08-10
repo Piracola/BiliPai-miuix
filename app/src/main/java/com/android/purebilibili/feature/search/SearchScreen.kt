@@ -792,16 +792,10 @@ fun SearchScreen(
                 searchFieldFocused = searchFieldFocused
             )
         ) {
-            SearchBackAction.DISMISS_CHROME -> {
-                viewModel.dismissSuggestions()
+            SearchBackAction.LEAVE_SEARCH -> {
                 dismissSearchKeyboardAndFocus()
+                onBack()
             }
-            SearchBackAction.EXIT_RESULTS -> {
-                // Exit video/result list without reopening the IME.
-                dismissSearchKeyboardAndFocus()
-                viewModel.exitResultsToLanding()
-            }
-            SearchBackAction.LEAVE_SEARCH -> onBack()
         }
     }
 

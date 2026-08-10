@@ -107,7 +107,9 @@ fun <T> AppSingleChoicePreference(
                     Icon(
                         imageVector = imageVector,
                         contentDescription = null,
-                        tint = iconTint,
+                        // 与其他设置条目一致：MD3 官方推荐预设下为 onSurfaceVariant 单色，
+                        // 其余预设保留多彩语义色（MIUIX 等）。
+                        tint = rememberAdaptivePreferenceIconTint(iconTint),
                         modifier = Modifier.size(24.dp),
                     )
                 }

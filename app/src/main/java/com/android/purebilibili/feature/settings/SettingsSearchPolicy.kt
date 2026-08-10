@@ -416,7 +416,7 @@ private val SETTINGS_SEARCH_INDEX: List<SettingsSearchEntry> = listOf(
         title = "检查更新",
         subtitle = "检测最新版本",
         section = "关于",
-        aliases = listOf("更新", "升级", "新版本", "检查", "自动检查更新", "版本更新")
+        aliases = listOf("更新", "升级", "新版本", "检查", "自动检查更新", "版本更新", "检测渠道", "测试版", "正式版", "预发布", "beta", "稳定版")
     ),
     SettingsSearchEntry(
         target = SettingsSearchTarget.VIEW_RELEASE_NOTES,

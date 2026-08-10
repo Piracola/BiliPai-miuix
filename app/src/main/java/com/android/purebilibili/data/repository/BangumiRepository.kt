@@ -350,6 +350,85 @@ object BangumiRepository {
             Result.failure(e)
         }
     }
+
+    suspend fun updateBangumiFollowStatuses(
+        seasonIds: Collection<Long>,
+        status: Int,
+    ): Result<Boolean> = withContext(Dispatchers.IO) {
+        val normalizedIds = seasonIds.asSequence().filter { it > 0L }.distinct().toList()
+        if (normalizedIds.isEmpty()) {
+            return@withContext Result.failure(IllegalArgumentException("请选择要更新的番剧"))
+        }
+        try {
+            val csrf = TokenManager.csrfCache ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.updateBangumiFollowStatusBatch(
+                seasonIds = normalizedIds.joinToString(","),
+                status = status,
+                csrf = csrf,
+            )
+            if (response.code == 0) {
+                Result.success(true)
+            } else {
+                Result.failure(Exception("批量更新追番状态失败: ${response.message}"))
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("BangumiRepo", "updateBangumiFollowStatuses error: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getBangumiIndexConditions(
+        seasonType: Int? = null,
+        indexType: Int? = null,
+        type: Int = 0,
+    ): Result<BangumiIndexConditionData> = withContext(Dispatchers.IO) {
+        try {
+            val response = api.getBangumiIndexCondition(
+                seasonType = seasonType,
+                type = type,
+                indexType = indexType,
+            )
+            if (response.code == 0 && response.data != null) {
+                Result.success(response.data)
+            } else {
+                Result.failure(Exception("获取番剧索引条件失败: ${response.message}"))
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("BangumiRepo", "getBangumiIndexConditions error: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getBangumiIndexPage(
+        seasonType: Int? = null,
+        indexType: Int? = null,
+        type: Int = 0,
+        page: Int = 1,
+        pageSize: Int = 21,
+        params: Map<String, String> = emptyMap(),
+    ): Result<BangumiIndexData> = withContext(Dispatchers.IO) {
+        try {
+            val query = params.toMutableMap().apply {
+                put("type", type.toString())
+                put("page", page.coerceAtLeast(1).toString())
+                put("pagesize", pageSize.coerceAtLeast(1).toString())
+                seasonType?.let {
+                    put("season_type", it.toString())
+                    putIfAbsent("st", it.toString())
+                }
+                indexType?.let { put("index_type", it.toString()) }
+            }
+            val response = api.getBangumiIndexResult(query)
+            if (response.code == 0 && response.data != null) {
+                Result.success(response.data)
+            } else {
+                Result.failure(Exception("获取番剧索引失败: ${response.message}"))
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("BangumiRepo", "getBangumiIndexPage error: ${e.message}")
+            Result.failure(e)
+        }
+    }
     
     /**
      *  [新增] 获取番剧索引/列表（支持筛选）
@@ -446,6 +525,7 @@ object BangumiRepository {
      */
     suspend fun getMyFollowBangumi(
         type: Int = 1,  // 1=追番 2=追剧
+        followStatus: Int? = null,
         page: Int = 1,
         pageSize: Int = 30,
         vmid: Long? = null
@@ -455,6 +535,7 @@ object BangumiRepository {
             val response = api.getMyFollowBangumi(
                 vmid = mid,
                 type = type,
+                followStatus = followStatus,
                 pn = page,
                 ps = pageSize
             )

@@ -71,7 +71,6 @@ import top.yukonga.miuix.kmp.basic.Card as MiuixCard
 import top.yukonga.miuix.kmp.basic.CardDefaults as MiuixCardDefaults
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.Switch as MiuixSwitch
-import top.yukonga.miuix.kmp.preference.ArrowPreference as MiuixArrowPreference
 import top.yukonga.miuix.kmp.preference.SliderPreference as MiuixSliderPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference as MiuixSwitchPreference
 import top.yukonga.miuix.kmp.basic.InputField
@@ -335,6 +334,20 @@ internal fun resolveAdaptivePreferenceIconContentColor(
     }
 }
 
+internal fun resolveAdaptivePreferenceIconGlyphColor(
+    treatment: AppPreferenceIconTreatment,
+    iconStyle: AppIconStyle,
+    containerContentColor: Color,
+    semanticIconColor: Color,
+): Color = if (
+    treatment == AppPreferenceIconTreatment.FILLED ||
+    iconStyle == AppIconStyle.THEME_CONTAINER
+) {
+    containerContentColor
+} else {
+    semanticIconColor
+}
+
 internal fun resolveAdaptivePreferenceIconBackgroundAlpha(
     treatment: AppPreferenceIconTreatment,
     tonalAlpha: Float,
@@ -359,6 +372,26 @@ fun rememberAdaptiveSemanticIconTint(
             colorScheme = colorScheme,
             useSemanticAccentRoles = dynamicColorActive,
         )
+    }
+}
+
+/**
+ * 与 [AdaptivePreferenceContent] 图标最终呈现一致的颜色：MD3 官方推荐预设
+ * 下为 onSurfaceVariant 单色，其余预设保留传入的多彩/语义色。
+ * 用于无容器图标（如 WindowSpinnerPreference 的 startAction、发布渠道卡片），
+ * 避免仅经 [rememberAdaptiveSemanticIconTint] 落到主题主色、与其他条目不一致。
+ */
+@Composable
+fun rememberAdaptivePreferenceIconTint(
+    iconTint: Color,
+): Color {
+    val iconStyle = rememberResolvedAppIconStyle()
+    val colorScheme = MaterialTheme.colorScheme
+    return remember(iconTint, iconStyle, colorScheme) {
+        when (iconStyle) {
+            AppIconStyle.MD3_STANDARD -> colorScheme.onSurfaceVariant
+            else -> iconTint
+        }
     }
 }
 
@@ -553,11 +586,12 @@ internal fun AdaptiveSwitchPreferenceContent(
     val iconStyle = rememberResolvedAppIconStyle()
     val effectiveIconTint = rememberAdaptivePreferenceIconContainerColor(iconTint)
     val filledIconContentColor = rememberAdaptivePreferenceIconContentColor(effectiveIconTint)
-    val iconContentColor = if (iconTreatment == AppPreferenceIconTreatment.FILLED) {
-        filledIconContentColor
-    } else {
-        effectiveIconTint
-    }
+    val iconContentColor = resolveAdaptivePreferenceIconGlyphColor(
+        treatment = iconTreatment,
+        iconStyle = iconStyle,
+        containerContentColor = filledIconContentColor,
+        semanticIconColor = effectiveIconTint,
+    )
     val iconBackgroundAlpha = resolveAdaptivePreferenceIconBackgroundAlpha(
         iconTreatment,
         visualSpec.iconBackgroundAlpha,
@@ -736,11 +770,12 @@ fun AdaptiveSliderPreferenceRenderer(
     val iconStyle = rememberResolvedAppIconStyle()
     val effectiveIconTint = rememberAdaptivePreferenceIconContainerColor(iconTint)
     val filledIconContentColor = rememberAdaptivePreferenceIconContentColor(effectiveIconTint)
-    val iconContentColor = if (iconTreatment == AppPreferenceIconTreatment.FILLED) {
-        filledIconContentColor
-    } else {
-        effectiveIconTint
-    }
+    val iconContentColor = resolveAdaptivePreferenceIconGlyphColor(
+        treatment = iconTreatment,
+        iconStyle = iconStyle,
+        containerContentColor = filledIconContentColor,
+        semanticIconColor = effectiveIconTint,
+    )
     val iconBackgroundAlpha = resolveAdaptivePreferenceIconBackgroundAlpha(
         iconTreatment,
         visualSpec.iconBackgroundAlpha,
@@ -973,11 +1008,12 @@ internal fun AdaptivePreferenceContent(
     val iconStyle = rememberResolvedAppIconStyle()
     val effectiveIconTint = rememberAdaptivePreferenceIconContainerColor(iconTint)
     val filledIconContentColor = rememberAdaptivePreferenceIconContentColor(effectiveIconTint)
-    val iconContentColor = if (iconTreatment == AppPreferenceIconTreatment.FILLED) {
-        filledIconContentColor
-    } else {
-        effectiveIconTint
-    }
+    val iconContentColor = resolveAdaptivePreferenceIconGlyphColor(
+        treatment = iconTreatment,
+        iconStyle = iconStyle,
+        containerContentColor = filledIconContentColor,
+        semanticIconColor = effectiveIconTint,
+    )
     val iconBackgroundAlpha = resolveAdaptivePreferenceIconBackgroundAlpha(
         iconTreatment,
         visualSpec.iconBackgroundAlpha,
@@ -1010,11 +1046,7 @@ internal fun AdaptivePreferenceContent(
         return
     }
     if (nativeListItem && clickableRenderer == AppClickableItemRenderer.MIUIX_ARROW) {
-        MiuixArrowPreference(
-            title = title,
-            titleColor = BasicComponentDefaults.titleColor(color = textColor),
-            summary = subtitle,
-            summaryColor = BasicComponentDefaults.summaryColor(color = subtitleColor),
+        BasicComponent(
             onClick = onClick,
             insideMargin = PaddingValues(
                 horizontal = rowSpec.insideHorizontalPaddingDp.dp,
@@ -1068,6 +1100,7 @@ internal fun AdaptivePreferenceContent(
             endActions = {
                 trailingContent?.invoke()
                 if (!value.isNullOrBlank()) {
+                    if (trailingContent != null) Spacer(Modifier.width(8.dp))
                     Text(
                         text = value,
                         style = MaterialTheme.typography.bodySmall,
@@ -1084,8 +1117,35 @@ internal fun AdaptivePreferenceContent(
                             )
                     )
                 }
+                if (showChevron && onClick != null) {
+                    if (trailingContent != null || !value.isNullOrBlank()) Spacer(Modifier.width(8.dp))
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = chevronTint,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            },
+        ) {
+            Text(
+                text = title,
+                color = textColor,
+                fontSize = MiuixTheme.textStyles.headline1.fontSize,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            )
+            if (!subtitle.isNullOrBlank()) {
+                Text(
+                    text = subtitle,
+                    color = subtitleColor,
+                    fontSize = MiuixTheme.textStyles.body2.fontSize,
+                    maxLines = 2,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                )
             }
-        )
+        }
         return
     }
     if (clickableRenderer == AppClickableItemRenderer.MD3_BASIC) {
@@ -1441,11 +1501,12 @@ fun AdaptivePreferenceGridItemRenderer(
     val iconStyle = rememberResolvedAppIconStyle()
     val effectiveIconTint = rememberAdaptivePreferenceIconContainerColor(iconTint)
     val filledIconContentColor = rememberAdaptivePreferenceIconContentColor(effectiveIconTint)
-    val iconContentColor = if (iconTreatment == AppPreferenceIconTreatment.FILLED) {
-        filledIconContentColor
-    } else {
-        effectiveIconTint
-    }
+    val iconContentColor = resolveAdaptivePreferenceIconGlyphColor(
+        treatment = iconTreatment,
+        iconStyle = iconStyle,
+        containerContentColor = filledIconContentColor,
+        semanticIconColor = effectiveIconTint,
+    )
     val iconBackgroundAlpha = resolveAdaptivePreferenceIconBackgroundAlpha(
         iconTreatment,
         visualSpec.iconBackgroundAlpha,

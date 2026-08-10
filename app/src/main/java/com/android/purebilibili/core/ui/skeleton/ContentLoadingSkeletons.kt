@@ -283,6 +283,97 @@ fun UserListRowSkeleton(
     }
 }
 
+/** 评论行：头像、昵称、正文和操作区，供评论区首次加载使用。 */
+@Composable
+fun CommentListItemSkeleton(
+    modifier: Modifier = Modifier,
+    blockColor: Color? = null,
+) {
+    val pulse = if (blockColor == null) rememberContentSkeletonPulse() else 0f
+    val color = blockColor ?: rememberContentSkeletonBlockColor(pulse)
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        ContentSkeletonBlock(
+            color = color,
+            shape = CircleShape,
+            modifier = Modifier.size(40.dp),
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            ContentSkeletonBlock(
+                color = color,
+                modifier = Modifier
+                    .fillMaxWidth(0.34f)
+                    .height(14.dp),
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            ContentSkeletonBlock(
+                color = color,
+                modifier = Modifier
+                    .fillMaxWidth(0.96f)
+                    .height(14.dp),
+            )
+            Spacer(modifier = Modifier.height(7.dp))
+            ContentSkeletonBlock(
+                color = color,
+                modifier = Modifier
+                    .fillMaxWidth(0.72f)
+                    .height(14.dp),
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            ContentSkeletonBlock(
+                color = color,
+                modifier = Modifier
+                    .fillMaxWidth(0.42f)
+                    .height(12.dp),
+            )
+        }
+    }
+}
+
+@Composable
+fun CommentListSkeleton(
+    modifier: Modifier = Modifier,
+    itemCount: Int = 6,
+    contentPadding: PaddingValues = PaddingValues(vertical = 4.dp),
+) {
+    val pulse = rememberContentSkeletonPulse()
+    val blockColor = rememberContentSkeletonBlockColor(pulse)
+    val skeletonKeys = List(itemCount.coerceAtLeast(0)) { it }
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = contentPadding,
+        userScrollEnabled = false,
+    ) {
+        lazyListItems(
+            items = skeletonKeys,
+            key = { "comment_list_skeleton_$it" },
+            contentType = { "comment_list_skeleton" },
+        ) {
+            CommentListItemSkeleton(blockColor = blockColor)
+        }
+    }
+}
+
+/** 可嵌入现有 LazyColumn 的评论骨架组，整组只使用一个脉冲时钟。 */
+@Composable
+fun CommentListColumnSkeleton(
+    modifier: Modifier = Modifier,
+    itemCount: Int = 5,
+) {
+    val pulse = rememberContentSkeletonPulse()
+    val blockColor = rememberContentSkeletonBlockColor(pulse)
+    Column(modifier = modifier.fillMaxWidth()) {
+        repeat(itemCount.coerceAtLeast(0)) {
+            CommentListItemSkeleton(blockColor = blockColor)
+        }
+    }
+}
+
 @Composable
 fun ContentMediaListSkeleton(
     modifier: Modifier = Modifier,

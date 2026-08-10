@@ -137,6 +137,9 @@ fun AnimationSettingsContent(
     val liveSurfaceCardTransitionEnabled by SettingsManager
         .getLiveSurfaceCardTransitionEnabled(context)
         .collectAsStateWithLifecycle(initialValue = false)
+    val fullScreenSwipeBackEnabled by SettingsManager
+        .getFullScreenSwipeBackEnabled(context)
+        .collectAsStateWithLifecycle(initialValue = false)
     val effectiveEntranceSpec = rememberEffectiveEntranceMotionSpec()
     // 开关开着、但有效参数被降级为不动画 → 系统减弱动效在生效。
     val entranceDowngradedBySystem = uiEntranceAnimationEnabled && !effectiveEntranceSpec.animate
@@ -330,6 +333,23 @@ fun AnimationSettingsContent(
                                 },
                             )
                         }
+                        AppPreferenceDivider()
+                        AppSwitchPreference(
+                            icon = rememberSettingsSemanticIcon(SettingsIconRole.PREDICTIVE_BACK),
+                            title = "全屏滑动返回",
+                            subtitle = if (fullScreenSwipeBackEnabled) {
+                                "列表与设置页支持全屏右滑返回；播放器、详情与网页页不受影响"
+                            } else {
+                                "仅屏幕边缘系统手势触发返回"
+                            },
+                            checked = fullScreenSwipeBackEnabled,
+                            onCheckedChange = { enabled ->
+                                scope.launch {
+                                    SettingsManager.setFullScreenSwipeBackEnabled(context, enabled)
+                                }
+                            },
+                            iconTint = iOSTeal
+                        )
                         AppPreferenceDivider()
                         SettingsSingleChoicePreference(
                             title = "视频转场速度：${state.videoSharedTransitionSpeed.label}",

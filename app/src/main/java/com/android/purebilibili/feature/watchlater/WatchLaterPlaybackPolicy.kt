@@ -4,12 +4,18 @@ import com.android.purebilibili.data.model.response.VideoItem
 import com.android.purebilibili.feature.video.player.PlaylistItem
 
 internal enum class WatchLaterManagementAction {
+    CLEAR_INVALID,
     CLEAR_VIEWED,
     CLEAR_ALL
 }
 
+enum class WatchLaterFilter(val viewed: Int, val label: String) {
+    ALL(0, "全部"),
+    UNFINISHED(2, "未看完"),
+}
+
 /** The server-provided order is the default order for the Watch Later list. */
-internal enum class WatchLaterSortOrder {
+enum class WatchLaterSortOrder {
     FORWARD,
     REVERSE;
 
@@ -99,6 +105,7 @@ internal fun resolveWatchLaterItemsAfterManagementAction(
     action: WatchLaterManagementAction
 ): List<VideoItem> {
     return when (action) {
+        WatchLaterManagementAction.CLEAR_INVALID -> items
         WatchLaterManagementAction.CLEAR_VIEWED -> items.filterNot(::isWatchLaterViewed)
         WatchLaterManagementAction.CLEAR_ALL -> emptyList()
     }
@@ -109,6 +116,8 @@ internal fun resolveWatchLaterManagementConfirmText(
     affectedCount: Int
 ): String {
     return when (action) {
+        WatchLaterManagementAction.CLEAR_INVALID ->
+            "确认清理已失效的视频吗？列表会按服务端结果刷新。"
         WatchLaterManagementAction.CLEAR_VIEWED ->
             "确认清空已看完的视频吗？本地预计影响 $affectedCount 个，实际以服务端记录为准。"
         WatchLaterManagementAction.CLEAR_ALL ->
@@ -121,6 +130,7 @@ internal fun resolveWatchLaterManagementSuccessMessage(
     affectedCount: Int
 ): String {
     return when (action) {
+        WatchLaterManagementAction.CLEAR_INVALID -> "已清理失效视频"
         WatchLaterManagementAction.CLEAR_VIEWED ->
             if (affectedCount > 0) "已清理 $affectedCount 个已看视频" else "已请求清理已看视频"
         WatchLaterManagementAction.CLEAR_ALL -> "已清空稍后再看"

@@ -8,7 +8,7 @@ import kotlin.test.assertTrue
 class ContentLoadingSkeletonStructureTest {
 
     @Test
-    fun contentSkeletons_coverVideoGridMediaRowAndUserRow() {
+    fun contentSkeletons_coverVideoGridMediaRowUserRowAndComments() {
         val source = loadSource(
             "app/src/main/java/com/android/purebilibili/core/ui/skeleton/ContentLoadingSkeletons.kt"
         )
@@ -16,6 +16,8 @@ class ContentLoadingSkeletonStructureTest {
         assertTrue(source.contains("fun ContentVideoGridSkeletonFixedColumns("))
         assertTrue(source.contains("fun MediaListRowSkeleton("))
         assertTrue(source.contains("fun UserListRowSkeleton("))
+        assertTrue(source.contains("fun CommentListSkeleton("))
+        assertTrue(source.contains("fun CommentListColumnSkeleton("))
         assertTrue(source.contains("fun ContentMediaListSkeleton("))
         assertTrue(source.contains("rememberContentSkeletonPulse("))
         // Home-style soft pulse; no left-right shimmer sweep flicker.
@@ -55,6 +57,28 @@ class ContentLoadingSkeletonStructureTest {
         assertTrue(watchLater.contains("ContentMediaListSkeleton("))
         assertTrue(liveSearch.contains("ContentVideoGridSkeletonFixedColumns("))
         assertTrue(liveSearch.contains("ContentMediaListSkeleton("))
+    }
+
+    @Test
+    fun bangumiAndCommentSurfaces_useSkeletonsForEmptyInitialLoading() {
+        val bangumi = loadSource(
+            "app/src/main/java/com/android/purebilibili/feature/bangumi/BangumiHubContent.kt"
+        )
+        val videoComments = loadSource(
+            "app/src/main/java/com/android/purebilibili/feature/video/ui/components/VideoCommentSheetHost.kt"
+        )
+        val dynamicComments = loadSource(
+            "app/src/main/java/com/android/purebilibili/feature/dynamic/components/DynamicCommentSheet.kt"
+        )
+
+        assertTrue(bangumi.contains("BangumiPosterGridSkeleton()"))
+        assertTrue(bangumi.contains("BangumiTimelineSkeleton()"))
+        assertTrue(bangumi.contains("BangumiFollowManagerSkeleton()"))
+        assertTrue(videoComments.contains("state.isRepliesLoading && state.replies.isEmpty()"))
+        assertTrue(videoComments.contains("CommentListSkeleton("))
+        assertTrue(dynamicComments.contains("isLoading && comments.isEmpty()"))
+        assertTrue(dynamicComments.contains("CommentListSkeleton("))
+        assertTrue(dynamicComments.contains("CommentListColumnSkeleton("))
     }
 
     private fun loadSource(path: String): String {

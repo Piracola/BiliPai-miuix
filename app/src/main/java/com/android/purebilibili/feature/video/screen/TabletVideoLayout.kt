@@ -668,7 +668,11 @@ private fun TabletSecondaryContent(
                                     )
                                 }
                             }
-                            if (commentState.isRepliesLoading) {
+                            if (commentState.isRepliesLoading && commentState.replies.isEmpty()) {
+                                item(key = "tablet_comment_skeleton") {
+                                    com.android.purebilibili.core.ui.skeleton.CommentListColumnSkeleton()
+                                }
+                            } else if (commentState.isRepliesLoading) {
                                 item {
                                     Box(
                                         modifier = Modifier

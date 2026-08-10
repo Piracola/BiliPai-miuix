@@ -114,7 +114,7 @@ sealed class SpaceUiState {
 }
 
 class SpaceViewModel(
-    private val savedStateHandle: SavedStateHandle
+    private val savedStateHandle: SavedStateHandle = SavedStateHandle()
 ) : ViewModel() {
 
     private data class SpaceVideoLoadResult(

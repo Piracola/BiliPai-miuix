@@ -136,6 +136,123 @@ class AppUpdateCheckerTest {
     }
 
     @Test
+    fun `selectLatestReleaseCandidate should include prerelease with apk for beta channel`() {
+        val release = AppUpdateChecker.selectLatestReleaseCandidate(
+            rawReleaseJson = """
+            [
+              {
+                "tag_name": "v7.1.0 Beta1",
+                "html_url": "https://example.com/beta",
+                "body": "beta notes",
+                "published_at": "2026-03-15T10:00:00Z",
+                "draft": false,
+                "prerelease": true,
+                "assets": [{
+                  "name": "BiliPai-v7.1.0-Beta1.apk",
+                  "browser_download_url": "https://example.com/beta.apk",
+                  "content_type": "application/vnd.android.package-archive"
+                }]
+              },
+              {
+                "tag_name": "v7.0.0",
+                "html_url": "https://example.com/stable",
+                "body": "stable notes",
+                "published_at": "2026-03-14T10:00:00Z",
+                "draft": false,
+                "prerelease": false,
+                "assets": [{
+                  "name": "BiliPai-v7.0.0.apk",
+                  "browser_download_url": "https://example.com/stable.apk",
+                  "content_type": "application/vnd.android.package-archive"
+                }]
+              }
+            ]
+            """.trimIndent(),
+            includePrerelease = true
+        )
+
+        assertEquals("v7.1.0 Beta1", release?.tagName)
+    }
+
+    @Test
+    fun `beta channel should fall back to stable when prerelease has no apk`() {
+        val release = AppUpdateChecker.selectLatestReleaseCandidate(
+            rawReleaseJson = """
+            [
+              {
+                "tag_name": "v7.1.0 Beta1",
+                "html_url": "https://example.com/beta",
+                "body": "beta notes",
+                "published_at": "2026-03-15T10:00:00Z",
+                "draft": false,
+                "prerelease": true,
+                "assets": [{
+                  "name": "build-metadata.json",
+                  "browser_download_url": "https://example.com/build-metadata.json",
+                  "content_type": "application/json"
+                }]
+              },
+              {
+                "tag_name": "v7.0.0",
+                "html_url": "https://example.com/stable",
+                "body": "stable notes",
+                "published_at": "2026-03-14T10:00:00Z",
+                "draft": false,
+                "prerelease": false,
+                "assets": [{
+                  "name": "BiliPai-v7.0.0.apk",
+                  "browser_download_url": "https://example.com/stable.apk",
+                  "content_type": "application/vnd.android.package-archive"
+                }]
+              }
+            ]
+            """.trimIndent(),
+            includePrerelease = true
+        )
+
+        assertEquals("v7.0.0", release?.tagName)
+    }
+
+    @Test
+    fun `stable channel should keep ignoring prerelease when includePrerelease is false`() {
+        val release = AppUpdateChecker.selectLatestReleaseCandidate(
+            rawReleaseJson = """
+            [
+              {
+                "tag_name": "v7.1.0 Beta1",
+                "html_url": "https://example.com/beta",
+                "body": "beta notes",
+                "published_at": "2026-03-15T10:00:00Z",
+                "draft": false,
+                "prerelease": true,
+                "assets": [{
+                  "name": "BiliPai-v7.1.0-Beta1.apk",
+                  "browser_download_url": "https://example.com/beta.apk",
+                  "content_type": "application/vnd.android.package-archive"
+                }]
+              },
+              {
+                "tag_name": "v7.0.0",
+                "html_url": "https://example.com/stable",
+                "body": "stable notes",
+                "published_at": "2026-03-14T10:00:00Z",
+                "draft": false,
+                "prerelease": false,
+                "assets": [{
+                  "name": "BiliPai-v7.0.0.apk",
+                  "browser_download_url": "https://example.com/stable.apk",
+                  "content_type": "application/vnd.android.package-archive"
+                }]
+              }
+            ]
+            """.trimIndent(),
+            includePrerelease = false
+        )
+
+        assertEquals("v7.0.0", release?.tagName)
+    }
+
+    @Test
     fun `parseReleaseAssets should keep apk metadata and sidecar assets`() {
         val assets = AppUpdateChecker.parseReleaseAssets(
             """

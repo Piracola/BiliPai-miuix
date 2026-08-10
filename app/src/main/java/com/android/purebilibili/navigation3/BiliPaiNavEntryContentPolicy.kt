@@ -93,9 +93,12 @@ internal fun resolveBiliPaiNavEntryContentRole(key: BiliPaiNavKey): BiliPaiNavEn
         BiliPaiNavKey.Profile -> BiliPaiNavEntryContentRole.PROFILE
         is BiliPaiNavKey.VideoDetail -> BiliPaiNavEntryContentRole.VIDEO_DETAIL
         BiliPaiNavKey.History -> BiliPaiNavEntryContentRole.HISTORY
+        is BiliPaiNavKey.HistorySearch -> BiliPaiNavEntryContentRole.HISTORY
         BiliPaiNavKey.Favorite -> BiliPaiNavEntryContentRole.FAVORITE
+        is BiliPaiNavKey.FavoriteSearch -> BiliPaiNavEntryContentRole.FAVORITE
         BiliPaiNavKey.LikedVideos -> BiliPaiNavEntryContentRole.LIKED_VIDEOS
         BiliPaiNavKey.WatchLater -> BiliPaiNavEntryContentRole.WATCH_LATER
+        is BiliPaiNavKey.WatchLaterSearch -> BiliPaiNavEntryContentRole.WATCH_LATER
         BiliPaiNavKey.Onboarding -> BiliPaiNavEntryContentRole.ONBOARDING
         is BiliPaiNavKey.Following -> BiliPaiNavEntryContentRole.FOLLOWING
         BiliPaiNavKey.DownloadList -> BiliPaiNavEntryContentRole.DOWNLOAD_LIST

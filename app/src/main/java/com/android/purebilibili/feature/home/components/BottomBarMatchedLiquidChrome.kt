@@ -37,6 +37,7 @@ import com.android.purebilibili.core.ui.AppSpacingTokens
 import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.ui.adaptive.MotionTier
 import com.android.purebilibili.core.ui.animation.DampedDragAnimationState
+import com.android.purebilibili.core.ui.animation.DampedDragTrackingMode
 import com.android.purebilibili.core.ui.animation.rememberDampedDragAnimationState
 import com.android.purebilibili.core.ui.motion.AppMotionEasing
 import com.android.purebilibili.core.ui.motion.BottomBarMotionSpec
@@ -119,13 +120,17 @@ internal fun rememberBottomBarMatchedLiquidChromeState(
     onIndexChanged: (Int) -> Unit,
     orientation: BottomBarLiquidOrientation = BottomBarLiquidOrientation.HORIZONTAL,
     isScrollInProgressProvider: () -> Boolean = { false },
-    notifyIndexChangedOnReleaseStart: Boolean = false
+    notifyIndexChangedOnReleaseStart: Boolean = false,
+    pressedScale: Float = 78f / 56f,
+    trackingMode: DampedDragTrackingMode = DampedDragTrackingMode.PROJECTED_SNAP,
 ): BottomBarMatchedLiquidChromeState {
     val motionSpec = remember { resolveSegmentedControlMotionSpec() }
     val dragState = rememberDampedDragAnimationState(
         initialIndex = initialIndex,
         itemCount = itemCount,
         motionSpec = motionSpec,
+        pressedScale = pressedScale,
+        trackingMode = trackingMode,
         notifyIndexChangedOnReleaseStart = notifyIndexChangedOnReleaseStart,
         holdPressUntilReleaseTargetSettles = true,
         onIndexChanged = onIndexChanged
@@ -403,6 +408,7 @@ internal fun BoxScope.BottomBarMatchedLiquidIndicator(
     velocityItemsPerSecond: Float,
     isDragging: Boolean,
     indicatorLayerScaleProgress: Float,
+    indicatorLayerScaleTransform: BottomBarIndicatorLayerTransform? = null,
     bottomBarMotionSpec: BottomBarMotionSpec,
     isDarkTheme: Boolean,
     indicatorSettleReboundTransform: BottomBarClickPulseTransform =
@@ -433,7 +439,7 @@ internal fun BoxScope.BottomBarMatchedLiquidIndicator(
             velocityItemsPerSecond = velocityItemsPerSecond,
             isDragging = isDragging,
             indicatorLayerScaleProgress = indicatorLayerScaleProgress,
-            indicatorLayerScaleTransform = null,
+            indicatorLayerScaleTransform = indicatorLayerScaleTransform,
             bottomBarMotionSpec = bottomBarMotionSpec,
             isDarkTheme = isDarkTheme,
             swapMotionAxes = orientation == BottomBarLiquidOrientation.VERTICAL,
@@ -464,7 +470,7 @@ internal fun BoxScope.BottomBarMatchedLiquidIndicator(
         velocityItemsPerSecond = velocityItemsPerSecond,
         isDragging = isDragging,
         indicatorLayerScaleProgress = indicatorLayerScaleProgress,
-        indicatorLayerScaleTransform = null,
+        indicatorLayerScaleTransform = indicatorLayerScaleTransform,
         bottomBarMotionSpec = bottomBarMotionSpec,
         isDarkTheme = isDarkTheme,
         swapMotionAxes = orientation == BottomBarLiquidOrientation.VERTICAL,

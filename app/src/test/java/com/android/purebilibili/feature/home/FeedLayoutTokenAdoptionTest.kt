@@ -34,8 +34,6 @@ class FeedLayoutTokenAdoptionTest {
                 ".responsiveContentWidth(resolveFollowingListMaxWidth())",
             "src/main/java/com/android/purebilibili/feature/list/CommonListScreen.kt" to
                 ".responsiveContentWidth(resolveCommonListSingleColumnMaxWidth())",
-            "src/main/java/com/android/purebilibili/feature/watchlater/WatchLaterScreen.kt" to
-                ".responsiveContentWidth(resolveWatchLaterListMaxWidth())",
         )
 
         expected.forEach { (path, call) ->
@@ -60,7 +58,7 @@ class FeedLayoutTokenAdoptionTest {
             "src/main/java/com/android/purebilibili/feature/list/CommonListScreen.kt" to
                 "resolveCommonListGridMinColumnWidth(windowSizeClass.isExpandedScreen)",
             "src/main/java/com/android/purebilibili/feature/watchlater/WatchLaterScreen.kt" to
-                "resolveWatchLaterCoverWidth()",
+                "resolveWatchLaterColumnCount(maxWidth.value)",
             "src/main/java/com/android/purebilibili/feature/following/FollowingListScreen.kt" to
                 "resolveFollowingBatchGroupDialogMaxHeight()",
         )

@@ -37,12 +37,25 @@ internal object VideoCardTransitionVisualTimeline {
     const val SECONDARY_CONTENT_ENTER_END = 0.82f
     const val DETAIL_CONTENT_RETURN_END = 0.28f
     const val SOURCE_CHROME_RETURN_START = 0.68f
+    const val SOURCE_CHROME_RETURN_END = 0.94f
     const val SECONDARY_CONTENT_TRANSLATION_DP = 8
     const val REDUCED_MOTION_DURATION_MILLIS = 140
 }
 
 internal const val VIDEO_CARD_RETURN_CHROME_REVEAL_START =
     VideoCardTransitionVisualTimeline.SOURCE_CHROME_RETURN_START
+
+/**
+ * 来源卡标题/UP 等正文独立于 live surface → 封面的像素交接提前回显。
+ * 正文位于封面下方，不会与缩回中的视频画面重叠；在落位前完成可避免最后一帧只剩封面。
+ */
+internal fun resolveVideoCardSourceChromeReturnAlpha(
+    morphDepthProgress: Float,
+): Float = resolveVideoCardTimelineWindowProgress(
+    progress = resolveVideoCardReturnSettleFromMorphDepth(morphDepthProgress),
+    start = VideoCardTransitionVisualTimeline.SOURCE_CHROME_RETURN_START,
+    end = VideoCardTransitionVisualTimeline.SOURCE_CHROME_RETURN_END,
+)
 
 /**
  * live morph 详情次要内容（简介/推荐等）开始让位的 settle 进度。

@@ -7,6 +7,19 @@ import kotlin.test.assertIs
 import kotlin.test.assertNotEquals
 
 class BiliPaiNavKeyMappingPolicyTest {
+    @Test
+    fun personalListSearchKeysRoundTripThroughLegacyRoutes() {
+        val keys = listOf(
+            BiliPaiNavKey.HistorySearch("猫 咪"),
+            BiliPaiNavKey.FavoriteSearch(
+                "Compose",
+                com.android.purebilibili.data.model.response.FavoriteSearchScope.ALL_VIDEO_FOLDERS,
+            ),
+            BiliPaiNavKey.WatchLaterSearch("稍后"),
+        )
+
+        keys.forEach { key -> assertEquals(key, legacyRouteToBiliPaiNavKey(key.toLegacyRoute())) }
+    }
 
     @Test
     fun `navigation state keys distinguish detail sessions for the same video`() {

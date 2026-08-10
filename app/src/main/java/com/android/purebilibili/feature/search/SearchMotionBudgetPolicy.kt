@@ -53,44 +53,30 @@ internal fun shouldBootstrapSearchLandingData(
 }
 
 /**
- * Only auto-focus the empty landing once. Never re-focus after results or after
- * the user has already interacted (exiting video search must not pop the keyboard).
+ * Search is a navigation destination rather than an IME-first overlay. Do not focus the empty
+ * landing automatically: an automatic IME consumes the first system Back event, making a newly
+ * opened search page appear to require two Back actions to leave.
  */
 internal fun shouldAutoFocusSearchField(
-    startupSettled: Boolean,
-    query: String,
-    showResults: Boolean = false,
-    autoFocusConsumed: Boolean = false
-): Boolean {
-    return startupSettled &&
-        query.isBlank() &&
-        !showResults &&
-        !autoFocusConsumed
-}
+    @Suppress("UNUSED_PARAMETER") startupSettled: Boolean,
+    @Suppress("UNUSED_PARAMETER") query: String,
+    @Suppress("UNUSED_PARAMETER") showResults: Boolean = false,
+    @Suppress("UNUSED_PARAMETER") autoFocusConsumed: Boolean = false
+): Boolean = false
 
 enum class SearchBackAction {
-    DISMISS_CHROME,
-    EXIT_RESULTS,
     LEAVE_SEARCH
 }
 
 /**
- * System/back navigation priority:
- * 1) dismiss suggestions / focused keyboard chrome
- * 2) leave result list for landing without reopening the keyboard
- * 3) leave the search screen
+ * Search has one navigation back action. Suggestions, IME focus, and result content are chrome
+ * inside the same destination; consuming Back for them makes users press Back twice to leave.
  */
 internal fun resolveSearchBackAction(
-    showResults: Boolean,
-    suggestionsVisible: Boolean,
-    searchFieldFocused: Boolean
-): SearchBackAction {
-    return when {
-        suggestionsVisible || searchFieldFocused -> SearchBackAction.DISMISS_CHROME
-        showResults -> SearchBackAction.EXIT_RESULTS
-        else -> SearchBackAction.LEAVE_SEARCH
-    }
-}
+    @Suppress("UNUSED_PARAMETER") showResults: Boolean,
+    @Suppress("UNUSED_PARAMETER") suggestionsVisible: Boolean,
+    @Suppress("UNUSED_PARAMETER") searchFieldFocused: Boolean
+): SearchBackAction = SearchBackAction.LEAVE_SEARCH
 
 internal fun shouldClearSearchFocusWhenShowingResults(
     showResults: Boolean,

@@ -35,7 +35,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.android.purebilibili.core.ui.components.AppCircularProgressIndicator
-import com.android.purebilibili.core.ui.AdaptiveLoadingIndicator
+import com.android.purebilibili.core.ui.skeleton.CommentListSkeleton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import com.android.purebilibili.core.ui.components.AppIcon
 import androidx.compose.material3.MaterialTheme
@@ -795,9 +795,10 @@ internal fun VideoCommentMainList(
         CommentFraudDetectingBanner(isDetecting = state.isDetectingFraud)
 
         if (state.isRepliesLoading && state.replies.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                AdaptiveLoadingIndicator()
-            }
+            CommentListSkeleton(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = WindowInsets.navigationBars.asPaddingValues(),
+            )
         } else {
             Box(modifier = Modifier.fillMaxSize()) {
                 LazyColumn(

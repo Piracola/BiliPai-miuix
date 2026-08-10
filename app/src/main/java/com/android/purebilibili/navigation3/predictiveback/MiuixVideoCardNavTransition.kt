@@ -1,12 +1,19 @@
 package com.android.purebilibili.navigation3.predictiveback
 
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import com.android.purebilibili.core.ui.transition.resolveVideoCardSourceChromeReturnAlpha
 import top.yukonga.miuix.kmp.nav.transition.NavMotion
 import top.yukonga.miuix.kmp.nav.transition.NavRole
 import top.yukonga.miuix.kmp.nav.transition.NavSettleSpec
@@ -23,6 +30,71 @@ internal data class MiuixVideoCardContentCompensation(
     val scaleY: Float,
     val transformOrigin: TransformOrigin,
 )
+
+internal data class MiuixVideoCardClipRadii(
+    val radiusX: Float,
+    val radiusY: Float,
+)
+
+private const val MIUIX_WIDE_VIDEO_CARD_MIN_ASPECT_RATIO = 1.45f
+
+/** Top entry depth is 0 at rest and moves toward -1 while returning. */
+internal fun resolveMiuixVideoCardDepthProgress(relativeDepth: Float): Float =
+    topProgress(relativeDepth)
+
+/**
+ * Keeps the corner circular in screen space while the outer card layer scales non-uniformly.
+ * A regular RoundedCornerShape is scaled together with the layer and becomes too small on the
+ * compressed axis, which exposes the retained source card at the end of a 16:9 return.
+ */
+internal fun resolveMiuixVideoCardClipRadii(
+    sourceCornerPx: Float,
+    outerScaleX: Float,
+    outerScaleY: Float,
+): MiuixVideoCardClipRadii {
+    val physicalRadius = sourceCornerPx.coerceAtLeast(0f)
+    return MiuixVideoCardClipRadii(
+        radiusX = physicalRadius / outerScaleX.coerceAtLeast(0.01f),
+        radiusY = physicalRadius / outerScaleY.coerceAtLeast(0.01f),
+    )
+}
+
+/**
+ * Wide/16:9 shells cannot geometrically reproduce their source content by scaling the whole
+ * detail page. During the final return segment, reveal the real retained source card using the
+ * same 68%–94% settle window as source-card chrome.
+ */
+internal fun resolveMiuixVideoCardReturnContentAlpha(
+    sourceBounds: Rect,
+    morphProgress: Float,
+    isReturning: Boolean,
+): Float {
+    if (!isReturning) return 1f
+    val aspectRatio = sourceBounds.width / sourceBounds.height.coerceAtLeast(1f)
+    if (aspectRatio < MIUIX_WIDE_VIDEO_CARD_MIN_ASPECT_RATIO) return 1f
+    return 1f - resolveVideoCardSourceChromeReturnAlpha(morphProgress)
+}
+
+private data class MiuixVideoCardClipShape(
+    val radiusX: Float,
+    val radiusY: Float,
+) : Shape {
+    override fun createOutline(
+        size: Size,
+        layoutDirection: LayoutDirection,
+        density: Density,
+    ): Outline {
+        return Outline.Rounded(
+            RoundRect(
+                rect = Rect(0f, 0f, size.width, size.height),
+                cornerRadius = CornerRadius(
+                    x = radiusX.coerceIn(0f, size.width / 2f),
+                    y = radiusY.coerceIn(0f, size.height / 2f),
+                ),
+            ),
+        )
+    }
+}
 
 internal fun resolveMiuixVideoCardContentCompensation(
     outerScaleX: Float,
@@ -62,7 +134,7 @@ internal class MiuixVideoCardTransitionProgress {
     }
 
     fun depthOr(fallback: Float): Float = topScope
-        ?.let { topProgress(it.relativeDepth) }
+        ?.let { resolveMiuixVideoCardDepthProgress(it.relativeDepth) }
         ?: fallback.coerceIn(0f, 1f)
 
     fun isGestureInProgress(): Boolean = topScope?.gesture != null
@@ -113,27 +185,40 @@ internal fun miuixVideoCardNavTransition(
                 val height = scope.layoutSize.height.toFloat().coerceAtLeast(1f)
                 val depth = scope.relativeDepth
                 if (depth <= 0f) {
-                    val morph = topProgress(depth)
+                    val morph = resolveMiuixVideoCardDepthProgress(depth)
                     val sourceScaleX = (bounds.width / width).coerceIn(0.05f, 1f)
                     val sourceScaleY = (bounds.height / height).coerceIn(0.05f, 1f)
-                    scaleX = sourceScaleX + (1f - sourceScaleX) * morph
-                    scaleY = sourceScaleY + (1f - sourceScaleY) * morph
+                    val outerScaleX = sourceScaleX + (1f - sourceScaleX) * morph
+                    val outerScaleY = sourceScaleY + (1f - sourceScaleY) * morph
+                    scaleX = outerScaleX
+                    scaleY = outerScaleY
                     transformOrigin = TransformOrigin(0f, 0f)
                     translationX = bounds.left.coerceIn(-width, width) * (1f - morph)
                     translationY = bounds.top.coerceIn(-height, height) * (1f - morph)
-                    // The old sharedBounds path used Enter/Exit.None: the live card/player stays
-                    // fully opaque while its bounds move. Fading the whole detail page changed the
-                    // transition into a generic zoom and exposed the source beneath it.
-                    alpha = 1f
+                    // Keep ordinary/vertical cards fully opaque. Wide shells hand off during the
+                    // shared 68%–94% source-chrome window, before the card reaches its final slot.
+                    alpha = resolveMiuixVideoCardReturnContentAlpha(
+                        sourceBounds = bounds,
+                        morphProgress = morph,
+                        isReturning = scope.role == NavRole.Outgoing,
+                    )
                     clip = morph < 0.999f
-                    shape = RoundedCornerShape((corner * (1f - morph)).dp)
+                    val clipRadii = resolveMiuixVideoCardClipRadii(
+                        sourceCornerPx = corner.dp.toPx(),
+                        outerScaleX = outerScaleX,
+                        outerScaleY = outerScaleY,
+                    )
+                    shape = MiuixVideoCardClipShape(
+                        radiusX = clipRadii.radiusX,
+                        radiusY = clipRadii.radiusY,
+                    )
                 }
             }.graphicsLayer {
                 val depth = scope.relativeDepth
                 if (depth <= 0f) {
                     val width = scope.layoutSize.width.toFloat().coerceAtLeast(1f)
                     val height = scope.layoutSize.height.toFloat().coerceAtLeast(1f)
-                    val morph = topProgress(depth)
+                    val morph = resolveMiuixVideoCardDepthProgress(depth)
                     val outerScaleX = (bounds.width / width).coerceIn(0.05f, 1f) +
                         (1f - (bounds.width / width).coerceIn(0.05f, 1f)) * morph
                     val outerScaleY = (bounds.height / height).coerceIn(0.05f, 1f) +

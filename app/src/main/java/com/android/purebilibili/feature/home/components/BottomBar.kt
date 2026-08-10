@@ -134,6 +134,7 @@ import com.android.purebilibili.core.theme.LocalCornerRadiusScale
 import com.android.purebilibili.core.theme.iOSCornerRadius
 import kotlinx.coroutines.launch  //  延迟导航
 import com.android.purebilibili.core.ui.animation.DampedDragAnimationState
+import com.android.purebilibili.core.ui.animation.DampedDragTrackingMode
 import com.android.purebilibili.core.ui.animation.horizontalDragGesture
 import com.android.purebilibili.feature.home.LocalHomeScrollOffset
 import com.android.purebilibili.feature.home.HomeVisualPalette
@@ -1555,7 +1556,7 @@ internal data class BottomBarIndicatorVisualPolicy(
 )
 
 internal const val BOTTOM_BAR_REFRACTION_IDLE_HOLD_MS = 96L
-private const val BOTTOM_BAR_INDICATOR_DRAG_SCALE_TARGET = 88f / 56f
+private const val BOTTOM_BAR_INDICATOR_DRAG_SCALE_TARGET = 78f / 56f
 
 internal fun resolveBottomBarCaptureSafeInsetDp(
     indicatorWidthDp: Float,
@@ -3070,7 +3071,9 @@ private fun KernelSuAlignedBottomBar(
     val matchedChromeState = rememberBottomBarMatchedLiquidChromeState(
         initialIndex = selectedIndex,
         itemCount = totalItems,
-        notifyIndexChangedOnReleaseStart = false,
+        notifyIndexChangedOnReleaseStart = true,
+        pressedScale = BOTTOM_BAR_INDICATOR_DRAG_SCALE_TARGET,
+        trackingMode = DampedDragTrackingMode.INSTALLER_X_SPRING,
         isScrollInProgressProvider = { isFeedScrollInProgress },
         onIndexChanged = { index ->
             when {
@@ -3125,6 +3128,16 @@ private fun KernelSuAlignedBottomBar(
         isDragging = dampedDragState.isDragging
     )
     val indicatorLayerScaleProgress = maxOf(indicatorDragScaleProgress, effectivePressProgress)
+    // InstallerX parity: keep its 78/56 X/Y spring enlargement attached to the moving capsule,
+    // then let DampedDragAnimation release it only after the target is nearly settled.
+    val indicatorLayerScaleTransform by remember(dampedDragState) {
+        derivedStateOf {
+            BottomBarIndicatorLayerTransform(
+                scaleX = dampedDragState.scaleX,
+                scaleY = dampedDragState.scaleY,
+            )
+        }
+    }
     val materialScrollProgress by animateFloatAsState(
         targetValue = if (isFeedScrollInProgress) 1f else 0f,
         animationSpec = tween(
@@ -3368,6 +3381,7 @@ private fun KernelSuAlignedBottomBar(
                 item: BottomNavItem?,
                 coverage: Float
             ): Color {
+                if (effectiveGlassEnabled) return unselectedColor
                 val itemSelectedColor = selectedContentColor(item)
                 return resolveBottomBarGlassVisibleContentColor(
                     unselectedColor = unselectedColor,
@@ -3683,6 +3697,7 @@ private fun KernelSuAlignedBottomBar(
                     velocityItemsPerSecond = dampedDragState.deformationVelocityItemsPerSecond,
                     isDragging = dampedDragState.isDragging,
                     indicatorLayerScaleProgress = indicatorLayerScaleProgress,
+                    indicatorLayerScaleTransform = indicatorLayerScaleTransform,
                     bottomBarMotionSpec = bottomBarMotionSpec,
                     isDarkTheme = isDarkTheme
                 )
@@ -4185,6 +4200,9 @@ private fun BoxScope.KernelSuBottomBarInputLayer(
             BottomBarInputTarget(
                 itemWidth = itemWidth,
                 onClick = { onItemClick(index, item) },
+                // 点按未选项时也先让当前液态指示器进入 pressed 状态；随后 onClick
+                // 迁移到新索引，释放动作会等目标落位后回弹。只对当前索引转发会让
+                // “直接点按切换”缺少放大反馈。
                 onPressChanged = dampedDragState::setPressed
             )
         }

@@ -78,6 +78,24 @@ class ProfileSpacePolicyTest {
     }
 
     @Test
+    fun `dashboard owned sections are not repeated below personal dashboard`() {
+        assertEquals(
+            listOf(
+                ProfileSpaceHomeSection.BANGUMI,
+                ProfileSpaceHomeSection.CONTRIBUTIONS,
+            ),
+            resolveProfileSpaceHomeSections(
+                favoriteFolders = listOf(FavFolder(id = 1, title = "默认收藏夹")),
+                bangumiItems = listOf(FollowBangumiItem(seasonId = 2, title = "追番")),
+                coinVideos = emptyList(),
+                likeVideos = emptyList(),
+                contributionVideos = listOf(SpaceVideoItem(aid = 5, bvid = "BV1xx", title = "投稿")),
+                includeDashboardOwnedSections = false,
+            ),
+        )
+    }
+
+    @Test
     fun `editable account state trims sign and marks only sign as editable`() {
         val state = ProfileEditableAccountState(
             name = "测试用户",

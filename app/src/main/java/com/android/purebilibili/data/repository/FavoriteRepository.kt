@@ -74,6 +74,47 @@ object FavoriteRepository {
         }
     }
 
+    suspend fun editFolder(
+        mediaId: Long,
+        title: String,
+        intro: String,
+        isPrivate: Boolean,
+        cover: String,
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val csrf = com.android.purebilibili.core.store.TokenManager.csrfCache.orEmpty()
+            if (csrf.isBlank()) return@withContext Result.failure(Exception("请先登录"))
+            val response = api.editFavFolder(
+                mediaId = mediaId,
+                title = title,
+                intro = intro,
+                privacy = if (isPrivate) 1 else 0,
+                cover = cover,
+                csrf = csrf,
+            )
+            if (response.code == 0) Result.success(Unit)
+            else Result.failure(Exception(response.message.ifBlank { "编辑收藏夹失败" }))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun deleteFolder(mediaId: Long): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val csrf = com.android.purebilibili.core.store.TokenManager.csrfCache.orEmpty()
+            if (csrf.isBlank()) return@withContext Result.failure(Exception("请先登录"))
+            val response = api.deleteFavFolders(mediaIds = mediaId.toString(), csrf = csrf)
+            if (response.code == 0) Result.success(Unit)
+            else Result.failure(Exception(response.message.ifBlank { "删除收藏夹失败" }))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun getCollectedFavFolders(
         mid: Long,
         pn: Int = 1,
@@ -212,6 +253,78 @@ object FavoriteRepository {
             } catch (e: Exception) {
                 Result.failure(e)
             }
+        }
+    }
+
+    suspend fun removeResources(mediaId: Long, resourceIds: Set<Long>): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            if (resourceIds.isEmpty()) return@withContext Result.success(Unit)
+            try {
+                val csrf = com.android.purebilibili.core.store.TokenManager.csrfCache.orEmpty()
+                if (csrf.isBlank()) return@withContext Result.failure(Exception("请先登录"))
+                val response = api.batchDelFavResource(
+                    mediaId = mediaId,
+                    resources = resourceIds.joinToString(",") { "$it:2" },
+                    csrf = csrf,
+                )
+                if (response.code == 0) Result.success(Unit)
+                else Result.failure(Exception(response.message.ifBlank { "批量删除失败" }))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    suspend fun copyOrMoveResources(
+        sourceMediaId: Long,
+        targetMediaId: Long,
+        mid: Long,
+        resourceIds: Set<Long>,
+        copy: Boolean,
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        if (resourceIds.isEmpty()) return@withContext Result.success(Unit)
+        try {
+            val csrf = com.android.purebilibili.core.store.TokenManager.csrfCache.orEmpty()
+            if (csrf.isBlank()) return@withContext Result.failure(Exception("请先登录"))
+            val resources = resourceIds.joinToString(",") { "$it:2" }
+            val response = if (copy) {
+                api.copyFavResources(sourceMediaId, targetMediaId, mid, resources, csrf = csrf)
+            } else {
+                api.moveFavResources(sourceMediaId, targetMediaId, mid, resources, csrf = csrf)
+            }
+            if (response.code == 0) Result.success(Unit)
+            else Result.failure(Exception(response.message.ifBlank { if (copy) "复制失败" else "移动失败" }))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun shareFolderToDynamic(
+        mediaId: Long,
+        content: String,
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val csrf = com.android.purebilibili.core.store.TokenManager.csrfCache.orEmpty()
+            if (csrf.isBlank()) return@withContext Result.failure(Exception("请先登录"))
+            val response = NetworkModule.dynamicApi.repostDynamic(
+                csrf = csrf,
+                body = com.android.purebilibili.core.network.buildFavoriteFolderDynamicRequest(
+                    mediaId = mediaId,
+                    content = content,
+                ),
+            )
+            if (response.code == 0) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception(response.message.ifBlank { "分享至动态失败" }))
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 }

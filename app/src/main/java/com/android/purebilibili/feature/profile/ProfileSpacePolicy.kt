@@ -230,15 +230,21 @@ fun resolveProfileSpaceHomeSections(
     bangumiItems: List<FollowBangumiItem>,
     coinVideos: List<SpaceAggregateArchiveItem>,
     likeVideos: List<SpaceAggregateArchiveItem>,
-    contributionVideos: List<SpaceVideoItem>
+    contributionVideos: List<SpaceVideoItem>,
+    includeDashboardOwnedSections: Boolean = true,
 ): List<ProfileSpaceHomeSection> {
     return buildList {
-        if (favoriteFolders.any { it.id > 0L && it.title.isNotBlank() }) add(ProfileSpaceHomeSection.FAVORITES)
+        if (
+            includeDashboardOwnedSections &&
+            favoriteFolders.any { it.id > 0L && it.title.isNotBlank() }
+        ) {
+            add(ProfileSpaceHomeSection.FAVORITES)
+        }
         if (bangumiItems.any { it.seasonId > 0L && it.title.isNotBlank() }) add(ProfileSpaceHomeSection.BANGUMI)
         if (coinVideos.any { it.aid > 0L && it.title.isNotBlank() }) add(ProfileSpaceHomeSection.COIN_VIDEOS)
         if (likeVideos.any { it.aid > 0L && it.title.isNotBlank() }) add(ProfileSpaceHomeSection.LIKE_VIDEOS)
         if (contributionVideos.any { it.bvid.isNotBlank() || it.aid > 0L }) add(ProfileSpaceHomeSection.CONTRIBUTIONS)
-        add(ProfileSpaceHomeSection.SERVICES)
+        if (includeDashboardOwnedSections) add(ProfileSpaceHomeSection.SERVICES)
     }
 }
 

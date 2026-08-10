@@ -24,7 +24,7 @@ class HistoryFilterTabChromePolicyTest {
         assertEquals(HISTORY_FILTER_LIQUID_DOCK_INDICATOR_HEIGHT_DP, spec.indicatorHeightDp)
         assertEquals(HISTORY_FILTER_LIQUID_DOCK_LABEL_FONT_SIZE_SP, spec.labelFontSizeSp)
         assertEquals(null, spec.itemWidthDp)
-        assertTrue(spec.dragSelectionEnabled)
+        assertFalse(spec.dragSelectionEnabled)
     }
 
     @Test

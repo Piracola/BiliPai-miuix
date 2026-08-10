@@ -160,7 +160,7 @@ class BottomBarMiuixPolicyTest {
         )
         assertTrue(source.contains("refractionHeight = AppSpacingTokens.ExtraLarge.toPx()"))
         assertTrue(source.contains("refractionAmount = AppSpacingTokens.ExtraLarge.toPx()"))
-        assertTrue(source.contains("BOTTOM_BAR_INDICATOR_DRAG_SCALE_TARGET = 88f / 56f"))
+        assertTrue(source.contains("BOTTOM_BAR_INDICATOR_DRAG_SCALE_TARGET = 78f / 56f"))
     }
 
     @Test
@@ -192,7 +192,7 @@ class BottomBarMiuixPolicyTest {
         assertTrue(refractionCaptureSource.contains("BOTTOM_BAR_INDICATOR_DOCK_BAND_HEIGHT_DP.dp"))
         assertFalse(refractionCaptureSource.contains("resolveBottomBarIndicatorExportCaptureHeightDp("))
         assertFalse(refractionCaptureSource.contains(".background(ksuContainerColor, shellShape)"))
-        assertTrue(source.contains("BOTTOM_BAR_INDICATOR_DRAG_SCALE_TARGET = 88f / 56f"))
+        assertTrue(source.contains("BOTTOM_BAR_INDICATOR_DRAG_SCALE_TARGET = 78f / 56f"))
     }
 
     @Test

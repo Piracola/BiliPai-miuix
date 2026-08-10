@@ -267,6 +267,13 @@ interface BilibiliApi {
         @Query("business") business: String? = null //  null=省略该参数
     ): HistoryResponse
 
+    @GET("x/web-interface/history/search")
+    suspend fun searchHistory(
+        @Query("pn") page: Int = 1,
+        @Query("keyword") keyword: String,
+        @Query("business") business: String = "all",
+    ): HistoryResponse
+
     // [新增] 删除单条历史记录
     @retrofit2.http.FormUrlEncoded
     @POST("x/v2/history/delete")
@@ -317,6 +324,25 @@ interface BilibiliApi {
         @retrofit2.http.Field("csrf") csrf: String
     ): SimpleApiResponse
 
+    @retrofit2.http.FormUrlEncoded
+    @retrofit2.http.POST("x/v3/fav/folder/edit")
+    suspend fun editFavFolder(
+        @retrofit2.http.Field("media_id") mediaId: Long,
+        @retrofit2.http.Field("title") title: String,
+        @retrofit2.http.Field("intro") intro: String = "",
+        @retrofit2.http.Field("privacy") privacy: Int = 0,
+        @retrofit2.http.Field("cover") cover: String = "",
+        @retrofit2.http.Field("csrf") csrf: String,
+    ): SimpleApiResponse
+
+    @retrofit2.http.FormUrlEncoded
+    @retrofit2.http.POST("x/v3/fav/folder/del")
+    suspend fun deleteFavFolders(
+        @retrofit2.http.Field("media_ids") mediaIds: String,
+        @retrofit2.http.Field("platform") platform: String = "web",
+        @retrofit2.http.Field("csrf") csrf: String,
+    ): SimpleApiResponse
+
     @GET("x/v3/fav/resource/list")
     suspend fun getFavoriteList(
         @Query("media_id") mediaId: Long,
@@ -352,10 +378,102 @@ interface BilibiliApi {
     ): SimpleApiResponse
 
     @retrofit2.http.FormUrlEncoded
+    @retrofit2.http.POST("x/v3/fav/resource/copy")
+    suspend fun copyFavResources(
+        @retrofit2.http.Field("src_media_id") sourceMediaId: Long,
+        @retrofit2.http.Field("tar_media_id") targetMediaId: Long,
+        @retrofit2.http.Field("mid") mid: Long,
+        @retrofit2.http.Field("resources") resources: String,
+        @retrofit2.http.Field("platform") platform: String = "web",
+        @retrofit2.http.Field("csrf") csrf: String,
+    ): SimpleApiResponse
+
+    @retrofit2.http.FormUrlEncoded
+    @retrofit2.http.POST("x/v3/fav/resource/move")
+    suspend fun moveFavResources(
+        @retrofit2.http.Field("src_media_id") sourceMediaId: Long,
+        @retrofit2.http.Field("tar_media_id") targetMediaId: Long,
+        @retrofit2.http.Field("mid") mid: Long,
+        @retrofit2.http.Field("resources") resources: String,
+        @retrofit2.http.Field("platform") platform: String = "web",
+        @retrofit2.http.Field("csrf") csrf: String,
+    ): SimpleApiResponse
+
+    @retrofit2.http.FormUrlEncoded
     @retrofit2.http.POST("x/v3/fav/resource/clean")
     suspend fun cleanInvalidFavResource(
         @retrofit2.http.Field("media_id") mediaId: Long,
         @retrofit2.http.Field("csrf") csrf: String
+    ): SimpleApiResponse
+
+    @GET("x/polymer/web-dynamic/v1/opus/feed/fav")
+    suspend fun getFavoriteArticles(
+        @Query("page_size") pageSize: Int = 20,
+        @Query("page") page: Int = 1,
+    ): com.android.purebilibili.data.model.response.FavoriteArticleResponse
+
+    @GET("x/note/list")
+    suspend fun getFavoriteNotes(
+        @Query("pn") page: Int = 1,
+        @Query("ps") pageSize: Int = 10,
+        @Query("csrf") csrf: String,
+    ): com.android.purebilibili.data.model.response.FavoriteNoteResponse
+
+    @GET("x/note/publish/list/user")
+    suspend fun getPublishedFavoriteNotes(
+        @Query("pn") page: Int = 1,
+        @Query("ps") pageSize: Int = 10,
+        @Query("csrf") csrf: String,
+    ): com.android.purebilibili.data.model.response.FavoriteNoteResponse
+
+    @GET("x/topic/web/fav/list")
+    suspend fun getFavoriteTopics(
+        @Query("page_size") pageSize: Int = 24,
+        @Query("page_num") page: Int = 1,
+        @Query("web_location") webLocation: String = "333.1387",
+    ): com.android.purebilibili.data.model.response.FavoriteTopicResponse
+
+    @GET("pugv/app/web/favorite/page")
+    suspend fun getFavoriteCourses(
+        @Query("mid") mid: Long,
+        @Query("ps") pageSize: Int = 20,
+        @Query("pn") page: Int = 1,
+        @Query("web_location") webLocation: String = "333.1387",
+    ): com.android.purebilibili.data.model.response.FavoriteCourseResponse
+
+    @retrofit2.http.FormUrlEncoded
+    @retrofit2.http.POST("x/article/favorites/del")
+    suspend fun deleteFavoriteArticle(
+        @retrofit2.http.Field("id") id: Long,
+        @retrofit2.http.Field("csrf") csrf: String,
+    ): SimpleApiResponse
+
+    @retrofit2.http.FormUrlEncoded
+    @retrofit2.http.POST("x/note/del")
+    suspend fun deleteFavoriteNote(
+        @retrofit2.http.Field("note_ids") noteIds: String,
+        @retrofit2.http.Field("csrf") csrf: String,
+    ): SimpleApiResponse
+
+    @retrofit2.http.FormUrlEncoded
+    @retrofit2.http.POST("x/note/publish/del")
+    suspend fun deletePublishedFavoriteNote(
+        @retrofit2.http.Field("note_ids") noteIds: String,
+        @retrofit2.http.Field("csrf") csrf: String,
+    ): SimpleApiResponse
+
+    @retrofit2.http.FormUrlEncoded
+    @retrofit2.http.POST("x/topic/fav/sub/cancel")
+    suspend fun deleteFavoriteTopic(
+        @retrofit2.http.Field("topic_id") topicId: Long,
+        @retrofit2.http.Field("csrf") csrf: String,
+    ): SimpleApiResponse
+
+    @retrofit2.http.FormUrlEncoded
+    @retrofit2.http.POST("pugv/app/web/favorite/del")
+    suspend fun deleteFavoriteCourse(
+        @retrofit2.http.Field("season_id") seasonId: Long,
+        @retrofit2.http.Field("csrf") csrf: String,
     ): SimpleApiResponse
 
     // ==================== 推荐/热门模块 ====================
@@ -1197,6 +1315,11 @@ interface BilibiliApi {
     // ==================== 稍后再看模块 ====================
     @GET("x/v2/history/toview")
     suspend fun getWatchLaterList(): WatchLaterResponse
+
+    @GET("x/v2/history/toview/web")
+    suspend fun getWatchLaterPage(
+        @QueryMap params: Map<String, String>,
+    ): WatchLaterResponse
     
     //  [新增] 添加到稍后再看
     @retrofit2.http.FormUrlEncoded
@@ -1216,9 +1339,36 @@ interface BilibiliApi {
     ): SimpleApiResponse
 
     @retrofit2.http.FormUrlEncoded
+    @retrofit2.http.POST("x/v2/history/toview/del")
+    suspend fun deleteMultipleFromWatchLater(
+        @retrofit2.http.Field("aid") aids: String,
+        @retrofit2.http.Field("csrf") csrf: String,
+    ): SimpleApiResponse
+
+    @retrofit2.http.FormUrlEncoded
     @retrofit2.http.POST("x/v2/history/toview/clear")
     suspend fun clearWatchLater(
+        @retrofit2.http.Field("clean_type") cleanType: Int? = null,
         @retrofit2.http.Field("csrf") csrf: String
+    ): SimpleApiResponse
+
+    @retrofit2.http.FormUrlEncoded
+    @retrofit2.http.POST("x/v2/history/toview/copy")
+    suspend fun copyWatchLaterToFavorite(
+        @retrofit2.http.Field("tar_media_id") targetMediaId: Long,
+        @retrofit2.http.Field("mid") mid: Long,
+        @retrofit2.http.Field("resources") resources: String,
+        @retrofit2.http.Field("platform") platform: String = "web",
+        @retrofit2.http.Field("csrf") csrf: String,
+    ): SimpleApiResponse
+
+    @retrofit2.http.FormUrlEncoded
+    @retrofit2.http.POST("x/v2/history/toview/move")
+    suspend fun moveWatchLaterToFavorite(
+        @retrofit2.http.Field("tar_media_id") targetMediaId: Long,
+        @retrofit2.http.Field("resources") resources: String,
+        @retrofit2.http.Field("platform") platform: String = "web",
+        @retrofit2.http.Field("csrf") csrf: String,
     ): SimpleApiResponse
 }
 
@@ -1434,7 +1584,14 @@ data class DynamicRepostContentItem(
 
 @kotlinx.serialization.Serializable
 data class DynamicWebRepostSource(
-    val dyn_id_str: String
+    val dyn_id_str: String? = null,
+    val revs_id: DynamicRepostResource? = null
+)
+
+@kotlinx.serialization.Serializable
+data class DynamicRepostResource(
+    val dyn_type: Int,
+    val rid: Long
 )
 
 @kotlinx.serialization.Serializable
@@ -1479,6 +1636,25 @@ internal fun buildDynamicRepostRequest(
             attach_card = null
         ),
         web_repost_src = DynamicWebRepostSource(dyn_id_str = dynamicId)
+    )
+}
+
+internal fun buildFavoriteFolderDynamicRequest(
+    mediaId: Long,
+    content: String,
+): DynamicRepostRequest {
+    val contents = content.trim().takeIf { it.isNotEmpty() }?.let { text ->
+        listOf(DynamicRepostContentItem(raw_text = text, type = 1, biz_id = ""))
+    }.orEmpty()
+    return DynamicRepostRequest(
+        dyn_req = DynamicRepostDynReq(
+            content = DynamicRepostContent(contents = contents),
+            scene = 5,
+            attach_card = null,
+        ),
+        web_repost_src = DynamicWebRepostSource(
+            revs_id = DynamicRepostResource(dyn_type = 4300, rid = mediaId),
+        ),
     )
 }
 
@@ -1790,6 +1966,18 @@ interface BangumiApi {
         @Query("sort") sort: Int = 0,
         @Query("type") type: Int = 1
     ): com.android.purebilibili.data.model.response.BangumiIndexResponse
+
+    @GET("pgc/season/index/condition")
+    suspend fun getBangumiIndexCondition(
+        @Query("season_type") seasonType: Int? = null,
+        @Query("type") type: Int = 0,
+        @Query("index_type") indexType: Int? = null,
+    ): com.android.purebilibili.data.model.response.BangumiIndexConditionResponse
+
+    @GET("pgc/season/index/result")
+    suspend fun getBangumiIndexResult(
+        @QueryMap params: Map<String, String>,
+    ): com.android.purebilibili.data.model.response.BangumiIndexResponse
     
     // 番剧详情 -  返回 ResponseBody 自行解析，防止 OOM
     @GET("pgc/view/web/season")
@@ -1833,12 +2021,21 @@ interface BangumiApi {
         @retrofit2.http.Field("status") status: Int,
         @retrofit2.http.Field("csrf") csrf: String
     ): com.android.purebilibili.data.model.response.SimpleApiResponse
+
+    @retrofit2.http.FormUrlEncoded
+    @retrofit2.http.POST("pgc/web/follow/status/update")
+    suspend fun updateBangumiFollowStatusBatch(
+        @retrofit2.http.Field("season_id") seasonIds: String,
+        @retrofit2.http.Field("status") status: Int,
+        @retrofit2.http.Field("csrf") csrf: String,
+    ): com.android.purebilibili.data.model.response.SimpleApiResponse
     
     //  [新增] 我的追番列表
     @GET("x/space/bangumi/follow/list")
     suspend fun getMyFollowBangumi(
         @Query("vmid") vmid: Long,          // 用户 mid (登录用户的 mid)
         @Query("type") type: Int = 1,        // 1=追番 2=追剧
+        @Query("follow_status") followStatus: Int? = null,
         @Query("pn") pn: Int = 1,
         @Query("ps") ps: Int = 30
     ): com.android.purebilibili.data.model.response.MyFollowBangumiResponse

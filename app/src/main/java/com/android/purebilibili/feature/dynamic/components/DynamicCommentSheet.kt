@@ -10,6 +10,8 @@ import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.ContainerLevel
 import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.ui.rememberAppSegmentedControlPolicy
+import com.android.purebilibili.core.ui.skeleton.CommentListColumnSkeleton
+import com.android.purebilibili.core.ui.skeleton.CommentListSkeleton
 
 import android.content.Context
 import androidx.compose.foundation.background
@@ -235,15 +237,13 @@ fun DynamicCommentSheet(
             }
 
             // 评论列表
-            if (isLoading) {
-                Box(
+            if (isLoading && comments.isEmpty()) {
+                CommentListSkeleton(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    AdaptiveLoadingIndicator(size = AppSpacingTokens.DoubleExtraLarge)
-                }
+                    contentPadding = PaddingValues(vertical = AppSpacingTokens.Small),
+                )
             } else if (comments.isEmpty()) {
                 Box(
                     modifier = Modifier
@@ -443,15 +443,8 @@ fun LazyListScope.dynamicInlineCommentItems(
     onImagePreview: (List<String>, Int, Rect?, ImagePreviewTextContent?) -> Unit,
 ) {
     when {
-        isLoading -> item(key = "dynamic_inline_comment_loading") {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = AppSpacingTokens.DoubleExtraLarge),
-                contentAlignment = Alignment.Center,
-            ) {
-                AdaptiveLoadingIndicator(size = AppSpacingTokens.DoubleExtraLarge)
-            }
+        isLoading && comments.isEmpty() -> item(key = "dynamic_inline_comment_skeleton") {
+            CommentListColumnSkeleton(itemCount = 4)
         }
 
         comments.isEmpty() -> item(key = "dynamic_inline_comment_empty") {

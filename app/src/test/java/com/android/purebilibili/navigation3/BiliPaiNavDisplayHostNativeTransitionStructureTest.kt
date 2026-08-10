@@ -7,6 +7,19 @@ import kotlin.test.assertTrue
 class BiliPaiNavDisplayHostNativeTransitionStructureTest {
 
     @Test
+    fun videoCardMorphOwnsCornersWithoutHostLeadingClip() {
+        val source = loadSource()
+
+        assertTrue(source.contains("val videoCardMorphOwnsCorners = cardMorphAvailable"))
+        assertTrue(source.contains("isCardMorphDestinationNavKey(currentKey)"))
+        assertTrue(source.contains("VideoCardTransitionExposure.Returning"))
+        assertTrue(source.contains("val enableHostCornerClip = !videoCardMorphOwnsCorners"))
+        assertTrue(source.contains("enableCornerClip = enableHostCornerClip"))
+        assertTrue(source.contains("val hostDimAmount = if (videoCardMorphOwnsCorners) 0f else 0.5f"))
+        assertTrue(source.contains("dimAmount = hostDimAmount"))
+    }
+
+    @Test
     fun hostForwardsPredictiveBackProgressAndCancellationToNativeVideoTransition() {
         val source = loadSource()
 

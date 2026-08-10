@@ -153,6 +153,15 @@ class AdaptiveListComponentPolicyTest {
                 iconStyle = AppIconStyle.THEME_CONTAINER,
             ),
         )
+        assertEquals(
+            colorScheme.onSecondaryContainer,
+            resolveAdaptivePreferenceIconGlyphColor(
+                treatment = AppPreferenceIconTreatment.TONAL,
+                iconStyle = AppIconStyle.THEME_CONTAINER,
+                containerContentColor = colorScheme.onSecondaryContainer,
+                semanticIconColor = colorScheme.secondaryContainer,
+            ),
+        )
     }
 
     @Test

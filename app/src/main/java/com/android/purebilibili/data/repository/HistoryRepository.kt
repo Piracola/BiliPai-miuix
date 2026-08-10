@@ -93,6 +93,27 @@ object HistoryRepository {
         }
     }
 
+    suspend fun searchHistory(page: Int, keyword: String): Result<HistoryResult> =
+        withContext(Dispatchers.IO) {
+            try {
+                val response = api.searchHistory(page = page, keyword = keyword.trim())
+                if (response.code == 0) {
+                    Result.success(
+                        HistoryResult(
+                            list = response.data?.list.orEmpty(),
+                            cursor = response.data?.cursor,
+                        )
+                    )
+                } else {
+                    Result.failure(Exception(response.message.ifBlank { "搜索历史失败" }))
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
     suspend fun deleteHistoryItem(
         kid: String,
         csrf: String

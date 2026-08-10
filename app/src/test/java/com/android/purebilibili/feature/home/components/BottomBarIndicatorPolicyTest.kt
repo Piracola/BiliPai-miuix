@@ -623,18 +623,18 @@ class BottomBarIndicatorPolicyTest {
             motionSpec = resolveBottomBarMotionSpec(BottomBarMotionProfile.ANDROID_NATIVE_FLOATING)
         )
 
-        assertEquals(88f / 56f, transform.scaleX, 0.001f)
-        assertEquals(88f / 56f, transform.scaleY, 0.001f)
+        assertEquals(78f / 56f, transform.scaleX, 0.001f)
+        assertEquals(78f / 56f, transform.scaleY, 0.001f)
     }
 
     @Test
-    fun `bottom bar keeps BiliPai drag scale target while using KernelSU velocity constants`() {
+    fun `bottom bar uses InstallerX drag scale target with KernelSU velocity constants`() {
         val source = listOf(
             java.io.File("app/src/main/java/com/android/purebilibili/feature/home/components/BottomBar.kt"),
             java.io.File("src/main/java/com/android/purebilibili/feature/home/components/BottomBar.kt")
         ).first { it.exists() }.readText()
 
-        assertTrue(source.contains("private const val BOTTOM_BAR_INDICATOR_DRAG_SCALE_TARGET = 88f / 56f"))
+        assertTrue(source.contains("private const val BOTTOM_BAR_INDICATOR_DRAG_SCALE_TARGET = 78f / 56f"))
         assertTrue(source.contains("private const val KSU_INDICATOR_VELOCITY_NORMALIZATION_DIVISOR = 10f"))
         assertTrue(source.contains("private const val KSU_INDICATOR_VELOCITY_SCALE_X_MULTIPLIER = 0.75f"))
         assertTrue(source.contains("private const val KSU_INDICATOR_VELOCITY_SCALE_Y_MULTIPLIER = 0.25f"))
@@ -682,8 +682,8 @@ class BottomBarIndicatorPolicyTest {
 
         assertEquals(full.scaleX, partial.scaleX, 0.001f)
         assertEquals(full.scaleY, partial.scaleY, 0.001f)
-        assertEquals(88f / 56f, partial.scaleX, 0.001f)
-        assertEquals(88f / 56f, partial.scaleY, 0.001f)
+        assertEquals(78f / 56f, partial.scaleX, 0.001f)
+        assertEquals(78f / 56f, partial.scaleY, 0.001f)
         assertTrue(deformed.scaleX > partial.scaleX)
         assertTrue(deformed.scaleY < partial.scaleY)
     }
@@ -734,7 +734,7 @@ class BottomBarIndicatorPolicyTest {
 
     @Test
     fun `indicator velocity deformation follows KernelSU constants without changing drag scale target`() {
-        val baseScale = 88f / 56f
+        val baseScale = 78f / 56f
         val transform = resolveBottomBarIndicatorLayerTransform(
             motionProgress = 1f,
             velocityItemsPerSecond = 2f,
@@ -758,8 +758,8 @@ class BottomBarIndicatorPolicyTest {
         assertTrue(source.contains("private const val KERNEL_SU_PRESSED_SCALE = 78f / 56f"))
         assertTrue(source.contains("private val scaleXAnimationSpec = spring(0.6f, 250f, 0.001f)"))
         assertTrue(source.contains("private val scaleYAnimationSpec = spring(0.7f, 250f, 0.001f)"))
-        assertTrue(source.contains("scaleXAnimation.animateTo(KERNEL_SU_PRESSED_SCALE, scaleXAnimationSpec)"))
-        assertTrue(source.contains("scaleYAnimation.animateTo(KERNEL_SU_PRESSED_SCALE, scaleYAnimationSpec)"))
+        assertTrue(source.contains("scaleXAnimation.animateTo(pressedScale, scaleXAnimationSpec)"))
+        assertTrue(source.contains("scaleYAnimation.animateTo(pressedScale, scaleYAnimationSpec)"))
     }
 
     @Test

@@ -46,7 +46,9 @@ internal fun resolveHistoryFilterTabChromeSpec(
             itemWidthDp = null,
             horizontalPaddingDp = 16,
             labelFontSizeSp = HISTORY_FILTER_LIQUID_DOCK_LABEL_FONT_SIZE_SP,
-            dragSelectionEnabled = true
+            // Page-level navigation remains tap-first so the selector never competes
+            // with Android's predictive back gesture at either screen edge.
+            dragSelectionEnabled = false
         )
     } else {
         HistoryFilterTabChromeSpec(

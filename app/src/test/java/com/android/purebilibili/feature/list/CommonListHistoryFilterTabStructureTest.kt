@@ -35,7 +35,7 @@ class CommonListHistoryFilterTabStructureTest {
         )
         assertTrue(
             historyFilterSection.contains("dragSelectionEnabled = historyFilterChrome.dragSelectionEnabled"),
-            "液态 dock 指示器必须支持左右滑动切换"
+            "个人列表筛选必须使用点击切换，避免与系统返回手势竞争"
         )
         assertTrue(
             historyFilterSection.contains("modifier = Modifier.fillMaxWidth()"),
@@ -51,6 +51,11 @@ class CommonListHistoryFilterTabStructureTest {
         assertFalse(
             liquidDockBranch.contains("LazyRow("),
             "液态 dock 分支不应继续依赖横向 FilterChip 列表"
+        )
+        val fallbackBranch = historyFilterSection.substringAfter("} else {")
+        assertTrue(
+            fallbackBranch.contains("FlowRow("),
+            "非液态模式也应自动换行，不能把主筛选放进横向滚动列表"
         )
     }
 
