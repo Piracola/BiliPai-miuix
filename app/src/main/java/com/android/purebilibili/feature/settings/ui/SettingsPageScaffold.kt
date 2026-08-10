@@ -1,5 +1,6 @@
 package com.android.purebilibili.feature.settings.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -7,8 +8,10 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
@@ -19,9 +22,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.android.purebilibili.core.theme.LocalAppUiStyle
 import com.android.purebilibili.core.ui.AppScaffold
 import com.android.purebilibili.core.ui.AppTopBar
 import com.android.purebilibili.core.ui.AppSurfaceTokens
@@ -31,13 +37,25 @@ import com.android.purebilibili.core.ui.blur.BlurStyles
 import com.android.purebilibili.core.ui.blur.currentUnifiedBlurIntensity
 import com.android.purebilibili.core.ui.blur.hazeSourceCompat
 import com.android.purebilibili.core.ui.blur.rememberRecoverableHazeState
-import com.android.purebilibili.core.ui.rememberAppBackIcon
+import com.android.purebilibili.core.ui.LocalAppListItemStyle
 import com.android.purebilibili.core.ui.components.AppIconButton
-import com.android.purebilibili.core.ui.components.AppPreferenceIconTreatment
-import com.android.purebilibili.core.ui.components.AppPreferenceGroupPresentation
 import com.android.purebilibili.core.ui.components.LocalAppPreferenceIconTreatment
 import com.android.purebilibili.core.ui.components.LocalAppPreferenceGroupPresentation
+import com.android.purebilibili.core.ui.rememberAppBackIcon
+import com.android.purebilibili.core.util.responsiveContentWidth
+import com.android.purebilibili.feature.settings.SettingsContentWidth
+import com.android.purebilibili.feature.settings.SettingsMaxContentWidthDp
 import com.android.purebilibili.feature.settings.SettingsPageScrollHost
+import com.android.purebilibili.feature.settings.SettingsVisualOverrides
+import com.android.purebilibili.feature.settings.resolveSettingsVisualPolicy
+
+/**
+ * 是否处于 840dp 双栏设置的详情面板（`SettingsTabletShell` 的 rightPane）。
+ *
+ * 双栏顶部栏契约：详情面板内抑制子页面 Scaffold 的第二套顶栏，只保留
+ * master 面板一套顶栏和详情面板一套表面（见 UI-GAP-008）。
+ */
+val LocalSettingsDetailPane = staticCompositionLocalOf { false }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,41 +82,66 @@ internal fun SettingsPageScaffold(
     }
     val pageContainerColor = AppSurfaceTokens.groupedListContainer()
 
-    // InstallerX：设置页用不透明 grouped 底色，避免全局壁纸半透明与多页叠色闪烁。
+    // P1 双主题视觉合同：分组/图标/顶栏/分隔/宽度由纯策略解析，Scaffold 不再
+    // 无条件强制 FLAT/FILLED。行样式覆盖取主题层提供的原始用户选择，
+    // 在设置页范围内解析为主题官方默认（显式 CUSTOM/NATIVE 原样保留）。
+    val uiStyle = LocalAppUiStyle.current
+    val userPreferenceRowStyle = LocalAppListItemStyle.current
+    val visualPolicy = remember(uiStyle, userPreferenceRowStyle) {
+        resolveSettingsVisualPolicy(
+            uiStyle = uiStyle,
+            overrides = SettingsVisualOverrides(preferenceRowStyle = userPreferenceRowStyle),
+        )
+    }
+    val inDetailPane = LocalSettingsDetailPane.current
+
     CompositionLocalProvider(
         LocalGlobalWallpaperBackdropVisible provides false,
-        LocalAppPreferenceIconTreatment provides AppPreferenceIconTreatment.FILLED,
-        LocalAppPreferenceGroupPresentation provides AppPreferenceGroupPresentation.FLAT,
+        LocalAppPreferenceIconTreatment provides visualPolicy.iconTreatment,
+        LocalAppPreferenceGroupPresentation provides visualPolicy.groupPresentation,
+        LocalAppListItemStyle provides visualPolicy.preferenceRowStyle,
     ) {
         AppScaffold(
             modifier = modifier,
             topBar = {
-                Box {
-                    TopReadabilityChrome(
-                        height = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 64.dp,
-                        surfaceColor = pageContainerColor,
-                        surfaceAlpha = topBarSurfaceAlpha,
-                        hazeState = hazeState,
-                        hazeEnabled = topBarBlurEnabled,
+                if (inDetailPane) {
+                    // 双栏详情面板：只保留状态栏同色块，不渲染第二套顶栏
+                    // （master 面板顶栏即该窗格唯一顶部栏）。
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .windowInsetsPadding(WindowInsets.statusBars)
+                            .background(pageContainerColor),
                     )
-                    AppTopBar(
-                        title = title,
-                        navigationIcon = {
-                            AppIconButton(onClick = onBack) {
-                                AppIcon(
-                                    imageVector = rememberAppBackIcon(),
-                                    contentDescription = backContentDescription,
-                                )
-                            }
-                        },
-                        actions = actions,
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = Color.Transparent,
-                            titleContentColor = MaterialTheme.colorScheme.onSurface,
-                            navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-                            actionIconContentColor = MaterialTheme.colorScheme.onSurface,
-                        ),
-                    )
+                } else {
+                    Box {
+                        TopReadabilityChrome(
+                            height = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 64.dp,
+                            surfaceColor = pageContainerColor,
+                            surfaceAlpha = topBarSurfaceAlpha,
+                            hazeState = hazeState,
+                            hazeEnabled = topBarBlurEnabled,
+                        )
+                        AppTopBar(
+                            title = title,
+                            navigationIcon = {
+                                AppIconButton(onClick = onBack) {
+                                    AppIcon(
+                                        imageVector = rememberAppBackIcon(),
+                                        contentDescription = backContentDescription,
+                                    )
+                                }
+                            },
+                            actions = actions,
+                            style = visualPolicy.topBarStyle,
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = Color.Transparent,
+                                titleContentColor = MaterialTheme.colorScheme.onSurface,
+                                navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                                actionIconContentColor = MaterialTheme.colorScheme.onSurface,
+                            ),
+                        )
+                    }
                 }
             },
             containerColor = pageContainerColor,
@@ -106,6 +149,13 @@ internal fun SettingsPageScaffold(
         ) { padding ->
             val scrollModifier = Modifier
                 .padding(padding)
+                .let { modifier ->
+                    if (visualPolicy.contentWidth == SettingsContentWidth.LIMITED) {
+                        modifier.responsiveContentWidth(maxWidth = SettingsMaxContentWidthDp)
+                    } else {
+                        modifier
+                    }
+                }
                 .fillMaxSize()
                 .hazeSourceCompat(state = hazeState)
 

@@ -41,7 +41,6 @@ import com.android.purebilibili.core.ui.AppListItemStyle
 import com.android.purebilibili.core.ui.LocalAppIconStyle
 import com.android.purebilibili.core.ui.LocalAppListItemStyle
 import com.android.purebilibili.core.ui.resolveAppIconStyle
-import com.android.purebilibili.core.ui.resolveAppListItemStyle
 import com.android.purebilibili.core.store.ThemeRoleOverrides
 import com.android.purebilibili.feature.settings.AppThemeMode
 import com.android.purebilibili.feature.settings.Md3ColorSource
@@ -998,10 +997,7 @@ fun PureBiliBiliTheme(
             iconStyle = appIconStyle,
             uiStyle = uiStyle
         ),
-        LocalAppListItemStyle provides resolveAppListItemStyle(
-            style = appListItemStyle,
-            uiStyle = uiStyle
-        ),
+        LocalAppListItemStyle provides appListItemStyle,
         LocalCornerRadiusScale provides resolveCornerRadiusScale(uiStyle)
     ) {
         MiuixTheme(

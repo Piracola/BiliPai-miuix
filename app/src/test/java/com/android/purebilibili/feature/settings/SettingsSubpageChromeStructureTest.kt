@@ -57,6 +57,39 @@ class SettingsSubpageChromeStructureTest {
         assertTrue(source.contains(".verticalScroll("))
     }
 
+    @Test
+    fun settingsScaffold_consumesVisualPolicyInsteadOfHardcodedValues() {
+        val source = loadSource(
+            "app/src/main/java/com/android/purebilibili/feature/settings/ui/SettingsPageScaffold.kt",
+        )
+
+        assertTrue(source.contains("resolveSettingsVisualPolicy("))
+        assertTrue(source.contains("LocalAppPreferenceIconTreatment provides visualPolicy.iconTreatment"))
+        assertTrue(source.contains("LocalAppPreferenceGroupPresentation provides visualPolicy.groupPresentation"))
+        assertTrue(source.contains("LocalAppListItemStyle provides visualPolicy.preferenceRowStyle"))
+        assertTrue(source.contains("style = visualPolicy.topBarStyle"))
+
+        // 历史无条件强制值必须消失，两主题呈现由 P1 策略决定。
+        assertFalse(source.contains("LocalAppPreferenceIconTreatment provides AppPreferenceIconTreatment.FILLED"))
+        assertFalse(source.contains("LocalAppPreferenceGroupPresentation provides AppPreferenceGroupPresentation.FLAT"))
+    }
+
+    @Test
+    fun detailPaneSuppressesSecondTopBar_inSplitLayout() {
+        val scaffold = loadSource(
+            "app/src/main/java/com/android/purebilibili/feature/settings/ui/SettingsPageScaffold.kt",
+        )
+        assertTrue(scaffold.contains("val LocalSettingsDetailPane = staticCompositionLocalOf { false }"))
+        assertTrue(scaffold.contains("val inDetailPane = LocalSettingsDetailPane.current"))
+        assertTrue(scaffold.contains("if (inDetailPane)"))
+
+        val shell = loadSource(
+            "app/src/main/java/com/android/purebilibili/feature/settings/screen/SettingsTabletShell.kt",
+        )
+        assertTrue(shell.contains("LocalSettingsDetailPane provides true"))
+        assertTrue(shell.contains("windowInsetsPadding(WindowInsets.statusBars)"))
+    }
+
     private fun loadSource(path: String): String {
         val normalizedPath = path.removePrefix("app/")
         val sourceFile = listOf(
