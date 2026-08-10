@@ -1,10 +1,10 @@
 # 12 设置页 UI 优化计划
 
 > 文档编号：UI-12<br>
-> 规范版本：1.2.0-draft<br>
+> 规范版本：1.3.0-draft<br>
 > 状态：草案<br>
 > 最后核对日期：2026-08-10<br>
-> 适用提交：78e923f0f<br>
+> 适用提交：ac9b7d237<br>
 > 维护角色：设置维护者、设计系统维护者、QA 维护者<br>
 > 相关文档：[设计方向](01_DIRECTION.md) · [主题规范](03_THEMES.md) · [设置页档案](pages/SETTINGS.md) · [差距台账](10_GAP_LEDGER.md) · [变更日志](CHANGELOG.md)
 
@@ -14,6 +14,7 @@
 |---|---|---|---|
 | 1.1.0-draft | 2026-08-10 | 首版：设置页双主题视觉合同与分阶段计划 | 双主题规范统一 |
 | 1.2.0-draft | 2026-08-10 | 评审修订：澄清目标架构、补齐搜索定位/平板/首页设置联动/恢复语义/验收缺口；P4 显式延期 | 评审结论与决策记录 |
+| 1.3.0-draft | 2026-08-10 | P1 视觉策略与 P2 共享外壳落地；顶部栏能力确认结论登记（Miuix 原生居中标题，无需新增适配器） | M1/M2 里程碑 |
 
 ## 初学者解释
 
@@ -105,6 +106,8 @@ data class SettingsVisualPolicy(
 
 ### P1 视觉策略与默认值
 
+**状态**：已完成（commit 933cf5d5f）。`SettingsVisualPolicy` 纯策略 + 7 条单测（两主题参数/默认值/显式覆盖/非法值回退/非设置列表 AUTO 回归）全部通过。
+
 **建议修改入口**：
 
 - `app/.../feature/settings/ui/SettingsPageScaffold.kt`
@@ -125,6 +128,8 @@ data class SettingsVisualPolicy(
 
 ### P2 共享设置页外壳
 
+**状态**：已完成（commit ac9b7d237）。Scaffold 消费策略、顶部栏能力确认与双栏面板契约均已落地；`SettingsSubpageChromeStructureTest` 新增契约测试通过。
+
 **建议修改入口**：
 
 - `SettingsPageScaffold.kt`
@@ -140,7 +145,7 @@ data class SettingsVisualPolicy(
 3. Material 3 使用 Material TopAppBar、分组 surface 和单色图标。
 4. 统一内容最大宽度、屏幕边距、组间距和底部安全区。
 5. 保留 External/LazyColumn 两种 scroll host，不改变搜索定位和滚动所有权。
-6. **顶部栏能力确认（capability spike）**：`AppTopBarStyle.CENTERED` 在 MIUIX 分支当前与 `SMALL` 渲染同一 `MiuixSmallTopAppBar`，“MIUIX 居中标题”不是切换枚举即可完成。先确认现有 Miuix 组件是否提供居中或大标题变体；没有时再在 design-system 增加受控适配器，禁止在 feature 层自造顶部栏。
+6. **顶部栏能力确认（capability spike，已完成）**：`AppTopBarStyle.CENTERED` 在 MIUIX 分支与 `SMALL` 渲染同一 `MiuixSmallTopAppBar`。经 miuix 0.9.3 源码与 SNAPSHOT aar 字节码双重确认：Miuix `SmallTopAppBar`/`TopAppBar` 标题布局原生居中（`(maxWidth - titleWidth) / 2`，在导航与操作图标之间居中）。**”MIUIX 居中标题”由现状 SMALL 路径直接达成——同渲染不是能力缺口，而是 Miuix 官方语法本身**；无需在 design-system 新增受控适配器。策略中 MIUIX → `CENTERED` 表达合同意图，渲染层统一由 `MiuixSmallTopAppBar` 承担。
 7. **840dp 双栏顶部栏契约**：子页面 Screen 在 `SettingsTabletShell` 的详情面板（`rightPane`）内仍渲染自身 `SettingsPageScaffold` 顶栏，双顶栏由此而来。策略需要感知“是否处于双栏详情面板”：详情面板内抑制/降级 Scaffold 顶栏，仅保留一套顶部栏和一套详情表面。
 
 **风险**：共享 Scaffold 影响设置搜索、权限、播放、插件、备份等约 16 个入口；`SettingsTabletShell` 不消费 Scaffold，需通过策略或面板上下文联动，不能只改壳。必须先完成策略测试，再迁移试点。
@@ -215,8 +220,8 @@ data class SettingsVisualPolicy(
 | 里程碑 | 可独立提交内容 | 不应混入 |
 |---|---|---|
 | M0 | 规范、计划、文档测试 | 生产 UI 行为 |
-| M1 | SettingsVisualPolicy 与单测 | 页面重排 |
-| M2 | Scaffold 和 adaptive primitives | 外观页业务状态改造 |
+| M1 | SettingsVisualPolicy 与单测（已完成） | 页面重排 |
+| M2 | Scaffold 和 adaptive primitives（已完成） | 外观页业务状态改造 |
 | M3 | 外观页信息架构 | 其他设置页批量迁移 |
 | M4 | 每批 2-4 个设置页面 | 无关页面重构 |
 | M5 | 验收修复与文档收尾 | 新功能 |
@@ -244,7 +249,7 @@ data class SettingsVisualPolicy(
 
 ## 当前差距
 
-P0（规范基线）已随本次评审修订完成并通过文档结构测试；生产 UI 尚未修改。现有实现具备双主题状态和底层组件能力，但 shared Scaffold 仍强制 `FLAT/FILLED`、默认 Preference 策略、外观页信息架构与双主题验收证据仍未达到本计划目标。P1-P3 为本轮执行范围，P4 已显式延期。
+P0-P2 已落地：规范基线、`SettingsVisualPolicy` 纯策略与共享设置页外壳均已完成并通过策略/结构测试（含非设置列表 `AUTO` 回归、双栏详情面板单顶栏契约与顶部栏能力确认）。剩余差距：外观页五组信息架构与文案（P3 试点，含稳定 key 搜索定位与 HomeSettings 联动）、其余设置页批量迁移（P4，显式延期）与双主题人工验收矩阵（P5）。P1-P3 为本轮执行范围，P4 已显式延期。
 
 ## 验收方法
 

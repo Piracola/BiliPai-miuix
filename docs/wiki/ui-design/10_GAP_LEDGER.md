@@ -149,14 +149,14 @@
 
 | 字段 | 内容 |
 |---|---|
-| 领域 / 优先级 / 状态 | 设置/设计系统 / P1 / 待实施 |
+| 领域 / 优先级 / 状态 | 设置/设计系统 / P1 / 实施中（P2 完成，待 P3 外观页试点与 P4 批量迁移） |
 | 维护角色 | 设置维护者、设计系统维护者 |
-| 现状证据 | `SettingsPageScaffold` 无条件提供 `AppPreferenceGroupPresentation.FLAT` 与 `AppPreferenceIconTreatment.FILLED`；约 16 个设置入口复用该外壳 |
+| 现状证据 | 已由纯 `SettingsVisualPolicy` 按 MIUIX/Material 3 解析分组、图标、顶栏、divider 与宽度；`SettingsPageScaffold` 消费策略并抑制双栏详情面板第二套顶栏（`LocalSettingsDetailPane`）；约 16 个设置入口复用该外壳 |
 | 目标 | 由纯 `SettingsVisualPolicy` 按 MIUIX/Material 3 解析顶部栏、分组、图标、divider、宽度和默认 Preference Renderer；覆盖双栏详情面板顶部栏契约（详情面板内仅一套顶栏） |
 | Why | 当前两主题只在局部控件和标题位置上不同，无法形成各自完整的官方设置页语法 |
 | 影响 | 设置首页、外观、播放、动画、权限、搜索、插件、备份等所有共享 Scaffold 页面，以及 840dp 双栏详情面板 |
 | 修改入口 | `SettingsPageScaffold.kt`、`AppSemanticVisualPolicy.kt`、`AdaptivePreferenceComponents.kt`、`AppListItemPolicy.kt`、`AdaptiveChrome.kt`、`SettingsTabletShell.kt` 面板契约 |
-| 依赖 / 风险 | Scaffold 影响面大；必须先建立纯策略测试，不能直接全局翻转列表默认值。`AppTopBarStyle.CENTERED` 在 MIUIX 分支当前与 `SMALL` 渲染相同（能力缺口，需 capability spike）；`SettingsTabletShell` 不消费 Scaffold，需策略/面板上下文联动 |
+| 依赖 / 风险 | Scaffold 影响面大；已建纯策略测试并锁定非设置列表 `AUTO` 语义不变。顶部栏能力确认（已完成）：Miuix `SmallTopAppBar`/`TopAppBar` 标题原生居中（0.9.3 源码与 SNAPSHOT 字节码验证），无需新增适配器；`SettingsTabletShell` 详情面板已通过 `LocalSettingsDetailPane` 抑制第二套顶栏 |
 | 实施步骤 | 建 policy（含非设置列表 AUTO 行为不变的回归测试）→ 测试双主题/覆盖 → Scaffold 消费 → 顶部栏能力确认 → 双栏面板契约 → 外观页试点 → P4 分批迁移（显式延期） |
 | 自动验证 | policy 单测、Preference 结构测试、Scaffold 结构测试、非设置列表 AUTO 回归测试、最小模块编译 |
 | 人工验证 | 360/840dp，MIUIX/Material 3，浅/深，检查标题、分组、图标、长文案和返回 |
