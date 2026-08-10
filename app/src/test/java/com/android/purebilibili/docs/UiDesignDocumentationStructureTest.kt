@@ -150,6 +150,26 @@ class UiDesignDocumentationStructureTest {
         }
     }
 
+    @Test
+    fun activeDesignContractsUseDualThemeTerminology() {
+        val staleTerms = requiredDocuments
+            .filterNot { it.endsWith("CHANGELOG.md") }
+            .flatMap { relativePath ->
+                file(relativePath).readLines().mapIndexedNotNull { index, line ->
+                    line.takeIf { it.contains("三风格") }
+                        ?.let { "$relativePath:${index + 1}: $it" }
+                }
+            }
+
+        assertTrue(
+            staleTerms.isEmpty(),
+            staleTerms.joinToString(
+                prefix = "Active UI design contracts still use the removed three-style model:\n",
+                separator = "\n",
+            ),
+        )
+    }
+
     private fun markdownDocuments(): List<File> = (requiredDocuments + wikiIntegrationDocuments)
         .distinct()
         .map(::file)
@@ -189,6 +209,7 @@ class UiDesignDocumentationStructureTest {
             "$UI_DESIGN_ROOT/09_ACCEPTANCE.md",
             "$UI_DESIGN_ROOT/10_GAP_LEDGER.md",
             "$UI_DESIGN_ROOT/11_MAINTENANCE.md",
+            "$UI_DESIGN_ROOT/12_SETTINGS_UI_OPTIMIZATION_PLAN.md",
             "$UI_DESIGN_ROOT/CHANGELOG.md",
             "$UI_DESIGN_ROOT/components/README.md",
             "$UI_DESIGN_ROOT/components/PRIMITIVES.md",
@@ -269,7 +290,7 @@ class UiDesignDocumentationStructureTest {
             "文案",
             "无障碍",
             "响应式",
-            "三风格",
+            "双主题",
             "Compose 入口",
             "当前差距",
             "验收",

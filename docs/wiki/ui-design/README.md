@@ -1,10 +1,10 @@
 # BiliPai UI 设计规范
 
 > 文档编号：UI-INDEX  
-> 规范版本：1.0.0-draft  
-> 状态：草案  
-> 最后核对日期：2026-08-02  
-> 适用提交：4443e72ff  
+> 规范版本：1.1.0-draft<br>
+> 状态：草案<br>
+> 最后核对日期：2026-08-10<br>
+> 适用提交：146819292<br>
 > 维护角色：设计系统维护者  
 > 相关文档：[Miuix 对齐记录](../MIUIX_ALIGNMENT.md) · [架构说明](../ARCHITECTURE.md) · [QA 手册](../QA.md)
 
@@ -47,9 +47,9 @@ flowchart LR
 | 文档 | 解决的问题 |
 |---|---|
 | [00 术语表](00_GLOSSARY.md) | Compose、Token、状态、母版等词是什么意思 |
-| [01 设计方向](01_DIRECTION.md) | 为什么以 Miuix 为主，以及三风格的共同边界 |
+| [01 设计方向](01_DIRECTION.md) | 为什么以 MIUIX 为默认，以及双主题的共同边界 |
 | [02 基础令牌](02_FOUNDATIONS.md) | 颜色、间距、形状、尺寸和图标怎样统一 |
-| [03 主题与三风格](03_THEMES.md) | Miuix、iOS、Material 3 如何映射 |
+| [03 双主题](03_THEMES.md) | MIUIX、Material 3 如何共享语义并保留各自视觉语法 |
 | [04 排版与文案](04_TYPOGRAPHY_CONTENT.md) | 字号、层级、截断和中文文案怎样写 |
 | [05 布局与自适应](05_LAYOUT_ADAPTIVE.md) | 手机、平板、宽屏怎样共用信息结构 |
 | [06 动效与效果](06_MOTION_EFFECTS.md) | 动画、模糊、玻璃和降级怎样处理 |
@@ -63,6 +63,7 @@ flowchart LR
 | [09 验收手册](09_ACCEPTANCE.md) | 主题、设备、状态和关键流程怎样检查 |
 | [10 差距台账](10_GAP_LEDGER.md) | 当前缺口怎样转成可执行任务 |
 | [11 维护流程](11_MAINTENANCE.md) | 新页面、新组件和规则变更怎样更新文档 |
+| [12 设置页 UI 优化计划](12_SETTINGS_UI_OPTIMIZATION_PLAN.md) | 双主题设置页如何分阶段落地、验证和回滚 |
 | [变更日志](CHANGELOG.md) | 规范本身发生了什么变化 |
 
 ### 组件规范
@@ -92,7 +93,7 @@ flowchart LR
 | 事实 | 当前入口 |
 |---|---|
 | Navigation 3 的 61 个页面 Key | `BiliPaiNavKey.kt` 中的 `BiliPaiNavKey` |
-| 三种 UI 风格 | `UiStyle.IOS`、`UiStyle.MATERIAL3`、`UiStyle.MIUIX` |
+| 两种运行时主题 | `AppUiStyle.MIUIX`、`AppUiStyle.MATERIAL3`；iOS 仅为历史迁移输入 |
 | 共享设计系统 | `design-system/src/main/java/com/android/purebilibili/core/` |
 | Miuix 依赖版本 | `app/build.gradle.kts` 与 `design-system/build.gradle.kts` 中的 `0.9.3` |
 | Miuix 技术接入进度 | [MIUIX_ALIGNMENT.md](../MIUIX_ALIGNMENT.md) |
@@ -101,7 +102,7 @@ flowchart LR
 
 ## 当前差距
 
-规范首版仍处于草案状态，实际 UI 尚未完成全部组件收口和三风格验收。已知问题包括同名组件重复、部分页面继续使用硬编码尺寸、响应式断点由页面各自维护。它们是整改输入，不是允许继续复制的先例。
+规范仍处于草案状态。主题运行时已经收敛为 MIUIX 与 Material 3，但设置页仍统一强制扁平分组，外观页存在超长分组、重复当前值和过量常驻说明，未形成两套主题各自完整的官方设置页语法。它们是整改输入，不是允许继续复制的先例。
 
 ## 验收方法
 

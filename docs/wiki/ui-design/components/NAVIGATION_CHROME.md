@@ -24,7 +24,7 @@
 | 状态 / 交互 | 加载和错误属于内容，不应重建外壳；系统返回由导航所有者处理 |
 | 文案 / 无障碍 | 主内容区顺序位于导航之后；全局提示有合适 live region |
 | 响应式 | Compact 可底栏，Expanded 可 Rail/Sidebar；不简单拉伸内容 |
-| 三风格映射 | 底层 Scaffold 和表面可变；槽位职责与 inset 一致 |
+| 双主题映射 | 底层 Scaffold 和表面可变；槽位职责与 inset 一致 |
 | Compose 入口 | 当前 `AdaptiveChrome.kt` 中 `AppScaffold` |
 | 当前差距 / 验收 | 旧页面可能直接用具体 Scaffold；检查双 inset、键盘和迷你播放器 |
 
@@ -35,10 +35,10 @@
 | 用途 / 禁用场景 | 页面身份、返回与少量高频动作；不能塞入完整筛选表单 |
 | 结构 / 变体 | 导航图标、标题、副标题、最多少量动作、overflow；固定/滚动变体 |
 | 尺寸 / Token | chrome token 决定高度；每个动作 48dp；标题有稳定剩余宽度 |
-| 状态 / 交互 | 返回、动作、滚动折叠；disabled 动作可解释或隐藏但三风格一致 |
+| 状态 / 交互 | 返回、动作、滚动折叠；disabled 动作可解释或隐藏但双主题一致 |
 | 文案 / 无障碍 | 标题准确；返回描述为“返回”；菜单动作有名称 |
 | 响应式 | Compact 收入 overflow；Expanded 可显示上下文但不重复侧栏标题 |
-| 三风格映射 | Miuix/iOS/Material 标题节奏可变；动作顺序和含义一致 |
+| 双主题映射 | MIUIX/Material 3 标题节奏可变；动作顺序和含义一致 |
 | Compose 入口 | 当前 `AdaptiveChrome.kt` 中 `AppTopBar` |
 | 当前差距 / 验收 | 首页 TopBar 有局部定制；检查最长标题、滚动、返回与菜单 |
 
@@ -54,7 +54,7 @@
 | 交互 | 滚动或全屏隐藏策略需可预测 | 选择当前项可回顶等行为统一定义 |
 | 文案/无障碍 | 内容不能被底栏遮挡 | 读出标签、选中状态和 badge 含义 |
 | 响应式 | Expanded 切 Rail/Sidebar | `TextOnly` 等视觉模式不改变目的地 |
-| 三风格 | 壳与动画可不同 | Miuix 0.9.3 可映射其支持的 label 模式 |
+| 双主题 | 壳与动画可不同 | Miuix 可映射其支持的 label 模式 |
 | 入口 | `AppBottomNavigationHost` | `AppNavigationBar` |
 | 差距/验收 | BottomBar 正在用户改动，本任务不修改 | 检查顺序、显隐、角标、旋转和大字体 |
 
@@ -68,7 +68,7 @@
 | 状态 / 交互 | selected、hover/focus、expanded；切换不改变当前目的地 |
 | 文案 / 无障碍 | 折叠态图标必须有名称和 tooltip；展开态避免重复读标签 |
 | 响应式 | 由可用宽度和用户侧栏设置决定；窄屏回到底栏 |
-| 三风格映射 | 使用对应 NavigationRail 表现；目的地与顺序一致 |
+| 双主题映射 | 使用对应 NavigationRail 表现；目的地与顺序一致 |
 | Compose 入口 | 当前 `AppPlatformNavigationRail` |
 | 当前差距 / 验收 | 侧栏/底栏切换状态保留需持续验证 |
 
@@ -82,7 +82,7 @@
 | 状态 / 交互 | selected、pressed、disabled；滑动页面与点击同步且不抢系统手势 |
 | 文案 / 无障碍 | 短名词；读出“第 n 个，共 m 个”和选中状态 |
 | 响应式 | 窄屏可滚动，宽屏不无意义拉满；过多分类考虑菜单/筛选 |
-| 三风格映射 | Tab/Segmented 外观可变；索引和内容一致 |
+| 双主题映射 | Tab/Segmented 外观可变；索引和内容一致 |
 | Compose 入口 | 当前 `AppScrollableTabRow` |
 | 当前差距 / 验收 | 各业务分段控件实现仍有差异；检查状态同步和字体放大 |
 
@@ -96,7 +96,7 @@
 | 状态 / 交互 | 无选择、已选择、详情加载/失败；返回先关闭详情语义 |
 | 文案 / 无障碍 | 阅读顺序先主栏后详情；选择变化合理通知，不抢焦点 |
 | 响应式 | Compact 退化成 push 导航；切换保留选择和滚动 |
-| 三风格映射 | 分隔与表面可变，栏职责和返回一致 |
+| 双主题映射 | 分隔与表面可变，栏职责和返回一致 |
 | Compose 入口 | 当前 `AppSplitLayout.kt` 中 `AppAdaptiveSplitLayout` |
 | 当前差距 / 验收 | 设置已有特化 Shell；检查 840dp 临界与预测返回 |
 

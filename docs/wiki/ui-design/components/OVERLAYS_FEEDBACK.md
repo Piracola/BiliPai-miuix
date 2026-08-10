@@ -24,7 +24,7 @@
 | 状态 / 交互 | open、submitting、error；系统返回/点外关闭是否允许必须明确 |
 | 文案 / 无障碍 | 标题说对象，正文说后果；打开聚焦标题/主要内容，关闭回触发项 |
 | 响应式 | 按钮文字长时纵向排列；不能横向挤压截断 |
-| 三风格映射 | 对话框外观和按钮顺序遵循适配，但主要/危险含义一致 |
+| 双主题映射 | 对话框外观和按钮顺序遵循适配，但主要/危险含义一致 |
 | Compose 入口 | 当前 `AppAlertDialog`，动作可用 `AppDialogAction` |
 | 当前差距 / 验收 | 各业务确认文案质量不一；检查返回、外部点击、提交失败和大字体 |
 
@@ -38,7 +38,7 @@
 | 状态 / 交互 | hidden/partial/expanded/submitting；拖动、点外与返回关闭结果一致 |
 | 文案 / 无障碍 | 打开后焦点限制在面板，关闭回触发项；drag handle 有合理语义或不聚焦 |
 | 响应式 | Compact 从底部；宽屏可保持底部但限制宽度，复杂编辑考虑 Dialog/Pane |
-| 三风格映射 | 圆角、handle、动画可变；关闭与提交语义一致 |
+| 双主题映射 | 圆角、handle、动画可变；关闭与提交语义一致 |
 | Compose 入口 | 当前 `AppModalBottomSheet`、`AppBottomSheetDragHandle` |
 | 当前差距 / 验收 | 业务 Sheet 高度与滚动策略不统一；检查键盘、旋转和预测返回 |
 
@@ -52,7 +52,7 @@
 | 状态 / 交互 | queued/visible/dismissed/action；相同消息去重，危险撤销时间足够 |
 | 文案 / 无障碍 | 结果明确，如“已从稍后再看移除”；live region 不频繁打断 |
 | 响应式 | Compact 留边，Expanded 限宽并靠近内容语境 |
-| 三风格映射 | 造型与时长细节可变；消息、动作和队列一致 |
+| 双主题映射 | 造型与时长细节可变；消息、动作和队列一致 |
 | Compose 入口 | 当前 `AppSnackbar`、`AppSnackbarHost` |
 | 当前差距 / 验收 | 提示系统可能混用 Toast；检查队列、底栏遮挡与 TalkBack 时间 |
 
@@ -66,7 +66,7 @@
 | 状态 / 交互 | open/selected/disabled；点击外部或返回关闭，不丢失页面状态 |
 | 文案 / 无障碍 | 项目为动词或选项名，读出选中/禁用；触发按钮说明“更多选项” |
 | 响应式 | 空间不足调整弹出方向；移动端复杂多选考虑 Sheet |
-| 三风格映射 | 菜单表面与动画可变，项目顺序/状态一致 |
+| 双主题映射 | 菜单表面与动画可变，项目顺序/状态一致 |
 | Compose 入口 | 当前 `AppDropdownMenu`、`AppDropdownMenuItem` |
 | 当前差距 / 验收 | 领域 Popup 仍存在；检查屏幕边缘、键盘/遥控焦点和长文案 |
 
@@ -82,7 +82,7 @@
 | 文案 | 发生什么 + 下一步 | 没有什么 + 可做什么 |
 | 无障碍 | 错误播报一次，恢复动作清楚 | 不持续播报；动作名称完整 |
 | 响应式 | 局部失败留在所属区块 | 不用巨型插画占满宽屏 |
-| 三风格 | 图标/表面可变 | 图标/表面可变 |
+| 双主题 | 图标/表面可变 | 图标/表面可变 |
 | 目标入口 | `AppErrorState` | `AppEmptyState` |
 | 当前入口 | `design-system/.../AppContentStateComponents.kt` | `design-system/.../AppContentStateComponents.kt` |
 | 差距/验收 | P005 已使用 PAGE/INLINE；其他页面仍待迁移 | P005 已使用 PAGE；其他页面空状态仍待迁移 |
