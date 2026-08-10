@@ -48,14 +48,17 @@ class MiuixV2MigrationStructureTest {
 
     @Test
     fun buildGradle_pinsMiuixVersionTo093() {
-        val source = loadSource("app/build.gradle.kts")
-        assertTrue(source.contains("val miuixVersion = \"0.9.3\""))
+        // 版本收敛到 version catalog（libs.versions.toml），app/build.gradle.kts 只引用别名。
+        val catalog = loadSource("gradle/libs.versions.toml")
+        assertTrue(catalog.contains("""miuix = "0.9.3"""))
+        val build = loadSource("app/build.gradle.kts")
+        assertTrue(build.contains("implementation(libs.miuix.ui)"))
     }
 
     @Test
     fun buildGradle_includesMiuixShaderArtifact() {
         val source = loadSource("app/build.gradle.kts")
-        assertTrue(source.contains("miuix-shader-android"))
+        assertTrue(source.contains("libs.miuix.shader"))
     }
 
     @Test
@@ -86,13 +89,13 @@ class MiuixV2MigrationStructureTest {
     @Test
     fun buildGradle_includesMiuixSquircleArtifact() {
         val source = loadSource("app/build.gradle.kts")
-        assertTrue(source.contains("miuix-squircle-android"))
+        assertTrue(source.contains("libs.miuix.squircle"))
     }
 
     @Test
     fun buildGradle_includesMiuixIconsArtifact() {
         val source = loadSource("app/build.gradle.kts")
-        assertTrue(source.contains("miuix-icons-android"))
+        assertTrue(source.contains("libs.miuix.icons"))
     }
 
     @Test
@@ -135,13 +138,16 @@ class MiuixV2MigrationStructureTest {
 
     @Test
     fun iosClickableItem_routesThroughAdaptiveListItemPolicy() {
-        val source = loadSource("design-system/src/main/java/com/android/purebilibili/core/ui/components/AdaptivePreferenceComponents.kt")
-        assertTrue(source.contains("resolveAppClickableItemRenderer("))
-        assertTrue(source.contains("AppClickableItemRenderer.MIUIX_ARROW"))
-        assertTrue(source.contains("AppClickableItemRenderer.MIUIX_BASIC"))
-        assertTrue(source.contains("shouldRouteSwitchItemToMiuixSwitchPreference("))
-        assertTrue(source.contains("shouldRouteSliderPreferenceToMiuixSliderPreference("))
-        assertTrue(source.contains("MiuixSliderPreference("))
+        // 路由决策集中在 AdaptiveListItemPolicy；renderer 消费其结果并调用 Miuix 原生组件。
+        val policySource = loadSource("design-system/src/main/java/com/android/purebilibili/core/ui/components/AdaptiveListItemPolicy.kt")
+        assertTrue(policySource.contains("fun resolveAppClickableItemRenderer("))
+        assertTrue(policySource.contains("AppClickableItemRenderer.MIUIX_ARROW"))
+        assertTrue(policySource.contains("AppClickableItemRenderer.MIUIX_BASIC"))
+        assertTrue(policySource.contains("fun shouldRouteSwitchItemToMiuixSwitchPreference("))
+        assertTrue(policySource.contains("fun shouldRouteSliderPreferenceToMiuixSliderPreference("))
+        val rendererSource = loadSource("design-system/src/main/java/com/android/purebilibili/core/ui/components/AdaptivePreferenceComponents.kt")
+        assertTrue(rendererSource.contains("shouldRouteSliderPreferenceToMiuixSliderPreference("))
+        assertTrue(rendererSource.contains("MiuixSliderPreference("))
     }
 
     @Test

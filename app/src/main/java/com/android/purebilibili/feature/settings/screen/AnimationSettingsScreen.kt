@@ -335,7 +335,7 @@ fun AnimationSettingsContent(
                         }
                         AppPreferenceDivider()
                         AppSwitchPreference(
-                            icon = rememberSettingsSemanticIcon(SettingsIconRole.PREDICTIVE_BACK),
+                            icon = rememberSettingsSemanticIcon(SettingsIconRole.CENTER_SWIPE_FULLSCREEN),
                             title = "全屏滑动返回",
                             subtitle = if (fullScreenSwipeBackEnabled) {
                                 "列表与设置页支持全屏右滑返回；播放器、详情与网页页不受影响"

@@ -15,8 +15,8 @@ class SettingsLocalBackHandlerStructureTest {
 
         assertTrue(source.contains("NavigationBackHandler("))
         assertTrue(source.contains("rememberNavigationEventState(NavigationEventInfo.None)"))
-        assertTrue(source.contains("LocalPredictiveBackGestureEnabled.current"))
-        assertTrue(source.contains("reportPredictiveProgress = predictiveBackGestureEnabled"))
+        assertTrue(source.contains("isBackEnabled = enabled"))
+        assertTrue(source.contains("onBackCompleted = onBackCompleted"))
     }
 
     @Test

@@ -11,16 +11,21 @@ class AnimationSettingsScreenStructureTest {
     fun animationSettingsScreen_controlsGlobalPredictivePreviewIndependently() {
         val source = animationSettingsSource()
 
-        assertTrue(source.contains("title = \"预测性返回手势\""))
-        assertTrue(source.contains("SettingsManager.setPredictiveBackEnabled(context, enabled)"))
+        // 全局返回动画（样式选择）独立于实时画面卡片转场开关。
+        assertTrue(source.contains("title = \"全局返回动画\""))
+        assertTrue(source.contains("SettingsManager.setPredictiveBackEnabled(context, true)"))
         val predictiveItem = source
-            .substringAfter("title = \"预测性返回手势\"")
-            .substringBefore("AppPreferenceDivider()")
+            .substringAfter("title = \"全局返回动画\"")
+            .substringBefore("title = \"全屏滑动返回\"")
         assertFalse(predictiveItem.contains("enabled = state.cardTransitionEnabled"))
-        assertFalse(source.contains("setPredictiveBackAnimationStyle"))
-        assertFalse(source.contains("setPredictiveBackExitDirection"))
-        assertFalse(source.contains("resolvePredictiveBackStyleOptions"))
-        assertFalse(source.contains("resolvePredictiveBackExitDirectionOptions"))
+        // 样式与退出方向选项存在，且选择样式即启用预测性返回。
+        assertTrue(source.contains("SettingsManager.setPredictiveBackAnimationStyle("))
+        assertTrue(source.contains("SettingsManager.setPredictiveBackExitDirection("))
+        assertTrue(source.contains("predictiveBackStyleOptions"))
+        assertTrue(source.contains("predictiveBackExitDirectionOptions"))
+        // 全屏滑动返回是独立开关，不再与全局返回动画共用图标。
+        assertTrue(source.contains("title = \"全屏滑动返回\""))
+        assertTrue(source.contains("fullScreenSwipeBackEnabled"))
     }
 
     @Test

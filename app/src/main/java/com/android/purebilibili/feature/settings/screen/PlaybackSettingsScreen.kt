@@ -55,7 +55,9 @@ import com.android.purebilibili.core.theme.LocalSettingsLiquidGlassEnabled
 import com.android.purebilibili.core.theme.iOSTeal
 import com.android.purebilibili.core.theme.iOSOrange
 import com.android.purebilibili.core.theme.iOSSystemGray
+import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.AppSurfaceTokens
+import com.android.purebilibili.core.ui.ContainerLevel
 import com.android.purebilibili.core.util.LocalWindowSizeClass
 import com.android.purebilibili.feature.settings.ui.SettingsPageScaffold
 import com.android.purebilibili.core.store.TokenManager
@@ -346,7 +348,7 @@ fun PlaybackSettingsContent(
                         )
                         AppPreferenceDivider()
                         AppSwitchPreference(
-                            icon = rememberSettingsSemanticIcon(SettingsIconRole.PLAYBACK_SPEED),
+                            icon = rememberSettingsSemanticIcon(SettingsIconRole.LONG_PRESS_HINT),
                             title = "隐藏长按倍速提示",
                             subtitle = if (longPressSpeedHintHidden) {
                                 "长按临时加速仍会生效，但不再显示倍速浮层"
@@ -390,7 +392,7 @@ fun PlaybackSettingsContent(
                                     )
                                 }
                                 Surface(
-                                    shape = RoundedCornerShape(999.dp),
+                                    shape = AppShapes.container(ContainerLevel.Pill),
                                     color = MaterialTheme.colorScheme.primaryContainer
                                 ) {
                                     Text(
@@ -436,7 +438,7 @@ fun PlaybackSettingsContent(
                                     )
                                 }
                                 Surface(
-                                    shape = RoundedCornerShape(999.dp),
+                                    shape = AppShapes.container(ContainerLevel.Pill),
                                     color = MaterialTheme.colorScheme.primaryContainer
                                 ) {
                                     Text(

@@ -35,12 +35,19 @@ class FeedSettingsSelectionPolicyTest {
     }
 
     @Test
-    fun `settings pages use flat preference groups`() {
+    fun `settings pages use theme official preference groups`() {
         val source = locate("src/main/java/com/android/purebilibili/feature/settings/ui/SettingsPageScaffold.kt")
             .readText()
 
+        // P2：分组呈现由 SettingsVisualPolicy 按主题解析（两主题均为 CARD，
+        // 不能因兼容历史实现统一降级为 FLAT），不再无条件强制 FLAT。
         assertTrue(
             source.contains(
+                "LocalAppPreferenceGroupPresentation provides visualPolicy.groupPresentation"
+            )
+        )
+        assertTrue(
+            !source.contains(
                 "LocalAppPreferenceGroupPresentation provides AppPreferenceGroupPresentation.FLAT"
             )
         )

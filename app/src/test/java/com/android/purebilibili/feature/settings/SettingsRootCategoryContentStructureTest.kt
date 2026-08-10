@@ -296,7 +296,8 @@ class SettingsRootCategoryContentStructureTest {
             .substringAfter("fun AboutSection(")
             .substringBefore("@Composable\nprivate fun AboutProjectOverviewCard(")
 
-        assertTrue(aboutSectionBlock.contains("AboutProjectOverviewCard(versionName = versionName)"))
+        assertTrue(aboutSectionBlock.contains("AboutProjectOverviewCard("))
+        assertTrue(aboutSectionBlock.contains("versionName = versionName"))
         assertTrue(aboutSectionBlock.indexOf("AboutProjectOverviewCard(") < aboutSectionBlock.indexOf("SettingsCardGroup {"))
         assertTrue(source.contains("internal val AboutContributors = listOf("))
         assertTrue(source.contains("AboutContributor(\"jay3-yy\", \"jay3-yy\", R.drawable.avatar_jay3_yy)"))
@@ -405,8 +406,12 @@ class SettingsRootCategoryContentStructureTest {
             .substringAfter("private fun AboutProjectOverviewCard(")
             .substringBefore("@Composable\nprivate fun ContributorAvatarRow(")
 
+        // 概览卡图标由调用方传入 raster launcher 资源（resolveIconOptionPreviewRes），
+        // 不再硬编码圆形 maskable 默认图标。
+        assertTrue(overviewBlock.contains("appIconRes: Int"))
+        assertTrue(overviewBlock.contains("AsyncImage("))
+        assertTrue(overviewBlock.contains("model = appIconRes"))
         assertFalse(overviewBlock.contains("R.mipmap.ic_launcher_bilipai)"))
-        assertTrue(overviewBlock.contains("R.mipmap.ic_launcher_bilipai_foreground"))
     }
 
     @Test

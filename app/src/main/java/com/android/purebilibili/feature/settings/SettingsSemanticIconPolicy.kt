@@ -129,7 +129,8 @@ internal enum class SettingsIconRole {
     HOME_CARD_STATS_COMPACT,
     BOTTOM_BAR_GLASS_PREVIEW,
     ADVANCED_COLOR,
-    CAST_BUTTON
+    CAST_BUTTON,
+    LONG_PRESS_HINT,
 }
 
 @Composable
@@ -310,4 +311,5 @@ private fun resolveMd3SettingsSemanticIcon(role: SettingsIconRole): ImageVector 
     SettingsIconRole.BOTTOM_BAR_GLASS_PREVIEW -> Icons.Outlined.LensBlur
     SettingsIconRole.ADVANCED_COLOR -> Icons.Outlined.InvertColors
     SettingsIconRole.CAST_BUTTON -> Icons.Outlined.Cast
+    SettingsIconRole.LONG_PRESS_HINT -> Icons.Outlined.Gesture
 }

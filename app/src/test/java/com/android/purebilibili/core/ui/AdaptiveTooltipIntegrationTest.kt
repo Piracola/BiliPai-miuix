@@ -2,6 +2,7 @@ package com.android.purebilibili.core.ui
 
 import java.io.File
 import kotlin.test.Test
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class AdaptiveTooltipIntegrationTest {
@@ -17,7 +18,9 @@ class AdaptiveTooltipIntegrationTest {
 
         assertTrue(tooltipSource.contains("MiuixTooltipBox("))
         assertTrue(tooltipSource.contains("rememberPresetPrimitiveRenderer()"))
-        assertTrue(appearanceSource.contains("AdaptivePlainTooltipBox("))
+        // D3：界面预设说明卡已降级为组内小字说明，不再使用高强调 tooltip 卡。
+        assertFalse(appearanceSource.contains("AdaptivePlainTooltipBox("))
+        assertTrue(appearanceSource.contains("uiPresetDescription.summary"))
     }
 
     private fun load(path: String): String = listOf(
