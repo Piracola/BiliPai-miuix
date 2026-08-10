@@ -506,6 +506,7 @@ class DanmakuManager private constructor(
         applyPlaybackSpeedToController(ctrl)
         executeExplicitDanmakuResync(
             pause = { ctrl.pause() },
+            clear = { ctrl.clear() },
             setData = { ctrl.setData(list, 0) },
             start = { ctrl.start(positionMs) }
         )

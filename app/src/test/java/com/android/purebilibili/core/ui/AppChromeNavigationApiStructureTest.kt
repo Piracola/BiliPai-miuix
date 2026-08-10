@@ -37,6 +37,20 @@ class AppChromeNavigationApiStructureTest {
         assertFalse(offenders.isNotEmpty(), "Legacy chrome callers: ${offenders.joinToString { it.path }}")
     }
 
+    @Test
+    fun miuixTopBarsKeepCompactPaddingsSoTitlesSurvive() {
+        // Miuix 标题可用宽度 = (总宽 - 导航 - actions) × 0.9 - titlePadding×2，
+        // 默认 26dp×2 + 多 actions 会把「历史记录」等标题挤成省略号。
+        val chrome = loadSource("design-system/src/main/java/com/android/purebilibili/core/ui/AdaptiveChrome.kt")
+
+        val miuixBranches = chrome.substringAfter("if (rememberIsNativeMiuixEnabled())")
+            .substringBefore("val topBarWindowInsets")
+
+        assertTrue(miuixBranches.contains("titlePadding = 0.dp"))
+        assertTrue(miuixBranches.contains("navigationIconPadding = 0.dp"))
+        assertTrue(miuixBranches.contains("actionIconPadding = 0.dp"))
+    }
+
     private fun loadSource(path: String): String {
         val normalizedPath = path.removePrefix("app/").removePrefix("design-system/")
         return listOf(File(path), File("../$path"), File(normalizedPath))

@@ -63,13 +63,19 @@ internal fun resolveMiuixVideoCardClipRadii(
  * Wide/16:9 shells cannot geometrically reproduce their source content by scaling the whole
  * detail page. During the final return segment, reveal the real retained source card using the
  * same 68%–94% settle window as source-card chrome.
+ *
+ * [isGestureSeeking]：预测返回手势 seek 中（未松手提交）保持整层不透明，
+ * 避免 morph 接近列表时内容提前淡出、实时画面被源卡色块替换；
+ * 松手进入 commit settle 后才走淡出交接。
  */
 internal fun resolveMiuixVideoCardReturnContentAlpha(
     sourceBounds: Rect,
     morphProgress: Float,
     isReturning: Boolean,
+    isGestureSeeking: Boolean = false,
 ): Float {
     if (!isReturning) return 1f
+    if (isGestureSeeking) return 1f
     val aspectRatio = sourceBounds.width / sourceBounds.height.coerceAtLeast(1f)
     if (aspectRatio < MIUIX_WIDE_VIDEO_CARD_MIN_ASPECT_RATIO) return 1f
     return 1f - resolveVideoCardSourceChromeReturnAlpha(morphProgress)
@@ -197,10 +203,12 @@ internal fun miuixVideoCardNavTransition(
                     translationY = bounds.top.coerceIn(-height, height) * (1f - morph)
                     // Keep ordinary/vertical cards fully opaque. Wide shells hand off during the
                     // shared 68%–94% source-chrome window, before the card reaches its final slot.
+                    // 预测返回手势 seek 中（未松手）不淡出，避免画面提前消失被源卡色块替换。
                     alpha = resolveMiuixVideoCardReturnContentAlpha(
                         sourceBounds = bounds,
                         morphProgress = morph,
                         isReturning = scope.role == NavRole.Outgoing,
+                        isGestureSeeking = scope.gesture != null && scope.settle == null,
                     )
                     clip = morph < 0.999f
                     val clipRadii = resolveMiuixVideoCardClipRadii(

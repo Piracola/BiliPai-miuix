@@ -1955,9 +1955,9 @@ private fun PlaybackFullscreenGestureSettingsSection(
             icon = rememberSettingsSemanticIcon(SettingsIconRole.IMMERSIVE_STATUS_BAR),
             title = "播放页沉浸状态栏",
             subtitle = if (immersiveVideoPageStatusBar) {
-                "状态栏保留；播放器顶部使用纯黑背景，系统图标清晰可见，底部手势条保持显示"
+                "状态栏保留；播放器顶部使用实时模糊背景，系统图标清晰可见，底部手势条保持显示"
             } else {
-                "显示普通透明状态栏；播放器顶栏自动避让，不与系统图标重叠"
+                "状态栏保留；播放器顶部使用纯黑背景，系统图标清晰可见，底部手势条保持显示"
             },
             checked = immersiveVideoPageStatusBar,
             onCheckedChange = {

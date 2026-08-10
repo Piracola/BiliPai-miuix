@@ -331,7 +331,7 @@ private fun TimelineSection(
                     selectedValue = selectedDay,
                     onSelectionChange = { selectedDay = it },
                     scrollable = true,
-                    minTabWidth = 76.dp,
+                    minTabWidth = 108.dp,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 AnimatedContent(
@@ -412,7 +412,7 @@ private fun BangumiIndexContent(
                     options = CINEMA_INDEX_CATEGORIES.map { AppSegmentOption(it, it.label) },
                     selectedValue = category,
                     scrollable = true,
-                    minTabWidth = 76.dp,
+                    minTabWidth = 108.dp,
                     onSelectionChange = {
                         if (it == category) {
                             scope.launch { gridState.animateScrollToItem(0) }

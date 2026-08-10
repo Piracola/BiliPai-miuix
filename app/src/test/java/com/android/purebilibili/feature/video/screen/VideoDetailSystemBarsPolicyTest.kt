@@ -267,17 +267,19 @@ class VideoDetailSystemBarsPolicyTest {
     }
 
     @Test
-    fun portraitPlayerTopInset_reservesSolidBackdropOnlyWhenImmersiveSettingIsEnabled() {
+    fun portraitPlayerTopInset_alwaysReservesStatusBarWhenBarsVisible() {
+        // 详情页内联播放器始终沉浸：开关只切换背景条样式（实时模糊 / 纯黑），
+        // 不再决定是否预留状态栏高度。
         assertEquals(
             0f,
             resolveVideoDetailPortraitPlayerTopInsetDp(
                 stableStatusBarHeightDp = 24f,
                 hideStatusBars = true,
-                immersiveStatusBarBackdropEnabled = true,
+                immersiveStatusBarBackdropEnabled = false,
             )
         )
         assertEquals(
-            0f,
+            24f,
             resolveVideoDetailPortraitPlayerTopInsetDp(
                 stableStatusBarHeightDp = 24f,
                 hideStatusBars = false,

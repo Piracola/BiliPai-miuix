@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import com.android.purebilibili.core.ui.AppShapes
+import com.android.purebilibili.core.ui.ContainerLevel
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -17,7 +19,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,7 +37,7 @@ internal fun BangumiPosterSkeletonItem(
     Column(modifier = modifier.fillMaxWidth()) {
         ContentSkeletonBlock(
             color = color,
-            shape = RoundedCornerShape(8.dp),
+            shape = AppShapes.container(ContainerLevel.Chip),
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(BANGUMI_POSTER_ASPECT_RATIO),
@@ -131,7 +132,7 @@ internal fun BangumiTimelineSkeleton(modifier: Modifier = Modifier) {
             repeat(5) {
                 ContentSkeletonBlock(
                     color = blockColor,
-                    shape = RoundedCornerShape(8.dp),
+                    shape = AppShapes.container(ContainerLevel.Pill),
                     modifier = Modifier
                         .weight(1f)
                         .height(48.dp),
@@ -164,7 +165,7 @@ internal fun BangumiFilterSkeleton(modifier: Modifier = Modifier) {
                 repeat(3) {
                     ContentSkeletonBlock(
                         color = blockColor,
-                        shape = RoundedCornerShape(8.dp),
+                        shape = AppShapes.container(ContainerLevel.Chip),
                         modifier = Modifier
                             .weight(1f)
                             .height(36.dp),
@@ -196,7 +197,7 @@ internal fun BangumiFollowManagerSkeleton(modifier: Modifier = Modifier) {
             ) {
                 ContentSkeletonBlock(
                     color = blockColor,
-                    shape = RoundedCornerShape(8.dp),
+                    shape = AppShapes.container(ContainerLevel.Chip),
                     modifier = Modifier
                         .width(92.dp)
                         .aspectRatio(BANGUMI_POSTER_ASPECT_RATIO),

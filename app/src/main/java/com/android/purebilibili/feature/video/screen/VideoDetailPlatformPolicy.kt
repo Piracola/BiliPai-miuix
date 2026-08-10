@@ -186,9 +186,9 @@ internal fun resolveVideoDetailStableStatusBarHeightDp(
 /**
  * 竖屏详情播放器顶部沉浸带高度。
  *
- * 开启「播放页沉浸状态栏」时，播放器容器额外增加状态栏高度，视频内容从
- * 状态栏下方开始；状态栏区域由实时取色视频背景填充。关闭时仍保持原有
- * edge-to-edge 布局。
+ * 详情页内联播放器始终沉浸：视频内容延伸到系统状态栏后方，状态栏区域由背景条
+ * （「播放页沉浸状态栏」开关：实时模糊 或 纯黑）填充。因此只要状态栏可见即返回
+ * 状态栏高度；[immersiveStatusBarBackdropEnabled] 仅保留为兼容参数。
  *
  * [isSharedCardTransition] 保留参数兼容；共享转场与落位后的几何保持一致，
  * 避免动画结束时播放器高度突然跳变。
@@ -200,7 +200,7 @@ internal fun resolveVideoDetailPortraitPlayerTopInsetDp(
     immersiveStatusBarBackdropEnabled: Boolean = false,
     isSharedCardTransition: Boolean = false,
 ): Float {
-    if (hideStatusBars || !immersiveStatusBarBackdropEnabled) return 0f
+    if (hideStatusBars) return 0f
     return stableStatusBarHeightDp
         .takeIf { it.isFinite() }
         ?.coerceAtLeast(0f)

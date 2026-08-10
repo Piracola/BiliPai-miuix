@@ -214,12 +214,14 @@ internal fun resolveDanmakuGuardAction(
 
 internal inline fun executeExplicitDanmakuResync(
     pause: () -> Unit,
+    clear: () -> Unit,
     setData: () -> Unit,
     start: () -> Unit
 ) {
-    // DanmakuRenderEngine start() is ignored while already playing.
-    // Force a deterministic restart order for explicit timeline jumps.
+    // 引擎 setData/start 均不清屏：先 clear 掉渲染队列里残留的旧弹幕，
+    // 否则 seek 后旧时间线弹幕与新时间线叠加（重复且不跟随进度）。
     pause()
+    clear()
     setData()
     start()
 }

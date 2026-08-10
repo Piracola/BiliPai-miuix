@@ -341,8 +341,11 @@ internal fun resolveAdaptivePreferenceIconGlyphColor(
     semanticIconColor: Color,
 ): Color = if (
     treatment == AppPreferenceIconTreatment.FILLED ||
-    iconStyle == AppIconStyle.THEME_CONTAINER
+    iconStyle == AppIconStyle.THEME_CONTAINER ||
+    iconStyle == AppIconStyle.MD3_STANDARD
 ) {
+    // MD3_STANDARD 的容器色是 Color.Transparent，若走 semanticIconColor 会得到透明
+    // glyph（图标消失只剩文字）；这里用 containerContentColor（onSurfaceVariant 单色）。
     containerContentColor
 } else {
     semanticIconColor

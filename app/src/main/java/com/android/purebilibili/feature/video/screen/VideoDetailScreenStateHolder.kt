@@ -3188,7 +3188,7 @@ internal fun VideoDetailScreenStateHolder(
                         val playerTopInset = resolveVideoDetailPortraitPlayerTopInsetDp(
                             stableStatusBarHeightDp = stableStatusBarHeight.value,
                             hideStatusBars = systemBarsVisibilityPolicy.hideStatusBars,
-                            immersiveStatusBarBackdropEnabled = immersiveVideoPageStatusBar,
+                            immersiveStatusBarBackdropEnabled = true,
                             isSharedCardTransition = detailShellSharedBoundsEnabled,
                         ).dp
                         val screenWidthDp = configuration.screenWidthDp.dp
@@ -3611,12 +3611,13 @@ internal fun VideoDetailScreenStateHolder(
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .graphicsLayer {
-                                            val gestureKeepLivePlayer = liveReturnMorph && (
+                                            // 预测返回手势进行中（含未提交 seek 与取消恢复）：保 player、不画封面，
+                                            // 避免手势过程中画面实时消失（实时画面转场开关关闭时同样生效）。
+                                            val gestureKeepLivePlayer =
                                                 videoCardDepthBackgroundState
                                                     .isReturnGestureInProgressProvider() ||
                                                     videoCardDepthBackgroundState
                                                         .isGestureRestoreInProgressProvider()
-                                            )
                                             alpha = resolveVideoDetailReturnCoverAlpha(
                                                 transitionProgress =
                                                     resolveVideoDetailReturnVisualProgress(
@@ -3642,12 +3643,11 @@ internal fun VideoDetailScreenStateHolder(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .graphicsLayer {
-                                        val gestureKeepLivePlayer = liveReturnMorph && (
+                                        val gestureKeepLivePlayer =
                                             videoCardDepthBackgroundState
                                                 .isReturnGestureInProgressProvider() ||
                                                 videoCardDepthBackgroundState
                                                     .isGestureRestoreInProgressProvider()
-                                        )
                                         alpha = resolveVideoDetailReturnPlayerAlpha(
                                             transitionProgress =
                                                 resolveVideoDetailReturnVisualProgress(
@@ -4191,7 +4191,7 @@ internal fun VideoDetailScreenStateHolder(
             isPortraitFullscreen = isPortraitFullscreen,
             videoPlayerRootBottomPx = videoPlayerRootBottomPx,
             hideStatusBars = systemBarsVisibilityPolicy.hideStatusBars,
-            immersiveStatusBarBackdropEnabled = immersiveVideoPageStatusBar,
+            immersiveStatusBarBackdropEnabled = true,
             currentVideoPositionMsProvider = {
                 playerState.player.currentPosition.coerceAtLeast(0L)
             },

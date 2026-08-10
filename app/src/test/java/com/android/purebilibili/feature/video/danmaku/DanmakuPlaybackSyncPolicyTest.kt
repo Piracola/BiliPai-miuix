@@ -177,16 +177,17 @@ class DanmakuPlaybackSyncPolicyTest {
     }
 
     @Test
-    fun `explicit resync should pause before setData and start`() {
+    fun `explicit resync should pause and clear before setData and start`() {
         val calls = mutableListOf<String>()
 
         executeExplicitDanmakuResync(
             pause = { calls += "pause" },
+            clear = { calls += "clear" },
             setData = { calls += "setData" },
             start = { calls += "start" }
         )
 
-        assertEquals(listOf("pause", "setData", "start"), calls)
+        assertEquals(listOf("pause", "clear", "setData", "start"), calls)
     }
 
     @Test

@@ -25,6 +25,9 @@ import com.android.purebilibili.feature.video.ui.overlay.resolveBottomControlBar
 import com.android.purebilibili.feature.video.ui.overlay.resolveVideoProgressBarLayoutPolicy
 import com.android.purebilibili.feature.video.ui.overlay.resolveLandscapeEndDrawerReservedWidthDp
 import com.android.purebilibili.feature.video.ui.overlay.resolveLandscapeEndDrawerLayoutPolicy
+import com.android.purebilibili.feature.video.ui.overlay.VIDEO_STATUS_BAR_AMBIENT_CAPTURE_INTERVAL_MS
+import com.android.purebilibili.feature.video.ui.overlay.VIDEO_STATUS_BAR_AMBIENT_SAMPLE_HEIGHT_PX
+import com.android.purebilibili.feature.video.ui.overlay.VIDEO_STATUS_BAR_AMBIENT_SAMPLE_WIDTH_PX
 import com.android.purebilibili.feature.video.ui.components.SponsorSkipButton
 import com.android.purebilibili.feature.video.ui.components.SponsorContributionOverlay
 import com.android.purebilibili.feature.video.viewmodel.SponsorContributionUiState
@@ -191,6 +194,7 @@ import com.android.purebilibili.feature.video.usecase.playPlayerFromUserAction
 import com.android.purebilibili.feature.video.usecase.seekPlayerFromUserAction
 import com.android.purebilibili.feature.video.usecase.togglePlayerPlaybackFromUserAction
 import com.android.purebilibili.feature.video.util.captureAndSaveVideoScreenshot
+import com.android.purebilibili.feature.video.util.captureVideoAmbientFrame
 import com.android.purebilibili.feature.video.playback.session.PlaybackSeekSessionState
 import com.android.purebilibili.feature.video.playback.session.SEEK_PLAYBACK_RECOVERY_DELAY_MS
 import com.android.purebilibili.feature.video.playback.session.shouldAttemptPlaybackRecoveryAfterSeek
@@ -1016,6 +1020,7 @@ fun VideoPlayerSection(
     var playerViewRef by remember { mutableStateOf<PlayerView?>(null) }
     var measuredPlayerViewportSize by remember(bvid) { mutableStateOf(IntSize.Zero) }
     var measuredBottomControlsHeightPx by remember(bvid) { mutableIntStateOf(0) }
+    val statusBarAmbientFrame = remember(bvid) { mutableStateOf<ImageBitmap?>(null) }
     
     // 🔒 [新增] 屏幕锁定状态（全屏时防误触）
     var isScreenLocked by remember { mutableStateOf(false) }
@@ -1032,6 +1037,42 @@ fun VideoPlayerSection(
             if (shouldBlockAppScreenshot) {
                 AppScreenshotGestureBlockState.fullscreenPlayerLocked = false
             }
+        }
+    }
+
+    // 「播放页沉浸状态栏」开启时，实时采样播放画面作为状态栏背景模糊源；
+    // 关闭（默认）时背景为纯黑，不采样，零开销。
+    val statusBarHazeEnabled by SettingsManager
+        .getHideVideoPageStatusBar(context)
+        .collectAsStateWithLifecycle(
+            initialValue = SettingsManager.getHideVideoPageStatusBarSync(context),
+        )
+    val shouldCaptureStatusBarAmbientFrame = contentTopInset.value > 0f &&
+        !isFullscreen &&
+        !isInPipMode &&
+        hostLifecycleStarted &&
+        statusBarHazeEnabled
+    LaunchedEffect(
+        playerViewRef,
+        shouldCaptureStatusBarAmbientFrame,
+        observedIsPlaying,
+        currentPlaybackIdentity,
+    ) {
+        if (!shouldCaptureStatusBarAmbientFrame) {
+            statusBarAmbientFrame.value = null
+            return@LaunchedEffect
+        }
+        val playerView = playerViewRef ?: return@LaunchedEffect
+        while (isActive) {
+            if (playerView.isAttachedToWindow && playerView.width > 0 && playerView.height > 0) {
+                statusBarAmbientFrame.value = captureVideoAmbientFrame(
+                    playerView = playerView,
+                    targetWidth = VIDEO_STATUS_BAR_AMBIENT_SAMPLE_WIDTH_PX,
+                    targetHeight = VIDEO_STATUS_BAR_AMBIENT_SAMPLE_HEIGHT_PX,
+                )?.asImageBitmap()
+            }
+            if (!observedIsPlaying) break
+            delay(VIDEO_STATUS_BAR_AMBIENT_CAPTURE_INTERVAL_MS)
         }
     }
 
@@ -5144,6 +5185,7 @@ fun VideoPlayerSection(
                 hasFavoritePlaylist = hasFavoritePlaylist,
                 onFavoritePlaylistClick = onFavoritePlaylistClick,
                 drawerHazeState = overlayDrawerHazeState,
+                statusBarAmbientFrame = statusBarAmbientFrame,
                 statusBarBackdropHeight = contentTopInset,
                 onLandscapeCommentClick = onLandscapeCommentClick,
                 landscapeCommentPanelVisible = landscapeCommentPanelVisible,

@@ -700,6 +700,7 @@ fun AppNavigation(
             isSingleColumnCard = CardPositionManager.isSingleColumnCard,
         )
         var lastVideoDetailOpenId by remember { mutableLongStateOf(0L) }
+        var lastLiveAreaDetailOpenId by remember { mutableLongStateOf(0L) }
         fun pushNavigation3KeyDirect(key: BiliPaiNavKey) {
             val sessionScopedKey = when (key) {
                 is BiliPaiNavKey.VideoDetail -> {
@@ -711,6 +712,18 @@ fun AppNavigation(
                             lastVideoDetailOpenId + 1L,
                         )
                         lastVideoDetailOpenId = nextOpenId
+                        key.copy(openId = nextOpenId)
+                    }
+                }
+                is BiliPaiNavKey.LiveAreaDetail -> {
+                    if (key.openId > 0L) {
+                        key
+                    } else {
+                        val nextOpenId = maxOf(
+                            SystemClock.uptimeMillis(),
+                            lastLiveAreaDetailOpenId + 1L,
+                        )
+                        lastLiveAreaDetailOpenId = nextOpenId
                         key.copy(openId = nextOpenId)
                     }
                 }

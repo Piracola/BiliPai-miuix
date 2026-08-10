@@ -51,6 +51,18 @@ class BiliPaiNavBackStackPolicyTest {
     }
 
     @Test
+    fun push_liveAreaDetailReentryKeepsDistinctInstances() {
+        // 回归：同一直播分区经同级 chips 互跳后再次进入时，openId 使每次 push 的
+        // contentKey 实例唯一，避免 Miuix 抛出 Duplicate contentKey 崩溃。
+        val first = BiliPaiNavKey.LiveAreaDetail(parentAreaId = 1, areaId = 145, title = "颜值", openId = 100L)
+        val reentry = BiliPaiNavKey.LiveAreaDetail(parentAreaId = 1, areaId = 145, title = "颜值", openId = 101L)
+
+        val stack = pushBiliPaiNavKey(listOf(BiliPaiNavKey.MainHost, first), reentry)
+
+        assertEquals(listOf(BiliPaiNavKey.MainHost, first, reentry), stack)
+    }
+
+    @Test
     fun pop_keepsRootEntry() {
         assertEquals(
             listOf(BiliPaiNavKey.MainHost),

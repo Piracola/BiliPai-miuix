@@ -3,9 +3,11 @@ package com.android.purebilibili.navigation3
 import com.android.purebilibili.feature.settings.SettingsRootCategory
 import com.android.purebilibili.data.model.response.FavoriteSearchScope
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonClassDiscriminator
 import top.yukonga.miuix.kmp.nav.core.NavKey
 
 @Serializable
+@JsonClassDiscriminator("nav_key_class")
 internal sealed interface BiliPaiNavKey : NavKey {
     val routeBase: String
 
@@ -230,7 +232,9 @@ internal sealed interface BiliPaiNavKey : NavKey {
     data class LiveAreaDetail(
         val parentAreaId: Int,
         val areaId: Int,
-        val title: String = ""
+        val title: String = "",
+        /** 每次进入分配自增 id，避免同级分区互跳后同一分区重复入栈时 contentKey 冲突。 */
+        val openId: Long = 0L
     ) : BiliPaiNavKey {
         override val routeBase: String = "live_area_detail"
     }

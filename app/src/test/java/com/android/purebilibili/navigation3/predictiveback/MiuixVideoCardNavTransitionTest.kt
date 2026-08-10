@@ -77,6 +77,17 @@ class MiuixVideoCardNavTransitionTest {
             ),
             absoluteTolerance = 0.0001f,
         )
+        // 预测返回手势 seek 中（未松手提交）：整层保持不透明，画面不提前消失。
+        assertEquals(
+            1f,
+            resolveMiuixVideoCardReturnContentAlpha(
+                sourceBounds = wideBounds,
+                morphProgress = 0.06f,
+                isReturning = true,
+                isGestureSeeking = true,
+            ),
+            absoluteTolerance = 0.0001f,
+        )
     }
 
     @Test

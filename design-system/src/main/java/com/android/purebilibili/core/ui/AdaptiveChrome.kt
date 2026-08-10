@@ -27,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.unit.dp
 import com.android.purebilibili.core.theme.AppUiStyle
 import com.android.purebilibili.core.theme.LocalAppUiStyle
 import com.android.purebilibili.core.theme.resolveAndroidNativeChromeTokens
@@ -255,7 +256,12 @@ fun AdaptiveTopAppBar(
                     modifier = modifier,
                     color = topAppBarColors.containerColor,
                     navigationIcon = navigationContent,
-                    actions = actionsContent
+                    actions = actionsContent,
+                    // Miuix 标题可用宽度 = (总宽 - 导航 - actions) × 0.9 - titlePadding×2；
+                    // 默认 26dp×2 + 多 actions 会把标题挤到省略号。压紧 padding 把空间还给标题。
+                    titlePadding = 0.dp,
+                    navigationIconPadding = 0.dp,
+                    actionIconPadding = 0.dp,
                 )
             }
 
@@ -266,7 +272,10 @@ fun AdaptiveTopAppBar(
                     modifier = modifier,
                     color = topAppBarColors.containerColor,
                     navigationIcon = navigationContent,
-                    actions = actionsContent
+                    actions = actionsContent,
+                    titlePadding = 0.dp,
+                    navigationIconPadding = 0.dp,
+                    actionIconPadding = 0.dp,
                 )
             }
         }

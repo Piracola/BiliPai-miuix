@@ -238,6 +238,7 @@ fun <T> AppNativeTabRow(
             scrollable = scrollable,
             minTabWidth = minTabWidth,
             colors = colors,
+            pillCornerRadius = policy.pillCornerRadius,
             modifier = modifier,
             onSelectionChange = onSelectionChange,
         )
