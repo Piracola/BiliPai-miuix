@@ -46,6 +46,9 @@ jobs:
         run: echo "${{ secrets.FCM }}" | base64 -d > app/google-services.json
 
       - name: Compile release and collect Compose compiler data
+        env:
+          GPR_USER: ${{ secrets.GPR_USER }}
+          GPR_KEY: ${{ secrets.GPR_KEY }}
         run: ./gradlew :app:compileReleaseKotlin -Pbili.composeReports=true --no-daemon --no-configuration-cache --console=plain
 
       - name: Verify report output

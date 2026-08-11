@@ -46,10 +46,17 @@ dependencyResolutionManagement {
         // GitHub Packages (compose-miuix-ui/miuix).
         // Authentication is required even for this public package. Keep credentials outside
         // the repository in ~/.gradle/gradle.properties or environment variables.
+        // Resolution order: gpr.user/gpr.key (local) > GPR_USER/GPR_KEY (CI secrets) >
+        // GITHUB_ACTOR/GITHUB_TOKEN (GitHub Actions defaults). Blank values fall through
+        // so a CI job without secrets degrades to anonymous resolution.
         val gprUser = providers.gradleProperty("gpr.user")
+            .orElse(providers.environmentVariable("GPR_USER"))
             .orElse(providers.environmentVariable("GITHUB_ACTOR"))
+            .filter { it.isNotBlank() }
         val gprKey = providers.gradleProperty("gpr.key")
+            .orElse(providers.environmentVariable("GPR_KEY"))
             .orElse(providers.environmentVariable("GITHUB_TOKEN"))
+            .filter { it.isNotBlank() }
         maven {
             name = "GitHubPackagesMiuix"
             url = uri("https://maven.pkg.github.com/compose-miuix-ui/miuix")

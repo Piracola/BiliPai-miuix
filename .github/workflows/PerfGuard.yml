@@ -46,6 +46,9 @@ jobs:
       # 逐条列出当前可通过的测试类；shape/motion/surface 三条历史债继续由 allowlist
       # 棘轮限制不能增长。颜色、间距、字号和已迁移模块检查在 PR 阶段直接执行。
       - name: 帧预算与稳定性棘轮
+        env:
+          GPR_USER: ${{ secrets.GPR_USER }}
+          GPR_KEY: ${{ secrets.GPR_KEY }}
         run: |
           ./gradlew :app:testDebugUnitTest \
             --tests 'com.android.purebilibili.core.ui.perf.FrameBudgetLintTest' \

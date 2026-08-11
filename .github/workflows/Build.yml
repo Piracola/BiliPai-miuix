@@ -45,6 +45,9 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Run source and policy guards
+        env:
+          GPR_USER: ${{ secrets.GPR_USER }}
+          GPR_KEY: ${{ secrets.GPR_KEY }}
         run: |
           chmod +x gradlew
           ./gradlew :app:testDebugUnitTest \
@@ -124,6 +127,8 @@ jobs:
   
       - name: Build APK
         env:
+          GPR_USER: ${{ secrets.GPR_USER }}
+          GPR_KEY: ${{ secrets.GPR_KEY }}
           BILI_BUILD_COMMIT_SHA: ${{ github.sha }}
           BILI_BUILD_GIT_REF: ${{ github.ref }}
           BILI_BUILD_WORKFLOW_RUN_ID: ${{ github.run_id }}
