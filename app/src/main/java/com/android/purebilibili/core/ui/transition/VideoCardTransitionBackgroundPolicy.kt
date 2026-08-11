@@ -101,6 +101,16 @@ internal fun resolveVideoCardTransitionBackgroundScaleReduction(
         VIDEO_CARD_TRANSITION_PARTITION_SCALE_REDUCTION
 }
 
+/**
+ * A nested related-video return already reveals a retained VideoDetail containing an Android
+ * player surface. Full-page snapshot blur can neither capture that surface reliably nor preserve
+ * the parent's visual structure, so this path keeps only the lightweight depth scrim.
+ */
+internal fun shouldUseRealtimeVideoCardTransitionBackgroundBlur(
+    source: VideoCardTransitionBackgroundSource,
+    realtimeBlurEnabled: Boolean,
+): Boolean = realtimeBlurEnabled && source != VideoCardTransitionBackgroundSource.RelatedVideo
+
 internal data class VideoCardTransitionBackgroundFrame(
     val blurRadiusPx: Float,
     val scrimAlpha: Float,
@@ -125,8 +135,8 @@ internal data class VideoCardTransitionBackgroundState(
     val isGestureRestoreInProgressProvider: () -> Boolean = { false },
     val isQuickReturnFromDetailProvider: () -> Boolean = { false },
     /**
-     * 为 true 时源卡标题/UP 与封面同步全显（不走 live 叠字延迟）。
-     * 默认 false：预测返回始终预览实时画面。
+     * 为 true 时完整源卡常驻下层，由上层 live 画面在落点窗口内淡出交接。
+     * 默认值仅供未接入导航宿主的调用方兜底；导航宿主应显式选择返回策略。
      */
     val preferWholeCardReturnProvider: () -> Boolean = { false },
     val motionTierProvider: () -> MotionTier = { MotionTier.Normal },
@@ -1112,7 +1122,7 @@ internal fun Modifier.videoCardTransitionBackgroundEffect(
 }
 
 /**
- * Fades the frozen depth snapshot out over the source chrome's 68%–94% settle window.
+ * Fades the frozen depth snapshot out over the full source-card takeover window.
  * Depth is 1 at full blur and 0 when the previous page is fully restored.
  *
  * Drawing live content underneath this layer is essential for player surfaces: recording an
@@ -1131,9 +1141,9 @@ internal fun resolveVideoCardTransitionFrozenLayerAlpha(
         else -> false
     }
     if (!supportsLiveHandoff) return 1f
-    // 与来源卡正文共用 68%–94% settle 窗口。旧实现只在 depth=0 才将冻结层
-    // 完全移除，导致下方已淡入的标题仍被开场时录下的“无正文快照”盖住。
-    return 1f - resolveVideoCardSourceChromeReturnAlpha(depthProgress)
+    // 冻结层往往录到了进场时被隐藏标题的卡片。在返回中段就把它交给
+    // live source page，否则下方已就绪的标题/UP/统计仍会被无正文快照盖住。
+    return 1f - resolveVideoCardWholeSourceReturnAlpha(depthProgress)
 }
 
 /**

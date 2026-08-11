@@ -71,7 +71,7 @@
     </style>
 
     <style name="Theme.PureBiliBili.Splash.BiliPaiMonet" parent="Theme.PureBiliBili">
-        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_bilipai_monet</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/splash_icon_bilipai_monet</item>
     </style>
 
     <style name="Theme.PureBiliBili.Splash.NoIcon" parent="Theme.PureBiliBili">

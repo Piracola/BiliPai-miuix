@@ -2,17 +2,19 @@ package com.android.purebilibili.feature.video.screen
 
 import com.android.purebilibili.core.ui.transition.VideoCardReturnCoverOwnership
 import com.android.purebilibili.core.ui.transition.VIDEO_CARD_RETURN_LIVE_CONTENT_YIELD_END
+import com.android.purebilibili.core.ui.transition.VideoCardTransitionVisualTimeline
 
 /**
  * Settled 播放态详情 → 列表返回的**运动预算**（纯 Kotlin）。
  *
  * 产品硬门槛：有可绘 live 帧时全程 [VideoDetailReturnPlayerMode.LiveMorph] 一镜到底，
- * 不做 snapshot / 静态帧 / 性能向 forceCover 降级。减负只动旁路（弹幕、次要内容、控制层、
- * 景深 quantize、首页重型工作错峰），不掐实时 surface。
+ * 不做 snapshot / 静态帧 / 性能向 forceCover 降级。飞行卡内部形变期间保留弹幕、
+ * 次要内容和控制层的 composition，只调整绘制 alpha；不停止实时 surface。
  */
 
 /** 与 live return cover handoff 对齐：末段才允许停播意图。 */
-internal const val VIDEO_DETAIL_RETURN_HANDOFF_SETTLE_START = 0.88f
+internal const val VIDEO_DETAIL_RETURN_HANDOFF_SETTLE_START =
+    VideoCardTransitionVisualTimeline.MEDIA_RETURN_END
 
 internal enum class VideoDetailReturnSessionPhase {
     Idle,
@@ -166,10 +168,17 @@ internal fun resolveVideoDetailReturnVisualBudget(
         )
     }
 
-    val secondaryMode = resolveVideoDetailReturnSecondaryContentMode(
-        phase = phase,
-        secondaryContentAlpha = secondaryContentAlpha,
-    )
+    val preserveLiveMorphContentTrees =
+        playerMode == VideoDetailReturnPlayerMode.LiveMorph &&
+            phase != VideoDetailReturnSessionPhase.Settle
+    val secondaryMode = if (preserveLiveMorphContentTrees) {
+        VideoDetailReturnSecondaryContentMode.Keep
+    } else {
+        resolveVideoDetailReturnSecondaryContentMode(
+            phase = phase,
+            secondaryContentAlpha = secondaryContentAlpha,
+        )
+    }
     val depthMode = when {
         reduceMotion -> VideoDetailReturnDepthBlurMode.ScrimOnly
         phase == VideoDetailReturnSessionPhase.Settle -> VideoDetailReturnDepthBlurMode.Full
@@ -180,13 +189,21 @@ internal fun resolveVideoDetailReturnVisualBudget(
         phase = phase,
         playerMode = playerMode,
         secondaryContentMode = secondaryMode,
-        danmakuMode = when (phase) {
-            VideoDetailReturnSessionPhase.Settle -> VideoDetailReturnDanmakuMode.Keep
-            else -> VideoDetailReturnDanmakuMode.PauseHide
+        danmakuMode = if (preserveLiveMorphContentTrees) {
+            VideoDetailReturnDanmakuMode.Keep
+        } else {
+            when (phase) {
+                VideoDetailReturnSessionPhase.Settle -> VideoDetailReturnDanmakuMode.Keep
+                else -> VideoDetailReturnDanmakuMode.PauseHide
+            }
         },
-        overlayControlsMode = when (phase) {
-            VideoDetailReturnSessionPhase.Settle -> VideoDetailReturnOverlayControlsMode.Keep
-            else -> VideoDetailReturnOverlayControlsMode.Suppress
+        overlayControlsMode = if (preserveLiveMorphContentTrees) {
+            VideoDetailReturnOverlayControlsMode.Keep
+        } else {
+            when (phase) {
+                VideoDetailReturnSessionPhase.Settle -> VideoDetailReturnOverlayControlsMode.Keep
+                else -> VideoDetailReturnOverlayControlsMode.Suppress
+            }
         },
         depthBlurMode = depthMode,
         homeHeavyWorkMode = when (phase) {
@@ -201,7 +218,8 @@ internal fun resolveVideoDetailReturnVisualBudget(
 }
 
 /**
- * 次要内容：Commit/Morph 优先 Freeze（保壳尺寸）；alpha 已近 0 时可 Detach 省 composition。
+ * 无实时帧的封面回退路径：Commit/Morph 优先 Freeze（保壳尺寸）；alpha 已近 0 时可
+ * Detach 省 composition。LiveMorph 会在上层预算中直接 Keep，不进入这里。
  */
 internal fun resolveVideoDetailReturnSecondaryContentMode(
     phase: VideoDetailReturnSessionPhase,
@@ -225,12 +243,13 @@ internal fun resolveVideoDetailReturnSecondaryContentMode(
 }
 
 /**
- * 已提交的返回不再保留详情正文：播放器/封面仍由共享 morph 接管，
- * 但标题、统计和操作行必须在来源卡 chrome 露出前让位，避免短暂叠层。
+ * Live 返回保留详情与来源两套内容树以完成飞行卡内部形变；无实时帧时才可以提前
+ * 卸载次要内容。
  */
 internal fun resolveVideoDetailReturnSecondaryContentAlphaPreview(
     isCommittedCardReturn: Boolean,
-): Float = if (isCommittedCardReturn) 0f else 1f
+    hasRenderableLiveFrame: Boolean = false,
+): Float = if (isCommittedCardReturn && !hasRenderableLiveFrame) 0f else 1f
 
 /** 返回预算是否要求隐藏/暂停弹幕绘制。 */
 internal fun shouldPauseHideDanmakuForReturnBudget(

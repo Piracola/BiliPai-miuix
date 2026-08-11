@@ -1,6 +1,8 @@
 package com.android.purebilibili.navigation3
 
 import androidx.compose.ui.geometry.Rect
+import com.android.purebilibili.core.ui.transition.VideoCardSourceChromeSnapshot
+import com.android.purebilibili.core.ui.transition.VideoCardSourceLayout
 
 /**
  * A click-time snapshot of the source card used for the complete detail round trip.
@@ -14,11 +16,14 @@ internal data class VideoCardTransitionSession(
     val sourceRoute: String?,
     val sourceKey: String?,
     val cardBounds: Rect?,
+    val coverBounds: Rect?,
     val sourceCornerDp: Int?,
     val cardSourceDirection: BiliPaiNavCardSourceDirection,
     val coverIdentity: String?,
     val cardFullyVisible: Boolean,
     val isSingleColumnCard: Boolean,
+    val sourceLayout: VideoCardSourceLayout,
+    val sourceChromeSnapshot: VideoCardSourceChromeSnapshot?,
 ) {
     val hasUsableSourceGeometry: Boolean
         get() = cardBounds != null && cardFullyVisible
@@ -28,11 +33,14 @@ internal data class VideoCardTransitionSession(
             bvid: String,
             source: BiliPaiVideoSource,
             cardBounds: Rect?,
+            coverBounds: Rect? = null,
             sourceCornerDp: Int?,
             cardSourceDirection: BiliPaiNavCardSourceDirection,
             coverIdentity: String?,
             cardFullyVisible: Boolean,
             isSingleColumnCard: Boolean,
+            sourceLayout: VideoCardSourceLayout = VideoCardSourceLayout.COVER_ONLY,
+            sourceChromeSnapshot: VideoCardSourceChromeSnapshot? = null,
         ): VideoCardTransitionSession {
             val normalizedBvid = bvid.trim()
             val sourceBvid = source.key
@@ -47,6 +55,9 @@ internal data class VideoCardTransitionSession(
                 cardBounds = cardBounds?.takeIf { ownsRecordedGeometry }?.let {
                     Rect(it.left, it.top, it.right, it.bottom)
                 },
+                coverBounds = coverBounds?.takeIf { ownsRecordedGeometry }?.let {
+                    Rect(it.left, it.top, it.right, it.bottom)
+                },
                 sourceCornerDp = sourceCornerDp
                     ?.takeIf { ownsRecordedGeometry }
                     ?.coerceAtLeast(0),
@@ -55,6 +66,8 @@ internal data class VideoCardTransitionSession(
                 coverIdentity = coverIdentity?.trim()?.takeIf(String::isNotEmpty),
                 cardFullyVisible = ownsRecordedGeometry && cardFullyVisible,
                 isSingleColumnCard = isSingleColumnCard,
+                sourceLayout = sourceLayout,
+                sourceChromeSnapshot = sourceChromeSnapshot.takeIf { ownsRecordedGeometry },
             )
         }
     }

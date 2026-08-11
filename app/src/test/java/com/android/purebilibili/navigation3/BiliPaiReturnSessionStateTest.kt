@@ -1,12 +1,34 @@
 package com.android.purebilibili.navigation3
 
 import androidx.compose.ui.geometry.Rect
+import com.android.purebilibili.core.ui.transition.VideoCardSourceChromeSnapshot
+import com.android.purebilibili.core.ui.transition.VideoCardSourceLayout
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class BiliPaiReturnSessionStateTest {
+
+    @Test
+    fun relatedSourceRestoreWaitsForMiuixSettle() {
+        assertEquals(
+            332L,
+            resolveRelatedReturnSourceRestoreDelayMillis(
+                cardTransitionEnabled = true,
+                reduceMotion = false,
+                transitionDurationMillis = 300,
+            ),
+        )
+        assertEquals(
+            0L,
+            resolveRelatedReturnSourceRestoreDelayMillis(
+                cardTransitionEnabled = true,
+                reduceMotion = true,
+                transitionDurationMillis = 300,
+            ),
+        )
+    }
 
     private fun transitionSession(
         bvid: String,
@@ -22,6 +44,18 @@ class BiliPaiReturnSessionStateTest {
         coverIdentity = "cover-$bvid",
         cardFullyVisible = true,
         isSingleColumnCard = false,
+        sourceLayout = if (sourceRoute.startsWith("video/")) {
+            VideoCardSourceLayout.SIDE_BY_SIDE
+        } else {
+            VideoCardSourceLayout.STACKED
+        },
+        sourceChromeSnapshot = VideoCardSourceChromeSnapshot(
+            title = "title-$bvid",
+            ownerName = "owner-$bvid",
+            viewText = "1万",
+            danmakuText = "200",
+            durationText = "01:23",
+        ),
     )
 
     @Test
@@ -102,14 +136,13 @@ class BiliPaiReturnSessionStateTest {
 
         assertEquals("video/BV_A", state.lastVideoSourceRoute)
         assertEquals("video/BV_A:BV_B", state.lastVideoSourceKey)
-        assertEquals("home", state.previousListVideoSourceRoute)
-        assertEquals("home:BV_A", state.previousListVideoSourceKey)
+        assertEquals("home", state.previousVideoSources.single().route)
+        assertEquals("home:BV_A", state.previousVideoSources.single().key)
 
-        val restored = state.restoreListVideoSourceAfterRelatedReturn()
+        val restored = state.restorePreviousVideoSourceAfterRelatedReturn()
         assertEquals("home", restored.lastVideoSourceRoute)
         assertEquals("home:BV_A", restored.lastVideoSourceKey)
-        assertEquals(null, restored.previousListVideoSourceRoute)
-        assertEquals(null, restored.previousListVideoSourceKey)
+        assertTrue(restored.previousVideoSources.isEmpty())
     }
 
     @Test
@@ -134,6 +167,8 @@ class BiliPaiReturnSessionStateTest {
         assertFalse(state.transitionSession?.cardBounds == unrelatedLaterCard.cardBounds)
         assertEquals("cover-BV_A", state.transitionSession?.coverIdentity)
         assertEquals(12, state.transitionSession?.sourceCornerDp)
+        assertEquals(VideoCardSourceLayout.STACKED, state.transitionSession?.sourceLayout)
+        assertEquals("title-BV_A", state.transitionSession?.sourceChromeSnapshot?.title)
     }
 
     @Test
@@ -167,11 +202,33 @@ class BiliPaiReturnSessionStateTest {
         val restored = BiliPaiReturnSessionState()
             .recordTransitionSession(listSession)
             .recordTransitionSession(relatedSession)
-            .restoreListVideoSourceAfterRelatedReturn()
+            .restorePreviousVideoSourceAfterRelatedReturn()
 
         assertEquals(listSession, restored.transitionSession)
         assertEquals("home", restored.lastVideoSourceRoute)
         assertEquals("home:BV_A", restored.lastVideoSourceKey)
-        assertEquals(null, restored.previousListTransitionSession)
+        assertTrue(restored.previousTransitionSessions.isEmpty())
+    }
+
+    @Test
+    fun multiHopRelatedReturnRestoresEveryIntermediateSourceSession() {
+        val homeToA = transitionSession("BV_A", "home", "home:BV_A")
+        val aToB = transitionSession("BV_B", "video/BV_A", "video/BV_A:BV_B")
+        val bToC = transitionSession("BV_C", "video/BV_B", "video/BV_B:BV_C")
+        val atC = BiliPaiReturnSessionState()
+            .recordTransitionSession(homeToA)
+            .recordTransitionSession(aToB)
+            .recordTransitionSession(bToC)
+
+        assertEquals(listOf(homeToA, aToB), atC.previousTransitionSessions)
+
+        val backAtB = atC.restorePreviousVideoSourceAfterRelatedReturn()
+        assertEquals(aToB, backAtB.transitionSession)
+        assertEquals("video/BV_A:BV_B", backAtB.lastVideoSourceKey)
+
+        val backAtA = backAtB.restorePreviousVideoSourceAfterRelatedReturn()
+        assertEquals(homeToA, backAtA.transitionSession)
+        assertEquals("home:BV_A", backAtA.lastVideoSourceKey)
+        assertTrue(backAtA.previousTransitionSessions.isEmpty())
     }
 }

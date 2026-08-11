@@ -12,6 +12,7 @@ import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
@@ -89,13 +90,15 @@ import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.contentColorFor
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorProducer
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
@@ -790,13 +793,6 @@ fun AppCheckbox(
     interactionSource = interactionSource,
 )
 
-/**
- * 开关选中态 thumb 颜色:亮主题色下 [androidx.compose.material3.ColorScheme.onPrimary]
- * 可能被判为深色(黑字),导致浅色模式选中后 thumb 变黑;此时回退白色。
- */
-internal fun resolveSwitchCheckedThumbColor(onPrimary: Color): Color =
-    if (onPrimary.luminance() > 0.5f) onPrimary else Color.White
-
 @Composable
 fun AppSwitch(
     checked: Boolean,
@@ -804,21 +800,29 @@ fun AppSwitch(
     modifier: Modifier = Modifier,
     thumbContent: (@Composable () -> Unit)? = null,
     enabled: Boolean = true,
-    colors: SwitchColors = SwitchDefaults.colors(
-        checkedThumbColor = resolveSwitchCheckedThumbColor(
-            onPrimary = MaterialTheme.colorScheme.onPrimary,
-        ),
-        checkedTrackColor = MaterialTheme.colorScheme.primary,
-        uncheckedThumbColor = MaterialTheme.colorScheme.surface,
-        uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-        uncheckedBorderColor = MaterialTheme.colorScheme.outline,
-    ),
+    colors: SwitchColors = SwitchDefaults.colors(),
     interactionSource: MutableInteractionSource? = null,
+    showThumbIcon: Boolean = true,
 ) = Switch(
     checked = checked,
     onCheckedChange = onCheckedChange,
     modifier = modifier,
-    thumbContent = thumbContent,
+    thumbContent = thumbContent ?: if (showThumbIcon) {
+        {
+            Icon(
+                imageVector = if (checked) Icons.Filled.Check else Icons.Filled.Close,
+                contentDescription = null,
+                tint = if (checked) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.surfaceContainerHighest
+                },
+                modifier = Modifier.size(SwitchDefaults.IconSize),
+            )
+        }
+    } else {
+        null
+    },
     enabled = enabled,
     colors = colors,
     interactionSource = interactionSource,

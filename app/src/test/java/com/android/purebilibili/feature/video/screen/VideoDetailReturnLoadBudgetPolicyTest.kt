@@ -34,9 +34,9 @@ class VideoDetailReturnLoadBudgetPolicyTest {
         )
         assertTrue(shouldExpectLiveSurfaceOwnershipForReturnBudget(budget))
         assertFalse(budget.allowPlaybackStopIntent)
-        assertEquals(VideoDetailReturnDanmakuMode.PauseHide, budget.danmakuMode)
-        assertEquals(VideoDetailReturnOverlayControlsMode.Suppress, budget.overlayControlsMode)
-        assertEquals(VideoDetailReturnSecondaryContentMode.Freeze, budget.secondaryContentMode)
+        assertEquals(VideoDetailReturnDanmakuMode.Keep, budget.danmakuMode)
+        assertEquals(VideoDetailReturnOverlayControlsMode.Keep, budget.overlayControlsMode)
+        assertEquals(VideoDetailReturnSecondaryContentMode.Keep, budget.secondaryContentMode)
         assertEquals(VideoDetailReturnDepthBlurMode.QuantizedLite, budget.depthBlurMode)
         assertEquals(VideoDetailReturnHomeHeavyWorkMode.DeferToSettle, budget.homeHeavyWorkMode)
     }
@@ -100,7 +100,7 @@ class VideoDetailReturnLoadBudgetPolicyTest {
             resolveVideoDetailReturnSessionPhase(
                 isCommittedCardReturn = true,
                 isExitTransitionInProgress = true,
-                settleProgress = 0.9f,
+                settleProgress = 0.99f,
             ),
         )
         assertEquals(
@@ -129,7 +129,7 @@ class VideoDetailReturnLoadBudgetPolicyTest {
                 secondaryContentAlpha = 0.01f,
             ),
         )
-        assertTrue(
+        assertFalse(
             shouldDetachSecondaryContentForReturnBudget(
                 resolveVideoDetailReturnVisualBudget(
                     phase = VideoDetailReturnSessionPhase.Handoff,
@@ -141,13 +141,14 @@ class VideoDetailReturnLoadBudgetPolicyTest {
     }
 
     @Test
-    fun committedReturn_detachesNonSharedDetailContentBeforeSourceChromeReveals() {
+    fun committedLiveReturnKeepsBothContentTreesForFlyingCardTransform() {
         val secondaryContentAlpha = resolveVideoDetailReturnSecondaryContentAlphaPreview(
             isCommittedCardReturn = true,
+            hasRenderableLiveFrame = true,
         )
 
-        assertEquals(0f, secondaryContentAlpha, 0.0001f)
-        assertTrue(
+        assertEquals(1f, secondaryContentAlpha, 0.0001f)
+        assertFalse(
             shouldDetachSecondaryContentForReturnBudget(
                 resolveVideoDetailReturnVisualBudget(
                     phase = VideoDetailReturnSessionPhase.Commit,
@@ -163,6 +164,28 @@ class VideoDetailReturnLoadBudgetPolicyTest {
                 hasRenderableLiveFrame = true,
                 secondaryContentAlpha = secondaryContentAlpha,
             ).playerMode,
+        )
+    }
+
+    @Test
+    fun committedResidentReturnMayDetachDetailBodyAfterCoverOwnsTheFrame() {
+        val secondaryContentAlpha = resolveVideoDetailReturnSecondaryContentAlphaPreview(
+            isCommittedCardReturn = true,
+            hasRenderableLiveFrame = false,
+        )
+        val budget = resolveVideoDetailReturnVisualBudget(
+            phase = VideoDetailReturnSessionPhase.Morph,
+            hasRenderableLiveFrame = false,
+            secondaryContentAlpha = secondaryContentAlpha,
+        )
+
+        assertEquals(0f, secondaryContentAlpha, 0.0001f)
+        assertEquals(VideoDetailReturnPlayerMode.ResidentCover, budget.playerMode)
+        assertTrue(shouldDetachSecondaryContentForReturnBudget(budget))
+        assertEquals(VideoDetailReturnDanmakuMode.PauseHide, budget.danmakuMode)
+        assertEquals(
+            VideoDetailReturnOverlayControlsMode.Suppress,
+            budget.overlayControlsMode,
         )
     }
 

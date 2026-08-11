@@ -3,13 +3,12 @@ package com.android.purebilibili.feature.video.screen
 import com.android.purebilibili.core.ui.transition.VideoCardTransitionBackgroundPhase
 
 import androidx.compose.animation.core.Easing
-import com.android.purebilibili.core.ui.transition.VIDEO_CARD_RETURN_LIVE_CONTENT_YIELD_START
-import com.android.purebilibili.core.ui.transition.resolveVideoCardLiveReturnVisualHandoffAlpha
 import com.android.purebilibili.core.ui.transition.VideoCardReturnCoverOwnership
 import com.android.purebilibili.core.ui.transition.VideoSharedTransitionPlaybackIntent
 import com.android.purebilibili.core.ui.transition.isVideoCardLiveReturnMorphOwnership
 import com.android.purebilibili.core.ui.transition.resolveReturnSessionLockedCoverOwnership
 import com.android.purebilibili.core.ui.transition.resolveVideoCardLiveMorphSecondaryContentAlpha
+import com.android.purebilibili.core.ui.transition.resolveVideoCardLiveReturnVisualHandoffAlpha
 import com.android.purebilibili.core.ui.transition.resolveVideoCardReturnCoverOwnership
 import com.android.purebilibili.core.ui.transition.resolveVideoCardSharedTransitionEnterEasing
 import com.android.purebilibili.core.ui.transition.resolveVideoCardSharedTransitionReturnEasing
@@ -17,7 +16,6 @@ import com.android.purebilibili.core.ui.transition.shouldHandVisualOwnershipToRe
 import com.android.purebilibili.core.ui.transition.shouldUseVideoCardLiveReturnMorph
 
 private const val COVER_TAKEOVER_PRE_BACK_DELAY_MILLIS = 0L
-/** 已提交返回的最后 12%：实时画面淡到驻留封面，掩盖 shared overlay 卸层。 */
 internal const val VIDEO_CONTENT_COMMENT_TAB_INDEX = 1
 
 internal fun resolveForceCoverOnlyForReturn(
@@ -62,7 +60,7 @@ internal fun shouldTreatVideoDetailCardReturnAsCommitted(
 }
 
 /**
- * 详情 → 来源卡片 sharedBounds：实时画面跟手缩小（一镜到底）。
+ * 详情 → 来源卡片 Miuix entry morph：实时画面跟手缩小（一镜到底）。
  * 实现收口到 [shouldUseVideoCardLiveReturnMorph]（[VideoCardReturnTimeline]）。
  */
 internal fun shouldUseLiveReturnMorph(
@@ -174,29 +172,55 @@ internal fun resolveVideoDetailReturnSessionLockedOwnership(
     )
 }
 
+internal data class VideoDetailReturnMediaFrame(
+    val coverAlpha: Float,
+    val playerAlpha: Float,
+)
+
+/**
+ * One ownership decision for the two media layers. The resident cover is drawn above TextureView;
+ * SurfaceView ownership uses the paired player-internal cover-only fallback. The outer navigation
+ * entry alpha is no longer responsible for hiding platform video surfaces.
+ */
+internal fun resolveVideoDetailReturnMediaFrame(
+    transitionProgress: Float,
+    isCommittedCardReturn: Boolean,
+    hasResidentCover: Boolean,
+    liveReturnMorph: Boolean = false,
+    isReturnGestureInProgress: Boolean = false,
+): VideoDetailReturnMediaFrame {
+    if (!hasResidentCover) {
+        return VideoDetailReturnMediaFrame(coverAlpha = 0f, playerAlpha = 1f)
+    }
+    val returnActive = isCommittedCardReturn || isReturnGestureInProgress
+    if (!returnActive) {
+        return VideoDetailReturnMediaFrame(coverAlpha = 0f, playerAlpha = 1f)
+    }
+    if (!liveReturnMorph) {
+        return VideoDetailReturnMediaFrame(coverAlpha = 1f, playerAlpha = 0f)
+    }
+    // Player and resident cover are two contents of the same flying media slot. Complementary
+    // alphas make the live frame transform into the cover without exposing the page underneath.
+    val coverTakeover = resolveVideoCardLiveReturnVisualHandoffAlpha(transitionProgress)
+    return VideoDetailReturnMediaFrame(
+        coverAlpha = coverTakeover,
+        playerAlpha = 1f - coverTakeover,
+    )
+}
+
 internal fun resolveVideoDetailReturnCoverAlpha(
     transitionProgress: Float,
     isCommittedCardReturn: Boolean,
     hasResidentCover: Boolean,
     liveReturnMorph: Boolean = false,
     keepLivePlayerForPredictiveBack: Boolean = false,
-): Float {
-    // Live morph：封面垫在播放器下（alpha=1），无帧时防黑；有视频帧时被上层盖住。
-    if (liveReturnMorph) {
-        return if (hasResidentCover) 1f else 0f
-    }
-    // 关闭实时画面：刻意 **不画封面、不画 player**，只保留壳上黑底块 morph，
-    // 降低 sharedBounds overlay 的解码/合成压力（用户期望的「整块黑色卡」）。
-    @Suppress("UNUSED_PARAMETER")
-    val ignoredProgress = transitionProgress
-    @Suppress("UNUSED_PARAMETER")
-    val ignoredCommitted = isCommittedCardReturn
-    @Suppress("UNUSED_PARAMETER")
-    val ignoredKeepLive = keepLivePlayerForPredictiveBack
-    @Suppress("UNUSED_PARAMETER")
-    val ignoredCover = hasResidentCover
-    return 0f
-}
+): Float = resolveVideoDetailReturnMediaFrame(
+    transitionProgress = transitionProgress,
+    isCommittedCardReturn = isCommittedCardReturn,
+    hasResidentCover = hasResidentCover,
+    liveReturnMorph = liveReturnMorph,
+    isReturnGestureInProgress = keepLivePlayerForPredictiveBack,
+).coverAlpha
 
 /**
  * 返回画面交接使用的唯一进度源。
@@ -222,37 +246,15 @@ internal fun resolveVideoDetailReturnPlayerAlpha(
     hasResidentCover: Boolean,
     liveReturnMorph: Boolean = false,
     keepLivePlayerForPredictiveBack: Boolean = false,
-): Float {
-    // 实时画面开 + 预测返回：player 保持满不透明（视频帧在上）。
-    if (keepLivePlayerForPredictiveBack) return 1f
-    if (liveReturnMorph) {
-        if (!hasResidentCover) return 1f
-        return 1f - resolveVideoDetailLiveReturnLandingHandoffAlpha(
-            transitionProgress = transitionProgress,
-            isCommittedCardReturn = isCommittedCardReturn,
-        )
-    }
-    // 关闭实时画面：离开详情后隐藏 player，只留黑底壳 morph（低渲染压力）。
-    val progress = transitionProgress.coerceIn(0f, 1f)
-    if (isCommittedCardReturn) return 0f
-    // progress≈1 仍在详情：正常播；一离开（progress 下降）即关 player。
-    return if (progress < 0.999f) 0f else 1f
-}
+): Float = resolveVideoDetailReturnMediaFrame(
+    transitionProgress = transitionProgress,
+    isCommittedCardReturn = isCommittedCardReturn,
+    hasResidentCover = hasResidentCover,
+    liveReturnMorph = liveReturnMorph,
+    isReturnGestureInProgress = keepLivePlayerForPredictiveBack,
+).playerAlpha
 
-/**
- * live morph 保持实时画面缩回；仅已提交返回的最后一小段，与驻留封面交叉淡化。
- * 两层仍读同一个 shared transition progress，取消或预测返回不会产生独立补间。
- */
-private fun resolveVideoDetailLiveReturnLandingHandoffAlpha(
-    transitionProgress: Float,
-    isCommittedCardReturn: Boolean,
-): Float {
-    if (!isCommittedCardReturn) return 0f
-    return resolveVideoCardLiveReturnVisualHandoffAlpha(
-        morphDepthProgress = transitionProgress,
-    )
-}
-
+@Suppress("UNUSED_PARAMETER")
 internal fun resolveVideoDetailReturnContentAlpha(
     transitionProgress: Float,
     isCommittedCardReturn: Boolean,
@@ -261,26 +263,17 @@ internal fun resolveVideoDetailReturnContentAlpha(
     depthBlurProgress: Float? = null,
     isQuickReturn: Boolean = false,
     /**
-     * 单时钟 morph 深度（[VideoCardTransitionClock.depthProgress]）：1=详情，0=列表。
-     * 提供时 live morph 正文只跟这一路，与源卡 chrome settle 对齐。
+     * Miuix live 返回只消费 shared flying-card 的 morph depth；保留可空参数以兼容
+     * 非 Miuix 调用。
      */
     morphDepthProgress: Float? = null,
 ): Float {
-    // live morph：正文与源卡 chrome 共用 morphDepth settle，禁止 AVS/depth 双源 max 叠字。
+    // The detail controls/body and source-card text share one late morph window. The moving card
+    // shell remains opaque; only corresponding contents change ownership inside it.
     if (liveReturnMorph) {
-        // 快速返回 + 已提交：源卡 chrome 立刻 1，详情正文立刻 0。
-        if (isCommittedCardReturn && isQuickReturn) {
-            return 0f
-        }
-        val yieldStart = if (isQuickReturn) {
-            0f
-        } else {
-            VIDEO_CARD_RETURN_LIVE_CONTENT_YIELD_START
-        }
         return resolveVideoCardLiveMorphSecondaryContentAlpha(
             transitionProgress = transitionProgress,
             depthBlurProgress = depthBlurProgress,
-            yieldStart = yieldStart,
             morphDepthProgress = morphDepthProgress,
         )
     }
@@ -461,27 +454,6 @@ internal fun resolveVideoDetailMotionSpec(
         contentRevealFadeDurationMillis = transitionEnterDurationMillis
             .coerceAtLeast(VIDEO_DETAIL_CONTENT_PHASE_MIN_DURATION_MILLIS)
     )
-}
-
-/**
- * 相关推荐卡片的 shell sharedBounds 嵌在父详情壳内。
- * 父壳若在子转场期间仍注册 sharedBounds，会嵌套劫持导致「点相关推荐没过渡」。
- * 仅在「本页是相关来源宿主 + 共享过渡进行中」时临时摘掉父壳。
- */
-internal fun shouldSuppressDetailShellSharedBoundsForRelatedChildTransition(
-    detailBvid: String,
-    lastClickedVideoSourceKey: String?,
-    isSharedTransitionActive: Boolean,
-): Boolean {
-    if (!isSharedTransitionActive) return false
-    val normalizedBvid = detailBvid.trim()
-    if (normalizedBvid.isEmpty()) return false
-    val hostRoute = lastClickedVideoSourceKey
-        ?.substringBefore(":")
-        ?.substringBefore("?")
-        ?.takeIf { it.isNotBlank() }
-        ?: return false
-    return hostRoute == "video/$normalizedBvid"
 }
 
 internal fun resolveVideoDetailRouteSheetMotion(

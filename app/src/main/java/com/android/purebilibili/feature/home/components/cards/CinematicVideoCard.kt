@@ -146,6 +146,7 @@ fun CinematicVideoCard(
     val densityValue = density.density
     // 记录卡片位置（非 Compose State，避免滚动时触发高频重组）
     val cardBoundsRef = remember { object { var value: androidx.compose.ui.geometry.Rect? = null } }
+    val coverBoundsRef = remember { object { var value: androidx.compose.ui.geometry.Rect? = null } }
     val localSharedElementSourceRoute = LocalVideoCardSharedElementSourceRoute.current
     val effectiveSharedElementSourceRoute = remember(sharedElementSourceRoute, localSharedElementSourceRoute) {
         sharedElementSourceRoute ?: localSharedElementSourceRoute
@@ -172,7 +173,17 @@ fun CinematicVideoCard(
                 screenWidth = screenWidthPx,
                 screenHeight = screenHeightPx,
                 density = densityValue,
-                sourceCornerDp = cardCornerRadius.value.roundToInt()
+                sourceCornerDp = cardCornerRadius.value.roundToInt(),
+                coverBounds = coverBoundsRef.value,
+                sourceLayout = com.android.purebilibili.core.ui.transition.VideoCardSourceLayout.STACKED,
+                sourceChromeSnapshot = com.android.purebilibili.core.ui.transition.VideoCardSourceChromeSnapshot(
+                    title = video.title,
+                    ownerName = video.owner.name,
+                    ownerFaceUrl = video.owner.face,
+                    viewText = FormatUtils.formatStat(video.stat.view.toLong()),
+                    danmakuText = FormatUtils.formatStat(video.stat.danmaku.toLong()),
+                    durationText = FormatUtils.formatDuration(video.duration),
+                ),
             )
         }
         onClick(video.bvid, 0)
@@ -271,6 +282,9 @@ fun CinematicVideoCard(
             val coverModifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(VIDEO_SHARED_COVER_ASPECT_RATIO) // 统一共享比例
+                .onGloballyPositioned { coordinates ->
+                    coverBoundsRef.value = coordinates.boundsInRoot()
+                }
                 .videoCardShellReturnCoverAlpha(
                     enabled = useCardShellSharedBounds,
                     bvid = video.bvid,

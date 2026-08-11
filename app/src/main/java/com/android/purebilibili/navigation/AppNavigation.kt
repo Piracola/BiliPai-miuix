@@ -115,6 +115,7 @@ import com.android.purebilibili.core.ui.transition.shouldApplyPredictiveBackBlur
 import com.android.purebilibili.core.ui.transition.shouldApplyVideoCardTransitionBackgroundToRoute
 import com.android.purebilibili.core.ui.transition.resolveVideoCardTransitionBackgroundScaleReduction
 import com.android.purebilibili.core.ui.transition.resolveVideoCardTransitionBackgroundSource
+import com.android.purebilibili.core.ui.transition.shouldUseRealtimeVideoCardTransitionBackgroundBlur
 import com.android.purebilibili.core.ui.transition.videoCardTransitionBackgroundEffect
 import androidx.compose.runtime.mutableFloatStateOf
 import top.yukonga.miuix.kmp.nav.core.rememberNavBackStack
@@ -676,6 +677,10 @@ fun AppNavigation(
             sourceCornerDp = navigation3ReturnSession.transitionSession?.sourceCornerDp,
             coverIdentity = navigation3ReturnSession.transitionSession?.coverIdentity,
             sourceBounds = navigation3ReturnSession.transitionSession?.cardBounds,
+            sourceCoverBounds = navigation3ReturnSession.transitionSession?.coverBounds,
+            sourceLayout = navigation3ReturnSession.transitionSession?.sourceLayout
+                ?: com.android.purebilibili.core.ui.transition.VideoCardSourceLayout.COVER_ONLY,
+            sourceChromeSnapshot = navigation3ReturnSession.transitionSession?.sourceChromeSnapshot,
         )
         fun captureCardSourceDirectionForSession(): BiliPaiNavCardSourceDirection {
             return resolveBiliPaiNavCardSourceDirection(
@@ -693,11 +698,14 @@ fun AppNavigation(
             bvid = bvid,
             source = source,
             cardBounds = CardPositionManager.lastClickedCardBounds,
+            coverBounds = CardPositionManager.lastClickedCoverBounds,
             sourceCornerDp = CardPositionManager.lastClickedVideoSourceCornerDp,
             cardSourceDirection = captureCardSourceDirectionForSession(),
             coverIdentity = coverIdentity,
             cardFullyVisible = CardPositionManager.isCardFullyVisible,
             isSingleColumnCard = CardPositionManager.isSingleColumnCard,
+            sourceLayout = CardPositionManager.lastClickedVideoSourceLayout,
+            sourceChromeSnapshot = CardPositionManager.lastClickedVideoSourceChromeSnapshot,
         )
         var lastVideoDetailOpenId by remember { mutableLongStateOf(0L) }
         var lastLiveAreaDetailOpenId by remember { mutableLongStateOf(0L) }
@@ -1734,10 +1742,11 @@ fun AppNavigation(
                     val entryRoute = key.toLegacyRoute()
                     val backgroundState = LocalVideoCardTransitionBackgroundState.current
                     val predictiveBackState = LocalPredictiveBackBackgroundState.current
+                    val backgroundSource = resolveVideoCardTransitionBackgroundSource(
+                        sourceRoute = backgroundState.sourceRouteProvider(),
+                    )
                     val backgroundScaleReduction = resolveVideoCardTransitionBackgroundScaleReduction(
-                        resolveVideoCardTransitionBackgroundSource(
-                            sourceRoute = backgroundState.sourceRouteProvider(),
-                        )
+                        backgroundSource
                     )
                     val shouldApplyBackground = cardTransitionEnabled &&
                         shouldApplyVideoCardTransitionBackgroundToRoute(
@@ -1748,6 +1757,7 @@ fun AppNavigation(
                     val shouldApplyPredictiveBlur = shouldApplyPredictiveBackBlurToRoute(
                         entryKey = key,
                         targetBackKey = predictiveBackState.targetKeyProvider(),
+                        videoCardBackgroundApplied = shouldApplyBackground,
                     )
                     val routeModifier = Modifier
                         .fillMaxSize()
@@ -1765,7 +1775,10 @@ fun AppNavigation(
                                             motionTierProvider = backgroundState.motionTierProvider,
                                             isLightBackgroundProvider = backgroundState.isLightBackgroundProvider,
                                             realtimeBlurEnabledProvider = {
-                                                videoTransitionRealtimeBlurEnabled
+                                                shouldUseRealtimeVideoCardTransitionBackgroundBlur(
+                                                    source = backgroundSource,
+                                                    realtimeBlurEnabled = videoTransitionRealtimeBlurEnabled,
+                                                )
                                             },
                                             scaleReductionProvider = {
                                                 backgroundScaleReduction
@@ -3330,6 +3343,9 @@ fun AppNavigation(
                     predictiveBackExitDirection = predictiveBackExitDirection,
                     sourceMetadata = navigation3SourceMetadata,
                     programmaticBackDispatcher = navigation3ProgrammaticBackDispatcher,
+                    // 来源卡内容进入飞行 shared-bounds 壳，在后段由播放器/详情信息
+                    // 形变为封面、标题和统计；不能把完整源卡留在列表原位直接揭示。
+                    preferWholeCardReturn = false,
                     onBack = { performSystemBackAction() },
                     onPrepareVideoCardSharedReturn = {
                         // 普通返回(顶部按钮/系统手势提交)兜底预热。
@@ -3341,7 +3357,7 @@ fun AppNavigation(
                     },
                     onRelatedVideoDetailReturned = {
                         navigation3ReturnSession =
-                            navigation3ReturnSession.restoreListVideoSourceAfterRelatedReturn()
+                            navigation3ReturnSession.restorePreviousVideoSourceAfterRelatedReturn()
                         CardPositionManager.restoreVideoSourceKey(
                             navigation3ReturnSession.lastVideoSourceKey
                         )

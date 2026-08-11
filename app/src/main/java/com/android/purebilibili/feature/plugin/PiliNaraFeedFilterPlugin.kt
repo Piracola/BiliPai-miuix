@@ -7,7 +7,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -19,6 +20,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.android.purebilibili.core.plugin.FeedKind
 import com.android.purebilibili.core.plugin.FeedPlugin
@@ -28,9 +30,9 @@ import com.android.purebilibili.core.ui.AppAlertDialog
 import com.android.purebilibili.core.ui.AppDialogAction
 import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.ContainerLevel
-import com.android.purebilibili.core.ui.components.AppNativeSegmentedControl
+import com.android.purebilibili.core.ui.components.AppChoiceOption
 import com.android.purebilibili.core.ui.components.AppOutlinedTextField
-import com.android.purebilibili.core.ui.components.AppSegmentOption
+import com.android.purebilibili.core.ui.components.AppSingleChoicePreference
 import com.android.purebilibili.core.ui.components.AppSwitchPreference
 import com.android.purebilibili.core.ui.components.AppText
 import com.android.purebilibili.data.model.response.VideoItem
@@ -53,6 +55,7 @@ class PiliNaraFeedFilterPlugin : FeedPlugin {
     override val description = "移植自 PiliNara 的推荐流过滤: 时长/播放量/点赞率/标题关键词/屏蔽用户/白名单"
     override val version = "1.0.0"
     override val author = "qyo123oyq"
+    override val icon: ImageVector = Icons.Outlined.FilterList
 
     private var config = PiliNaraFeedFilterConfig()
 
@@ -279,42 +282,34 @@ class PiliNaraFeedFilterPlugin : FeedPlugin {
         selected: T,
         customMarker: T,
         parse: (String) -> T?,
+        modifier: Modifier = Modifier,
         onSelect: (T) -> Unit,
     ) {
         val isCustom = presets.none { it.first == selected }
         var showDialog by remember { mutableStateOf(false) }
         var draft by remember { mutableStateOf("") }
-        val options = presets.map { AppSegmentOption(it.first, it.second) } +
-            AppSegmentOption(customMarker, "自定义")
+        val options = presets.map { (value, label) ->
+            AppChoiceOption(value = value, label = label)
+        } + AppChoiceOption(
+            value = customMarker,
+            label = if (isCustom) "自定义（当前值：$selected）" else "自定义",
+        )
 
-        Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)) {
-            AppText(
-                text = "$title($subtitle)",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            AppNativeSegmentedControl(
-                options = options,
-                selectedValue = if (isCustom) customMarker else selected,
-                modifier = Modifier.padding(top = 6.dp),
-                onSelectionChange = { value ->
-                    if (value == customMarker) {
-                        draft = "$selected"
-                        showDialog = true
-                    } else {
-                        onSelect(value)
-                    }
+        AppSingleChoicePreference(
+            title = title,
+            subtitle = subtitle,
+            options = options,
+            selectedValue = if (isCustom) customMarker else selected,
+            modifier = modifier,
+            onValueChange = { value ->
+                if (value == customMarker) {
+                    draft = "$selected"
+                    showDialog = true
+                } else {
+                    onSelect(value)
                 }
-            )
-            if (isCustom) {
-                AppText(
-                    text = "当前值: $selected",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
-        }
+            },
+        )
 
         if (showDialog) {
             AppAlertDialog(

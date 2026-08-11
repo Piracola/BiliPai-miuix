@@ -46,8 +46,8 @@ import com.android.purebilibili.feature.settings.AppThemeMode
 import com.android.purebilibili.feature.settings.Md3ColorSource
 import com.android.purebilibili.feature.settings.normalizeMd3CustomColorHex
 import com.materialkolor.PaletteStyle
+import com.materialkolor.dynamicColorScheme
 import com.materialkolor.dynamiccolor.ColorSpec
-import com.materialkolor.rememberDynamicColorScheme
 import top.yukonga.miuix.kmp.theme.ColorSchemeMode
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.theme.ThemeController
@@ -197,6 +197,8 @@ internal fun resolveColorSpecPreference(rawValue: String?): ColorSpec.SpecVersio
 internal data class MiuixMaterialBridge(
     val primary: Color,
     val onPrimary: Color,
+    val primaryFixed: Color,
+    val onPrimaryFixed: Color,
     val primaryContainer: Color,
     val onPrimaryContainer: Color,
     val secondary: Color,
@@ -209,6 +211,8 @@ internal data class MiuixMaterialBridge(
     val onTertiaryContainer: Color,
     val error: Color,
     val onError: Color,
+    val errorContainer: Color,
+    val onErrorContainer: Color,
     val background: Color,
     val onBackground: Color,
     val surface: Color,
@@ -217,6 +221,7 @@ internal data class MiuixMaterialBridge(
     val onSurfaceVariant: Color,
     val surfaceContainer: Color,
     val surfaceContainerHigh: Color,
+    val surfaceContainerHighest: Color,
     val outline: Color,
     val outlineVariant: Color
 )
@@ -225,6 +230,8 @@ internal fun createMiuixMaterialBridge(colorScheme: ColorScheme): MiuixMaterialB
     return MiuixMaterialBridge(
         primary = colorScheme.primary,
         onPrimary = colorScheme.onPrimary,
+        primaryFixed = colorScheme.primaryFixed,
+        onPrimaryFixed = colorScheme.onPrimaryFixed,
         primaryContainer = colorScheme.primaryContainer,
         onPrimaryContainer = colorScheme.onPrimaryContainer,
         secondary = colorScheme.secondary,
@@ -237,6 +244,8 @@ internal fun createMiuixMaterialBridge(colorScheme: ColorScheme): MiuixMaterialB
         onTertiaryContainer = colorScheme.onTertiaryContainer,
         error = colorScheme.error,
         onError = colorScheme.onError,
+        errorContainer = colorScheme.errorContainer,
+        onErrorContainer = colorScheme.onErrorContainer,
         background = colorScheme.background,
         onBackground = colorScheme.onBackground,
         surface = colorScheme.surface,
@@ -245,6 +254,7 @@ internal fun createMiuixMaterialBridge(colorScheme: ColorScheme): MiuixMaterialB
         onSurfaceVariant = colorScheme.onSurfaceVariant,
         surfaceContainer = colorScheme.surfaceContainer,
         surfaceContainerHigh = colorScheme.surfaceContainerHigh,
+        surfaceContainerHighest = colorScheme.surfaceContainerHighest,
         outline = colorScheme.outline,
         outlineVariant = colorScheme.outlineVariant
     )
@@ -321,44 +331,85 @@ internal fun resolveMiuixColorsFromMaterialBridge(
     darkTheme: Boolean
 ): top.yukonga.miuix.kmp.theme.Colors {
     val base = if (darkTheme) miuixDarkColorScheme() else miuixLightColorScheme()
+    val disabledPrimary = opaqueCompositeOver(bridge.primary.copy(alpha = 0.38f), bridge.surface)
+    val disabledOnPrimary = opaqueCompositeOver(bridge.onPrimary.copy(alpha = 0.38f), disabledPrimary)
+    val disabledPrimaryButton = opaqueCompositeOver(bridge.primary.copy(alpha = 0.38f), bridge.surface)
+    val disabledOnPrimaryButton = opaqueCompositeOver(
+        bridge.onPrimary.copy(alpha = 0.6f),
+        disabledPrimaryButton,
+    )
+    val disabledSecondary = opaqueCompositeOver(bridge.outlineVariant.copy(alpha = 0.5f), bridge.surface)
+    val disabledOnSecondary = opaqueCompositeOver(bridge.onSurface.copy(alpha = 0.38f), disabledSecondary)
+    val disabledSecondaryVariant = opaqueCompositeOver(
+        bridge.surfaceContainerHigh.copy(alpha = 0.6f),
+        bridge.surface,
+    )
+    val disabledOnSecondaryVariant = opaqueCompositeOver(
+        bridge.onSurface.copy(alpha = 0.38f),
+        disabledSecondaryVariant,
+    )
     return base.copy(
         primary = bridge.primary,
         onPrimary = bridge.onPrimary,
-        primaryVariant = bridge.primaryContainer,
-        onPrimaryVariant = bridge.onPrimaryContainer,
+        primaryVariant = bridge.primaryFixed,
+        onPrimaryVariant = bridge.onPrimaryFixed,
+        errorContainer = bridge.errorContainer,
+        onErrorContainer = bridge.onErrorContainer,
+        disabledPrimary = disabledPrimary,
+        disabledOnPrimary = disabledOnPrimary,
+        disabledPrimaryButton = disabledPrimaryButton,
+        disabledOnPrimaryButton = disabledOnPrimaryButton,
+        disabledPrimarySlider = disabledPrimary,
         primaryContainer = bridge.primaryContainer,
         onPrimaryContainer = bridge.onPrimaryContainer,
-        secondary = bridge.secondary,
-        onSecondary = bridge.onSecondary,
+        secondary = bridge.outlineVariant,
+        onSecondary = resolveReadableTextColor(
+            candidate = bridge.outline,
+            background = bridge.outlineVariant,
+            fallback = bridge.onSurface,
+            minimumContrast = ACCESSIBLE_UI_MIN_CONTRAST,
+        ),
         secondaryVariant = bridge.surfaceContainerHigh,
-        onSecondaryVariant = bridge.onSurfaceVariant,
+        onSecondaryVariant = bridge.onSurface,
+        disabledSecondary = disabledSecondary,
+        disabledOnSecondary = disabledOnSecondary,
+        disabledSecondaryVariant = disabledSecondaryVariant,
+        disabledOnSecondaryVariant = disabledOnSecondaryVariant,
         secondaryContainer = bridge.secondaryContainer,
         onSecondaryContainer = bridge.onSecondaryContainer,
-        secondaryContainerVariant = bridge.surfaceContainer,
+        secondaryContainerVariant = bridge.surfaceContainerHighest,
         onSecondaryContainerVariant = bridge.onSurfaceVariant,
         tertiaryContainer = bridge.tertiaryContainer,
         onTertiaryContainer = bridge.onTertiaryContainer,
-        tertiaryContainerVariant = bridge.tertiaryContainer,
+        tertiaryContainerVariant = bridge.onTertiaryContainer,
         error = bridge.error,
         onError = bridge.onError,
         background = bridge.background,
         onBackground = bridge.onBackground,
-        onBackgroundVariant = bridge.onSurfaceVariant,
+        onBackgroundVariant = bridge.primary,
         surface = bridge.surface,
         onSurface = bridge.onSurface,
         surfaceVariant = bridge.surfaceVariant,
-        onSurfaceSecondary = bridge.onSurfaceVariant,
+        onSurfaceSecondary = opaqueCompositeOver(bridge.onSurface.copy(alpha = 0.8f), bridge.surface),
         onSurfaceVariantSummary = bridge.onSurfaceVariant,
         onSurfaceVariantActions = bridge.onSurfaceVariant,
+        disabledOnSurface = bridge.onSurface,
         surfaceContainer = bridge.surfaceContainer,
         onSurfaceContainer = bridge.onSurface,
         onSurfaceContainerVariant = bridge.onSurfaceVariant,
         surfaceContainerHigh = bridge.surfaceContainerHigh,
-        onSurfaceContainerHigh = bridge.onSurface,
-        surfaceContainerHighest = bridge.surfaceContainerHigh,
+        onSurfaceContainerHigh = opaqueCompositeOver(
+            bridge.onSurface.copy(alpha = 0.8f),
+            bridge.surfaceContainerHigh,
+        ),
+        surfaceContainerHighest = bridge.surfaceContainerHighest,
         onSurfaceContainerHighest = bridge.onSurface,
         outline = bridge.outline,
-        dividerLine = bridge.outlineVariant
+        dividerLine = bridge.outlineVariant,
+        windowDimming = Color.Black.copy(alpha = if (darkTheme) 0.6f else 0.3f),
+        sliderKeyPoint = bridge.primary,
+        sliderKeyPointForeground = bridge.surfaceContainerHigh,
+        sliderBackground = opaqueCompositeOver(bridge.primary.copy(alpha = 0.2f), bridge.surface),
     )
 }
 
@@ -696,7 +747,12 @@ internal fun alignStaticColorSchemeWithThemePrimary(
     themePrimaryColor: Color,
     darkTheme: Boolean
 ): ColorScheme {
-    val primary = themePrimaryColor
+    val primaryCandidates = listOf(themePrimaryColor, scheme.primary, scheme.onSurface).distinct()
+    val primary = primaryCandidates.firstOrNull {
+        calculateContrastRatio(it, scheme.surface) >= ACCESSIBLE_UI_MIN_CONTRAST
+    } ?: primaryCandidates.maxBy {
+        calculateContrastRatio(it, scheme.surface)
+    }
     val primaryContainer = blendColors(
         background = scheme.background,
         foreground = primary,
@@ -795,9 +851,34 @@ private fun rememberKernelSuStyleColorScheme(
     paletteStyle: PaletteStyle,
     colorSpec: ColorSpec.SpecVersion,
     dynamicBaseScheme: ColorScheme? = null
+): ColorScheme = remember(
+    seedColor,
+    darkTheme,
+    amoledDarkTheme,
+    paletteStyle,
+    colorSpec,
+    dynamicBaseScheme,
+) {
+    createKernelSuStyleColorScheme(
+        seedColor = seedColor,
+        darkTheme = darkTheme,
+        amoledDarkTheme = amoledDarkTheme,
+        paletteStyle = paletteStyle,
+        colorSpec = colorSpec,
+        dynamicBaseScheme = dynamicBaseScheme,
+    )
+}
+
+internal fun createKernelSuStyleColorScheme(
+    seedColor: Color,
+    darkTheme: Boolean,
+    amoledDarkTheme: Boolean,
+    paletteStyle: PaletteStyle,
+    colorSpec: ColorSpec.SpecVersion,
+    dynamicBaseScheme: ColorScheme? = null,
 ): ColorScheme {
     val scheme = if (dynamicBaseScheme != null) {
-        rememberDynamicColorScheme(
+        dynamicColorScheme(
             seedColor = Color.Unspecified,
             isDark = darkTheme,
             isAmoled = amoledDarkTheme,
@@ -811,7 +892,7 @@ private fun rememberKernelSuStyleColorScheme(
             error = dynamicBaseScheme.error
         )
     } else {
-        rememberDynamicColorScheme(
+        dynamicColorScheme(
             seedColor = seedColor,
             isDark = darkTheme,
             isAmoled = amoledDarkTheme,

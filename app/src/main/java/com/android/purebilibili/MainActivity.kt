@@ -481,8 +481,8 @@ internal fun resolveSplashIconResIdForComponentClassName(className: String?): In
         "MainActivityAliasBiliPaiWhiteNoIcon",
         "MainActivitySplashBiliPaiWhite" -> R.mipmap.ic_launcher_bilipai_white
         "MainActivityAliasBiliPaiMonet",
-        "MainActivityAliasBiliPaiMonetNoIcon",
-        "MainActivitySplashBiliPaiMonet" -> R.mipmap.ic_launcher_bilipai_monet
+        "MainActivityAliasBiliPaiMonetNoIcon" -> R.mipmap.ic_launcher_bilipai_monet
+        "MainActivitySplashBiliPaiMonet" -> R.mipmap.splash_icon_bilipai_monet
         "MainActivityAliasFlat",
         "MainActivityAliasFlatNoIcon",
         "MainActivityAliasTelegramBlue",

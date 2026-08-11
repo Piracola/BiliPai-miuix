@@ -89,9 +89,10 @@ fun VideoCardLarge(
         with(density) { configuration.screenHeightDp.dp.toPx() }
     }
     val sourceRoute = LocalVideoCardSharedElementSourceRoute.current
+    val cardBoundsRef = remember { object { var value: androidx.compose.ui.geometry.Rect? = null } }
     val coverBoundsRef = remember { object { var value: androidx.compose.ui.geometry.Rect? = null } }
     val triggerClick = {
-        coverBoundsRef.value?.let { bounds ->
+        cardBoundsRef.value?.let { bounds ->
             CardPositionManager.recordVideoCardPosition(
                 bvid = archive.bvid,
                 sourceRoute = sourceRoute,
@@ -99,7 +100,8 @@ fun VideoCardLarge(
                 screenWidth = screenWidthPx,
                 screenHeight = screenHeightPx,
                 density = density.density,
-                sourceCornerDp = 10
+                sourceCornerDp = 10,
+                coverBounds = coverBoundsRef.value,
             )
         }
         onClick()
@@ -159,7 +161,7 @@ fun VideoCardLarge(
                 clipShape = coverShape
             )
             .onGloballyPositioned { coordinates ->
-                coverBoundsRef.value = coordinates.boundsInRoot()
+                cardBoundsRef.value = coordinates.boundsInRoot()
             }
     ) {
         VideoCardLargeCover(
@@ -168,7 +170,10 @@ fun VideoCardLarge(
             context = context,
             isCollection = isCollection,
             cornerBadgeText = cornerBadgeText,
-            coverShape = coverShape
+            coverShape = coverShape,
+            modifier = Modifier.onGloballyPositioned { coordinates ->
+                coverBoundsRef.value = coordinates.boundsInRoot()
+            },
         )
         Column(
             modifier = Modifier.videoCardShellReturnChromeAlpha(

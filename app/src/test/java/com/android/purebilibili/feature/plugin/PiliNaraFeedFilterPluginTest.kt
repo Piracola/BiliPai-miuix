@@ -4,6 +4,7 @@ import com.android.purebilibili.core.plugin.FeedKind
 import com.android.purebilibili.data.model.response.Owner
 import com.android.purebilibili.data.model.response.Stat
 import com.android.purebilibili.data.model.response.VideoItem
+import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -211,5 +212,17 @@ class PiliNaraFeedFilterPluginTest {
     @Test
     fun `parseUidMap ignores empty lines`() {
         assertTrue(PiliNaraFeedFilterPlugin.parseUidMap("\n\n").isEmpty())
+    }
+
+    @Test
+    fun `settings use native single choice preference instead of inline segments`() {
+        val source = listOf(
+            File("app/src/main/java/com/android/purebilibili/feature/plugin/PiliNaraFeedFilterPlugin.kt"),
+            File("src/main/java/com/android/purebilibili/feature/plugin/PiliNaraFeedFilterPlugin.kt"),
+        ).firstOrNull(File::exists)?.readText()
+            ?: error("Cannot locate PiliNaraFeedFilterPlugin.kt")
+
+        assertTrue(source.contains("AppSingleChoicePreference("))
+        assertFalse(source.contains("AppNativeSegmentedControl("))
     }
 }

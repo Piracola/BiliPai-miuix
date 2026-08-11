@@ -1,5 +1,7 @@
 // 文件路径: feature/video/ui/components/CommentInputDialog.kt
 package com.android.purebilibili.feature.video.ui.components
+
+import com.android.purebilibili.core.theme.opaqueCompositeOver
 import com.android.purebilibili.core.ui.resolveFilledButtonContainerColor
 import com.android.purebilibili.core.ui.resolveFilledButtonContentColor
 import com.android.purebilibili.core.ui.components.AppScrollableTabRow
@@ -751,7 +753,12 @@ fun CommentInputDialog(
                                                             .height(36.dp)
                                                             .clip(RoundedCornerShape(4.dp))
                                                             .clickable { insertTextAtCursor(kaomojis[i]) }
-                                                            .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.1f))
+                                                            .background(
+                                                                opaqueCompositeOver(
+                                                                    MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.1f),
+                                                                    MaterialTheme.colorScheme.surface,
+                                                                )
+                                                            )
                                                     ) {
                                                         AppText(kaomojis[i], fontSize = 13.sp)
                                                     }

@@ -1505,6 +1505,28 @@ internal fun shouldAutoHidePlayerChromeOnPlaybackStart(
         !isSeekScrubbing
 }
 
+internal enum class MediaSwitchSurfaceRebindAction {
+    SKIP,
+    WAIT_FOR_OUTPUT,
+    REBIND
+}
+
+internal fun resolveMediaSwitchSurfaceRebindAction(
+    hasSuccessPlaybackIdentity: Boolean,
+    shouldBindInlinePlayerView: Boolean,
+    isInPipMode: Boolean,
+    hasPlayerView: Boolean,
+    mediaItemCount: Int
+): MediaSwitchSurfaceRebindAction {
+    if (!hasSuccessPlaybackIdentity || !shouldBindInlinePlayerView || isInPipMode) {
+        return MediaSwitchSurfaceRebindAction.SKIP
+    }
+    if (!hasPlayerView || mediaItemCount <= 0) {
+        return MediaSwitchSurfaceRebindAction.WAIT_FOR_OUTPUT
+    }
+    return MediaSwitchSurfaceRebindAction.REBIND
+}
+
 internal fun shouldRebindPlayerSurfaceOnForeground(
     hasPlayerView: Boolean,
     isInPipMode: Boolean,

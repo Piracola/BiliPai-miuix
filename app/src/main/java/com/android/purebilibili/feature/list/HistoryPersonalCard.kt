@@ -107,6 +107,7 @@ internal fun HistoryPersonalCard(
         transitionEnabled = sharedElementReady,
     )
     val cardBounds = remember { object { var value: androidx.compose.ui.geometry.Rect? = null } }
+    val coverBounds = remember { object { var value: androidx.compose.ui.geometry.Rect? = null } }
     val screenWidthPx = configuration.screenWidthDp * density.density
     val screenHeightPx = configuration.screenHeightDp * density.density
     val progressState = remember(item.progress, video.duration, video.view_at) {
@@ -126,6 +127,7 @@ internal fun HistoryPersonalCard(
                     screenWidth = screenWidthPx,
                     screenHeight = screenHeightPx,
                     sourceCornerDp = 12,
+                    coverBounds = coverBounds.value,
                 )
             }
         }
@@ -133,6 +135,9 @@ internal fun HistoryPersonalCard(
     }
 
     PersonalMediaCardFrame(
+        coverModifier = Modifier.onGloballyPositioned {
+            coverBounds.value = it.boundsInRoot()
+        },
         modifier = modifier
             .videoCardShellSharedBoundsOrEmpty(
                 enabled = useSharedBounds,

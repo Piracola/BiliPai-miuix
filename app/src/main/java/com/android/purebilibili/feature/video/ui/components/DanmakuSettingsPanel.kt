@@ -4,6 +4,7 @@ import com.android.purebilibili.core.ui.AppAlertDialog
 import com.android.purebilibili.core.ui.components.AppIcon
 import com.android.purebilibili.core.ui.components.AppText
 import com.android.purebilibili.core.ui.components.AppHorizontalDivider
+import com.android.purebilibili.core.theme.resolveAccessibleContainerColors
 
 import com.android.purebilibili.core.store.DanmakuPanelWidthMode
 import com.android.purebilibili.core.store.DanmakuSettingsScope
@@ -45,7 +46,6 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.SwitchDefaults
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
@@ -119,28 +119,33 @@ internal fun resolveDanmakuSettingsPanelSurfaceColors(
     val supportingColor = colorScheme.onSurfaceVariant.copy(
         alpha = if (isDark) 0.78f else 0.72f
     )
+    val panelColor = if (isDark) {
+        colorScheme.surfaceContainerHigh
+    } else {
+        colorScheme.surface
+    }
+    val itemColor = if (isDark) {
+        colorScheme.surfaceContainer
+    } else {
+        colorScheme.surfaceContainerLowest
+    }
+    val badgeColors = resolveAccessibleContainerColors(
+        containerColor = colorScheme.primaryContainer.copy(alpha = if (isDark) 0.55f else 0.85f),
+        contentColor = if (isDark) colorScheme.primary else colorScheme.onPrimaryContainer,
+        backgroundColor = itemColor,
+        fallbackContentColors = listOf(colorScheme.onSurface, colorScheme.onBackground),
+    )
+
     // 深色：高对比容器；浅色：纯 surface + 低阴影，避免发灰糊成一团
     return DanmakuSettingsPanelSurfaceColors(
-        panelColor = if (isDark) {
-            colorScheme.surfaceContainerHigh
-        } else {
-            colorScheme.surface
-        },
-        itemColor = if (isDark) {
-            colorScheme.surfaceContainer
-        } else {
-            colorScheme.surfaceContainerLowest
-        },
+        panelColor = panelColor,
+        itemColor = itemColor,
         titleColor = titleColor,
         supportingColor = supportingColor,
         dividerColor = colorScheme.outlineVariant.copy(alpha = if (isDark) 0.55f else 0.7f),
-        badgeBackgroundColor = colorScheme.primaryContainer.copy(alpha = if (isDark) 0.55f else 0.85f),
+        badgeBackgroundColor = badgeColors.containerColor,
         badgeBorderColor = colorScheme.primary.copy(alpha = if (isDark) 0.45f else 0.28f),
-        badgeContentColor = if (isDark) {
-            colorScheme.primary
-        } else {
-            colorScheme.onPrimaryContainer
-        },
+        badgeContentColor = badgeColors.contentColor,
         sliderActiveTrackColor = colorScheme.primary,
         sliderInactiveTrackColor = colorScheme.surfaceVariant.copy(alpha = if (isDark) 0.85f else 1f),
         sliderActiveTickColor = colorScheme.primary.copy(alpha = 0.4f),
@@ -922,12 +927,6 @@ fun DanmakuSettingsPanel(
                             AppSwitch(
                                 checked = mergeDuplicates,
                                 onCheckedChange = onMergeDuplicatesChange,
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = panelColors.panelColor,
-                                    checkedTrackColor = MaterialTheme.colorScheme.primary,
-                                    uncheckedThumbColor = panelColors.panelColor,
-                                    uncheckedTrackColor = panelColors.sliderInactiveTrackColor
-                                )
                             )
                         }
                     }
@@ -1008,12 +1007,6 @@ fun DanmakuSettingsPanel(
                                 AppSwitch(
                                     checked = smartOcclusion,
                                     onCheckedChange = onSmartOcclusionChange,
-                                    colors = SwitchDefaults.colors(
-                                        checkedThumbColor = panelColors.panelColor,
-                                        checkedTrackColor = MaterialTheme.colorScheme.primary,
-                                        uncheckedThumbColor = panelColors.panelColor,
-                                        uncheckedTrackColor = panelColors.sliderInactiveTrackColor
-                                    )
                                 )
                             }
                         }
@@ -1518,12 +1511,6 @@ private fun DanmakuFilterSwitchRow(
             AppSwitch(
                 checked = checked,
                 onCheckedChange = onCheckedChange,
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = colors.panelColor,
-                    checkedTrackColor = MaterialTheme.colorScheme.primary,
-                    uncheckedThumbColor = colors.panelColor,
-                    uncheckedTrackColor = colors.sliderInactiveTrackColor
-                )
             )
         }
         if (showDivider) {

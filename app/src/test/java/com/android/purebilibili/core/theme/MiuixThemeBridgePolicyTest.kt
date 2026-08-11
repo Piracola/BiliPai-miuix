@@ -5,6 +5,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class MiuixThemeBridgePolicyTest {
 
@@ -14,6 +15,8 @@ class MiuixThemeBridgePolicyTest {
             bridge = MiuixMaterialBridge(
                 primary = Color(0xFF3482FF),
                 onPrimary = Color.White,
+                primaryFixed = Color(0xFFD7E3FF),
+                onPrimaryFixed = Color(0xFF001B3F),
                 primaryContainer = Color(0xFFE1ECFF),
                 onPrimaryContainer = Color(0xFF001C3A),
                 secondary = Color(0xFF5A5F71),
@@ -26,6 +29,8 @@ class MiuixThemeBridgePolicyTest {
                 onTertiaryContainer = Color(0xFF2C1229),
                 error = Color(0xFFBA1A1A),
                 onError = Color.White,
+                errorContainer = Color(0xFFFFDAD6),
+                onErrorContainer = Color(0xFF410002),
                 background = Color(0xFFF8F9FF),
                 onBackground = Color(0xFF191C20),
                 surface = Color(0xFFF8F9FF),
@@ -34,6 +39,7 @@ class MiuixThemeBridgePolicyTest {
                 onSurfaceVariant = Color(0xFF44474E),
                 surfaceContainer = Color(0xFFECEEF4),
                 surfaceContainerHigh = Color(0xFFE6E8EE),
+                surfaceContainerHighest = Color(0xFFE0E2E8),
                 outline = Color(0xFF74777F),
                 outlineVariant = Color(0xFFC4C6D0)
             ),
@@ -88,5 +94,34 @@ class MiuixThemeBridgePolicyTest {
 
         assertEquals(seedPrimary, miuixColors.primary)
         assertEquals(Color(0xFFFFF8F6), miuixColors.background)
+    }
+
+    @Test
+    fun `miuix bridge maps switch slider and disabled roles from material palette`() {
+        val scheme = lightColorScheme(
+            primary = Color(0xFF006A60),
+            onPrimary = Color.White,
+            primaryFixed = Color(0xFF9EF2E4),
+            onPrimaryFixed = Color(0xFF00201C),
+            outline = Color(0xFF6F7976),
+            outlineVariant = Color(0xFFBEC9C5),
+            surface = Color(0xFFF4FBF8),
+            surfaceContainerHigh = Color(0xFFE2E9E6),
+            surfaceContainerHighest = Color(0xFFDCE3E0),
+        )
+        val colors = resolveMiuixColorsFromMaterialBridge(
+            bridge = createMiuixMaterialBridge(scheme),
+            darkTheme = false,
+        )
+
+        assertEquals(scheme.primaryFixed, colors.primaryVariant)
+        assertEquals(scheme.onPrimaryFixed, colors.onPrimaryVariant)
+        assertEquals(scheme.outlineVariant, colors.secondary)
+        assertTrue(calculateContrastRatio(colors.onSecondary, colors.secondary) >= 3f)
+        assertEquals(scheme.surfaceContainerHighest, colors.secondaryContainerVariant)
+        assertEquals(scheme.primary, colors.sliderKeyPoint)
+        assertEquals(1f, colors.sliderBackground.alpha)
+        assertEquals(1f, colors.disabledPrimary.alpha)
+        assertEquals(1f, colors.disabledSecondary.alpha)
     }
 }

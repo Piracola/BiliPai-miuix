@@ -30,7 +30,6 @@ import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.ui.ContainerLevel
 import com.android.purebilibili.core.ui.components.AppSurface
-import com.android.purebilibili.core.ui.LocalSharedTransitionEnabled
 import com.android.purebilibili.core.ui.blur.hazeSourceCompat
 import com.android.purebilibili.core.ui.blur.shouldAllowRuntimeShaderBackedHazeEffect
 import com.android.purebilibili.core.ui.rememberAppChevronUpIcon
@@ -111,7 +110,6 @@ internal fun VideoDetailPhoneSuccessContentLayer(
 ) {
     val engagementSuccess = success.withEngagementUiState(engagementState)
     val danmakuManager = rememberDanmakuManager()
-    val relatedVideoTransitionEnabled = LocalSharedTransitionEnabled.current
     // Android 16 ART 曾拒绝校验 VideoDetailScreen 中捕获过多状态的匿名 Compose lambda。
     // 保持这个成功态为命名边界，避免 R8/Compose 再生成单个超大内容块。
     key(success.info.bvid) {
@@ -283,7 +281,6 @@ internal fun VideoDetailPhoneSuccessContentLayer(
                                     }
                                 },
                                 transitionEnabled = transitionEnabled,
-                                relatedVideoTransitionEnabled = relatedVideoTransitionEnabled,
                                 isQuickReturnLimitedForSharedElements = isQuickReturnLimitedForSharedElements,
                                 sourceRouteForSharedElement = sourceRouteForSharedElement,
                                 onFavoriteLongClick = playbackActions.showFavoriteFolderDialog,

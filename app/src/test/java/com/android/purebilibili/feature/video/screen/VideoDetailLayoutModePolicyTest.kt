@@ -261,7 +261,6 @@ class VideoDetailLayoutModePolicyTest {
             null,
             resolvePhoneVideoRequestedOrientation(
                 autoRotateEnabled = true,
-                systemAutoRotateEnabled = true,
                 fullscreenMode = FullscreenMode.AUTO,
                 isCompactDevice = true,
                 isOrientationDrivenFullscreen = true,
@@ -345,9 +344,9 @@ class VideoDetailLayoutModePolicyTest {
     }
 
     @Test
-    fun phoneOrientationPolicy_releasesOrientationLockOnNonCompactLayout() {
+    fun largeScreenAutoRotate_usesFullSensorWithoutEnteringFullscreen() {
         assertEquals(
-            ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED,
+            ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR,
             resolvePhoneVideoRequestedOrientation(
                 autoRotateEnabled = true,
                 fullscreenMode = FullscreenMode.AUTO,
@@ -364,7 +363,6 @@ class VideoDetailLayoutModePolicyTest {
             ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE,
             resolvePhoneVideoRequestedOrientation(
                 autoRotateEnabled = true,
-                systemAutoRotateEnabled = false,
                 fullscreenMode = FullscreenMode.HORIZONTAL,
                 isCompactDevice = false,
                 isOrientationDrivenFullscreen = false,
@@ -425,7 +423,6 @@ class VideoDetailLayoutModePolicyTest {
             ActivityInfo.SCREEN_ORIENTATION_PORTRAIT,
             resolvePhoneVideoRequestedOrientation(
                 autoRotateEnabled = true,
-                systemAutoRotateEnabled = true,
                 fullscreenMode = FullscreenMode.AUTO,
                 isCompactDevice = true,
                 isOrientationDrivenFullscreen = true,
@@ -436,7 +433,6 @@ class VideoDetailLayoutModePolicyTest {
             ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE,
             resolvePhoneVideoRequestedOrientation(
                 autoRotateEnabled = true,
-                systemAutoRotateEnabled = true,
                 fullscreenMode = FullscreenMode.AUTO,
                 isCompactDevice = true,
                 isOrientationDrivenFullscreen = true,
@@ -451,7 +447,6 @@ class VideoDetailLayoutModePolicyTest {
             ActivityInfo.SCREEN_ORIENTATION_PORTRAIT,
             resolvePhoneVideoRequestedOrientation(
                 autoRotateEnabled = false,
-                systemAutoRotateEnabled = true,
                 fullscreenMode = FullscreenMode.AUTO,
                 isCompactDevice = true,
                 isOrientationDrivenFullscreen = true,
@@ -462,7 +457,6 @@ class VideoDetailLayoutModePolicyTest {
             ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE,
             resolvePhoneVideoRequestedOrientation(
                 autoRotateEnabled = false,
-                systemAutoRotateEnabled = true,
                 fullscreenMode = FullscreenMode.AUTO,
                 isCompactDevice = true,
                 isOrientationDrivenFullscreen = true,
@@ -477,7 +471,6 @@ class VideoDetailLayoutModePolicyTest {
             ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE,
             resolvePhoneVideoRequestedOrientation(
                 autoRotateEnabled = true,
-                systemAutoRotateEnabled = true,
                 fullscreenMode = FullscreenMode.AUTO,
                 isCompactDevice = true,
                 isOrientationDrivenFullscreen = true,
@@ -515,7 +508,6 @@ class VideoDetailLayoutModePolicyTest {
             ActivityInfo.SCREEN_ORIENTATION_PORTRAIT,
             resolvePhoneVideoRequestedOrientation(
                 autoRotateEnabled = true,
-                systemAutoRotateEnabled = true,
                 fullscreenMode = FullscreenMode.HORIZONTAL,
                 isCompactDevice = true,
                 isOrientationDrivenFullscreen = true,
@@ -526,37 +518,33 @@ class VideoDetailLayoutModePolicyTest {
     }
 
     @Test
-    fun effectivePhoneAutoRotate_requiresAppAndSystemAndNoManualPortraitHold() {
+    fun effectivePhoneAutoRotate_requiresAppSettingAndNoManualPortraitHold() {
         assertTrue(
             resolveEffectivePhoneAutoRotateEnabled(
                 autoRotateEnabled = true,
-                systemAutoRotateEnabled = true,
+                manualPortraitHoldActive = false
+            )
+        )
+        assertFalse(
+            resolveEffectivePhoneAutoRotateEnabled(
+                autoRotateEnabled = false,
                 manualPortraitHoldActive = false
             )
         )
         assertFalse(
             resolveEffectivePhoneAutoRotateEnabled(
                 autoRotateEnabled = true,
-                systemAutoRotateEnabled = false,
-                manualPortraitHoldActive = false
-            )
-        )
-        assertFalse(
-            resolveEffectivePhoneAutoRotateEnabled(
-                autoRotateEnabled = true,
-                systemAutoRotateEnabled = true,
                 manualPortraitHoldActive = true
             )
         )
     }
 
     @Test
-    fun phoneOrientationPolicy_systemRotationLock_preventsAutomaticLandscape() {
+    fun phoneOrientationPolicy_appAutoRotateCanRequestLandscapeIndependently() {
         assertEquals(
-            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT,
+            ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE,
             resolvePhoneVideoRequestedOrientation(
                 autoRotateEnabled = true,
-                systemAutoRotateEnabled = false,
                 fullscreenMode = FullscreenMode.AUTO,
                 isCompactDevice = true,
                 isOrientationDrivenFullscreen = true,
@@ -571,7 +559,6 @@ class VideoDetailLayoutModePolicyTest {
             ActivityInfo.SCREEN_ORIENTATION_PORTRAIT,
             resolvePhoneVideoRequestedOrientation(
                 autoRotateEnabled = true,
-                systemAutoRotateEnabled = true,
                 fullscreenMode = FullscreenMode.AUTO,
                 isCompactDevice = true,
                 isOrientationDrivenFullscreen = true,
@@ -685,7 +672,6 @@ class VideoDetailLayoutModePolicyTest {
             ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE,
             resolvePhoneVideoRequestedOrientation(
                 autoRotateEnabled = true,
-                systemAutoRotateEnabled = true,
                 fullscreenMode = FullscreenMode.AUTO,
                 isCompactDevice = true,
                 isOrientationDrivenFullscreen = true,
@@ -710,7 +696,6 @@ class VideoDetailLayoutModePolicyTest {
         assertTrue(
             shouldObservePhoneAutoRotate(
                 autoRotateEnabled = true,
-                systemAutoRotateEnabled = true,
                 isCompactDevice = true,
                 isOrientationDrivenFullscreen = true,
                 fullscreenMode = FullscreenMode.AUTO,
@@ -719,8 +704,7 @@ class VideoDetailLayoutModePolicyTest {
         )
         assertFalse(
             shouldObservePhoneAutoRotate(
-                autoRotateEnabled = true,
-                systemAutoRotateEnabled = false,
+                autoRotateEnabled = false,
                 isCompactDevice = true,
                 isOrientationDrivenFullscreen = true,
                 fullscreenMode = FullscreenMode.AUTO,
@@ -734,7 +718,6 @@ class VideoDetailLayoutModePolicyTest {
         assertFalse(
             shouldObservePhoneAutoRotate(
                 autoRotateEnabled = true,
-                systemAutoRotateEnabled = true,
                 isCompactDevice = true,
                 isOrientationDrivenFullscreen = true,
                 fullscreenMode = FullscreenMode.AUTO,
@@ -745,11 +728,24 @@ class VideoDetailLayoutModePolicyTest {
     }
 
     @Test
+    fun phoneOrientationObserverPolicy_doesNotListenInPictureInPicture() {
+        assertFalse(
+            shouldObservePhoneAutoRotate(
+                autoRotateEnabled = true,
+                isCompactDevice = true,
+                isOrientationDrivenFullscreen = true,
+                fullscreenMode = FullscreenMode.AUTO,
+                manualPortraitHoldActive = false,
+                isInPictureInPictureMode = true
+            )
+        )
+    }
+
+    @Test
     fun phoneOrientationObserverPolicy_stopsListeningDuringPortraitImmersiveFullscreen() {
         assertFalse(
             shouldObservePhoneAutoRotate(
                 autoRotateEnabled = true,
-                systemAutoRotateEnabled = true,
                 isCompactDevice = true,
                 isOrientationDrivenFullscreen = true,
                 fullscreenMode = FullscreenMode.AUTO,
@@ -760,12 +756,11 @@ class VideoDetailLayoutModePolicyTest {
     }
 
     @Test
-    fun phoneOrientationPolicy_locksPortraitWhilePortraitImmersiveFullscreen() {
+    fun phoneOrientationPolicy_doesNotForceRotationWhilePortraitImmersiveFullscreen() {
         assertEquals(
-            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT,
+            null,
             resolvePhoneVideoRequestedOrientation(
                 autoRotateEnabled = true,
-                systemAutoRotateEnabled = true,
                 fullscreenMode = FullscreenMode.AUTO,
                 isCompactDevice = true,
                 isOrientationDrivenFullscreen = true,
@@ -777,12 +772,37 @@ class VideoDetailLayoutModePolicyTest {
     }
 
     @Test
+    fun largeScreenAutoRotate_doesNotWriteOrientationInsideSmallWindowOrPip() {
+        assertEquals(
+            null,
+            resolvePhoneVideoRequestedOrientation(
+                autoRotateEnabled = true,
+                fullscreenMode = FullscreenMode.AUTO,
+                isCompactDevice = false,
+                isOrientationDrivenFullscreen = false,
+                isFullscreenMode = false,
+                isInMultiWindowMode = true
+            )
+        )
+        assertEquals(
+            null,
+            resolvePhoneVideoRequestedOrientation(
+                autoRotateEnabled = true,
+                fullscreenMode = FullscreenMode.AUTO,
+                isCompactDevice = false,
+                isOrientationDrivenFullscreen = false,
+                isFullscreenMode = false,
+                isInPictureInPictureMode = true
+            )
+        )
+    }
+
+    @Test
     fun phoneOrientationPolicy_fullscreenModeNone_keepsCurrentOrientation() {
         assertEquals(
             null,
             resolvePhoneVideoRequestedOrientation(
                 autoRotateEnabled = true,
-                systemAutoRotateEnabled = true,
                 fullscreenMode = FullscreenMode.NONE,
                 isCompactDevice = true,
                 isOrientationDrivenFullscreen = false,

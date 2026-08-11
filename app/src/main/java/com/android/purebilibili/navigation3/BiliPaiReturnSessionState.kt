@@ -1,6 +1,22 @@
 package com.android.purebilibili.navigation3
 
 private const val QUICK_RETURN_THRESHOLD_MILLIS = 500L
+private const val RELATED_RETURN_SOURCE_RESTORE_SETTLE_BUFFER_MILLIS = 32L
+
+/**
+ * Related-video pop must keep its related-card geometry until Miuix finishes settling the entry.
+ * Restoring the earlier list source sooner retargets the same outgoing transition mid-flight.
+ */
+internal fun resolveRelatedReturnSourceRestoreDelayMillis(
+    cardTransitionEnabled: Boolean,
+    reduceMotion: Boolean,
+    transitionDurationMillis: Int,
+): Long = if (cardTransitionEnabled && !reduceMotion) {
+    transitionDurationMillis.coerceAtLeast(0).toLong() +
+        RELATED_RETURN_SOURCE_RESTORE_SETTLE_BUFFER_MILLIS
+} else {
+    0L
+}
 
 internal data class BiliPaiReturnSessionState(
     val isReturningFromDetail: Boolean = false,
@@ -13,33 +29,26 @@ internal data class BiliPaiReturnSessionState(
      */
     val lastCardSourceDirection: BiliPaiNavCardSourceDirection =
         BiliPaiNavCardSourceDirection.NONE,
-    /**
-     * 进入相关推荐详情前的列表来源（如 home:BV_A）。
-     * related 会把 last* 写成 video/BV_A:BV_B，pop 回父详情后需恢复，否则再回列表会丢共享元素。
-     */
-    val previousListVideoSourceRoute: String? = null,
-    val previousListVideoSourceKey: String? = null,
     val transitionSession: VideoCardTransitionSession? = null,
-    val previousListTransitionSession: VideoCardTransitionSession? = null,
+    /** 每次详情压详情前冻结当前来源，pop settle 后逐层恢复。 */
+    val previousVideoSources: List<BiliPaiVideoSource> = emptyList(),
+    val previousTransitionSessions: List<VideoCardTransitionSession> = emptyList(),
     val detailEnteredAtMillis: Long? = null
 ) {
     fun recordVideoSource(source: BiliPaiVideoSource): BiliPaiReturnSessionState {
         val relatedDetailSource = source.route?.substringBefore("?")?.startsWith("video/") == true
-        val preserveListSource = relatedDetailSource &&
-            lastVideoSourceRoute?.substringBefore("?")?.startsWith("video/") != true
+        val previousSource = BiliPaiVideoSource(lastVideoSourceRoute, lastVideoSourceKey)
+        val updatedHistory = if (relatedDetailSource && previousSource.route != null) {
+            previousVideoSources + previousSource
+        } else if (relatedDetailSource) {
+            previousVideoSources
+        } else {
+            emptyList()
+        }
         return copy(
-            previousListVideoSourceRoute = if (preserveListSource) {
-                lastVideoSourceRoute
-            } else {
-                previousListVideoSourceRoute
-            },
-            previousListVideoSourceKey = if (preserveListSource) {
-                lastVideoSourceKey
-            } else {
-                previousListVideoSourceKey
-            },
             lastVideoSourceRoute = source.route,
-            lastVideoSourceKey = source.key
+            lastVideoSourceKey = source.key,
+            previousVideoSources = updatedHistory,
         )
     }
 
@@ -49,28 +58,29 @@ internal data class BiliPaiReturnSessionState(
         val relatedDetailSource = session.sourceRoute
             ?.substringBefore("?")
             ?.startsWith("video/") == true
-        val preserveListSource = relatedDetailSource &&
-            transitionSession?.sourceRoute?.substringBefore("?")?.startsWith("video/") != true
+        val currentSession = transitionSession
+        val updatedSessionHistory = if (relatedDetailSource && currentSession != null) {
+            previousTransitionSessions + currentSession
+        } else if (relatedDetailSource) {
+            previousTransitionSessions
+        } else {
+            emptyList()
+        }
+        val currentSource = BiliPaiVideoSource(lastVideoSourceRoute, lastVideoSourceKey)
+        val updatedSourceHistory = if (relatedDetailSource && currentSource.route != null) {
+            previousVideoSources + currentSource
+        } else if (relatedDetailSource) {
+            previousVideoSources
+        } else {
+            emptyList()
+        }
         return copy(
-            previousListVideoSourceRoute = if (preserveListSource) {
-                transitionSession?.sourceRoute ?: lastVideoSourceRoute
-            } else {
-                previousListVideoSourceRoute
-            },
-            previousListVideoSourceKey = if (preserveListSource) {
-                transitionSession?.sourceKey ?: lastVideoSourceKey
-            } else {
-                previousListVideoSourceKey
-            },
-            previousListTransitionSession = if (preserveListSource) {
-                transitionSession
-            } else {
-                previousListTransitionSession
-            },
             lastVideoSourceRoute = session.sourceRoute,
             lastVideoSourceKey = session.sourceKey,
             lastCardSourceDirection = session.cardSourceDirection,
             transitionSession = session,
+            previousVideoSources = updatedSourceHistory,
+            previousTransitionSessions = updatedSessionHistory,
         )
     }
 
@@ -80,18 +90,18 @@ internal data class BiliPaiReturnSessionState(
         return copy(lastCardSourceDirection = direction)
     }
 
-    fun restoreListVideoSourceAfterRelatedReturn(): BiliPaiReturnSessionState {
-        val restoredRoute = previousListVideoSourceRoute ?: return this
-        val restoredSession = previousListTransitionSession
+    fun restorePreviousVideoSourceAfterRelatedReturn(): BiliPaiReturnSessionState {
+        val restoredSession = previousTransitionSessions.lastOrNull()
+        val restoredSource = previousVideoSources.lastOrNull()
+        if (restoredSession == null && restoredSource == null) return this
         return copy(
-            lastVideoSourceRoute = restoredSession?.sourceRoute ?: restoredRoute,
-            lastVideoSourceKey = restoredSession?.sourceKey ?: previousListVideoSourceKey,
+            lastVideoSourceRoute = restoredSession?.sourceRoute ?: restoredSource?.route,
+            lastVideoSourceKey = restoredSession?.sourceKey ?: restoredSource?.key,
             lastCardSourceDirection = restoredSession?.cardSourceDirection
                 ?: lastCardSourceDirection,
             transitionSession = restoredSession,
-            previousListVideoSourceRoute = null,
-            previousListVideoSourceKey = null,
-            previousListTransitionSession = null,
+            previousVideoSources = previousVideoSources.dropLast(1),
+            previousTransitionSessions = previousTransitionSessions.dropLast(1),
         )
     }
 
@@ -100,6 +110,8 @@ internal data class BiliPaiReturnSessionState(
             lastVideoSourceRoute = normalizeBiliPaiVideoSourceRoute(sourceRoute),
             lastVideoSourceKey = null,
             transitionSession = null,
+            previousVideoSources = emptyList(),
+            previousTransitionSessions = emptyList(),
         )
     }
 

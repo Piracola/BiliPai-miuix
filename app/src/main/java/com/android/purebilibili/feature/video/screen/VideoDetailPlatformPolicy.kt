@@ -5,19 +5,13 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
-import android.database.ContentObserver
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
-import android.provider.Settings
 import android.view.OrientationEventListener
 import android.view.Window
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.core.view.WindowInsetsCompat
@@ -523,7 +517,6 @@ internal fun ManualFullscreenRequestLifecycleEffect(
 
 internal fun resolvePhoneVideoRequestedOrientation(
     autoRotateEnabled: Boolean,
-    systemAutoRotateEnabled: Boolean = true,
     fullscreenMode: com.android.purebilibili.core.store.FullscreenMode,
     isCompactDevice: Boolean,
     isOrientationDrivenFullscreen: Boolean,
@@ -534,6 +527,7 @@ internal fun resolvePhoneVideoRequestedOrientation(
     isPortraitFullscreen: Boolean = false,
     currentRequestedOrientation: Int? = null,
     isInMultiWindowMode: Boolean = false,
+    isInPictureInPictureMode: Boolean = false,
     preferPortraitForFlatFoldable: Boolean = false
 ): Int? {
     // A size class alone can classify a tablet or a large phone as a foldable. Keep this
@@ -544,22 +538,24 @@ internal fun resolvePhoneVideoRequestedOrientation(
     // tablet they must never turn a manual landscape fullscreen request into portrait (metadata
     // may be stale or rotated). Video-directed orientation remains a phone-only behavior.
     val isVerticalVideoForOrientation = isCompactDevice && isVerticalVideo
-    if (isInMultiWindowMode) {
+    if (isInMultiWindowMode || isInPictureInPictureMode) {
         return null
     }
-    // Immersive portrait pager must stay portrait; sensor landscape would tear down the session.
+    // 竖屏刷视频是独立沉浸体验，不在这里写入 requestedOrientation。
     if (isPortraitFullscreen) {
-        return ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        return null
     }
     if (!shouldApplyPhoneAutoRotatePolicy(isCompactDevice)) {
-        return if (isFullscreenMode || manualFullscreenRequested) {
-            resolvePhoneFullscreenEnterOrientation(
-                fullscreenMode = fullscreenMode,
-                isVerticalVideo = isVerticalVideoForOrientation,
-                preferPortraitForFlatFoldable = preferPortraitForFoldableInnerScreen
-            )
-        } else {
-            ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        return when {
+            isFullscreenMode || manualFullscreenRequested -> {
+                resolvePhoneFullscreenEnterOrientation(
+                    fullscreenMode = fullscreenMode,
+                    isVerticalVideo = isVerticalVideoForOrientation,
+                    preferPortraitForFlatFoldable = preferPortraitForFoldableInnerScreen
+                )
+            }
+            autoRotateEnabled -> ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+            else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         }
     }
     if (fullscreenMode == com.android.purebilibili.core.store.FullscreenMode.NONE) {
@@ -576,7 +572,6 @@ internal fun resolvePhoneVideoRequestedOrientation(
     }
     if (resolveEffectivePhoneAutoRotateEnabled(
             autoRotateEnabled = autoRotateEnabled,
-            systemAutoRotateEnabled = systemAutoRotateEnabled,
             manualPortraitHoldActive = manualPortraitHoldActive
         )
     ) {
@@ -592,9 +587,6 @@ internal fun resolvePhoneVideoRequestedOrientation(
                 ?: ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
             else -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         }
-    }
-    if (autoRotateEnabled && !systemAutoRotateEnabled && !manualFullscreenRequested) {
-        return ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
     }
     return if (isFullscreenMode) {
         resolvePhoneFullscreenEnterOrientation(
@@ -760,25 +752,23 @@ internal fun resolvePortraitRotateTargetOrientation(
 
 internal fun resolveEffectivePhoneAutoRotateEnabled(
     autoRotateEnabled: Boolean,
-    systemAutoRotateEnabled: Boolean,
     manualPortraitHoldActive: Boolean
 ): Boolean {
-    return autoRotateEnabled && systemAutoRotateEnabled && !manualPortraitHoldActive
+    return autoRotateEnabled && !manualPortraitHoldActive
 }
 
 internal fun shouldObservePhoneAutoRotate(
     autoRotateEnabled: Boolean,
-    systemAutoRotateEnabled: Boolean,
     isCompactDevice: Boolean,
     isOrientationDrivenFullscreen: Boolean,
     fullscreenMode: com.android.purebilibili.core.store.FullscreenMode,
     manualPortraitHoldActive: Boolean,
     isInMultiWindowMode: Boolean = false,
+    isInPictureInPictureMode: Boolean = false,
     isPortraitFullscreen: Boolean = false
 ): Boolean {
     if (!autoRotateEnabled) return false
-    if (!systemAutoRotateEnabled) return false
-    if (isInMultiWindowMode) return false
+    if (isInMultiWindowMode || isInPictureInPictureMode) return false
     // PiliPlus-style: vertical immersive FS is not kicked by gravity / sensor landscape.
     if (isPortraitFullscreen) return false
     if (!shouldApplyPhoneAutoRotatePolicy(isCompactDevice)) return false
@@ -820,37 +810,6 @@ private fun withinWrappedRange(
         value >= min || value <= max
     }
 }
-
-@Composable
-internal fun rememberSystemAutoRotateEnabled(context: Context): State<Boolean> {
-    return produceState(initialValue = readSystemAutoRotateEnabled(context), context) {
-        val contentResolver = context.contentResolver
-        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
-            override fun onChange(selfChange: Boolean) {
-                value = readSystemAutoRotateEnabled(context)
-            }
-        }
-        value = readSystemAutoRotateEnabled(context)
-        contentResolver.registerContentObserver(
-            Settings.System.getUriFor(Settings.System.ACCELEROMETER_ROTATION),
-            false,
-            observer
-        )
-        awaitDispose {
-            contentResolver.unregisterContentObserver(observer)
-        }
-    }
-}
-
-private fun readSystemAutoRotateEnabled(context: Context): Boolean {
-    return runCatching {
-        Settings.System.getInt(
-            context.contentResolver,
-            Settings.System.ACCELEROMETER_ROTATION
-        ) == 1
-    }.getOrDefault(true)
-}
-
 
 internal fun resolveVideoDetailExitRequestedOrientation(
     originalRequestedOrientation: Int?

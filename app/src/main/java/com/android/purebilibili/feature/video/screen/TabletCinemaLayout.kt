@@ -1,7 +1,5 @@
 package com.android.purebilibili.feature.video.screen
 
-import android.app.Activity
-import android.content.ContextWrapper
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -87,7 +85,6 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.android.purebilibili.core.ui.LocalAnimatedVisibilityScope
 import com.android.purebilibili.core.ui.LocalSharedTransitionScope
-import com.android.purebilibili.core.ui.LocalSharedTransitionEnabled
 import com.android.purebilibili.core.ui.transition.LocalVideoCardSharedElementSourceRoute
 import com.android.purebilibili.core.store.SettingsManager
 import com.kyant.backdrop.backdrops.layerBackdrop
@@ -1405,21 +1402,13 @@ private fun CinemaRelatedPane(
                     videos = row,
                     cardLayout = relatedVideoCardLayout,
                     followingMids = success.followingMids,
-                    transitionEnabled = LocalSharedTransitionEnabled.current,
                     showUpBadge = showUpBadge,
                     onVideoClick = { video ->
-                        val activity = (context as? Activity)
-                            ?: (context as? ContextWrapper)?.baseContext as? Activity
-                        val options = activity?.let {
-                            android.app.ActivityOptions.makeSceneTransitionAnimation(it).toBundle()
-                        }
-                        val navOptions = android.os.Bundle(options ?: android.os.Bundle.EMPTY)
-                        val withMedia = buildVideoNavigationOptions(
-                            base = navOptions,
+                        val navOptions = buildVideoNavigationOptions(
                             targetCid = video.cid,
-                            coverUrl = video.pic
-                        ) ?: navOptions
-                        onRelatedVideoClick(video.bvid, withMedia)
+                            coverUrl = video.pic,
+                        ) ?: android.os.Bundle.EMPTY
+                        onRelatedVideoClick(video.bvid, navOptions)
                     },
                     onVideoHidden = { video ->
                         hiddenRelatedBvids = hiddenRelatedBvids + video.bvid

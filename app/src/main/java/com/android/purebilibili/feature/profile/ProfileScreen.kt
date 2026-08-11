@@ -67,6 +67,7 @@ import coil.size.Scale
 import com.android.purebilibili.core.theme.DarkBackground
 import com.android.purebilibili.core.theme.DarkSurface
 import com.android.purebilibili.core.theme.DarkSurfaceVariant
+import com.android.purebilibili.core.theme.resolveAccessibleContainerColors
 import com.android.purebilibili.core.util.FormatUtils
 import com.android.purebilibili.feature.home.UserState
 import com.android.purebilibili.feature.dynamic.components.ImagePreviewDialog
@@ -4311,6 +4312,24 @@ internal fun AccountSwitchDialog(
     val activeIsVip = activeAccount?.isVip == true
     val hasVipCandidate = accounts.any { it.isVip && it.mid != activeAccountMid }
     val showPlaybackGuide = !activeIsVip && hasVipCandidate && playbackAccountMid == null
+    val playbackAccountColors = resolveAccessibleContainerColors(
+        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f),
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        backgroundColor = MaterialTheme.colorScheme.surface,
+        fallbackContentColors = listOf(
+            MaterialTheme.colorScheme.onSurface,
+            MaterialTheme.colorScheme.onBackground,
+        ),
+    )
+    val playbackGuideColors = resolveAccessibleContainerColors(
+        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.45f),
+        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        backgroundColor = MaterialTheme.colorScheme.surface,
+        fallbackContentColors = listOf(
+            MaterialTheme.colorScheme.onSurface,
+            MaterialTheme.colorScheme.onBackground,
+        ),
+    )
 
     AppAlertDialog(
         onDismissRequest = onDismiss,
@@ -4332,7 +4351,7 @@ internal fun AccountSwitchDialog(
                 if (playbackAccount != null) {
                     AppSurface(
                         shape = RoundedCornerShape(14.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f),
+                        color = playbackAccountColors.containerColor,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
@@ -4344,7 +4363,7 @@ internal fun AccountSwitchDialog(
                             AppText(
                                 text = "正在用「${playbackAccount.name.ifBlank { "UID ${playbackAccount.mid}" }}」${if (playbackAccount.isVip) "的大会员" else "的账号"}播放",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                color = playbackAccountColors.contentColor
                             )
                         }
                     }
@@ -4352,7 +4371,7 @@ internal fun AccountSwitchDialog(
                     val guideAccount = accounts.firstOrNull { it.isVip && it.mid != activeAccountMid }
                     AppSurface(
                         shape = RoundedCornerShape(14.dp),
-                        color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.45f),
+                        color = playbackGuideColors.containerColor,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
@@ -4366,7 +4385,7 @@ internal fun AccountSwitchDialog(
                                     "「${it.name.ifBlank { "UID ${it.mid}" }}」是大会员，设为播放账号即可观看大会员视频"
                                 } ?: "可将大会员账号设为播放账号",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                                color = playbackGuideColors.contentColor
                             )
                         }
                     }

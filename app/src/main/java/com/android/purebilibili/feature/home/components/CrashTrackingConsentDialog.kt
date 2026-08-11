@@ -103,10 +103,6 @@ fun CrashTrackingConsentDialog(
                     AppSwitch(
                         checked = isEnabled,
                         onCheckedChange = { isEnabled = it },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = AppSurfaceTokens.cardContainer(),
-                            checkedTrackColor = BiliPink
-                        )
                     )
                 }
                 

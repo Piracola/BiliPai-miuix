@@ -256,6 +256,7 @@ private fun HomeHeroCarouselCard(
                 screenHeight = screenHeightPx,
                 density = densityValue,
                 sourceCornerDp = cardCornerDp.value.roundToInt(),
+                coverBounds = bounds,
             )
         }
         onVideoClick()

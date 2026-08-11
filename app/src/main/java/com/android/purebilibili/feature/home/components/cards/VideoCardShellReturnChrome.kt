@@ -16,8 +16,9 @@ import com.android.purebilibili.core.util.CardPositionManager
 
 /**
  * 源卡信息区（标题/UP 等）在 shell morph 时的 chrome 视觉。
- * 返回末段在封面像素交接前开始淡入，并在落位前完成，避免收尾只剩封面；
- * 横卡可选择随主进度短距离移动；快速返回若仍保留 live surface 也走同一交接。
+ * 信息区与封面都在飞行的 sharedBounds 内形变：信息区使用 72%–96%，
+ * 封面使用更晚的 82%–98%，避免落位卡片只剩封面而标题仍为空。
+ * 横卡可选择随主进度短距离移动。
  * 所有进度都在绘制阶段读取，避免整卡重组。
  */
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -47,7 +48,8 @@ internal fun Modifier.videoCardShellReturnChromeAlpha(
     }
     return graphicsLayer {
         val phase = bgState.phaseProvider()
-        val returnGestureInProgress = bgState.isReturnGestureInProgressProvider()
+        val returnGestureInProgress = bgState.isReturnGestureInProgressProvider() ||
+            bgState.isGestureRestoreInProgressProvider()
         val transitionActive = sharedTransitionScope?.isTransitionActive == true
         val progress = bgState.progressProvider()
         val quickReturn = isQuickReturnFromDetail ||
@@ -100,6 +102,7 @@ internal fun Modifier.videoCardShellReturnCoverAlpha(
     isReturningFromDetail: Boolean = false,
 ): Modifier {
     if (!enabled || bvid.isBlank()) return this
+    val sharedTransitionScope = LocalSharedTransitionScope.current
     val bgState = LocalVideoCardTransitionBackgroundState.current
     val isSharedMorphSourceCard = remember(
         bvid,
@@ -118,9 +121,12 @@ internal fun Modifier.videoCardShellReturnCoverAlpha(
             isSharedMorphSourceCard = isSharedMorphSourceCard,
             isReturningFromDetail = isReturningFromDetail,
             transitionBackgroundPhase = bgState.phaseProvider(),
-            isVideoCardReturnGestureInProgress = bgState.isReturnGestureInProgressProvider(),
+            isVideoCardReturnGestureInProgress =
+                bgState.isReturnGestureInProgressProvider() ||
+                    bgState.isGestureRestoreInProgressProvider(),
+            isSharedTransitionActive = sharedTransitionScope?.isTransitionActive == true,
             transitionBackgroundProgress = bgState.progressProvider(),
-            // 快速返回仍可能是 LIVE surface；只有显式整卡回退才允许提前全显。
+            // 来源封面位于 sharedBounds 飞行层，在最后 82%–98% 把播放器变为封面。
             preferWholeCardReturn = bgState.preferWholeCardReturnProvider(),
         )
     }

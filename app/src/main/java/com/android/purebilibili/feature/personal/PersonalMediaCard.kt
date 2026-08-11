@@ -43,6 +43,7 @@ internal fun PersonalMediaCardFrame(
     coverContent: @Composable BoxScope.() -> Unit,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    coverModifier: Modifier = Modifier,
     selected: Boolean = false,
     enabled: Boolean = true,
     coverAspectRatio: Float = PERSONAL_LIST_HORIZONTAL_COVER_ASPECT_RATIO,
@@ -76,7 +77,7 @@ internal fun PersonalMediaCardFrame(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(
-                    modifier = Modifier
+                    modifier = coverModifier
                         .width(minimumHeight * coverAspectRatio)
                         .aspectRatio(coverAspectRatio)
                         .clip(cardShape),

@@ -66,7 +66,6 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.android.purebilibili.core.ui.LocalSharedTransitionScope
 import com.android.purebilibili.core.ui.LocalAnimatedVisibilityScope
-import com.android.purebilibili.core.ui.LocalSharedTransitionEnabled
 import com.android.purebilibili.core.ui.transition.LocalVideoCardSharedElementSourceRoute
 import com.android.purebilibili.core.ui.transition.VIDEO_SHARED_COVER_ASPECT_RATIO
 import com.android.purebilibili.core.ui.transition.resolveVideoSharedTransitionSourceCornerDp
@@ -753,18 +752,12 @@ private fun TabletSecondaryContent(
                                     videos = row,
                                     cardLayout = relatedVideoCardLayout,
                                     followingMids = success.followingMids,
-                                    transitionEnabled = LocalSharedTransitionEnabled.current,
                                     showUpBadge = showUpBadge,
                                     onVideoClick = { video ->
-                                        val activity = (context as? android.app.Activity)
-                                            ?: (context as? android.content.ContextWrapper)?.baseContext as? android.app.Activity
-                                        val options = activity?.let {
-                                            android.app.ActivityOptions.makeSceneTransitionAnimation(it).toBundle()
-                                        }
-                                        val navOptions = android.os.Bundle(options ?: android.os.Bundle.EMPTY)
-                                        if (video.cid > 0L) {
-                                            navOptions.putLong(VIDEO_NAV_TARGET_CID_KEY, video.cid)
-                                        }
+                                        val navOptions = buildVideoNavigationOptions(
+                                            targetCid = video.cid,
+                                            coverUrl = video.pic,
+                                        ) ?: android.os.Bundle.EMPTY
                                         onRelatedVideoClick(video.bvid, navOptions)
                                     },
                                     onVideoHidden = { video ->

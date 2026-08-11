@@ -78,16 +78,7 @@ class PlaybackCompletionPolicyTest {
     }
 
     @Test
-    fun `auto mode stops for normal videos even when autoplay switch is on`() {
-        assertEquals(
-            PlaybackEndAction.STOP,
-            resolvePlaybackEndAction(
-                behavior = PlaybackCompletionBehavior.CONTINUE_CURRENT_LOGIC,
-                autoPlayEnabled = false,
-                isExternalPlaylist = false,
-                externalPlaylistAutoContinueEnabled = true
-            )
-        )
+    fun `auto mode stops when current video has no next page or season episode`() {
         assertEquals(
             PlaybackEndAction.STOP,
             resolvePlaybackEndAction(
@@ -105,9 +96,23 @@ class PlaybackCompletionPolicyTest {
             PlaybackEndAction.AUTO_CONTINUE,
             resolvePlaybackEndAction(
                 behavior = PlaybackCompletionBehavior.CONTINUE_CURRENT_LOGIC,
-                autoPlayEnabled = false,
+                autoPlayEnabled = true,
                 isExternalPlaylist = false,
                 externalPlaylistAutoContinueEnabled = false,
+                hasNextPageOrSeasonTarget = true
+            )
+        )
+    }
+
+    @Test
+    fun `auto mode stops before next page or season episode when autoplay switch is off`() {
+        assertEquals(
+            PlaybackEndAction.STOP,
+            resolvePlaybackEndAction(
+                behavior = PlaybackCompletionBehavior.CONTINUE_CURRENT_LOGIC,
+                autoPlayEnabled = false,
+                isExternalPlaylist = false,
+                externalPlaylistAutoContinueEnabled = true,
                 hasNextPageOrSeasonTarget = true
             )
         )

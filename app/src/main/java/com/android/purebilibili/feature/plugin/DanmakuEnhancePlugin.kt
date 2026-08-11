@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SwitchDefaults
 import com.android.purebilibili.core.ui.components.AppOutlinedTextField
 import com.android.purebilibili.core.ui.components.AppSwitch
 import com.android.purebilibili.core.ui.components.AppText
@@ -192,7 +191,6 @@ class DanmakuEnhancePlugin : DanmakuPluginApi {
                 Column(modifier = Modifier.weight(1f)) {
                     AppText("启用关键词屏蔽", style = MaterialTheme.typography.bodyLarge)
                 }
-                val primaryColor = MaterialTheme.colorScheme.primary
                 AppSwitch(
                     checked = enableFilter,
                     onCheckedChange = { newValue ->
@@ -201,11 +199,6 @@ class DanmakuEnhancePlugin : DanmakuPluginApi {
                             persistConfig(context, config.copy(enableFilter = newValue))
                         }
                     },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.White,
-                        checkedTrackColor = primaryColor,
-                        uncheckedTrackColor = Color(0xFFE9E9EA)
-                    )
                 )
             }
             
@@ -259,7 +252,6 @@ class DanmakuEnhancePlugin : DanmakuPluginApi {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                val primaryColor = MaterialTheme.colorScheme.primary
                 AppSwitch(
                     checked = enableHighlight,
                     onCheckedChange = { newValue ->
@@ -268,11 +260,6 @@ class DanmakuEnhancePlugin : DanmakuPluginApi {
                             persistConfig(context, config.copy(enableHighlight = newValue))
                         }
                     },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.White,
-                        checkedTrackColor = primaryColor,
-                        uncheckedTrackColor = Color(0xFFE9E9EA)
-                    )
                 )
             }
             

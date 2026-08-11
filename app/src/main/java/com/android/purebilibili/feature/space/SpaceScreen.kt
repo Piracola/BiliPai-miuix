@@ -3010,7 +3010,8 @@ private fun SpaceHomeVideoCard(
                         screenWidth = screenWidthPx,
                         screenHeight = screenHeightPx,
                         density = densityValue,
-                        sourceCornerDp = cardCornerRadius.value.roundToInt()
+                        sourceCornerDp = cardCornerRadius.value.roundToInt(),
+                        coverBounds = bounds,
                     )
                 }
                 onClick()
@@ -3161,7 +3162,8 @@ private fun SpaceAggregateMediaCard(
                         screenWidth = screenWidthPx,
                         screenHeight = screenHeightPx,
                         density = densityValue,
-                        sourceCornerDp = 14
+                        sourceCornerDp = 14,
+                        coverBounds = bounds,
                     )
                 }
                 onClick()
@@ -3312,7 +3314,8 @@ private fun SpaceTopVideoCard(
                         screenWidth = screenWidthPx,
                         screenHeight = screenHeightPx,
                         density = densityValue,
-                        sourceCornerDp = 12
+                        sourceCornerDp = 12,
+                        coverBounds = bounds,
                     )
                 }
                 onClick()
@@ -3486,7 +3489,8 @@ private fun SpaceArchiveListItemRow(
                         screenWidth = screenWidthPx,
                         screenHeight = screenHeightPx,
                         density = densityValue,
-                        sourceCornerDp = 12
+                        sourceCornerDp = 12,
+                        coverBounds = bounds,
                     )
                 }
                 onClick()

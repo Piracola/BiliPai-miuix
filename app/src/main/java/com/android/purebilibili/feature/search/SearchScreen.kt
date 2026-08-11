@@ -95,6 +95,7 @@ import com.android.purebilibili.R
 import com.android.purebilibili.core.ui.AppScaffold
 import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.AppSurfaceTokens
+import com.android.purebilibili.core.theme.resolveAccessibleContainerColors
 import com.android.purebilibili.core.ui.rememberContentCardSurfaceSpec
 import com.android.purebilibili.core.database.entity.SearchHistory
 import com.android.purebilibili.core.ui.LocalGlobalWallpaperBackdropVisible
@@ -887,11 +888,20 @@ fun SearchScreen(
                             //  搜索彩蛋消息横幅
                             val easterEggMsg = state.easterEggMessage
                             if (easterEggMsg != null) {
+                                val easterEggColors = resolveAccessibleContainerColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    backgroundColor = MaterialTheme.colorScheme.surface,
+                                    fallbackContentColors = listOf(
+                                        MaterialTheme.colorScheme.onSurface,
+                                        MaterialTheme.colorScheme.onBackground,
+                                    ),
+                                )
                                 AppSurface(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 12.dp, vertical = 6.dp),
-                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                                    color = easterEggColors.containerColor,
                                     shape = RoundedCornerShape(12.dp)
                                 ) {
                                     Row(
@@ -903,7 +913,7 @@ fun SearchScreen(
                                     ) {
                                         AppText(
                                             text = easterEggMsg,
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            color = easterEggColors.contentColor,
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.Medium,
                                             maxLines = 2,

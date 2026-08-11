@@ -437,7 +437,6 @@ fun AppAdaptiveSwitch(
     val uiStyle = LocalAppUiStyle.current
     when (resolveAppAdaptiveSwitchTreatment(uiStyle)) {
         AppAdaptiveSwitchTreatment.MATERIAL -> {
-            val colorScheme = MaterialTheme.colorScheme
             val platformHaptic = LocalHapticFeedback.current
             val effectiveHaptic = if (LocalAppThemeConfig.current.hapticFeedbackEnabled) {
                 platformHaptic
@@ -445,20 +444,11 @@ fun AppAdaptiveSwitch(
                 NoOpHapticFeedback
             }
             CompositionLocalProvider(LocalHapticFeedback provides effectiveHaptic) {
-                Switch(
+                AppSwitch(
                     checked = checked,
                     onCheckedChange = onCheckedChange,
                     enabled = enabled,
                     modifier = modifier,
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = resolveSwitchCheckedThumbColor(
-                            onPrimary = colorScheme.onPrimary,
-                        ),
-                        checkedTrackColor = colorScheme.primary,
-                        uncheckedThumbColor = colorScheme.surface,
-                        uncheckedTrackColor = colorScheme.surfaceContainerHighest,
-                        uncheckedBorderColor = colorScheme.outline,
-                    )
                 )
             }
         }
@@ -607,8 +597,6 @@ internal fun AdaptiveSwitchPreferenceContent(
                     text = title,
                     style = MaterialTheme.typography.bodyLarge,
                     color = textColor,
-                    maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 )
             },
             supportingContent = subtitle?.let { subtitleText ->
@@ -915,8 +903,6 @@ private fun Md3NativeListItemContent(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
                 color = textColor,
-                maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             )
         },
         supportingContent = subtitle?.let { subtitleText ->
@@ -1146,16 +1132,12 @@ internal fun AdaptivePreferenceContent(
                 color = textColor,
                 fontSize = MiuixTheme.textStyles.headline1.fontSize,
                 fontWeight = FontWeight.Medium,
-                maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             )
             if (!subtitle.isNullOrBlank()) {
                 Text(
                     text = subtitle,
                     color = subtitleColor,
                     fontSize = MiuixTheme.textStyles.body2.fontSize,
-                    maxLines = 2,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 )
             }
         }
@@ -1217,8 +1199,6 @@ internal fun AdaptivePreferenceContent(
                     text = title,
                     style = MaterialTheme.typography.bodyLarge,
                     color = textColor,
-                    maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 )
                 if (subtitle != null) {
                     Spacer(modifier = Modifier.height(2.dp))
@@ -1226,8 +1206,6 @@ internal fun AdaptivePreferenceContent(
                         text = subtitle,
                         style = MaterialTheme.typography.bodyMedium,
                         color = subtitleColor,
-                        maxLines = 2,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     )
                 }
             }

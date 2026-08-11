@@ -59,6 +59,8 @@ import com.android.purebilibili.core.util.animateEnter
 import com.android.purebilibili.core.util.CardPositionManager
 import com.android.purebilibili.core.util.HomeCoverReturnPrefetchEntry
 import com.android.purebilibili.core.util.HomeCoverReturnPrefetchRegistry
+import com.android.purebilibili.core.ui.transition.VideoCardSourceChromeSnapshot
+import com.android.purebilibili.core.ui.transition.VideoCardSourceLayout
 import com.android.purebilibili.data.model.response.VideoItem
 import com.android.purebilibili.core.theme.BiliPink
 import com.android.purebilibili.core.store.HomeCardBadgeEffectMode
@@ -748,7 +750,26 @@ internal fun ElegantVideoCard(
                 screenWidth = screenMetrics.widthPx,
                 screenHeight = screenMetrics.heightPx,
                 density = screenMetrics.density,
-                sourceCornerDp = cardCornerRadius.value.roundToInt()
+                sourceCornerDp = cardCornerRadius.value.roundToInt(),
+                coverBounds = coverCoordsRef.value
+                    ?.takeIf { it.isAttached }
+                    ?.boundsInRoot(),
+                // Dual-column home cards are cover-over-meta; freeze chrome so return text
+                // survives Loading and does not wait for destination ViewInfo.
+                sourceLayout = VideoCardSourceLayout.STACKED,
+                sourceChromeSnapshot = VideoCardSourceChromeSnapshot(
+                    title = video.title,
+                    ownerName = video.owner.name,
+                    ownerFaceUrl = video.owner.face,
+                    viewText = if (video.stat.view > 0) {
+                        FormatUtils.formatStat(video.stat.view.toLong())
+                    } else {
+                        primaryStatText
+                    },
+                    danmakuText = secondaryStatText
+                        ?: FormatUtils.formatStat(video.stat.danmaku.toLong()),
+                    durationText = durationText,
+                ),
             )
         }
         onClick(video.bvid, video.cid)

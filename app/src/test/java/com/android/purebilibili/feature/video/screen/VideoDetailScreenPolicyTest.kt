@@ -261,9 +261,9 @@ class VideoDetailScreenPolicyTest {
             .substringAfter("RelatedVideoItem(")
             .substringBefore("onClick = openRelatedVideo")
 
-        assertTrue(phoneSource.contains("relatedVideoTransitionEnabled = LocalSharedTransitionEnabled.current"))
-        assertTrue(contentSource.contains("relatedVideoTransitionEnabled: Boolean = transitionEnabled"))
-        assertTrue(relatedCardSource.contains("transitionEnabled = relatedVideoTransitionEnabled"))
+        assertFalse(phoneSource.contains("relatedVideoTransitionEnabled"))
+        assertFalse(contentSource.contains("relatedVideoTransitionEnabled"))
+        assertFalse(relatedCardSource.contains("sharedTransitionEnabled"))
     }
 
     @Test

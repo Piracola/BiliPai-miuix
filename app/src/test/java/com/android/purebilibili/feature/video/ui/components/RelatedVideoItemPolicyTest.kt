@@ -47,22 +47,16 @@ class RelatedVideoItemPolicyTest {
     }
 
     @Test
-    fun `metadata shared bounds stay disabled for related cards`() {
-        assertFalse(shouldEnableRelatedVideoMetadataSharedBounds(transitionEnabled = true))
-        assertFalse(shouldEnableRelatedVideoMetadataSharedBounds(transitionEnabled = false))
-    }
-
-    @Test
     fun `related cards preserve the detail source route for detail to detail shared element`() {
         assertEquals("video", resolveRelatedVideoSharedElementSourceRoute(null))
         assertEquals("video", resolveRelatedVideoSharedElementSourceRoute(""))
         assertEquals("video/BV1", resolveRelatedVideoSharedElementSourceRoute("video/BV1?from=related"))
         assertEquals("home", resolveRelatedVideoSharedElementSourceRoute("home"))
-        // Whole-card sharedBounds anchors remain host route + target bvid for morph matching.
+        // Miuix source sessions remain host route + target bvid for morph matching.
     }
 
     @Test
-    fun `related detail uses single column horizontal card with whole card shell anchor`() {
+    fun `related detail records a side by side Miuix card source`() {
         val source = File("src/main/java/com/android/purebilibili/feature/video/ui/components/RelatedVideoItem.kt")
             .readText()
 
@@ -74,14 +68,11 @@ class RelatedVideoItemPolicyTest {
         assertTrue(source.contains("RELATED_VIDEO_GRID_COLUMNS = 1"))
         assertTrue(source.contains("coverAspectRatio = cardLayout.coverAspectRatio"))
         assertTrue(source.contains("modifier = Modifier.fillMaxWidth()"))
-        assertTrue(source.contains("videoCardShellSharedBoundsOrEmpty("))
+        assertFalse(source.contains("videoCardShellSharedBoundsOrEmpty("))
         assertFalse(source.contains("videoCoverSharedBoundsOrEmpty("))
-        assertTrue(source.contains("clipShape = cardShape"))
-        assertTrue(
-            source.indexOf(".videoCardShellSharedBoundsOrEmpty(") <
-                source.indexOf(".clip(cardShape)")
-        )
-        assertTrue(source.contains("crossfadeSourceContent = true"))
+        assertTrue(source.contains("sourceLayout = VideoCardSourceLayout.SIDE_BY_SIDE"))
+        assertTrue(source.contains("sourceChromeSnapshot = VideoCardSourceChromeSnapshot("))
+        assertTrue(source.contains("coverBounds = coverCoordinatesRef.value"))
         assertTrue(source.contains("RelatedVideoGridRow("))
         assertTrue(source.contains("chunkRelatedVideosForHomeStyleGrid("))
         assertFalse(source.contains("relatedCoverWidth = 130.dp"))

@@ -1,7 +1,6 @@
 package com.android.purebilibili.feature.video.ui.components
 
 import android.widget.Toast
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -73,6 +72,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.layout.onSizeChanged
 import com.android.purebilibili.core.ui.rememberAppChevronUpIcon
 import com.android.purebilibili.core.ui.rememberAppBottomSheetMotion
+import com.android.purebilibili.core.ui.LocalNavigationBackHandler
 import com.android.purebilibili.core.ui.InteractiveOverlayProgressVisual
 import com.android.purebilibili.core.ui.InteractiveOverlaySurfaceType
 import com.android.purebilibili.core.ui.resolveInteractiveOverlayProgressVisual
@@ -456,13 +456,16 @@ fun VideoCommentSheetHost(
         )
     }
 
-    BackHandler(enabled = hostVisible) {
-        if (subReplyState.visible) {
-            commentViewModel.closeSubReply()
-        } else {
-            onDismiss()
-        }
-    }
+    LocalNavigationBackHandler(
+        enabled = hostVisible,
+        onBackCompleted = {
+            if (subReplyState.visible) {
+                commentViewModel.closeSubReply()
+            } else {
+                onDismiss()
+            }
+        },
+    )
 
     LaunchedEffect(aid, mainSheetVisible, forceInitialize, preferredSortMode, upMid, expectedReplyCount) {
         if (shouldInitializeVideoCommentSheetHost(mainSheetVisible, forceInitialize)) {

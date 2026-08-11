@@ -55,6 +55,7 @@ import com.android.purebilibili.core.ui.rememberAppChevronUpIcon
 import com.android.purebilibili.core.ui.rememberAppCommentIcon
 import com.android.purebilibili.core.ui.rememberAppVisibilityOnIcon
 import com.android.purebilibili.core.ui.rememberAppShareIcon
+import com.android.purebilibili.core.theme.resolveAccessibleContainerColors
 import com.android.purebilibili.core.ui.AppAlertDialog
 import com.android.purebilibili.core.ui.AppDialogAction
 import com.android.purebilibili.core.ui.rememberAppHistoryIcon
@@ -575,6 +576,15 @@ fun DynamicCardV2(
         //  风险提示条（module_dispute：如“视频内含有危险行为，请勿模仿”，点击打开 jump_url）
         item.modules.module_dispute?.let { dispute ->
             if (shouldShowDynamicDispute(dispute)) {
+                val disputeColors = resolveAccessibleContainerColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f),
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    backgroundColor = MaterialTheme.colorScheme.surface,
+                    fallbackContentColors = listOf(
+                        MaterialTheme.colorScheme.onSurface,
+                        MaterialTheme.colorScheme.onBackground,
+                    ),
+                )
                 val disputeClickModifier = if (dispute.jump_url.isNotBlank()) {
                     Modifier.clickable {
                         val target = if (dispute.jump_url.startsWith("//")) {
@@ -592,7 +602,7 @@ fun DynamicCardV2(
                         .fillMaxWidth()
                         .padding(bottom = AppSpacingTokens.Medium)
                         .clip(RoundedCornerShape(6.dp))
-                        .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f))
+                        .background(disputeColors.containerColor)
                         .then(disputeClickModifier)
                         .padding(
                             horizontal = AppSpacingTokens.Small,
@@ -604,13 +614,13 @@ fun DynamicCardV2(
                         rememberAppWarningIcon(),
                         contentDescription = null,
                         modifier = Modifier.size(AppSpacingTokens.Small + AppSpacingTokens.Micro),
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer
+                        tint = disputeColors.contentColor
                     )
                     Spacer(modifier = Modifier.width(AppSpacingTokens.ExtraSmall))
                     AppText(
                         dispute.title.ifBlank { dispute.desc },
                         fontSize = MaterialTheme.typography.labelMedium.fontSize,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                        color = disputeColors.contentColor
                     )
                 }
             }

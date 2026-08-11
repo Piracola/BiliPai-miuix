@@ -151,20 +151,6 @@ internal fun resolveDanmakuActionForPositionDiscontinuity(
     return if (isSeekDiscontinuity) DanmakuSyncAction.HardResync else DanmakuSyncAction.None
 }
 
-internal fun resolveDanmakuActionForPlaybackSpeedChange(
-    previousSpeed: Float,
-    newSpeed: Float,
-    isPlayerPlaying: Boolean,
-    hasData: Boolean
-): DanmakuSyncAction {
-    if (!isPlayerPlaying || !hasData) return DanmakuSyncAction.None
-    return if (abs(previousSpeed - newSpeed) > 0.01f) {
-        DanmakuSyncAction.HardResync
-    } else {
-        DanmakuSyncAction.None
-    }
-}
-
 internal fun resolveDanmakuActionForForegroundRecovery(
     playWhenReady: Boolean,
     isPlayerPlaying: Boolean,
@@ -224,6 +210,17 @@ internal inline fun executeExplicitDanmakuResync(
     clear()
     setData()
     start()
+}
+
+internal inline fun executeDanmakuPlaybackSpeedUpdate(
+    applyTiming: () -> Unit,
+    invalidate: () -> Unit
+) {
+    // 倍速变化不改变媒体时间位置，只更新引擎 playSpeed、滚动时长和静态弹幕
+    // 停留时长。不要复用显式 seek 的 clear/setData/start，否则长按进入和退出
+    // 倍速都会清屏，看起来像弹幕被刷新。
+    applyTiming()
+    invalidate()
 }
 
 internal inline fun executeDanmakuSeekScrubStart(

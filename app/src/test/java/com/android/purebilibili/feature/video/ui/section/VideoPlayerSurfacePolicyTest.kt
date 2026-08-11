@@ -213,4 +213,56 @@ class VideoPlayerSurfacePolicyTest {
             )
         )
     }
+
+    @Test
+    fun `collection switch waits when success arrives before paused player output`() {
+        assertEquals(
+            MediaSwitchSurfaceRebindAction.WAIT_FOR_OUTPUT,
+            resolveMediaSwitchSurfaceRebindAction(
+                hasSuccessPlaybackIdentity = true,
+                shouldBindInlinePlayerView = true,
+                isInPipMode = false,
+                hasPlayerView = true,
+                mediaItemCount = 0
+            )
+        )
+    }
+
+    @Test
+    fun `collection switch rebinds once player view and media item are ready`() {
+        assertEquals(
+            MediaSwitchSurfaceRebindAction.REBIND,
+            resolveMediaSwitchSurfaceRebindAction(
+                hasSuccessPlaybackIdentity = true,
+                shouldBindInlinePlayerView = true,
+                isInPipMode = false,
+                hasPlayerView = true,
+                mediaItemCount = 1
+            )
+        )
+    }
+
+    @Test
+    fun `collection switch surface recovery skips pip and stale success`() {
+        assertEquals(
+            MediaSwitchSurfaceRebindAction.SKIP,
+            resolveMediaSwitchSurfaceRebindAction(
+                hasSuccessPlaybackIdentity = true,
+                shouldBindInlinePlayerView = true,
+                isInPipMode = true,
+                hasPlayerView = true,
+                mediaItemCount = 1
+            )
+        )
+        assertEquals(
+            MediaSwitchSurfaceRebindAction.SKIP,
+            resolveMediaSwitchSurfaceRebindAction(
+                hasSuccessPlaybackIdentity = false,
+                shouldBindInlinePlayerView = true,
+                isInPipMode = false,
+                hasPlayerView = true,
+                mediaItemCount = 1
+            )
+        )
+    }
 }

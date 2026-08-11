@@ -59,8 +59,9 @@ class VideoDetailScreenMethodSizeStructureTest {
 
         assertTrue(transitionHost.contains("label = \"video-detail-shared-morph-clock\""))
         assertTrue(holder.contains("val detailTransitionProgress = transitionState.progress"))
-        assertTrue(holder.contains("resolveVideoDetailReturnCoverAlpha("))
-        assertTrue(holder.contains("resolveVideoDetailReturnPlayerAlpha("))
+        assertTrue(holder.contains("resolveVideoDetailReturnMediaFrame("))
+        assertTrue(holder.contains(").coverAlpha"))
+        assertTrue(holder.contains(").playerAlpha"))
         assertTrue(holder.contains("resolveVideoDetailReturnContentAlpha("))
         assertTrue(content.contains("transitionState.routeSheetFrameProvider"))
     }

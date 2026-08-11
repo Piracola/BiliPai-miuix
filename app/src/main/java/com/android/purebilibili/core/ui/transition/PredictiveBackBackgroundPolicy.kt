@@ -120,8 +120,9 @@ internal fun shouldApplyPredictiveBackGestureBlur(
 internal fun shouldApplyPredictiveBackBlurToRoute(
     entryKey: BiliPaiNavKey,
     targetBackKey: BiliPaiNavKey?,
+    videoCardBackgroundApplied: Boolean = false,
 ): Boolean {
-    return targetBackKey != null && entryKey == targetBackKey
+    return !videoCardBackgroundApplied && targetBackKey != null && entryKey == targetBackKey
 }
 
 internal fun resolvePredictiveBackCommitBlurDurationMs(startProgress: Float): Int {

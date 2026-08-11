@@ -4,8 +4,58 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 
-private const val PRIMARY_TEXT_MIN_CONTRAST = 4.5f
-private const val SECONDARY_TEXT_MIN_CONTRAST = 3.0f
+const val ACCESSIBLE_TEXT_MIN_CONTRAST = 4.5f
+const val ACCESSIBLE_UI_MIN_CONTRAST = 3.0f
+
+private const val PRIMARY_TEXT_MIN_CONTRAST = ACCESSIBLE_TEXT_MIN_CONTRAST
+private const val SECONDARY_TEXT_MIN_CONTRAST = ACCESSIBLE_TEXT_MIN_CONTRAST
+
+data class AccessibleContainerColors(
+    val containerColor: Color,
+    val contentColor: Color,
+)
+
+/** Flattens [foreground] over [background] so contrast checks use the color users see. */
+fun opaqueCompositeOver(
+    foreground: Color,
+    background: Color,
+): Color {
+    val foregroundAlpha = foreground.alpha
+    val backgroundAlpha = background.alpha
+    val outputAlpha = foregroundAlpha + backgroundAlpha * (1f - foregroundAlpha)
+    if (outputAlpha == 0f) return Color.Transparent
+    return Color(
+        red = (foreground.red * foregroundAlpha + background.red * backgroundAlpha * (1f - foregroundAlpha)) / outputAlpha,
+        green = (foreground.green * foregroundAlpha + background.green * backgroundAlpha * (1f - foregroundAlpha)) / outputAlpha,
+        blue = (foreground.blue * foregroundAlpha + background.blue * backgroundAlpha * (1f - foregroundAlpha)) / outputAlpha,
+        alpha = 1f,
+    )
+}
+
+/**
+ * Resolves an opaque visual equivalent for a translucent semantic container and a readable
+ * foreground for it. The first fallback that reaches [minimumContrast] wins; if none do, the
+ * highest-contrast candidate is used.
+ */
+fun resolveAccessibleContainerColors(
+    containerColor: Color,
+    contentColor: Color,
+    backgroundColor: Color,
+    fallbackContentColors: List<Color>,
+    minimumContrast: Float = ACCESSIBLE_TEXT_MIN_CONTRAST,
+): AccessibleContainerColors {
+    val resolvedContainer = opaqueCompositeOver(containerColor, backgroundColor)
+    val candidates = (listOf(contentColor) + fallbackContentColors).distinct()
+    val resolvedContent = candidates.firstOrNull {
+        calculateContrastRatio(it, resolvedContainer) >= minimumContrast
+    } ?: candidates.maxByOrNull {
+        calculateContrastRatio(it, resolvedContainer)
+    } ?: contentColor
+    return AccessibleContainerColors(
+        containerColor = resolvedContainer,
+        contentColor = resolvedContent.copy(alpha = 1f),
+    )
+}
 
 fun calculateContrastRatio(
     foreground: Color,
@@ -106,6 +156,30 @@ fun enforceDynamicLightTextContrast(
         onSecondaryContainer = resolveReadableThemeTextColor(
             candidate = scheme.onSecondaryContainer,
             background = scheme.secondaryContainer,
+            fallbacks = accentFallbacks,
+            minimumContrast = PRIMARY_TEXT_MIN_CONTRAST
+        ),
+        onTertiary = resolveReadableThemeTextColor(
+            candidate = scheme.onTertiary,
+            background = scheme.tertiary,
+            fallbacks = accentFallbacks,
+            minimumContrast = PRIMARY_TEXT_MIN_CONTRAST
+        ),
+        onTertiaryContainer = resolveReadableThemeTextColor(
+            candidate = scheme.onTertiaryContainer,
+            background = scheme.tertiaryContainer,
+            fallbacks = accentFallbacks,
+            minimumContrast = PRIMARY_TEXT_MIN_CONTRAST
+        ),
+        onError = resolveReadableThemeTextColor(
+            candidate = scheme.onError,
+            background = scheme.error,
+            fallbacks = accentFallbacks,
+            minimumContrast = PRIMARY_TEXT_MIN_CONTRAST
+        ),
+        onErrorContainer = resolveReadableThemeTextColor(
+            candidate = scheme.onErrorContainer,
+            background = scheme.errorContainer,
             fallbacks = accentFallbacks,
             minimumContrast = PRIMARY_TEXT_MIN_CONTRAST
         )

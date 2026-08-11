@@ -14,6 +14,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
@@ -63,10 +64,12 @@ import com.android.purebilibili.core.theme.iOSGreen
 import com.android.purebilibili.core.theme.iOSOrange
 import com.android.purebilibili.core.theme.iOSPurple
 import com.android.purebilibili.core.theme.iOSTeal
+import com.android.purebilibili.core.theme.resolveAccessibleContainerColors
 import com.android.purebilibili.feature.settings.SettingsLocalBackHandler
+import com.android.purebilibili.feature.settings.ui.SettingsBottomBarScrollEffect
 import com.android.purebilibili.feature.settings.ui.SettingsPageScaffold
 import com.android.purebilibili.core.ui.AppAlertDialog
-import com.android.purebilibili.core.ui.resolveBottomSafeAreaPadding
+import com.android.purebilibili.core.ui.LocalBottomBarContentPadding
 import com.android.purebilibili.core.ui.adaptiveSquircleBackground
 import com.android.purebilibili.core.ui.components.AppAdaptiveSwitch
 import com.android.purebilibili.core.ui.components.AppCircularProgressIndicator
@@ -191,7 +194,7 @@ fun PluginsScreen(
         }
     }
 
-    val bottomContentPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val bottomContentPadding = LocalBottomBarContentPadding.current
 
     SettingsPageScaffold(
         title = screenTitle,
@@ -223,10 +226,9 @@ fun PluginsContent(
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
-    val contentBottomPadding = resolveBottomSafeAreaPadding(
-        navigationBarsBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding(),
-        extraBottomPadding = 16.dp
-    )
+    val listState = rememberLazyListState()
+    SettingsBottomBarScrollEffect(listState)
+    val contentBottomPadding = LocalBottomBarContentPadding.current + 16.dp
     
     // Statistics
     val totalPlugins = plugins.size + jsonPlugins.size
@@ -493,6 +495,7 @@ fun PluginsContent(
     }
 
     LazyColumn(
+        state = listState,
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(top = 16.dp, bottom = contentBottomPadding)
     ) {
@@ -1997,15 +2000,24 @@ private fun PluginItem(
                     )
                     //  暂不可用标签
                     if (plugin.unavailable) {
+                        val unavailableColors = resolveAccessibleContainerColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f),
+                            contentColor = MaterialTheme.colorScheme.error,
+                            backgroundColor = MaterialTheme.colorScheme.surface,
+                            fallbackContentColors = listOf(
+                                MaterialTheme.colorScheme.onErrorContainer,
+                                MaterialTheme.colorScheme.onSurface,
+                            ),
+                        )
                         Spacer(modifier = Modifier.width(6.dp))
                         AppSurface(
                             shape = RoundedCornerShape(4.dp),
-                            color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f)
+                            color = unavailableColors.containerColor,
                         ) {
                             AppText(
                                 text = "暂不可用",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.error,
+                                color = unavailableColors.contentColor,
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
                         }
@@ -2063,7 +2075,7 @@ private fun PluginDetailScreen(
     onBack: () -> Unit,
 ) {
     val plugin = pluginInfo.plugin
-    val bottomContentPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val bottomContentPadding = LocalBottomBarContentPadding.current
     SettingsPageScaffold(
         title = plugin.name,
         onBack = onBack,
@@ -2187,6 +2199,19 @@ private fun PluginCapabilityChips(
 ) {
     val models = remember(capabilities) { resolvePluginCapabilityUiModels(capabilities) }
     if (models.isEmpty()) return
+    val colorScheme = MaterialTheme.colorScheme
+    val approvalColors = resolveAccessibleContainerColors(
+        containerColor = colorScheme.tertiaryContainer.copy(alpha = 0.62f),
+        contentColor = colorScheme.onTertiaryContainer,
+        backgroundColor = colorScheme.surface,
+        fallbackContentColors = listOf(colorScheme.onSurface, colorScheme.onBackground),
+    )
+    val standardColors = resolveAccessibleContainerColors(
+        containerColor = colorScheme.surfaceVariant.copy(alpha = 0.62f),
+        contentColor = colorScheme.onSurfaceVariant,
+        backgroundColor = colorScheme.surface,
+        fallbackContentColors = listOf(colorScheme.onSurface, colorScheme.onBackground),
+    )
     FlowRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -2196,9 +2221,9 @@ private fun PluginCapabilityChips(
             AppSurface(
                 shape = RoundedCornerShape(6.dp),
                 color = if (showAuthorizationLabels && model.requiresExplicitApproval) {
-                    MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.62f)
+                    approvalColors.containerColor
                 } else {
-                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.62f)
+                    standardColors.containerColor
                 }
             ) {
                 AppText(
@@ -2209,9 +2234,9 @@ private fun PluginCapabilityChips(
                     },
                     style = MaterialTheme.typography.labelSmall,
                     color = if (showAuthorizationLabels && model.requiresExplicitApproval) {
-                        MaterialTheme.colorScheme.onTertiaryContainer
+                        approvalColors.contentColor
                     } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
+                        standardColors.contentColor
                     },
                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
                 )
@@ -2574,6 +2599,10 @@ private fun TestResultDialog(
 ) {
     val blockedCount = originalCount - filteredCount
     val dialogIconTint = rememberAdaptiveSemanticIconTint(iOSBlue)
+    val resultContainerColor = com.android.purebilibili.core.theme.opaqueCompositeOver(
+        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+        MaterialTheme.colorScheme.surface,
+    )
 
     AppAlertDialog(
         onDismissRequest = onDismiss,
@@ -2597,7 +2626,7 @@ private fun TestResultDialog(
                 // 统计卡片
                 AppSurface(
                     shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    color = resultContainerColor,
                 ) {
                     Row(
                         modifier = Modifier

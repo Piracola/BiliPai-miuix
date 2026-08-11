@@ -379,6 +379,10 @@ private fun GesturePercentValue(
 // 最长等待 4s（20 × 200ms），超时按当前可用值加载（仓库层会回退）。
 private const val DANMAKU_DURATION_WAIT_ATTEMPTS = 20
 private const val DANMAKU_DURATION_WAIT_INTERVAL_MS = 200L
+// Success 状态可能先于 ExoPlayer.setMediaItem 可见；暂停态切合集时等待输出绑定就绪，
+// 避免一次性检查 mediaItemCount=0 后永远错过 Surface 重绑。
+private const val MEDIA_SWITCH_SURFACE_REBIND_ATTEMPTS = 40
+private const val MEDIA_SWITCH_SURFACE_REBIND_INTERVAL_MS = 50L
 
 @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 @Composable
@@ -2535,14 +2539,47 @@ fun VideoPlayerSection(
         LaunchedEffect(
             bvid,
             successPlaybackIdentity,
+            playerState.player,
+            videoOutputRouter,
             playerViewRef,
             shouldBindInlinePlayerView,
             isInPipMode
         ) {
-            if (successPlaybackIdentity.isNullOrBlank()) return@LaunchedEffect
-            if (!shouldBindInlinePlayerView || isInPipMode) return@LaunchedEffect
+            var waitAttempts = 0
+            while (isActive) {
+                val player = playerState.player
+                when (
+                    resolveMediaSwitchSurfaceRebindAction(
+                        hasSuccessPlaybackIdentity = !successPlaybackIdentity.isNullOrBlank(),
+                        shouldBindInlinePlayerView = shouldBindInlinePlayerView,
+                        isInPipMode = isInPipMode,
+                        hasPlayerView = playerViewRef != null,
+                        mediaItemCount = player.mediaItemCount
+                    )
+                ) {
+                    MediaSwitchSurfaceRebindAction.SKIP -> return@LaunchedEffect
+                    MediaSwitchSurfaceRebindAction.WAIT_FOR_OUTPUT -> {
+                        if (waitAttempts >= MEDIA_SWITCH_SURFACE_REBIND_ATTEMPTS) {
+                            Logger.w(
+                                "VideoPlayerSection",
+                                "⚠️ Media switch surface rebind timed out: " +
+                                    "bvid=$bvid identity=$successPlaybackIdentity"
+                            )
+                            return@LaunchedEffect
+                        }
+                        waitAttempts += 1
+                        delay(MEDIA_SWITCH_SURFACE_REBIND_INTERVAL_MS)
+                    }
+                    MediaSwitchSurfaceRebindAction.REBIND -> break
+                }
+            }
             val player = playerState.player
-            if (playerViewRef == null || player.mediaItemCount <= 0) return@LaunchedEffect
+            videoOutputRouter.update(
+                playerView = playerViewRef,
+                inputSurface = anime4kInputSurface,
+                shouldBindDirectPlayerView = shouldBindInlinePlayerView,
+                shouldUseAnime4K = shouldUseAnime4kPipeline
+            )
             videoOutputRouter.rebindDirectSurfaceIfNeeded()
             if (
                 shouldKickPlaybackAfterSurfaceRecovery(

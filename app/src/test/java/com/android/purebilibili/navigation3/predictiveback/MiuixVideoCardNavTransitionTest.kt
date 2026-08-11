@@ -1,11 +1,25 @@
 package com.android.purebilibili.navigation3.predictiveback
 
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.TransformOrigin
+import com.android.purebilibili.core.ui.transition.VideoCardSourceLayout
+import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class MiuixVideoCardNavTransitionTest {
+    @Test
+    fun transitionKeepsOneOpaqueFlyingCardWithoutStationaryRevealMask() {
+        val source = File(
+            "src/main/java/com/android/purebilibili/navigation3/predictiveback/MiuixVideoCardNavTransition.kt"
+        ).readText()
+        val transform = source.substringAfter("override fun Modifier.transformEntry")
+
+        assertEquals(true, transform.contains("alpha = 1f"))
+        assertEquals(false, transform.contains("visibleHeightFraction"))
+        assertEquals(false, transform.contains("outgoingClipFraction"))
+        assertEquals(false, transform.contains("alpha = resolveMiuixVideoCard"))
+    }
+
     @Test
     fun returnDepthClearsBlurInsteadOfReversingIt() {
         assertEquals(
@@ -38,72 +52,6 @@ class MiuixVideoCardNavTransitionTest {
     }
 
     @Test
-    fun wideCardHandsContentBackWithSourceChromeBeforeLanding() {
-        val wideBounds = Rect(0f, 0f, 320f, 180f)
-
-        assertEquals(
-            1f,
-            resolveMiuixVideoCardReturnContentAlpha(
-                sourceBounds = wideBounds,
-                morphProgress = 0f,
-                isReturning = false,
-            ),
-            absoluteTolerance = 0.0001f,
-        )
-        assertEquals(
-            0.5f,
-            resolveMiuixVideoCardReturnContentAlpha(
-                sourceBounds = wideBounds,
-                morphProgress = 0.19f,
-                isReturning = true,
-            ),
-            absoluteTolerance = 0.0001f,
-        )
-        assertEquals(
-            1f,
-            resolveMiuixVideoCardReturnContentAlpha(
-                sourceBounds = wideBounds,
-                morphProgress = 0.32f,
-                isReturning = true,
-            ),
-            absoluteTolerance = 0.0001f,
-        )
-        assertEquals(
-            0f,
-            resolveMiuixVideoCardReturnContentAlpha(
-                sourceBounds = wideBounds,
-                morphProgress = 0.06f,
-                isReturning = true,
-            ),
-            absoluteTolerance = 0.0001f,
-        )
-        // 预测返回手势 seek 中（未松手提交）：整层保持不透明，画面不提前消失。
-        assertEquals(
-            1f,
-            resolveMiuixVideoCardReturnContentAlpha(
-                sourceBounds = wideBounds,
-                morphProgress = 0.06f,
-                isReturning = true,
-                isGestureSeeking = true,
-            ),
-            absoluteTolerance = 0.0001f,
-        )
-    }
-
-    @Test
-    fun verticalCardKeepsLiveDetailOpaqueDuringReturn() {
-        assertEquals(
-            1f,
-            resolveMiuixVideoCardReturnContentAlpha(
-                sourceBounds = Rect(0f, 0f, 180f, 280f),
-                morphProgress = 0.05f,
-                isReturning = true,
-            ),
-            absoluteTolerance = 0.0001f,
-        )
-    }
-
-    @Test
     fun fillWidthTopPreservesAspectRatioAndTopAlignment() {
         val compensation = resolveMiuixVideoCardContentCompensation(
             outerScaleX = 0.5f,
@@ -127,5 +75,28 @@ class MiuixVideoCardNavTransitionTest {
         assertEquals(0.6f, 0.35f * compensation.scaleX, absoluteTolerance = 0.0001f)
         assertEquals(0.6f, 0.6f * compensation.scaleY, absoluteTolerance = 0.0001f)
         assertEquals(TransformOrigin.Center, compensation.transformOrigin)
+    }
+
+    @Test
+    fun sideBySideAndStackedUseFillWidthTopForLandingAnchors() {
+        assertEquals(
+            MiuixVideoCardContentScale.FillWidthTop,
+            resolveMiuixVideoCardContentScaleForSourceLayout(
+                sourceLayout = VideoCardSourceLayout.SIDE_BY_SIDE,
+            ),
+        )
+        assertEquals(
+            MiuixVideoCardContentScale.FillWidthTop,
+            resolveMiuixVideoCardContentScaleForSourceLayout(
+                sourceLayout = VideoCardSourceLayout.STACKED,
+            ),
+        )
+        assertEquals(
+            MiuixVideoCardContentScale.CropCenter,
+            resolveMiuixVideoCardContentScaleForSourceLayout(
+                sourceLayout = VideoCardSourceLayout.STACKED,
+                fullscreen = true,
+            ),
+        )
     }
 }

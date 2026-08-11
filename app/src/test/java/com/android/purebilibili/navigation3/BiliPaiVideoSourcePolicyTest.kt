@@ -2,8 +2,48 @@ package com.android.purebilibili.navigation3
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class BiliPaiVideoSourcePolicyTest {
+
+    @Test
+    fun partitionAndRelatedShareCardMorphGateWithListSources() {
+        assertTrue(isRelatedVideoCardMorphSourceRoute("video/BV_PARENT"))
+        assertFalse(isRelatedVideoCardMorphSourceRoute("partition"))
+        assertFalse(isRelatedVideoCardMorphSourceRoute("home?category=1"))
+        // 分区 (partition) + 相关 (video/*) + 推荐列表 同一门闩；布局由 sourceLayout 区分。
+        listOf(
+            "partition",
+            "video/BV_PARENT",
+            "home",
+            "home?category=1",
+            "search",
+            "dynamic/123",
+            "space/456",
+            "watchlater",
+            "favorite",
+            "history",
+        ).forEach { sourceRoute ->
+            assertTrue(
+                shouldUseMiuixVideoCardMorph(
+                    cardTransitionEnabled = true,
+                    reduceMotion = false,
+                    sourceRoute = sourceRoute,
+                    hasUsableSourceBounds = true,
+                ),
+                "Expected card morph for source=$sourceRoute",
+            )
+        }
+        assertFalse(
+            shouldUseMiuixVideoCardMorph(
+                cardTransitionEnabled = true,
+                reduceMotion = false,
+                sourceRoute = "partition",
+                hasUsableSourceBounds = false,
+            )
+        )
+    }
 
     @Test
     fun searchVideoUsesSearchSourceRouteAndIndependentSourceKey() {

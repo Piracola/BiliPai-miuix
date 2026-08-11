@@ -17,6 +17,73 @@ import com.android.purebilibili.core.theme.iOSSystemGray6
 class ThemeDynamicColorPolicyTest {
 
     @Test
+    fun `all palette specs keep material and miuix roles accessible`() {
+        val seeds = listOf(
+            Color(0xFF007AFF),
+            Color(0xFFFF5722),
+            Color(0xFF34C759),
+        )
+        val modes = listOf(
+            Triple(false, false, "light"),
+            Triple(true, false, "dark"),
+            Triple(true, true, "amoled"),
+        )
+
+        PaletteStyle.entries.forEach { style ->
+            ColorSpec.SpecVersion.entries.forEach { spec ->
+                seeds.forEach { seed ->
+                    modes.forEach { (dark, amoled, mode) ->
+                        val label = "$style/$spec/$mode/${seed.value}"
+                        val scheme = createKernelSuStyleColorScheme(
+                            seedColor = seed,
+                            darkTheme = dark,
+                            amoledDarkTheme = amoled,
+                            paletteStyle = style,
+                            colorSpec = spec,
+                        )
+
+                        assertTextContrast(scheme.onBackground, scheme.background, "$label background")
+                        assertTextContrast(scheme.onSurface, scheme.surface, "$label surface")
+                        assertTextContrast(scheme.onSurfaceVariant, scheme.surfaceVariant, "$label surfaceVariant")
+                        assertTextContrast(scheme.onPrimary, scheme.primary, "$label primary")
+                        assertTextContrast(scheme.onPrimaryContainer, scheme.primaryContainer, "$label primaryContainer")
+                        assertTextContrast(scheme.onSecondary, scheme.secondary, "$label secondary")
+                        assertTextContrast(scheme.onSecondaryContainer, scheme.secondaryContainer, "$label secondaryContainer")
+                        assertTextContrast(scheme.onTertiary, scheme.tertiary, "$label tertiary")
+                        assertTextContrast(scheme.onTertiaryContainer, scheme.tertiaryContainer, "$label tertiaryContainer")
+                        assertTextContrast(scheme.onError, scheme.error, "$label error")
+                        assertTextContrast(scheme.onErrorContainer, scheme.errorContainer, "$label errorContainer")
+                        assertTrue(
+                            calculateContrastRatio(scheme.primary, scheme.surface) >= 3f,
+                            "$label primary control is below 3:1",
+                        )
+
+                        val miuix = resolveMiuixColorsFromMaterialBridge(
+                            bridge = createMiuixMaterialBridge(scheme),
+                            darkTheme = dark,
+                        )
+                        assertTextContrast(miuix.onSurface, miuix.surface, "$label miuix surface")
+                        assertTextContrast(miuix.onPrimary, miuix.primary, "$label miuix primary")
+                        assertTextContrast(
+                            miuix.onPrimaryContainer,
+                            miuix.primaryContainer,
+                            "$label miuix primaryContainer",
+                        )
+                        assertTrue(
+                            calculateContrastRatio(miuix.onSecondary, miuix.secondary) >= 3f,
+                            "$label miuix switch roles are below 3:1",
+                        )
+                        assertTrue(
+                            calculateContrastRatio(miuix.sliderKeyPoint, miuix.surface) >= 3f,
+                            "$label miuix slider is below 3:1",
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
     fun `dynamic color keeps miuix bridge on explicit resolved colors`() {
         assertEquals(
             ColorSchemeMode.System,
@@ -206,6 +273,26 @@ class ThemeDynamicColorPolicyTest {
     }
 
     @Test
+    fun `static palette falls back from a source primary that cannot identify controls`() {
+        val lowContrastGreen = Color(0xFF34C759)
+        val generatedScheme = lightColorScheme(
+            primary = Color(0xFF006E2C),
+            surface = Color.White,
+            background = Color.White,
+        )
+
+        val scheme = alignStaticColorSchemeWithThemePrimary(
+            scheme = generatedScheme,
+            themePrimaryColor = lowContrastGreen,
+            darkTheme = false,
+        )
+
+        assertNotEquals(lowContrastGreen, scheme.primary)
+        assertEquals(generatedScheme.primary, scheme.primary)
+        assertTrue(calculateContrastRatio(scheme.primary, scheme.surface) >= 3f)
+    }
+
+    @Test
     fun `static md3 surfaces should respond to different source colors instead of staying fixed`() {
         val blueScheme = createStaticMd3ColorScheme(
             primaryColor = Color(0xFF007AFF),
@@ -332,5 +419,12 @@ class ThemeDynamicColorPolicyTest {
         assertEquals(Color.Black, scheme.background)
         assertEquals(Color.Black, scheme.surface)
         assertEquals(Color(0xFF007AFF), scheme.primary)
+    }
+
+    private fun assertTextContrast(foreground: Color, background: Color, label: String) {
+        assertTrue(
+            calculateContrastRatio(foreground, background) >= 4.5f,
+            "$label text is below 4.5:1",
+        )
     }
 }

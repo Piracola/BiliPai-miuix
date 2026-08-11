@@ -1195,6 +1195,7 @@ private fun WatchLaterVideoCard(
         with(density) { configuration.screenHeightDp.dp.toPx() }
     }
     val cardBoundsRef = remember { object { var value: androidx.compose.ui.geometry.Rect? = null } }
+    val coverBoundsRef = remember { object { var value: androidx.compose.ui.geometry.Rect? = null } }
     val sourceRoute = LocalVideoCardSharedElementSourceRoute.current
     val sharedTransitionSpeedSettings = LocalVideoSharedTransitionSpeedSettings.current
     val sharedTransitionScope = LocalSharedTransitionScope.current
@@ -1220,7 +1221,8 @@ private fun WatchLaterVideoCard(
                     bounds = bounds,
                     screenWidth = screenWidthPx,
                     screenHeight = screenHeightPx,
-                    sourceCornerDp = 8
+                    sourceCornerDp = 8,
+                    coverBounds = coverBoundsRef.value,
                 )
             }
         }
@@ -1233,6 +1235,9 @@ private fun WatchLaterVideoCard(
     val cardShellShape = AppShapes.container(ContainerLevel.Card)
 
     PersonalMediaCardFrame(
+        coverModifier = Modifier.onGloballyPositioned { coordinates ->
+            coverBoundsRef.value = coordinates.boundsInRoot()
+        },
         selected = isSelected,
         modifier = Modifier
             .videoCardShellSharedBoundsOrEmpty(

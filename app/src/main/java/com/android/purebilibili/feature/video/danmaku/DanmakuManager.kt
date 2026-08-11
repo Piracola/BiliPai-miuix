@@ -1475,46 +1475,13 @@ class DanmakuManager private constructor(
                 
                 //  同步弹幕速度：同时更新引擎时间轴、滚动速度和静态弹幕停留时间。
                 if (abs(videoSpeed - currentVideoSpeed) > 0.001f) {
-                    val previousSpeed = currentVideoSpeed
                     currentVideoSpeed = videoSpeed
                     
                     controller?.let { ctrl ->
-                        applyPlaybackSpeedToController(ctrl)
-                        
-                        when (
-                            resolveDanmakuActionForPlaybackSpeedChange(
-                                previousSpeed = previousSpeed,
-                                newSpeed = videoSpeed,
-                                isPlayerPlaying = exoPlayer.isPlaying,
-                                hasData = cachedDanmakuList != null
-                            )
-                        ) {
-                            DanmakuSyncAction.SoftResync -> {
-                                val currentPos = exoPlayer.currentPosition
-                                Log.w(TAG, "⏩ Speed changed, soft-resyncing danmaku at ${currentPos}ms")
-                                softResyncDanmakuTimeline(
-                                    positionMs = currentPos,
-                                    shouldPlay = exoPlayer.isPlaying,
-                                    reason = "speed_change"
-                                )
-                            }
-                            DanmakuSyncAction.HardResync -> {
-                                val currentPos = exoPlayer.currentPosition
-                                Log.w(TAG, "⏩ Speed changed, resyncing danmaku at ${currentPos}ms")
-                                cachedDanmakuList?.let { list ->
-                                    resyncDanmakuTimeline(
-                                        list = list,
-                                        positionMs = currentPos,
-                                        shouldPlay = exoPlayer.isPlaying,
-                                        reason = "speed_change"
-                                    )
-                                }
-                            }
-                            DanmakuSyncAction.None,
-                            DanmakuSyncAction.PauseOnly -> Unit
-                        }
-                        
-                        ctrl.invalidateView()
+                        executeDanmakuPlaybackSpeedUpdate(
+                            applyTiming = { applyPlaybackSpeedToController(ctrl) },
+                            invalidate = { ctrl.invalidateView() }
+                        )
                         Log.w(
                             TAG,
                             "⏩ Danmaku speed sync: engine=${ctrl.config.common.playSpeed}, " +

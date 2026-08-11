@@ -292,7 +292,8 @@ class VideoCardScrollLiteVisualPolicyTest {
     }
 
     @Test
-    fun homeCardSourceVisual_waitsForLiveReturnHandoff() {
+    fun homeCardSourceVisual_staysHiddenWhileFlyingEntryOwnsReturn() {
+        // Entire RETURNING morph: list cover stays 0 (flying entry paints the card).
         assertEquals(
             0f,
             resolveHomeCardReturnSourceVisualAlpha(
@@ -306,14 +307,38 @@ class VideoCardScrollLiteVisualPolicyTest {
             0.001f,
         )
         assertEquals(
-            0.5f,
+            0f,
             resolveHomeCardReturnSourceVisualAlpha(
                 useCardContainerSharedBounds = true,
                 isSharedMorphSourceCard = true,
                 isReturningFromDetail = true,
                 transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.RETURNING,
                 isVideoCardReturnGestureInProgress = false,
-                transitionBackgroundProgress = 0.06f,
+                transitionBackgroundProgress = 0.10f,
+            ),
+            0.001f,
+        )
+        assertEquals(
+            0f,
+            resolveHomeCardReturnSourceVisualAlpha(
+                useCardContainerSharedBounds = true,
+                isSharedMorphSourceCard = true,
+                isReturningFromDetail = true,
+                transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.RETURNING,
+                isVideoCardReturnGestureInProgress = false,
+                transitionBackgroundProgress = 0.02f,
+            ),
+            0.001f,
+        )
+        assertEquals(
+            1f,
+            resolveHomeCardReturnSourceVisualAlpha(
+                useCardContainerSharedBounds = true,
+                isSharedMorphSourceCard = true,
+                isReturningFromDetail = true,
+                transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.IDLE,
+                isVideoCardReturnGestureInProgress = false,
+                transitionBackgroundProgress = 0f,
             ),
             0.001f,
         )
@@ -333,7 +358,117 @@ class VideoCardScrollLiteVisualPolicyTest {
     }
 
     @Test
-    fun homeCardChrome_reappearsBeforeTheFinalCoverHandoff() {
+    fun stationaryListStaysHiddenUntilFlyingMorphIsIdle() {
+        assertEquals(
+            0f,
+            resolveHomeCardStationaryRevealAlpha(
+                isReturnContext = true,
+                preferWholeCardReturn = false,
+                transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.RETURNING,
+                isVideoCardReturnGestureInProgress = false,
+                isSharedTransitionActive = false,
+                transitionBackgroundProgress = 0.04f,
+            ),
+            0.001f,
+        )
+        assertEquals(
+            0f,
+            resolveHomeCardStationaryRevealAlpha(
+                isReturnContext = true,
+                preferWholeCardReturn = false,
+                transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.HELD,
+                isVideoCardReturnGestureInProgress = true,
+                isSharedTransitionActive = false,
+                transitionBackgroundProgress = 0.5f,
+            ),
+            0.001f,
+        )
+        assertEquals(
+            1f,
+            resolveHomeCardStationaryRevealAlpha(
+                isReturnContext = true,
+                preferWholeCardReturn = false,
+                transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.IDLE,
+                isVideoCardReturnGestureInProgress = false,
+                isSharedTransitionActive = false,
+                transitionBackgroundProgress = 0f,
+            ),
+            0.001f,
+        )
+        assertEquals(
+            1f,
+            resolveHomeCardStationaryRevealAlpha(
+                isReturnContext = true,
+                preferWholeCardReturn = true,
+                transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.RETURNING,
+                isVideoCardReturnGestureInProgress = true,
+                isSharedTransitionActive = true,
+                transitionBackgroundProgress = 0.5f,
+            ),
+            0.001f,
+        )
+    }
+
+    @Test
+    fun flyingReturnContextIncludesMiuixSettleEvenWhenLegacyPhaseIsHeld() {
+        assertTrue(
+            isVideoCardFlyingReturnContext(
+                isReturningFromDetail = false,
+                isVideoCardReturnGestureInProgress = false,
+                transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.HELD,
+                isSharedTransitionActive = true,
+                transitionBackgroundProgress = 0.4f,
+            )
+        )
+        assertTrue(
+            isVideoCardFlyingReturnContext(
+                isReturningFromDetail = false,
+                isVideoCardReturnGestureInProgress = false,
+                transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.HELD,
+                isSharedTransitionActive = false,
+                transitionBackgroundProgress = 0.4f,
+            )
+        )
+        assertFalse(
+            isVideoCardFlyingReturnContext(
+                isReturningFromDetail = false,
+                isVideoCardReturnGestureInProgress = false,
+                transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.OPENING,
+                isSharedTransitionActive = true,
+                transitionBackgroundProgress = 0.4f,
+            )
+        )
+        // Stationary list stays fully hidden while flying entry owns the morph (no dual layer).
+        assertEquals(
+            0f,
+            resolveHomeCardChromeAlphaDuringShellReturnMorph(
+                useCardContainerSharedBounds = true,
+                isSharedMorphSourceCard = true,
+                isReturningFromDetail = false,
+                transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.HELD,
+                isVideoCardReturnGestureInProgress = false,
+                isSharedTransitionActive = true,
+                transitionBackgroundProgress = 0.16f,
+            ),
+            0.001f,
+        )
+        assertEquals(
+            0f,
+            resolveHomeCardReturnSourceVisualAlpha(
+                useCardContainerSharedBounds = true,
+                isSharedMorphSourceCard = true,
+                isReturningFromDetail = false,
+                transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.HELD,
+                isVideoCardReturnGestureInProgress = false,
+                isSharedTransitionActive = true,
+                transitionBackgroundProgress = 0.10f,
+            ),
+            0.001f,
+        )
+    }
+
+    @Test
+    fun homeCardChromeTransformsBeforeLateCoverHandoffInsideTheFlyingShell() {
         assertTrue(
             shouldSuppressHomeCardVisualDuringShellReturnMorph(
                 useCardContainerSharedBounds = true,
@@ -378,15 +513,40 @@ class VideoCardScrollLiteVisualPolicyTest {
             ),
             0.001f,
         )
+        // Mid / late return: list still 0; flying entry draws the card.
         assertEquals(
-            0.5f,
+            0f,
             resolveHomeCardChromeAlphaDuringShellReturnMorph(
                 useCardContainerSharedBounds = true,
                 isSharedMorphSourceCard = true,
                 isReturningFromDetail = true,
                 transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.RETURNING,
                 isSharedTransitionActive = false,
-                transitionBackgroundProgress = 0.19f,
+                transitionBackgroundProgress = 0.16f,
+            ),
+            0.001f,
+        )
+        assertEquals(
+            0f,
+            resolveHomeCardChromeAlphaDuringShellReturnMorph(
+                useCardContainerSharedBounds = true,
+                isSharedMorphSourceCard = true,
+                isReturningFromDetail = true,
+                transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.RETURNING,
+                transitionBackgroundProgress = 0.04f,
+            ),
+            0.001f,
+        )
+        // Morph finished (IDLE): list may show again without dual-layer jump.
+        assertEquals(
+            1f,
+            resolveHomeCardChromeAlphaDuringShellReturnMorph(
+                useCardContainerSharedBounds = true,
+                isSharedMorphSourceCard = true,
+                isReturningFromDetail = true,
+                transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.IDLE,
+                isSharedTransitionActive = false,
+                transitionBackgroundProgress = 0f,
             ),
             0.001f,
         )
@@ -401,18 +561,7 @@ class VideoCardScrollLiteVisualPolicyTest {
             ),
             0.001f,
         )
-        assertEquals(
-            1f,
-            resolveHomeCardChromeAlphaDuringShellReturnMorph(
-                useCardContainerSharedBounds = true,
-                isSharedMorphSourceCard = true,
-                isReturningFromDetail = true,
-                transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.RETURNING,
-                transitionBackgroundProgress = 0.06f,
-            ),
-            0.001f,
-        )
-        // 快速返回仍可能保留 LIVE surface，正文也使用提前回显窗口。
+        // 快速返回仍可能保留 LIVE surface，正文继续使用同一内部形变窗口。
         assertEquals(
             0f,
             resolveHomeCardChromeAlphaDuringShellReturnMorph(
@@ -496,14 +645,15 @@ class VideoCardScrollLiteVisualPolicyTest {
             transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.RETURNING,
             transitionBackgroundProgress = 0.19f,
         )
-        assertEquals(0.5f, returnReveal.alpha, 0.001f)
+        // List chrome stays hidden while flying entry owns the return morph.
+        assertEquals(0f, returnReveal.alpha, 0.001f)
         assertEquals(0f, returnReveal.translationProgress, 0.001f)
 
         val landed = resolveHorizontalCardChromeMotionFrame(
             useCardContainerSharedBounds = true,
             isSharedMorphSourceCard = true,
             isReturningFromDetail = true,
-            transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.RETURNING,
+            transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.IDLE,
             transitionBackgroundProgress = 0f,
         )
         assertEquals(1f, landed.alpha, 0.001f)

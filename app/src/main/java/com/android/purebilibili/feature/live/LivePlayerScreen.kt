@@ -1,5 +1,6 @@
 package com.android.purebilibili.feature.live
 import com.android.purebilibili.core.ui.components.AppHorizontalDivider
+import com.android.purebilibili.core.theme.resolveAccessibleContainerColors
 
 import android.app.Activity
 import android.content.ClipData
@@ -1617,11 +1618,20 @@ private fun LiveRedPocketChip(
     } else {
         info.awardsText.ifBlank { info.danmu.ifBlank { "人气红包" } }
     }
+    val chipColors = resolveAccessibleContainerColors(
+        containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.94f),
+        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        backgroundColor = MaterialTheme.colorScheme.surface,
+        fallbackContentColors = listOf(
+            MaterialTheme.colorScheme.onSurface,
+            MaterialTheme.colorScheme.onBackground,
+        ),
+    )
     AppSurface(
         onClick = onClick,
         modifier = modifier.heightIn(min = AppSpacingTokens.TripleExtraLarge),
         shape = AppShapes.borderedContainer(ContainerLevel.Pill),
-        color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.94f),
+        color = chipColors.containerColor,
         border = androidx.compose.foundation.BorderStroke(
             AppSpacingTokens.Micro / 2f,
             MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.40f)
@@ -1637,13 +1647,13 @@ private fun LiveRedPocketChip(
             AppIcon(
                 imageVector = Icons.Outlined.CardGiftcard,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onErrorContainer,
+                tint = chipColors.contentColor,
                 modifier = Modifier.size(compactChrome.smallIconSizeDp.dp)
             )
             Spacer(Modifier.width(AppSpacingTokens.ExtraSmall))
             AppText(
                 text = label,
-                color = MaterialTheme.colorScheme.onErrorContainer,
+                color = chipColors.contentColor,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,

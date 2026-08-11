@@ -716,18 +716,9 @@ class VideoSharedTransitionPolicyTest {
                     "HOME_STYLE_SINGLE_COLUMN_COVER_WIDTH = AppSpacingTokens.TripleExtraLarge * 3"
                 )
         )
-        assertTrue(relatedCardSource.contains("videoCardShellSharedBoundsOrEmpty("))
-        assertTrue(
-            relatedCardSource.indexOf(".onGloballyPositioned") <
-                relatedCardSource.indexOf(".videoCardShellSharedBoundsOrEmpty(")
-        )
-        // 相关横卡由整行承载 shell，使封面、标题和元数据沿卡片中心由下向上移动。
-        assertTrue(relatedCardSource.contains("clipShape = cardShape"))
-        assertTrue(
-            relatedCardSource.indexOf(".videoCardShellSharedBoundsOrEmpty(") <
-                relatedCardSource.indexOf(".clip(cardShape)")
-        )
-        assertTrue(relatedCardSource.contains("crossfadeSourceContent = true"))
+        assertFalse(relatedCardSource.contains("videoCardShellSharedBoundsOrEmpty("))
+        assertTrue(relatedCardSource.contains("sourceLayout = VideoCardSourceLayout.SIDE_BY_SIDE"))
+        assertTrue(relatedCardSource.contains("sourceChromeSnapshot = VideoCardSourceChromeSnapshot("))
         assertFalse(relatedCardSource.contains("videoCardShellReturnChromeAlpha("))
         assertFalse(relatedCardSource.contains("followShellMotion = true"))
         assertFalse(partitionSource.contains("videoTitleSharedElementKey("))

@@ -86,7 +86,7 @@ fun getIconGroups(): List<IconGroup> {
                 IconOption("icon_bilipai", "BiliPai", "全新品牌图标", R.mipmap.ic_launcher_bilipai_round),
                 IconOption("icon_bilipai_pink", "BiliPai 粉", "同款粉色", R.mipmap.ic_launcher_bilipai_pink_round),
                 IconOption("icon_bilipai_white", "BiliPai 白", "霜白配色", R.mipmap.ic_launcher_bilipai_white_round),
-                IconOption("icon_bilipai_monet", "BiliPai Monet", "跟随壁纸取色", R.mipmap.ic_launcher_bilipai_monet_round)
+                IconOption("icon_bilipai_monet", "BiliPai Monet", "随系统主题图标取色", R.mipmap.ic_launcher_bilipai_monet_round)
             )
         )
     )

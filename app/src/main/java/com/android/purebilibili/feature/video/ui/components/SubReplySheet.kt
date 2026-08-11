@@ -6,9 +6,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Rect
+import com.android.purebilibili.core.ui.LocalNavigationBackHandler
 import com.android.purebilibili.data.model.response.ReplyItem
 import com.android.purebilibili.feature.dynamic.components.ImagePreviewTextContent
 import com.android.purebilibili.feature.video.viewmodel.SubReplyUiState
+import top.yukonga.miuix.kmp.nav.gesture.WindowNavigationEventBridge
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,6 +44,11 @@ fun SubReplySheet(
             modifier = Modifier.fillMaxHeight(maxHeightFraction),
             scrimColor = Color.Black.copy(alpha = scrimAlpha)
         ) {
+            WindowNavigationEventBridge()
+            LocalNavigationBackHandler(
+                enabled = true,
+                onBackCompleted = onDismiss,
+            )
             SubReplyDetailContent(
                 rootReply = rootReply,
                 subReplies = state.items,

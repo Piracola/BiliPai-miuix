@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import com.android.purebilibili.core.ui.transition.resolveVideoCardSourceChromeReturnAlpha
+import com.android.purebilibili.core.ui.transition.VideoCardSourceLayout
 import top.yukonga.miuix.kmp.nav.transition.NavMotion
 import top.yukonga.miuix.kmp.nav.transition.NavRole
 import top.yukonga.miuix.kmp.nav.transition.NavSettleSpec
@@ -21,8 +21,31 @@ import top.yukonga.miuix.kmp.nav.transition.NavTransition
 import top.yukonga.miuix.kmp.nav.transition.NavTransitionScope
 
 internal enum class MiuixVideoCardContentScale {
+    /** Home dual-column / stacked cards: media fills card width, pinned to top. */
     FillWidthTop,
+    /** Fullscreen, side-by-side, or square-ish morphs: cover scale about center. */
     CropCenter,
+}
+
+/**
+ * Pick entry content compensation from the frozen source layout.
+ * Side-by-side related/home single-column rows avoid FillWidthTop's vertical stretch
+ * (which reads as "whole page crushed into a thin strip").
+ */
+internal fun resolveMiuixVideoCardContentScaleForSourceLayout(
+    sourceLayout: VideoCardSourceLayout,
+    fullscreen: Boolean = false,
+): MiuixVideoCardContentScale {
+    if (fullscreen) return MiuixVideoCardContentScale.CropCenter
+    // FillWidthTop for both STACKED and SIDE_BY_SIDE so inverse-scale landing
+    // (1/sourceScale) + outer non-uniform scale maps to the frozen card bounds.
+    // CropCenter shifts top-left landing anchors and turns horizontal cards into black strips.
+    return when (sourceLayout) {
+        VideoCardSourceLayout.SIDE_BY_SIDE,
+        VideoCardSourceLayout.STACKED,
+        VideoCardSourceLayout.COVER_ONLY,
+        -> MiuixVideoCardContentScale.FillWidthTop
+    }
 }
 
 internal data class MiuixVideoCardContentCompensation(
@@ -36,8 +59,6 @@ internal data class MiuixVideoCardClipRadii(
     val radiusY: Float,
 )
 
-private const val MIUIX_WIDE_VIDEO_CARD_MIN_ASPECT_RATIO = 1.45f
-
 /** Top entry depth is 0 at rest and moves toward -1 while returning. */
 internal fun resolveMiuixVideoCardDepthProgress(relativeDepth: Float): Float =
     topProgress(relativeDepth)
@@ -45,7 +66,7 @@ internal fun resolveMiuixVideoCardDepthProgress(relativeDepth: Float): Float =
 /**
  * Keeps the corner circular in screen space while the outer card layer scales non-uniformly.
  * A regular RoundedCornerShape is scaled together with the layer and becomes too small on the
- * compressed axis, which exposes the retained source card at the end of a 16:9 return.
+ * compressed axis, which exposes the retained source card near the end of a card return.
  */
 internal fun resolveMiuixVideoCardClipRadii(
     sourceCornerPx: Float,
@@ -59,28 +80,6 @@ internal fun resolveMiuixVideoCardClipRadii(
     )
 }
 
-/**
- * Wide/16:9 shells cannot geometrically reproduce their source content by scaling the whole
- * detail page. During the final return segment, reveal the real retained source card using the
- * same 68%–94% settle window as source-card chrome.
- *
- * [isGestureSeeking]：预测返回手势 seek 中（未松手提交）保持整层不透明，
- * 避免 morph 接近列表时内容提前淡出、实时画面被源卡色块替换；
- * 松手进入 commit settle 后才走淡出交接。
- */
-internal fun resolveMiuixVideoCardReturnContentAlpha(
-    sourceBounds: Rect,
-    morphProgress: Float,
-    isReturning: Boolean,
-    isGestureSeeking: Boolean = false,
-): Float {
-    if (!isReturning) return 1f
-    if (isGestureSeeking) return 1f
-    val aspectRatio = sourceBounds.width / sourceBounds.height.coerceAtLeast(1f)
-    if (aspectRatio < MIUIX_WIDE_VIDEO_CARD_MIN_ASPECT_RATIO) return 1f
-    return 1f - resolveVideoCardSourceChromeReturnAlpha(morphProgress)
-}
-
 private data class MiuixVideoCardClipShape(
     val radiusX: Float,
     val radiusY: Float,
@@ -92,6 +91,8 @@ private data class MiuixVideoCardClipShape(
     ): Outline {
         return Outline.Rounded(
             RoundRect(
+                // The flying entry remains a complete opaque card. Player → cover and the
+                // detail-owned source-card chrome are transformed inside this moving boundary.
                 rect = Rect(0f, 0f, size.width, size.height),
                 cornerRadius = CornerRadius(
                     x = radiusX.coerceIn(0f, size.width / 2f),
@@ -144,6 +145,15 @@ internal class MiuixVideoCardTransitionProgress {
         ?: fallback.coerceIn(0f, 1f)
 
     fun isGestureInProgress(): Boolean = topScope?.gesture != null
+
+    /**
+     * Host layout width used by outer morph (`bounds.width / layoutSize.width`).
+     * Landing inverse scale must use the same width or land size drifts from the list card.
+     */
+    fun layoutWidthOr(fallback: Float): Float {
+        val w = topScope?.layoutSize?.width?.toFloat() ?: return fallback.coerceAtLeast(1f)
+        return w.coerceAtLeast(1f)
+    }
 
     /**
      * 预测返回手势进度（0=开始 → 1=完全提交），无手势时为 null。
@@ -207,15 +217,11 @@ internal fun miuixVideoCardNavTransition(
                     transformOrigin = TransformOrigin(0f, 0f)
                     translationX = bounds.left.coerceIn(-width, width) * (1f - morph)
                     translationY = bounds.top.coerceIn(-height, height) * (1f - morph)
-                    // Keep ordinary/vertical cards fully opaque. Wide shells hand off during the
-                    // shared 68%–94% source-chrome window, before the card reaches its final slot.
-                    // 预测返回手势 seek 中（未松手）不淡出，避免画面提前消失被源卡色块替换。
-                    alpha = resolveMiuixVideoCardReturnContentAlpha(
-                        sourceBounds = bounds,
-                        morphProgress = morph,
-                        isReturning = scope.role == NavRole.Outgoing,
-                        isGestureSeeking = scope.gesture != null && scope.settle == null,
-                    )
+                    // Geometry belongs to this one flying entry. Never reveal the retained card
+                    // at its stationary list position by fading or clipping the navigation entry.
+                    // Source-card text is composed by the outgoing detail entry itself; the
+                    // retained list card is never lifted from its stationary page.
+                    alpha = 1f
                     clip = morph < 0.999f
                     val clipRadii = resolveMiuixVideoCardClipRadii(
                         sourceCornerPx = corner.dp.toPx(),

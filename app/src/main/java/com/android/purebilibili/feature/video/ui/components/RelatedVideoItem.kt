@@ -1,7 +1,6 @@
 package com.android.purebilibili.feature.video.ui.components
 
 import android.widget.Toast
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -29,9 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,14 +56,10 @@ import com.android.purebilibili.core.store.TodayWatchFeedbackStore
 import com.android.purebilibili.core.store.withDislikedVideoFeedback
 import com.android.purebilibili.core.ui.AppAlertDialog
 import com.android.purebilibili.core.ui.AppDialogAction
-import com.android.purebilibili.core.ui.LocalAnimatedVisibilityScope
-import com.android.purebilibili.core.ui.LocalSharedTransitionScope
 import com.android.purebilibili.core.ui.components.UpBadgeName
 import com.android.purebilibili.core.ui.transition.LocalVideoCardSharedElementSourceRoute
-import com.android.purebilibili.core.ui.transition.LocalVideoSharedTransitionSpeedSettings
-import com.android.purebilibili.core.ui.transition.resolveVideoCardSharedTransitionMotionSpec
-import com.android.purebilibili.core.ui.transition.shouldUseVideoCardShellSharedBounds
-import com.android.purebilibili.core.ui.transition.videoCardShellSharedBoundsOrEmpty
+import com.android.purebilibili.core.ui.transition.VideoCardSourceChromeSnapshot
+import com.android.purebilibili.core.ui.transition.VideoCardSourceLayout
 import com.android.purebilibili.core.util.CardPositionManager
 import com.android.purebilibili.core.util.FormatUtils
 import com.android.purebilibili.core.util.HapticType
@@ -94,11 +87,6 @@ import kotlinx.coroutines.withContext
 internal const val RELATED_VIDEO_CARD_COVER_ASPECT_RATIO = 4f / 3f
 
 internal const val RELATED_VIDEO_GRID_COLUMNS = 1
-
-internal fun shouldDeferRelatedVideoNavigationForSharedTransition(
-    sharedTransitionEnabled: Boolean,
-    cardTransitionEnabled: Boolean,
-): Boolean = sharedTransitionEnabled && !cardTransitionEnabled
 
 /**
  * Related Videos Header
@@ -148,11 +136,6 @@ internal fun resolveRelatedVideoSharedElementSourceRoute(sourceRoute: String?): 
         ?: VideoRoute.base
 }
 
-@Suppress("UNUSED_PARAMETER")
-internal fun shouldEnableRelatedVideoMetadataSharedBounds(
-    transitionEnabled: Boolean
-): Boolean = false
-
 internal fun chunkRelatedVideosForHomeStyleGrid(
     videos: List<RelatedVideo>,
 ): List<List<RelatedVideo>> {
@@ -171,29 +154,17 @@ internal fun rememberRelatedVideoCardLayout(): HomeFeedCardLayout {
     }
 }
 
-/** 相关推荐单列横卡：整卡进入 shared overlay，封面、标题与元数据一起移动。 */
-@OptIn(ExperimentalSharedTransitionApi::class)
+/** 相关推荐单列横卡：点击时冻结整卡与封面几何，由 Miuix NavTransition 接管飞行。 */
 @Composable
 fun RelatedVideoItem(
     video: RelatedVideo,
     isFollowed: Boolean = false,
-    transitionEnabled: Boolean = false,
-    sharedTransitionEnabled: Boolean = transitionEnabled,
     showUpBadge: Boolean = true,
     coverAspectRatio: Float = RELATED_VIDEO_CARD_COVER_ASPECT_RATIO,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
     onMoreClick: (() -> Unit)? = null
 ) {
-    val clickScope = rememberCoroutineScope()
-    var forceSharedTransitionForClick by remember { mutableStateOf(false) }
-    val effectiveTransitionEnabled = transitionEnabled || forceSharedTransitionForClick
-    val latestOnClick by rememberUpdatedState(onClick)
-    val sharedTransitionScope = LocalSharedTransitionScope.current
-    val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
-    val sharedReady = effectiveTransitionEnabled &&
-        sharedTransitionScope != null &&
-        animatedVisibilityScope != null
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
     val screenWidthPx = remember(configuration.screenWidthDp, density) {
@@ -206,15 +177,8 @@ fun RelatedVideoItem(
     val sourceRoute = resolveRelatedVideoSharedElementSourceRoute(
         LocalVideoCardSharedElementSourceRoute.current
     )
-    val sharedTransitionSpeedSettings = LocalVideoSharedTransitionSpeedSettings.current
-    val cardSharedTransitionMotionSpec = remember(sourceRoute, effectiveTransitionEnabled, sharedTransitionSpeedSettings) {
-        resolveVideoCardSharedTransitionMotionSpec(
-            sourceRoute = sourceRoute,
-            transitionEnabled = effectiveTransitionEnabled,
-            speedSettings = sharedTransitionSpeedSettings
-        )
-    }
     val cardCoordinatesRef = remember { object { var value: LayoutCoordinates? = null } }
+    val coverCoordinatesRef = remember { object { var value: LayoutCoordinates? = null } }
     val triggerRelatedVideoClick = {
         cardCoordinatesRef.value
             ?.takeIf { it.isAttached }
@@ -227,24 +191,23 @@ fun RelatedVideoItem(
                     screenWidth = screenWidthPx,
                     screenHeight = screenHeightPx,
                     density = densityValue,
-                    sourceCornerDp = 12
+                    sourceCornerDp = 12,
+                    coverBounds = coverCoordinatesRef.value
+                        ?.takeIf { it.isAttached }
+                        ?.boundsInRoot(),
+                    sourceLayout = VideoCardSourceLayout.SIDE_BY_SIDE,
+                    sourceChromeSnapshot = VideoCardSourceChromeSnapshot(
+                        title = video.title,
+                        ownerName = video.owner.name,
+                        ownerFaceUrl = video.owner.face,
+                        viewText = FormatUtils.formatStat(video.stat.view.toLong()),
+                        danmakuText = FormatUtils.formatStat(video.stat.danmaku.toLong()),
+                        durationText = FormatUtils.formatDuration(video.duration),
+                        followed = isFollowed,
+                    ),
                 )
             }
-        if (shouldDeferRelatedVideoNavigationForSharedTransition(
-                sharedTransitionEnabled = sharedTransitionEnabled,
-                cardTransitionEnabled = effectiveTransitionEnabled,
-            )
-        ) {
-            forceSharedTransitionForClick = true
-            clickScope.launch {
-                // First frame applies the shared-bounds modifier; the second measures it before navigation.
-                withFrameNanos { }
-                withFrameNanos { }
-                latestOnClick()
-            }
-        } else {
-            latestOnClick()
-        }
+        onClick()
         Unit
     }
     val cardShape = AppShapes.container(ContainerLevel.Card)
@@ -257,10 +220,6 @@ fun RelatedVideoItem(
     val titleTwoLinesHeight = contentTypography.title.lineHeight.let { line ->
         if (line.isSp) line else contentTypography.title.fontSize * 1.2f
     }.let { with(density) { (it * 2).toDp() } }
-    val useCardShellSharedBounds = shouldUseVideoCardShellSharedBounds(
-        sourceRoute = sourceRoute,
-        transitionEnabled = sharedReady
-    )
     val context = LocalContext.current
     val coverRequest = remember(video.pic) {
         ImageRequest.Builder(context)
@@ -275,16 +234,6 @@ fun RelatedVideoItem(
             .onGloballyPositioned { coordinates ->
                 cardCoordinatesRef.value = coordinates
             }
-            .videoCardShellSharedBoundsOrEmpty(
-                enabled = useCardShellSharedBounds,
-                sharedTransitionScope = sharedTransitionScope,
-                animatedVisibilityScope = animatedVisibilityScope,
-                bvid = video.bvid,
-                sourceRoute = sourceRoute,
-                motionSpec = cardSharedTransitionMotionSpec,
-                clipShape = cardShape,
-                crossfadeSourceContent = true
-            )
             .clip(cardShape)
             .background(AppSurfaceTokens.cardContainer())
             .clickable(onClick = triggerRelatedVideoClick)
@@ -296,6 +245,9 @@ fun RelatedVideoItem(
             modifier = Modifier
                 .width(coverWidth)
                 .height(coverHeight)
+                .onGloballyPositioned { coordinates ->
+                    coverCoordinatesRef.value = coordinates
+                }
                 .clip(coverShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
@@ -437,7 +389,6 @@ internal fun RelatedVideoGridRow(
     videos: List<RelatedVideo>,
     cardLayout: HomeFeedCardLayout,
     followingMids: Set<Long> = emptySet(),
-    transitionEnabled: Boolean = false,
     showUpBadge: Boolean = true,
     onVideoClick: (RelatedVideo) -> Unit,
     onVideoHidden: ((RelatedVideo) -> Unit)? = null,
@@ -459,10 +410,6 @@ internal fun RelatedVideoGridRow(
             RelatedVideoItem(
                 video = video,
                 isFollowed = video.owner.mid in followingMids,
-                // Keep sharedBounds out of the scrolling tree. It is mounted for two frames
-                // by RelatedVideoItem only after a click requests navigation.
-                transitionEnabled = false,
-                sharedTransitionEnabled = transitionEnabled,
                 showUpBadge = showUpBadge,
                 coverAspectRatio = cardLayout.coverAspectRatio,
                 modifier = Modifier.fillMaxWidth(),

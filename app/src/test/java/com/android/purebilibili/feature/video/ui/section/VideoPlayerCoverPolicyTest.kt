@@ -461,7 +461,9 @@ class VideoPlayerCoverPolicyTest {
             .substringBefore("PortraitInlineVideoPlayerHost(")
 
         assertTrue(residentCoverBlock.contains(".crossfade(false)"))
-        assertTrue(residentCoverBlock.contains("resolveVideoDetailReturnCoverAlpha("))
+        assertTrue(residentCoverBlock.contains("resolveVideoDetailReturnMediaFrame("))
+        assertTrue(residentCoverBlock.contains(").coverAlpha"))
+        assertTrue(residentCoverBlock.contains(".zIndex(1f)"))
         // 返回封面透明度由合成视觉进度驱动：animatedVisibility 进度 + morph 深度进度
         assertTrue(residentCoverBlock.contains("resolveVideoDetailReturnVisualProgress("))
         assertTrue(residentCoverBlock.contains("animatedVisibilityProgress ="))

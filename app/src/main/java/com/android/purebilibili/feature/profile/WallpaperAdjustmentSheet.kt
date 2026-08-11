@@ -1,4 +1,6 @@
 package com.android.purebilibili.feature.profile
+
+import com.android.purebilibili.core.theme.opaqueCompositeOver
 import com.android.purebilibili.core.ui.components.AppIcon
 import com.android.purebilibili.core.ui.components.AppText
 
@@ -102,7 +104,12 @@ fun WallpaperAdjustmentSheet(
                     .fillMaxWidth()
                     .padding(horizontal = 32.dp, vertical = 8.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f))
+                    .background(
+                        opaqueCompositeOver(
+                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                            MaterialTheme.colorScheme.surface,
+                        )
+                    )
                     .padding(4.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
@@ -292,7 +299,12 @@ fun ProfileWallpaperAdjustmentSheet(
                     .fillMaxWidth()
                     .padding(horizontal = 32.dp, vertical = 8.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f))
+                    .background(
+                        opaqueCompositeOver(
+                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                            MaterialTheme.colorScheme.surface,
+                        )
+                    )
                     .padding(4.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {

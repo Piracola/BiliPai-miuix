@@ -58,19 +58,6 @@ class DanmakuSyncPolicyTest {
     }
 
     @Test
-    fun speedChange_forcesHardResyncWhenPlaybackRateActuallyChanges() {
-        assertEquals(
-            DanmakuSyncAction.HardResync,
-            resolveDanmakuActionForPlaybackSpeedChange(
-                previousSpeed = 1.0f,
-                newSpeed = 1.5f,
-                isPlayerPlaying = true,
-                hasData = true
-            )
-        )
-    }
-
-    @Test
     fun foregroundRecovery_resyncsActivePlaybackSession() {
         assertEquals(
             DanmakuSyncAction.HardResync,

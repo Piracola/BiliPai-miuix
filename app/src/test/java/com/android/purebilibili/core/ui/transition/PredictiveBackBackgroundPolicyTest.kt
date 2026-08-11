@@ -172,6 +172,13 @@ class PredictiveBackBackgroundPolicyTest {
                 targetBackKey = BiliPaiNavKey.MainHost,
             )
         )
+        assertFalse(
+            shouldApplyPredictiveBackBlurToRoute(
+                entryKey = BiliPaiNavKey.MainHost,
+                targetBackKey = BiliPaiNavKey.MainHost,
+                videoCardBackgroundApplied = true,
+            )
+        )
         assertTrue(
             shouldApplyPredictiveBackBlurToRoute(
                 entryKey = BiliPaiNavKey.Search,

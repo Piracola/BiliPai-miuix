@@ -81,6 +81,7 @@ internal fun FavoritePersonalCard(
     }
     val useSharedBounds = shouldUseVideoCardShellSharedBounds(sourceRoute, sharedElementReady)
     val cardBounds = remember { object { var value: androidx.compose.ui.geometry.Rect? = null } }
+    val coverBounds = remember { object { var value: androidx.compose.ui.geometry.Rect? = null } }
     val progressState = remember(item.progress, item.duration, item.view_at) {
         resolveVideoDisplayProgressState(
             serverProgressSec = item.progress,
@@ -98,6 +99,7 @@ internal fun FavoritePersonalCard(
                     screenWidth = configuration.screenWidthDp * density.density,
                     screenHeight = configuration.screenHeightDp * density.density,
                     sourceCornerDp = 12,
+                    coverBounds = coverBounds.value,
                 )
             }
         }
@@ -105,6 +107,9 @@ internal fun FavoritePersonalCard(
     }
 
     PersonalMediaCardFrame(
+        coverModifier = Modifier.onGloballyPositioned {
+            coverBounds.value = it.boundsInRoot()
+        },
         modifier = modifier
             .videoCardShellSharedBoundsOrEmpty(
                 enabled = useSharedBounds,

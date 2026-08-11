@@ -9,6 +9,33 @@ import kotlin.test.assertTrue
 class ThemeContrastPolicyTest {
 
     @Test
+    fun `translucent container is flattened before resolving readable content`() {
+        val result = resolveAccessibleContainerColors(
+            containerColor = Color(0xFF80D8FF).copy(alpha = 0.4f),
+            contentColor = Color(0xFF006064),
+            backgroundColor = Color(0xFF101418),
+            fallbackContentColors = listOf(Color.White, Color.Black),
+        )
+
+        assertEquals(1f, result.containerColor.alpha)
+        assertEquals(1f, result.contentColor.alpha)
+        assertTrue(calculateContrastRatio(result.contentColor, result.containerColor) >= 4.5f)
+    }
+
+    @Test
+    fun `ui contrast resolver accepts three to one threshold`() {
+        val result = resolveAccessibleContainerColors(
+            containerColor = Color(0xFFFF0000).copy(alpha = 0.2f),
+            contentColor = Color(0xFF777777),
+            backgroundColor = Color.White,
+            fallbackContentColors = listOf(Color.Black),
+            minimumContrast = ACCESSIBLE_UI_MIN_CONTRAST,
+        )
+
+        assertTrue(calculateContrastRatio(result.contentColor, result.containerColor) >= 3f)
+    }
+
+    @Test
     fun `dynamic light scheme keeps readable text colors unchanged`() {
         val scheme = lightColorScheme(
             background = Color(0xFFF6F7FB),
@@ -45,7 +72,7 @@ class ThemeContrastPolicyTest {
 
         assertTrue(calculateContrastRatio(result.onBackground, result.background) >= 4.5f)
         assertTrue(calculateContrastRatio(result.onSurface, result.surface) >= 4.5f)
-        assertTrue(calculateContrastRatio(result.onSurfaceVariant, result.surfaceVariant) >= 3.0f)
+        assertTrue(calculateContrastRatio(result.onSurfaceVariant, result.surfaceVariant) >= 4.5f)
         assertTrue(calculateContrastRatio(result.onPrimary, result.primary) >= 4.5f)
         assertTrue(calculateContrastRatio(result.onPrimaryContainer, result.primaryContainer) >= 4.5f)
         assertTrue(calculateContrastRatio(result.onSecondaryContainer, result.secondaryContainer) >= 4.5f)

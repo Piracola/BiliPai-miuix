@@ -80,6 +80,10 @@ class AppPreferenceApiStructureTest {
             File("app/src/main/java/com/android/purebilibili/feature/settings"),
             File("src/main/java/com/android/purebilibili/feature/settings"),
         ).first(File::isDirectory)
+        val pluginRoot = listOf(
+            File("app/src/main/java/com/android/purebilibili/feature/plugin"),
+            File("src/main/java/com/android/purebilibili/feature/plugin"),
+        ).first(File::isDirectory)
         val selectionSource = loadSource(
             "app/src/main/java/com/android/purebilibili/feature/settings/SettingsSelectionComponents.kt"
         )
@@ -92,10 +96,14 @@ class AppPreferenceApiStructureTest {
         val screenSources = settingsRoot.walkTopDown()
             .filter { it.isFile && it.extension == "kt" && it.name.endsWith("SettingsScreen.kt") }
             .joinToString("\n") { it.readText() }
+        val pluginSources = pluginRoot.walkTopDown()
+            .filter { it.isFile && it.extension == "kt" }
+            .joinToString("\n") { it.readText() }
 
         assertTrue(selectionSource.contains("AppSingleChoicePreference("))
         assertFalse(screenSources.contains("AppSegmentedPreference("))
         assertFalse(screenSources.contains("AppSegmentedControl("))
+        assertFalse(pluginSources.contains("AppNativeSegmentedControl("))
         assertFalse(screenSources.contains("AppSlider("))
         assertTrue(screenSources.contains("AppSliderDialogPreference("))
         assertFalse(appearanceSource.contains("ThemePresetDropdownSetting("))

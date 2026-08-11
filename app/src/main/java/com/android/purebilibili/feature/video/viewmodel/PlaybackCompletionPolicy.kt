@@ -17,7 +17,6 @@ internal fun shouldSuppressPlaybackCompletionForCommentInteraction(
     commentInteractionActive: Boolean
 ): Boolean = commentInteractionActive
 
-@Suppress("UNUSED_PARAMETER")
 internal fun resolvePlaybackEndAction(
     behavior: PlaybackCompletionBehavior,
     autoPlayEnabled: Boolean,
@@ -31,11 +30,12 @@ internal fun resolvePlaybackEndAction(
         PlaybackCompletionBehavior.REPEAT_ONE -> PlaybackEndAction.REPEAT_CURRENT
         PlaybackCompletionBehavior.LOOP_PLAYLIST -> PlaybackEndAction.PLAY_NEXT_IN_PLAYLIST_LOOP
         PlaybackCompletionBehavior.CONTINUE_CURRENT_LOGIC -> {
-            // “自动”只延续当前播放上下文：分P/合集继续，普通单视频停住，避免误跳推荐视频。
+            // “自动”只延续当前播放上下文：分P/合集受“自动播放下一个”控制，
+            // 外部列表由自己的连续播放开关控制，普通单视频停住，避免误跳推荐视频。
             val shouldAutoContinue = if (isExternalPlaylist) {
                 externalPlaylistAutoContinueEnabled
             } else {
-                hasNextPageOrSeasonTarget
+                autoPlayEnabled && hasNextPageOrSeasonTarget
             }
             if (shouldAutoContinue) {
                 PlaybackEndAction.AUTO_CONTINUE
