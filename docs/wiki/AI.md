@@ -1,6 +1,6 @@
 # AI Source Map / AI 事实导航
 
-最后核对：2026-08-04。本文只提供仓库路径与事实优先级，不替代源码检查。
+本文只提供仓库路径与事实优先级；它不复制易变化的版本、依赖或发布状态，也不替代源码检查。
 
 ## 推荐入口
 
@@ -24,7 +24,7 @@
 | 路径 | 职责 |
 | --- | --- |
 | `app/` | Android 主应用、功能界面、播放器、Navigation3 编排和测试 |
-| `design-system/` | iOS、Material 3、Miuix 共用的主题、组件与视觉策略 |
+| `design-system/` | MIUIX / Material 3 共用的主题、组件与视觉策略 |
 | `settings-core/` | 可复用设置与偏好逻辑 |
 | `network-core/` | 网络策略与底层网络支持 |
 | `plugin-sdk/` | 外部插件可依赖的稳定接口 |
@@ -51,8 +51,6 @@
 4. Wiki 与插件开发文档。
 5. `README.md` / `README_EN.md`。
 
-当前 `app/build.gradle.kts` 声明构建 `0.2.0 / versionCode 284`（`MAJOR.MINOR.PATCH`）；`CHANGELOG.md` 最新记录为 `v0.2.0`。公开发布状态仍以 GitHub / Telegram 为准。
-
-当前构建基线为 AGP 9.3.1、Gradle 9.5、Kotlin 2.4、compileSdk 37；Navigation3 runtime/UI 使用官方同版 `1.2.0-alpha07`，Miuix `0.9.3` 继续用于主题与视觉组件，不再提供 NavDisplay 实现。
+当前构建版本、变体和依赖直接读取 `app/build.gradle.kts`、根构建配置与版本目录；已发布版本和用户可见变更直接读取 `CHANGELOG.md`。不要把本页当作这两类事实的第二来源。
 
 `AI.txt` 与 `llm.txt` 是兼容入口，主入口为 [`../../llms.txt`](../../llms.txt)。

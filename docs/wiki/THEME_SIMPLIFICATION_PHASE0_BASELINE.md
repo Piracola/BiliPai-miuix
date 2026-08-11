@@ -1,7 +1,7 @@
 # 阶段 0 基线审计报告（主题与前端架构精简）
 
 > 关联计划：[前端架构与主题精简优化计划](FRONTEND_ARCHITECTURE_THEME_SIMPLIFICATION_PLAN.md)
-> 状态：阶段 0 已完成，可进入阶段 1
+> 状态：历史阶段 0 快照。数值和源码路径只描述 2026-08-04 的审计起点，不是当前实现事实。
 > 清单生成命令：[theme_simplification_inventory.ps1](../../scripts/theme_simplification_inventory.ps1)
 > 生成产物：`docs/theme_simplification_inventory/*.csv`
 
@@ -33,10 +33,10 @@
 ## 3. 关键结构事实（影响各阶段设计）
 
 1. **四套平行枚举**：`UiPreset`(IOS/MD3) + `AndroidNativeVariant`(MATERIAL3/MIUIX) 持久化于旧键；`UiStyle`、`AppThemeSelection`、`PresetPrimitiveRenderer` 均为派生模型。
-2. **默认值仍为 IOS/MATERIAL3**：[UiPreset.kt](../design-system/src/main/java/com/android/purebilibili/core/theme/UiPreset.kt) 中 `LocalUiPreset = { IOS }`、`fromValue` 兜底 `IOS`；[Theme.kt](../app/src/main/java/com/android/purebilibili/core/theme/Theme.kt) 中 `PureBiliBiliTheme(uiPreset = IOS)`；`SettingsViewModel.SettingsUiState(themeSelection = IOS)`。
-3. **AppIcons.kt 已是语义入口但按主题分发**：每个 `rememberApp*Icon()` 都按 `(LocalUiPreset, LocalAndroidNativeVariant)` 返回 Cupertino 或 Material 图标（[AppIcons.kt](../design-system/src/main/java/com/android/purebilibili/core/ui/AppIcons.kt)），共 54 个 Material + 17 个 Cupertino import。阶段 5 的核心改动点是去掉分发、改为单一 Miuix 风格映射。
-4. **旧键读写位置**：[SettingsManager.kt](../app/src/main/java/com/android/purebilibili/core/store/SettingsManager.kt) 定义 L1107-1108，读取 L1778-1780（AppThemeSettings）与 L1967-1969（getUiStyle），写入 L1952-1977（setUiPreset/setAndroidNativeVariant/setUiStyle），分享定义 L6308-6309。
-5. **iOS 色板 = 应用语义色**：[Color.kt](../design-system/src/main/java/com/android/purebilibili/core/theme/Color.kt) 的 23 个 `iOS*` 常量（iOSPink 点赞、iOSYellow 投币、iOSOrange 收藏、iOSTeal 评论、iOSPurple 三连、iOSSystemGray* 层级灰）被 feature 大量使用，属于"通用能力历史命名"，应改中性名而非删除。
+2. **默认值仍为 IOS/MATERIAL3**：[UiPreset.kt](../../design-system/src/main/java/com/android/purebilibili/core/theme/UiPreset.kt) 中 `LocalUiPreset = { IOS }`、`fromValue` 兜底 `IOS`；[Theme.kt](../../app/src/main/java/com/android/purebilibili/core/theme/Theme.kt) 中 `PureBiliBiliTheme(uiPreset = IOS)`；`SettingsViewModel.SettingsUiState(themeSelection = IOS)`。
+3. **AppIcons.kt 已是语义入口但按主题分发**：每个 `rememberApp*Icon()` 都按 `(LocalUiPreset, LocalAndroidNativeVariant)` 返回 Cupertino 或 Material 图标（[AppIcons.kt](../../design-system/src/main/java/com/android/purebilibili/core/ui/AppIcons.kt)），共 54 个 Material + 17 个 Cupertino import。阶段 5 的核心改动点是去掉分发、改为单一 Miuix 风格映射。
+4. **旧键读写位置**：[SettingsManager.kt](../../app/src/main/java/com/android/purebilibili/core/store/SettingsManager.kt) 定义 L1107-1108，读取 L1778-1780（AppThemeSettings）与 L1967-1969（getUiStyle），写入 L1952-1977（setUiPreset/setAndroidNativeVariant/setUiStyle），分享定义 L6308-6309。
+5. **iOS 色板 = 应用语义色**：[Color.kt](../../design-system/src/main/java/com/android/purebilibili/core/theme/Color.kt) 的 23 个 `iOS*` 常量（iOSPink 点赞、iOSYellow 投币、iOSOrange 收藏、iOSTeal 评论、iOSPurple 三连、iOSSystemGray* 层级灰）被 feature 大量使用，属于"通用能力历史命名"，应改中性名而非删除。
 6. **iOS 专属残留**：`IosLoadingIndicator.kt`、`IosContinuousCornerShape.kt`、Theme.kt 的 iOS 配色生成路径（createIosColorScheme/rememberIosColorScheme/alignIosColorSchemeWithDynamicAccent）。`IOSSectionTitle` 等旧包装组件已不存在（审计脚本模式零命中），说明此前已部分清理。
 7. **已有迁移护栏**：`MiuixV2MigrationStructureTest`、`BottomBarMiuixStructureTest`、`SettingsMiuixSimplificationStructureTest`、`DynamicNeutralUiStructureTest`、`HomeNavigationMiuixStructureTest` 等结构测试已存在，阶段 4/5 每批的"零直接 import"可沿用该模式扩展。
 

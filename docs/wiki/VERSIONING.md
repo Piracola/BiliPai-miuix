@@ -1,13 +1,13 @@
 # BiliPai 版本规范
 
-最后更新：2026-08-09
+本页只定义版本规则。当前开发版本以 `app/build.gradle.kts` 为准，已发布版本以 `CHANGELOG.md` 为准。
 
 ## 当前选择
 
 BiliPai 采用语义化版本号：
 
 ```text
-MAJOR.MINOR.PATCH
+MAJOR.MINOR.PATCH[-PRERELEASE]
 ```
 
 | 段 | 含义 | 何时递增 |
@@ -15,8 +15,9 @@ MAJOR.MINOR.PATCH
 | `MAJOR` | 大升级 / 不兼容或纪元级变更 | 第一位 +1，后两位归零 |
 | `MINOR` | 新功能 | 第二位 +1，`PATCH` 归零 |
 | `PATCH` | 修 bug / 小改进 | 第三位 +1 |
+| `PRERELEASE` | 预发布标识，如 `beta.2` | 同一候选迭代或公开测试时递增 |
 
-当前构建：`0.2.2` / `versionCode 287`。
+`PRERELEASE` 是可选后缀，不改变前三段的语义。例如 `1.4.0-beta.2` 是 `1.4.0` 的第二个预发布候选；稳定版移除后缀。
 
 - **不要**用日期充当 `versionName`（例如 `26.0805.1`）。
 - 应用 ID、签名和用户配置格式不变。
@@ -28,8 +29,8 @@ MAJOR.MINOR.PATCH
 
 | 位置 | 内容 |
 | --- | --- |
-| `versionName` / APK 名 | `0.2.2` |
-| 关于页建议 | `v0.2.2 · 287`，并可附短 commit / 构建日期 |
+| `versionName` / APK 名 | `MAJOR.MINOR.PATCH[-PRERELEASE]` |
+| 关于页建议 | `v<versionName> · <versionCode>`，并可附短 commit / 构建日期 |
 | Git 短 SHA / 完整 sha256 | 关于页、Telegram 说明、日志；**不**写入主 `versionName` |
 
 历史 `9.x` / 日历号 `YY.MMDD.N` / 先前 `0.1.0` 安装升级仍以 `versionCode` 为准。
@@ -37,31 +38,31 @@ MAJOR.MINOR.PATCH
 ## 递增规则
 
 1. **修 bug / 小改进**：`PATCH + 1`，同时 `versionCode + 1`  
-   - 例：`0.2.0` → `0.2.1`（code 284 → 285）
+   - 例：`1.4.0` → `1.4.1`
 2. **加功能**：`MINOR + 1`，`PATCH` 归 `0`，同时 `versionCode + 1`  
-   - 例：`0.2.2` → `0.3.0`
+   - 例：`1.4.1` → `1.5.0`
 3. **大升级**：`MAJOR + 1`，`MINOR`/`PATCH` 归 `0`，同时 `versionCode + 1`  
    - 例：`0.9.3` → `1.0.0`
 4. 仅工程变体后缀（不改变正式 `versionName` 主体）：  
    - debug：`versionNameSuffix = "-debug"`  
    - dev：`versionNameSuffix = "-dev"`  
    - smooth：`versionNameSuffix = "-smooth"`
-5. 稳定版 Git 标签：`v<versionName>`，例如 `v0.2.0`。
+5. 稳定版与预发布 Git 标签均为 `v<versionName>`，例如 `v1.5.0` 或 `v1.5.0-beta.1`；发布渠道必须明确是否为预发布。
 
 ## 示例
 
 ```text
-0.1.0    # 语义化 0.x 纪元起点
-0.2.0    # 功能更新（默认值、收藏夹风控等）
-0.2.1    # 补丁
-1.0.0    # 大版本
+1.4.0-beta.1  # 预发布候选
+1.4.0         # 稳定发布
+1.4.1         # 补丁
+2.0.0         # 大版本
 ```
 
 ## 与其它方案的关系
 
 | 方向 | 示例 | BiliPai |
 | --- | --- | --- |
-| 语义化 `X.Y.Z` | `0.2.0` | **当前采用** |
+| 语义化 `X.Y.Z[-PRERELEASE]` | `1.4.0-beta.1` | **当前采用** |
 | 两位年日历构建 | `26.0805.1` | 已结束（曾短暂使用） |
 | 四位年 | `2026.0805.1` | 不采用 |
 | 完整 sha256 进 versionName | — | 不采用 |
@@ -76,15 +77,15 @@ MAJOR.MINOR.PATCH
 - `build-metadata.json` 中的 `versionName`；
 - 交付 APK 文件名中的版本。
 
-Release APK：`BiliPai-<versionName>.apk`，例如 `BiliPai-0.2.2.apk`。
+Release APK：`BiliPai-<versionName>.apk`。
 Dev 验证包：`BiliPai-<versionName>-dev.apk`。
 
 ### 交付路径（不要拿 AGP 默认名）
 
 | 命令 | 用户交付文件 |
 | --- | --- |
-| `./gradlew :app:assembleRelease` | `app/build/outputs/bilipai/release/BiliPai-0.2.2.apk` |
-| `./gradlew :app:assembleDev` | `app/build/outputs/bilipai/dev/BiliPai-0.2.2-dev.apk` |
+| `./gradlew :app:assembleRelease` | `app/build/outputs/bilipai/release/BiliPai-<versionName>.apk` |
+| `./gradlew :app:assembleDev` | `app/build/outputs/bilipai/dev/BiliPai-<versionName>-dev.apk` |
 
 - `app/build/outputs/apk/**/app-*.apk` 或带 `-release` 后缀的中间产物**不是**对外交付名。
 - `assembleRelease` / `assembleDev` 会 `finalizedBy` 导出任务，强制写成 `BiliPai-` 前缀；命名校验会拒绝 `app-release` 一类默认名。

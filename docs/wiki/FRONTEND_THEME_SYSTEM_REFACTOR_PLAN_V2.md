@@ -1,10 +1,12 @@
 # BiliPai 双主题系统重构执行计划（简版）
 
+> 状态：历史方案草案，已被[前端架构与主题精简优化计划](FRONTEND_ARCHITECTURE_THEME_SIMPLIFICATION_PLAN.md)取代；不得将本文的旧基线或步骤视为当前事实。
+
 > 目标：让 MIUIX 与 Material 3 共用一套业务 UI 代码，主题差异集中在 design-system 内部。
 >
 > 执行对象：DeepSeek v4 Flash 或其他小尺寸代码模型。
 >
-> 当前基线：2026-08-06，代码尚未按本计划重构。
+> 原始基线：2026-08-06，记录保留用于追溯。
 
 ## 1. 最终目标
 

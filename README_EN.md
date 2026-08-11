@@ -5,11 +5,11 @@
 </p>
 
 <p align="center">
-  <sub>Last updated: 2026-08-05 · Current build: 0.2.0 · Latest documented release: v0.2.0</sub>
+<sub>Current development build: app/build.gradle.kts · Published releases: CHANGELOG.md</sub>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Release-0.2.0-fb7299?style=flat-square" alt="Release">
+<a href="CHANGELOG.md"><img src="https://img.shields.io/badge/Release-Changelog-fb7299?style=flat-square" alt="Release changelog"></a>
   <img src="https://img.shields.io/github/stars/jay3-yy/BiliPai?style=flat-square&color=yellow" alt="Stars">
   <img src="https://img.shields.io/github/forks/jay3-yy/BiliPai?style=flat-square&color=green" alt="Forks">
   <img src="https://img.shields.io/github/last-commit/jay3-yy/BiliPai?style=flat-square&color=purple" alt="Last Commit">
@@ -37,7 +37,7 @@
 | Developer Reference | [JSON Plugin Guide](docs/PLUGIN_DEVELOPMENT.md) · [Native Plugin Guide](docs/NATIVE_PLUGIN_DEVELOPMENT.md) |
 
 > [!CAUTION]
-> `README`, `AI.txt`, `llm.txt`, `llms.txt`, and the Wiki are maintained periodically, but fast-moving main-branch changes can still make parts of them stale. Treat them as reference only; verify current behavior with source, `CHANGELOG.md`, and real builds.
+> Current behavior and development version come from source and build configuration. Published changes and deliverable names come from `CHANGELOG.md`; this overview deliberately does not duplicate either.
 
 ## 📸 Preview
 
@@ -91,141 +91,11 @@
 
 First Visit Recommendation credits wangdaodao's original [TabulaBili](https://github.com/wangdaodaodao/TabulaBili) and tjsky's [TabulaBili-Plus](https://github.com/tjsky/TabulaBili), adapted here as a built-in Android plugin.
 
-#### Implemented Details (Supplement)
+Plugin schemas, capability boundaries, examples, and sample packages are maintained in the dedicated guides rather than duplicated here:
 
-- `Today Watch`:
-  - dual mode switch: `Relax Tonight` / `Deep Learning`
-  - UP ranking + recommendation queue + per-item explanation tags
-  - queue rows display uploader avatar + name for better readability
-  - linked with eye-care night signal (prefers shorter, lower-stimulation content at night)
-  - local negative-feedback learning (disliked video/uploader/keywords)
-  - one-shot cold-start exposure strategy so users can see the card on first screen
-  - one-tap reset of local profile + feedback in plugin settings
-- `Eye Protection 2.0`:
-  - 3 presets (`Gentle/Balanced/Focus`) + full DIY controls
-  - real-time brightness and warm-filter preview
-  - schedule + usage reminders + snooze
-  - improved humane reminder copy and pacing strategy
-- `Quality Switching`:
-  - quality options now follow the API list, while real DASH tracks decide which tiers stay switchable
-  - cache switching requires exact target quality match; falls back to API when missing
-  - clearer fallback toast when requested quality is unavailable
-
-#### Today Watch UI Example
-
-<p align="center">
-  <img src="docs/images/screenshot_today_watch_plan.png" alt="Today Watch screenshot" height="560">
-</p>
-
-#### Today Watch Algorithm (Detailed)
-
-1. Inputs
-
-- history sample from local watch history
-- candidate videos from home recommend feed
-- mode (`Relax` or `Learn`)
-- eye-care night signal
-- creator profile signals (cross-session local memory)
-- penalty signals (disliked video/uploader/keywords)
-
-2. Creator affinity build-up
-
-- filter valid history items (`bvid` not empty, valid `owner.mid`)
-- aggregate per-creator score with completion + recency bonus
-- merge cross-session profile signals from local store
-
-3. Candidate scoring
-
-- score = base popularity + creator affinity + freshness + mode score + night adjustment + feedback penalty + seen penalty
-- seen videos are explicitly penalized
-- mode score differs for Relax and Learn (duration + keyword orientation)
-- night adjustment favors short, low-stimulation items
-
-4. Diversity queue
-
-- queue is not pure score sort
-- each round applies anti-streak penalties for repeated creators
-- includes novelty bonus for unseen creators in the current queue
-
-5. Explainability and privacy
-
-- each queued item has explanation tags (e.g. `Learn · Mid Length · Night Friendly · Preferred Uploader`)
-- runs fully local; no history upload for personalization
-- users can clear local profile/feedback and restart recommendation learning
-
-<details>
-<summary><b>📖 JSON Rule Plugin Quick Start (Click to expand)</b></summary>
-
-#### What is a JSON Rule Plugin?
-
-A lightweight plugin format requiring **no coding**, just a simple JSON file to implement content filtering.
-
-#### Plugin Structure
-
-```json
-{
-    "id": "my_plugin",
-    "name": "My Plugin",
-    "description": "Plugin description",
-    "version": "1.0.0",
-    "author": "Your Name",
-    "type": "feed",
-    "rules": [
-        {
-            "field": "title",
-            "op": "contains",
-            "value": "Ad",
-            "action": "hide"
-        }
-    ]
-}
-```
-
-#### Supported Fields
-
-| Type | Field | Description |
-|------|------|------|
-| **Feed** | `title` | Video Title |
-| **Feed** | `duration` | Video Duration (seconds) |
-| **Feed** | `owner.mid` | Uploader UID |
-| **Feed** | `owner.name` | Uploader Name |
-| **Feed** | `stat.view` | Play Count |
-| **Danmaku** | `content` | Danmaku Content |
-
-#### Operators
-
-| Operator | Description | Example |
-|--------|------|------|
-| `contains` | Contains string | `"value": "Ad"` |
-| `regex` | Regular expression | `"value": "Shocking.*Must Watch"` |
-| `lt` / `gt` | Less than / Greater than | `"value": 60` |
-| `eq` / `ne` | Equal / Not Equal | `"value": 123456` |
-| `startsWith` | Starts with | `"value": "【"` |
-
-#### Example: Short Video Filter
-
-```json
-{
-    "id": "short_video_filter",
-    "name": "Short Video Filter",
-    "type": "feed",
-    "rules": [
-        { "field": "duration", "op": "lt", "value": 60, "action": "hide" }
-    ]
-}
-```
-
-#### Installation
-
-1. Upload the JSON file to a publicly accessible URL (e.g., GitHub Gist)
-2. In BiliPai, go to **Settings → Plugin Center → Import External Plugin**
-3. Paste the URL and install
-
-</details>
-
-> 📚 **Full Documentation**: [Plugin Development Guide](docs/PLUGIN_DEVELOPMENT.md)
->
-> 🧩 **Sample Plugins**: [plugins/samples/](plugins/samples/)
+- [JSON and external plugin guide](docs/PLUGIN_DEVELOPMENT.md)
+- [Native plugin guide](docs/NATIVE_PLUGIN_DEVELOPMENT.md)
+- [Sample plugins](plugins/samples/)
 
 ### 📺 Anime / Bangumi
 
@@ -254,7 +124,7 @@ A lightweight plugin format requiring **no coding**, just a simple JSON file to 
 | **Filtering** | Switch between All / Video Only |
 | **GIF Support** | Perfect rendering of GIF images in dynamic posts |
 | **Image Download** | Long press to preview and save to gallery |
-| **Image Preview** | Global non-dialog overlay with iOS-style open/close motion; comment scene uses top caption to avoid covering image content, with 3D-like text transition |
+| **Image Preview** | Global non-dialog overlay with immersive open/close motion; comment scene uses a top caption to avoid covering image content |
 | **@ Highlighting** | Auto-highlight @User mentions |
 
 ### 💬 Message Center & Direct Messages
@@ -289,9 +159,9 @@ A lightweight plugin format requiring **no coding**, just a simple JSON file to 
 
 | Feature | Description |
 |-----|-----|
-| **Material You** | Dynamic theming based on wallpaper |
-| **Dark Mode** | Perfect dark mode support |
-| **iOS Style Bar** | Elegant frosted glass navigation bar |
+| **Dual Themes** | MIUIX is the default; Material 3 is the Android-native alternative |
+| **Material You** | Material 3 supports dynamic theming based on wallpaper |
+| **Dark Mode** | Light, dark, and AMOLED-aware presentation |
 | **Animations** | Wave entrance, elastic scaling, shared element transitions |
 | **Shimmer** | Elegant loading placeholders |
 | **Lottie** | Beautiful interactions for Like/Coin/Fav |
@@ -362,7 +232,7 @@ BiliPai/
 │       ├── feature/             # Home, video, dynamic, live, settings and other product areas
 │       ├── navigation/          # Route compatibility and top-level navigation policies
 │       └── navigation3/         # NavKey, back stack, entries/scenes and predictive back
-├── design-system/               # Shared MD3, Miuix and iOS visual primitives and policies
+├── design-system/               # Shared MIUIX / Material 3 visual primitives and policies
 ├── settings-core/               # Reusable settings policies
 ├── network-core/                # Reusable network fallback and feed policies
 ├── plugin-sdk/                  # Recommendation, player and danmaku plugin contracts
@@ -380,10 +250,10 @@ BiliPai/
 
 | Category | Technology | Description |
 |-----|-----|-----|
-| **Language** | Kotlin 2.4 | AGP built-in Kotlin toolchain |
-| **Build Baseline** | AGP 9.3.1 / Gradle 9.5 / Kotlin 2.4 / JDK 21 | compileSdk 37, minSdk 26 |
-| **UI** | Jetpack Compose | Material 3, Miuix, Compose Cupertino |
-| **Navigation** | Navigation3 1.2.0-alpha07 | App-owned back stack, scenes and predictive back |
+| **Language** | Kotlin | AGP built-in Kotlin toolchain |
+| **Build Baseline** | Gradle configuration + JDK 21 | Exact toolchain and SDK values are defined in build files |
+| **UI** | Jetpack Compose | MIUIX and Material 3 runtime themes |
+| **Navigation** | Navigation3 | App-owned back stack, scenes and predictive back |
 | **Architecture** | MVVM + Clean Architecture | Clear separation, maintainable |
 
 ### Network & Data
@@ -409,7 +279,7 @@ BiliPai/
 |-----|-----|-----|
 | **Animation** | Compose Animation / SharedTransition + Lottie | Card morphs, predictive back and vector motion |
 | **Blur** | Haze 2 + Backdrop + Miuix blur | Frosted and liquid-glass surfaces with fallbacks |
-| **Theming** | Material 3 + Miuix + iOS preset | Dynamic color, dark mode and adaptive components |
+| **Theming** | Material 3 + MIUIX | Dynamic color, dark mode and adaptive components |
 
 ---
 
@@ -434,8 +304,8 @@ BiliPai/
 
 | Status | Direction |
 | --- | --- |
-| Product baseline | Home, playback, bangumi, live, dynamic feed, messages, offline/audio mode, video notes, casting, WebDAV, account sessions, plugins, large-screen layouts and three visual presets |
-| Current P0 | End-to-end video-card/predictive-return acceptance, transition steady-state performance, Navigation3 1.2 device regression, and restoration of the AGP 9 unit-test pipeline |
+| Product baseline | Home, playback, bangumi, live, dynamic feed, messages, offline/audio mode, video notes, casting, WebDAV, account sessions, plugins, large-screen layouts, and MIUIX / Material 3 themes |
+| Current P0 | End-to-end video-card/predictive-return acceptance, transition steady-state performance, Navigation3 1.2 device regression, and unit-test regression coverage |
 | Next | Controlled external-plugin execution, per-account data isolation, favorites management, complete localization, and evaluation of history cloud sync |
 
 See the [current roadmap](docs/wiki/ROADMAP.md) for priorities, completion criteria, guardrails, and non-goals.
@@ -446,15 +316,9 @@ See the [current roadmap](docs/wiki/ROADMAP.md) for priorities, completion crite
 
 See full changelog: [CHANGELOG.md](CHANGELOG.md)
 
-### Current source build (v0.2.2 · 2026-08-09)
+### Current Build and Releases
 
-- Current source build: `0.2.2` / `versionCode 287` (semantic `MAJOR.MINOR.PATCH`; no date-based names).
-- Defaults off: live-surface morph, transition blur, bottom-bar blur, player insight.
-- Home App+Web merged recommendation feed; search UI rebuild (trending/history/discover, filters, contrast/IME).
-- Card/predictive-back: live-surface switch without HDR wash; favorite-collection return matches home morph.
-- Listen-mode readable sheets/theme tokens; favorite API risk-control alignment; live LiveList/SC/quality chips.
-- Tablet default sidebar + dialog width caps; DLNA SSDP discovery hardened on dual-network devices.
-- Official Telegram: channel [@bilipai666](https://t.me/bilipai666), group [@bilipai888](https://t.me/bilipai888/1).
+The development version is defined in [`app/build.gradle.kts`](app/build.gradle.kts). Published versions, APK names, and user-visible changes are maintained in [CHANGELOG.md](CHANGELOG.md). Official announcements are posted in the [Telegram channel](https://t.me/bilipai666) and [community group](https://t.me/bilipai888/1).
 
 ---
 
@@ -466,7 +330,7 @@ cd BiliPai
 ./gradlew :app:assembleDev
 ```
 
-The installable artifact is exported to `app/build/outputs/bilipai/dev/BiliPai-0.2.0-dev.apk`. Release builds use `app/build/outputs/bilipai/release/BiliPai-0.2.0.apk`; AGP's internal `app-*.apk` files are not delivery artifacts.
+The installable artifact is exported to `app/build/outputs/bilipai/dev/BiliPai-<versionName>-dev.apk`. Release builds use `app/build/outputs/bilipai/release/BiliPai-<versionName>.apk`; AGP's internal `app-*.apk` files are not delivery artifacts.
 
 ---
 

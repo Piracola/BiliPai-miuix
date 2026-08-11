@@ -1,94 +1,30 @@
-# BiliPai Repository - LLM Entry / BiliPai 仓库 - LLM 入口
+# BiliPai Repository LLM Entry
 
-Canonical AI / LLM entry index for this repository.
-本仓库面向 AI / LLM 的主入口索引。
+Canonical entry point for AI and LLM tooling. This is an index, not a copy of fast-changing build, release, or feature facts.
 
-Maintained periodically, but still subject to freshness limits; reference only.
-会定期维护，但仍存在时效性限制，仅供参考。
+## Start Here
 
-Current sync target / 当前同步目标：`2026-08-05 · build 0.2.0 · documented release v0.2.0`
-
-## Preferred Entry Files / 优先入口文件
-
-| File | Verified Role |
+| Need | Authoritative source |
 | --- | --- |
-| `llms.txt` | canonical AI / LLM entry / 主 AI / LLM 入口 |
-| `AI.txt` | compatibility alias / AI 兼容入口 |
-| `llm.txt` | compatibility alias / LLM 兼容入口 |
-| `docs/wiki/AI.md` | repository path map / 仓库路径导航 |
-| `README.md` | Chinese overview / 中文总览 |
-| `README_EN.md` | English overview / 英文总览 |
-| `docs/wiki/ROADMAP.md` | current priorities and delivery gates / 当前优先级与交付门槛 |
-| `CHANGELOG.md` | release history / 版本记录 |
-| `docs/wiki/README.md` | wiki index / Wiki 索引 |
-| `docs/wiki/ARCHITECTURE.md` | architecture / 架构说明 |
-| `docs/wiki/QA.md` | QA checklist / QA 清单 |
-| `docs/wiki/RELEASE_WORKFLOW.md` | release workflow / 发布流程 |
-| `docs/wiki/VERSIONING.md` | versioning policy / 版本规范 |
-| `docs/PLUGIN_DEVELOPMENT.md` | JSON plugin guide / JSON 插件指南 |
-| `docs/NATIVE_PLUGIN_DEVELOPMENT.md` | native plugin guide / 原生插件指南 |
-| `plugins/samples/` | sample plugins / 示例插件 |
-| `plugins/community/README.md` | community plugin index / 社区插件索引 |
-| `STRUCTURE_GUIDELINES.adoc` | structure rules / 结构约束 |
+| Current build, variants, and dependencies | [`app/build.gradle.kts`](app/build.gradle.kts), [`gradle/libs.versions.toml`](gradle/libs.versions.toml), and [`settings.gradle.kts`](settings.gradle.kts) |
+| Published versions and user-visible changes | [`CHANGELOG.md`](CHANGELOG.md) |
+| Product overview | [`README.md`](README.md) / [`README_EN.md`](README_EN.md) |
+| Current priorities | [`docs/wiki/ROADMAP.md`](docs/wiki/ROADMAP.md) |
+| Architecture and module boundaries | [`docs/wiki/ARCHITECTURE.md`](docs/wiki/ARCHITECTURE.md) / [`STRUCTURE_GUIDELINES.adoc`](STRUCTURE_GUIDELINES.adoc) |
+| UI contracts and page catalog | [`docs/wiki/ui-design/README.md`](docs/wiki/ui-design/README.md) |
+| QA and release process | [`docs/wiki/QA.md`](docs/wiki/QA.md) / [`docs/wiki/RELEASE_WORKFLOW.md`](docs/wiki/RELEASE_WORKFLOW.md) |
+| JSON or external plugins | [`docs/PLUGIN_DEVELOPMENT.md`](docs/PLUGIN_DEVELOPMENT.md) |
+| Native plugins | [`docs/NATIVE_PLUGIN_DEVELOPMENT.md`](docs/NATIVE_PLUGIN_DEVELOPMENT.md) |
+| Repository path map | [`docs/wiki/AI.md`](docs/wiki/AI.md) |
 
-## Task Routing / 任务路由
+## Source Priority
 
-| Task | First File |
-| --- | --- |
-| project overview / 项目总览 | `README.md` or `README_EN.md` |
-| current priorities / 当前路线图 | `docs/wiki/ROADMAP.md` |
-| latest changes / 最新变更 | `CHANGELOG.md` |
-| architecture / 架构 | `docs/wiki/ARCHITECTURE.md` |
-| QA or regression / QA 与回归 | `docs/wiki/QA.md` |
-| release workflow / 发布流程 | `docs/wiki/RELEASE_WORKFLOW.md` |
-| versioning policy / 版本规范 | `docs/wiki/VERSIONING.md` |
-| AI repository map / AI 仓库导航 | `docs/wiki/AI.md` |
-| compatibility AI entry / 兼容 AI 入口 | `AI.txt` |
-| compatibility LLM entry / 兼容 LLM 入口 | `llm.txt` |
-| JSON plugins / JSON 插件 | `docs/PLUGIN_DEVELOPMENT.md` |
-| native plugins / 原生插件 | `docs/NATIVE_PLUGIN_DEVELOPMENT.md` |
+When sources disagree, use this order:
 
-## Source Priority / 事实优先级
+1. Source code and build configuration.
+2. `CHANGELOG.md` for released behavior.
+3. `ROADMAP.md` for priorities only.
+4. Current architecture, design, QA, and plugin documents.
+5. README files.
 
-When sources disagree, use this order.
-多个来源冲突时，按以下顺序处理。
-
-1. Source code and build files
-1. 源码与构建文件
-2. `CHANGELOG.md`
-2. `CHANGELOG.md`
-3. `docs/wiki/ROADMAP.md` for priorities only
-3. `docs/wiki/ROADMAP.md`（仅用于当前优先级）
-4. `llms.txt` and `docs/wiki/AI.md`
-4. `llms.txt` 与 `docs/wiki/AI.md`
-5. `AI.txt` and `llm.txt`
-5. `AI.txt` 与 `llm.txt`
-6. `README.md` and `README_EN.md`
-6. `README.md` 与 `README_EN.md`
-
-## Freshness Notes / 时效注记
-
-- `app/build.gradle.kts` currently declares build `versionName = "0.2.0"` and `versionCode = 284` (`MAJOR.MINOR.PATCH`).
-- `app/build.gradle.kts` 当前声明构建 `versionName = "0.2.0"`、`versionCode = 284`（语义化版本）。
-- `CHANGELOG.md` latest complete release entry is `v0.2.0 (2026-08-05)`.
-- `CHANGELOG.md` 最新完整发布段落为 `v0.2.0（2026-08-05）`。
-- A development version ahead of `CHANGELOG.md` is not automatically a public release.
-- 开发版本号领先 `CHANGELOG.md` 时，不代表该版本已经公开发布。
-- These files are maintained periodically, but fast-moving main-branch work can still outpace them.
-- 这些文件会定期维护，但主线快速迭代时仍可能出现文档滞后。
-
-## Verification Rules / 核验规则
-
-- For current behavior, verify with code and `CHANGELOG.md`.
-- 当前行为以代码和 `CHANGELOG.md` 共同核验。
-- Treat `llms.txt` as the canonical AI / LLM entry; use `AI.txt` and `llm.txt` as compatibility aliases.
-- 将 `llms.txt` 视为主 AI / LLM 入口，`AI.txt` 与 `llm.txt` 作为兼容别名。
-- If a listed path no longer exists, use the current repository tree.
-- 如果列出的路径已不存在，以当前仓库文件树为准。
-
-## Non-Goals / 非目标
-
-- Not a feature summary / 不是功能总结
-- Not a release guarantee / 不是发布保证
-- Not an API reference / 不是 API 手册
-- Not a replacement for source inspection / 不替代源码核查
+`AI.txt` and `llm.txt` are compatibility aliases only. Historical audits and superseded plans are evidence, not implementation authority.

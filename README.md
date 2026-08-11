@@ -14,7 +14,7 @@
 </p>
 
 <p>
-  <img src="https://img.shields.io/badge/Release-0.2.0-007AFF?style=flat-square&labelColor=ffffff" alt="Release 0.2.0" />
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/Release-Changelog-007AFF?style=flat-square&labelColor=ffffff" alt="Release changelog" /></a>
   <img src="https://img.shields.io/badge/Android-8.0%2B-34C759?style=flat-square&logo=android&logoColor=white" alt="Android 8.0+" />
   <img src="https://img.shields.io/badge/Kotlin-100%25-7F52FF?style=flat-square&logo=kotlin&logoColor=white" alt="Kotlin" />
   <img src="https://img.shields.io/badge/License-Non--Commercial-FF3B30?style=flat-square" alt="Non-Commercial License" />
@@ -33,7 +33,7 @@
   </a>
 </p>
 
-<sub>README 更新：2026-08-04 · 当前构建版本以 app/build.gradle.kts 为准 · 已发布版本以 <a href="CHANGELOG.md">CHANGELOG.md</a> 为准</sub>
+<sub>当前开发构建以 app/build.gradle.kts 为准；已发布版本以 <a href="CHANGELOG.md">CHANGELOG.md</a> 为准</sub>
 
 </div>
 
@@ -45,7 +45,7 @@ BiliPai 是一个基于 Kotlin 与 Jetpack Compose 的第三方 Bilibili Android
 
 - **日常使用优先**：首页、搜索、视频详情、番剧、直播、动态、消息、个人中心与离线缓存覆盖主流程。
 - **播放体验优先**：DASH、高清画质、弹幕、手势、后台播放、画中画、听视频模式与横竖屏策略持续优化。
-- **原生体验优先**：Material You、Material 3、Miuix、液态玻璃、平板/折叠屏布局与系统媒体控制接入。
+- **原生体验优先**：MIUIX（默认）与 Material 3（可选）分别遵循各自的组件语法，并支持液态玻璃、平板/折叠屏布局与系统媒体控制。
 - **可扩展优先**：内置插件稳定分发，JSON 规则插件可 URL 导入，源码级插件能力持续推进。
 - **隐私克制**：登录信息保存在本地，权限尽量收敛，使用统计仅记录匿名日活与基础使用情况。
 
@@ -101,9 +101,9 @@ BiliPai 是一个基于 Kotlin 与 Jetpack Compose 的第三方 Bilibili Android
 
 BiliPai 的界面围绕“内容优先、控制轻量、动效克制”调整。
 
-- **Material You / Android 原生**：支持动态主题色、Material 3 与 Miuix 子风格、排版和 motion 策略。
+- **双主题渲染**：MIUIX 为默认主题；Material 3 保留对等的 Android 原生组件、动态取色与排版语法。
 - **Liquid Glass**：底栏、顶部区域、播放器面板等关键层接入毛玻璃/液态玻璃视觉。
-- **iOS 风格底栏**：胶囊指示器、阻尼回弹、模糊背景与大屏侧边栏之间保持统一。
+- **统一信息架构**：主题可以改变组件和节奏，不能改变功能入口、业务状态或返回结果。
 - **播放器覆盖层**：控制栏、弹幕、预览图、手势区域和横屏信息栏分层处理，减少互相遮挡。
 - **可调而非强制**：外观、动画、播放器、弹幕、插件和后台行为均尽量提供设置入口。
 
@@ -126,9 +126,9 @@ BiliPai 的界面围绕“内容优先、控制轻量、动效克制”调整。
 | 类别 | 选型 |
 | --- | --- |
 | 语言 | Kotlin |
-| 构建基线 | AGP 9.3.1、Gradle 9.5、Kotlin 2.4、JDK 21、compileSdk 37 |
-| UI | Jetpack Compose、Material 3、Miuix、Compose Cupertino、MVVM |
-| 导航 | Navigation3 runtime/UI 1.2.0-alpha07、NavigationEvent 1.2.0-alpha03 |
+| 构建基线 | Gradle 配置与 JDK 21（精确版本以构建文件为准） |
+| UI | Jetpack Compose、Material 3、Miuix、MVVM |
+| 导航 | Navigation3 runtime/UI、NavigationEvent 与应用自持返回栈 |
 | 网络 | Retrofit、OkHttp、Kotlinx Serialization |
 | 存储 | Room、DataStore |
 | 媒体 | AndroidX Media3 / ExoPlayer、MediaCodec |
@@ -151,7 +151,7 @@ BiliPai/
 │       ├── feature/             # 视频、首页、动态、直播、设置等业务场景
 │       ├── navigation/          # 路由兼容、入口策略与顶层导航装配
 │       └── navigation3/         # NavKey、返回栈、Entry/Scene 与预测返回
-├── design-system/               # 三套风格共享的主题、组件、动效、模糊与适配策略
+├── design-system/               # MIUIX / Material 3 双主题的组件、动效、模糊与适配策略
 ├── settings-core/               # 可复用设置策略
 ├── network-core/                # 可复用网络回退与推荐策略
 ├── plugin-sdk/                  # 推荐、播放器、弹幕插件接口与能力声明
@@ -169,13 +169,13 @@ cd BiliPai
 ./gradlew :app:compileDebugKotlin
 ```
 
-本地开发使用 JDK 21；Android Studio、Android SDK 与 Gradle 环境需兼容 AGP 9.3.1 和 compileSdk 37。如需生成可安装的本地测试 APK，可运行：
+本地开发使用 JDK 21；Android Studio、Android SDK 与 Gradle 环境需满足当前构建配置。如需生成可安装的本地测试 APK，可运行：
 
 ```bash
 ./gradlew :app:assembleDev
 ```
 
-完成后可安装交付包位于 `app/build/outputs/bilipai/dev/BiliPai-0.2.0-dev.apk`。正式发布构建对应输出 `app/build/outputs/bilipai/release/BiliPai-0.2.0.apk`；AGP 内部的 `app-*.apk` 不作为交付文件。
+完成后可安装交付包位于 `app/build/outputs/bilipai/dev/BiliPai-<versionName>-dev.apk`。正式发布构建对应输出 `app/build/outputs/bilipai/release/BiliPai-<versionName>.apk`；AGP 内部的 `app-*.apk` 不作为交付文件。
 
 `google-services.json` 是可选项：放入 `app/` 后启用 Firebase Crashlytics / Analytics；缺失时构建脚本会跳过相关能力。
 
@@ -194,22 +194,16 @@ cd BiliPai
 | 版本规范 | [docs/wiki/VERSIONING.md](docs/wiki/VERSIONING.md) |
 | 变更日志 | [CHANGELOG.md](CHANGELOG.md) |
 
-## 最近更新
+## 版本与更新
 
-当前构建为 `0.2.2 / versionCode 287`（语义化 `MAJOR.MINOR.PATCH`）；最新完整发布记录为 `v0.2.1`。源码与变更以 GitHub 和 [CHANGELOG.md](CHANGELOG.md) 为准；安装包与公告见 [Telegram 频道](https://t.me/bilipai666) / [交流群](https://t.me/bilipai888/1)：
-
-- 版本号恢复 `X.Y.Z`；实时画面转场 / 转场模糊 / 底栏模糊 / 播放器洞察默认关闭。
-- 首页推荐新增 App+Web 合并模式；搜索页重构（热搜/历史/发现、筛选表、对比度与 IME）。
-- 整卡与预测返回：live-surface 开关、HDR 不降画质、落位与 haze 修复；收藏合集返回对齐首页 morph。
-- 听视频浅色可读、操作 sheet 主题色；收藏夹 API 对齐降低风控；直播 LiveList/SC/清晰度表。
-- 平板侧栏默认开、对话框限宽；DLNA SSDP 双网卡发现加固。
+README 不复制快速变化的构建号或更新条目。当前开发构建以 [`app/build.gradle.kts`](app/build.gradle.kts) 为准；已发布版本、交付文件名和用户可见变更以 [CHANGELOG.md](CHANGELOG.md) 为准。安装包与公告见 [Telegram 频道](https://t.me/bilipai666) / [交流群](https://t.me/bilipai888/1)。
 
 ## 路线图
 
 | 状态 | 方向 |
 | --- | --- |
-| 已完成基线 | 首页、播放、番剧、直播、动态、消息、离线、听视频、视频笔记、投屏、WebDAV、多账号会话、插件、大屏与三套视觉风格 |
-| 当前 P0 | 视频整卡/预测返回全入口验收、转场稳态性能、Navigation3 1.2 真机回归、AGP 9 单元测试链路恢复 |
+| 已完成基线 | 首页、播放、番剧、直播、动态、消息、离线、听视频、视频笔记、投屏、WebDAV、多账号会话、插件、大屏与 MIUIX / Material 3 双主题 |
+| 当前 P0 | 视频整卡/预测返回全入口验收、转场稳态性能、Navigation3 1.2 真机回归与单元测试回归 |
 | 后续 | 外部插件可控执行、多账户数据隔离、收藏夹管理、完整本地化与历史云同步评估 |
 
 完整优先级、完成条件与非目标见 [路线图](docs/wiki/ROADMAP.md)。

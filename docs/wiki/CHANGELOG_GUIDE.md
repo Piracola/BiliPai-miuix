@@ -6,7 +6,7 @@
 
 ## 基准与信息来源
 
-1. 以上一个正式标签为基准（如 `v26.0805.1`），用 `git log <previous-tag>..HEAD --oneline` 取提交范围。
+1. 以上一个正式标签为基准（如 `v<previous-version>`），用 `git log <previous-tag>..HEAD --oneline` 取提交范围。
 2. 合并提交与其子提交只归纳一次；已回滚的行为不写。
 3. 优先写用户能感知的结果；不堆类名、函数名或机械提交标题。
 4. **日志正文不写竞品/第三方 App 名称**（历史段落可保留原样，新版本禁止新增）。
@@ -32,9 +32,9 @@ vX.Y.Z(<short_sha>)
 ### 可选元信息（段首，仍用标签行）
 
 ```text
-[更改] 版本号 0.2.0，versionCode 284
-[更改] 正式包 BiliPai-0.2.0.apk，Dev 包 BiliPai-0.2.0-dev.apk
-[更改] 基准 v26.0805.1，比较区间见 GitHub Compare
+[更改] 版本号 X.Y.Z[-PRERELEASE]，versionCode N
+[更改] 正式包 BiliPai-<versionName>.apk，Dev 包 BiliPai-<versionName>-dev.apk
+[更改] 基准 v<previous-version>，比较区间见 GitHub Compare
 ```
 
 不强制使用 `### 版本信息` / `### 完整更新` 等二级标题；需要对照链接时可在版本行后加一行普通 Markdown 链接。
@@ -42,7 +42,7 @@ vX.Y.Z(<short_sha>)
 ### 版本行
 
 ```text
-v0.2.0(19e3dac)
+vX.Y.Z(<short_sha>)
 ```
 
 - `v` + `versionName` + 半角括号内 **7 位短 commit**（该版本最终文档或 tag 指向的 commit）。

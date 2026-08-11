@@ -1,18 +1,15 @@
 # 架构说明
 
-最后更新：2026-08-04（按当前工作区与构建配置校对）
+本文描述稳定的模块与运行时边界。版本、依赖和已发布变更各有唯一事实来源，不在此重复维护。
 
 ## 构建与运行基线
 
-| 项目 | 当前值 |
+| 事实 | 唯一来源 |
 | --- | --- |
-| 应用版本 | 当前构建与最近完整发布记录 `v0.2.0` / `versionCode 284` |
-| Android | minSdk 26、targetSdk 35、compileSdk 37、arm64-v8a |
-| 工具链 | AGP 9.3.1、Gradle 9.5、Kotlin 2.4、JDK 21 |
-| Compose | BOM 2026.06.00、Material3 1.5.0-alpha25、Lifecycle 2.11.0 |
-| 导航 | Navigation3 runtime/UI 1.2.0-alpha07、NavigationEvent 1.2.0-alpha03 |
-| 媒体 | Media3 1.10.1、DASH/HLS、MediaSession、Texture surface 连续返回 |
-| 视觉 | Miuix 0.9.3、Haze 2.0.0-alpha03、Backdrop 2.0.0、Compose Cupertino |
+| 开发版本、变体与交付命名 | `app/build.gradle.kts` |
+| Android、Compose、导航、媒体与视觉依赖 | 根构建配置、版本目录与各模块 `build.gradle.kts` |
+| 已发布版本和用户可见变更 | `CHANGELOG.md` |
+| 当前优先级 | `ROADMAP.md` |
 
 ## Gradle 模块
 
@@ -21,7 +18,8 @@ app
 ├── design-system
 ├── settings-core
 ├── network-core
-└── plugin-sdk
+├── plugin-sdk
+└── dolby-ffmpeg-decoder
 
 baselineprofile ──(benchmark target)──> app
 ```
@@ -29,10 +27,11 @@ baselineprofile ──(benchmark target)──> app
 | 模块 | 职责 | 当前边界 |
 | --- | --- | --- |
 | `app/` | Application、Activity、业务 UI、导航、播放器、Repository、UseCase 与应用测试 | 绝大多数产品逻辑仍在此模块，新增代码优先沿既有 feature/core 分层 |
-| `design-system/` | MD3/Miuix/iOS 主题、语义 token、组件 facade、动效、模糊预算与自适应策略 | 不承载网络、业务状态或页面 ViewModel |
+| `design-system/` | MIUIX / Material 3 主题、语义 token、组件 facade、动效、模糊预算与自适应策略 | 不承载网络、业务状态或页面 ViewModel |
 | `settings-core/` | 可复用播放速度等设置策略 | 只放跨页面、可独立测试的偏好域逻辑 |
 | `network-core/` | 网络 fallback 与首页推荐匿名化策略 | 不依赖 feature UI |
 | `plugin-sdk/` | 推荐、播放器、弹幕插件接口与能力 manifest | 作为外部插件稳定边界，不暴露 app 内部实现 |
+| `dolby-ffmpeg-decoder/` | Media3 FFmpeg Dolby 音频解码扩展 | 只承载解码扩展，不承载产品 UI 或业务状态 |
 | `baselineprofile/` | 启动、首页、底部 Pager、设置返回、视频详情与非实时 surface 基准 | 只负责 benchmark/profile，不承载产品代码 |
 
 ## App 源码分层
@@ -47,19 +46,19 @@ baselineprofile ──(benchmark target)──> app
 | `domain/` | 可复用业务规则 | UseCase 与不依赖 Compose 的业务决策 |
 | `feature/` | 业务场景 | home、video、bangumi、live、dynamic、message、download、settings 等 |
 | `navigation/` | 兼容与顶层入口 | legacy route 映射、首页 Pager、链接解析、入口/外观/播放策略 |
-| `navigation3/` | 当前页面导航内核 | 61 个 NavKey、返回栈策略、59 个显式 Entry、Scene、预测返回和整卡会话 |
+| `navigation3/` | 当前页面导航内核 | `BiliPaiNavKey`、返回栈策略、Entry、Scene、预测返回和整卡会话 |
 | `androidx/navigationevent/compose/` | 本地 NavigationEvent Compose 兼容层 | 保留完成/取消提交时序与关闭跟手预览能力；需随 NavigationEvent 版本核对 |
 
 ## 导航与整卡过渡
 
 1. `AppNavigation` 持有应用级 `List<BiliPaiNavKey>`，业务事件通过 policy 转换成 push、replace 或 pop。
 2. `BiliPaiNavEntryProvider` 把 NavKey 解析为 Entry，并注入来源路由、ViewModel owner 和视觉状态。
-3. `BiliPaiNavDisplayHost` 使用官方 Navigation3 runtime/UI `1.2.0-alpha07` 生成 `SceneState`，统一普通返回与预测返回。
+3. `BiliPaiNavDisplayHost` 使用构建配置钉扎的官方 Navigation3 runtime/UI 生成 `SceneState`，统一普通返回与预测返回。
 4. 视频入口创建不可变 `VideoCardTransitionSession`，冻结 bvid、来源 key/route、边界、圆角、方向与封面身份。
 5. 整卡几何只由一个 shell/shared bounds 所有；封面、标题、UP 和统计跟随卡片，不创建竞争的独立 bounds。
 6. 转场时钟负责 Opening、SettledHidden、BackPreview、Returning、Restoring；详情稳态保留返回会话，但停止无收益的模糊、Backdrop 和来源重录。
 
-Miuix `0.9.3` 继续用于组件与视觉，但它的 Nav3 UI 模块编译于 runtime `1.1.4`，因此当前项目不再混用该 NavDisplay；runtime/UI 必须保持官方同版。
+Miuix 继续用于组件与视觉；其 Nav3 UI 模块与应用的官方 Navigation3 依赖不处于同一版本轨道，因此当前项目不混用该 NavDisplay。具体版本以构建配置和 [Miuix 对齐记录](MIUIX_ALIGNMENT.md) 为准，runtime/UI 必须保持官方同版。
 
 ## 播放主链路
 
@@ -80,9 +79,9 @@ Feature UI
 
 ## 视觉与自适应
 
-正式 UI 设计合同、三风格边界、组件入口和页面档案见 [UI 设计规范](ui-design/README.md)。本页继续说明技术架构，不重复设计规则。
+正式 UI 设计合同、双主题边界、组件入口和页面档案见 [UI 设计规范](ui-design/README.md)。本页继续说明技术架构，不重复设计规则。
 
-- `design-system` 提供 MD3、Miuix 与 iOS facade，feature 只消费语义 token 和能力接口。
+- `design-system` 提供 MIUIX 与 Material 3 facade；历史 iOS 值只在数据迁移边界处理，feature 只消费语义 token 和能力接口。
 - Haze、Miuix blur 与 Backdrop 都受平台能力、运行时视觉预算和转场安全门控约束。
 - 手机使用底栏/单栏为主；平板和折叠屏使用 rail、双栏或影院布局。
 - 液态玻璃复用遵循 sibling/combined backdrop 拓扑，避免控件采样自身造成黑边或 RenderThread 问题。
@@ -104,7 +103,7 @@ Feature UI
 - Design system、network、settings、plugin SDK 各模块拥有独立纯 Kotlin 测试。
 - `baselineprofile/` 覆盖 Startup、FrameTiming、视频详情、首页、底部 Pager 和设置返回。
 - 性能相关改动按“目标测试 → `:app:compileDebugKotlin` → Macrobenchmark/真机”逐级验证。
-- 当前 AGP 9 迁移后的 app 单元测试注解解析仍是路线图 P0；恢复前不得把生产编译成功等同于测试全绿。
+- 生产编译不能替代目标策略测试、结构测试或设备回归；验证范围按改动风险扩大。
 
 ## 结构维护原则
 

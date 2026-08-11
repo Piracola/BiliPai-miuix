@@ -8,6 +8,8 @@
 > 维护角色：设计系统维护者  
 > 相关文档：[Miuix 对齐记录](../MIUIX_ALIGNMENT.md) · [架构说明](../ARCHITECTURE.md) · [QA 手册](../QA.md)
 
+`适用提交`记录本规范最后人工复核的上下文，不是运行时事实来源。页面集合、主题枚举和依赖版本分别由源码和构建配置校验。
+
 ## 初学者解释
 
 这套手册是 BiliPai 前端 UI 的正式设计合同。它同时回答三类问题：界面元素**是什么**（What）、为什么要这样设计（Why）、设计与 Compose 代码应当怎样落地（How）。它不修改当前 UI，也不把当前代码中的每个写法都当成正确标准。
@@ -78,7 +80,7 @@ flowchart LR
 
 ### 页面档案
 
-- [61 个导航 Key 唯一目录](pages/PAGE_CATALOG.md)
+- [导航 Key 唯一目录](pages/PAGE_CATALOG.md)
 - [应用外壳与首页](pages/APP_SHELL_HOME.md)
 - [搜索与发现](pages/SEARCH_DISCOVERY.md)
 - [社区与消息](pages/COMMUNITY_MESSAGE.md)
@@ -92,10 +94,10 @@ flowchart LR
 
 | 事实 | 当前入口 |
 |---|---|
-| Navigation 3 的 61 个页面 Key | `BiliPaiNavKey.kt` 中的 `BiliPaiNavKey` |
+| Navigation 3 的页面 Key 集合 | `BiliPaiNavKey.kt` 中的 `BiliPaiNavKey`，由结构测试与页面目录比对 |
 | 两种运行时主题 | `AppUiStyle.MIUIX`、`AppUiStyle.MATERIAL3`；iOS 仅为历史迁移输入 |
 | 共享设计系统 | `design-system/src/main/java/com/android/purebilibili/core/` |
-| Miuix 依赖版本 | `app/build.gradle.kts` 与 `design-system/build.gradle.kts` 中的 `0.9.3` |
+| Miuix 依赖版本 | `app/build.gradle.kts`、版本目录与 `design-system/build.gradle.kts` |
 | Miuix 技术接入进度 | [MIUIX_ALIGNMENT.md](../MIUIX_ALIGNMENT.md) |
 
 代码映射只使用文件名与符号名，避免文档因行号变化立刻失效。需要定位符号时，优先使用 CodeGraph。
@@ -107,6 +109,6 @@ flowchart LR
 ## 验收方法
 
 1. 所有目录链接均可访问，不能链接被 `.gitignore` 忽略的过程文件。
-2. `PAGE_CATALOG.md` 必须恰好登记源码中的 62 个 `BiliPaiNavKey`。
+2. `PAGE_CATALOG.md` 必须与源码中的 `BiliPaiNavKey` 集合完全一致。
 3. 每份规范都必须同时出现初学者解释、规范要求、代码映射、当前差距和验收方法。
-4. 运行 `:app:testDebugUnitTest --tests '*UiDesignDocumentationStructureTest'`。
+4. 运行 `powershell -ExecutionPolicy Bypass -File scripts/verify_docs.ps1`，再运行 `:app:testDebugUnitTest --tests '*UiDesignDocumentationStructureTest'`。
