@@ -23,7 +23,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.animation.*
-import com.android.purebilibili.core.theme.AppUiStyle
 import com.android.purebilibili.core.ui.AdaptivePlainTooltipBox
 import com.android.purebilibili.core.ui.AppAlertDialog
 import com.android.purebilibili.core.ui.AppShapes
@@ -93,6 +92,25 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 enum class AppearanceSettingsContentMode {
     APPEARANCE,
     HOME,
+}
+
+@Composable
+private fun AppearancePreferenceSeparator(
+    modifier: Modifier = Modifier,
+) {
+    val uiStyle = LocalAppUiStyle.current
+    val dividerMode = remember(uiStyle) {
+        resolveSettingsVisualPolicy(uiStyle).dividerMode
+    }
+    when (dividerMode) {
+        SettingsDividerMode.GROUP_SPACING_ONLY -> {
+            Spacer(modifier = modifier.height(12.dp))
+        }
+
+        SettingsDividerMode.WEAK_GROUP_DIVIDERS -> {
+            AppPreferenceDivider(modifier = modifier)
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
@@ -231,8 +249,14 @@ fun AppearanceSettingsContent(
             AppSegmentOption(AppSingleChoicePresentation.CENTERED_DIALOG, "居中弹窗"),
         )
     }
-    val isMiuixUi = LocalAppUiStyle.current == AppUiStyle.MIUIX
+    val uiStyle = LocalAppUiStyle.current
+    val settingsVisualPolicy = remember(uiStyle) {
+        resolveSettingsVisualPolicy(uiStyle)
+    }
     val listState = rememberLazyListState()
+    val listVisualCapabilities = rememberAdaptiveListVisualCapabilities()
+    val preferenceContentHorizontalPadding =
+        listVisualCapabilities.componentSpec.sectionStartPaddingDp.dp
     val focusRequest by SettingsSearchFocusController.request.collectAsStateWithLifecycle()
     // Animation Trigger
     val displayModeTint = rememberAdaptiveSemanticIconTint(iOSBlue)
@@ -425,11 +449,14 @@ fun AppearanceSettingsContent(
         state.appListItemStyle,
         singleChoicePresentation,
         themeRoleOverrides.enabled,
-        isMiuixUi,
+        settingsVisualPolicy.singleChoicePresentationOverrideVisible,
     ) {
         state.appIconStyle != AppIconStyle.AUTO ||
             state.appListItemStyle != AppListItemStyle.AUTO ||
-            (isMiuixUi && singleChoicePresentation != AppSingleChoicePresentation.WINDOW_POPUP) ||
+            (
+                settingsVisualPolicy.singleChoicePresentationOverrideVisible &&
+                    singleChoicePresentation != AppSingleChoicePresentation.WINDOW_POPUP
+                ) ||
             themeRoleOverrides.enabled
     }
     val selectedCustomThemeColor = remember(state.md3CustomColorHex) {
@@ -494,16 +521,14 @@ fun AppearanceSettingsContent(
 
                         // D3：说明卡降级为小字说明，只承担一个影响，不占视觉层级
                         Spacer(modifier = Modifier.height(8.dp))
-                        AppText(
+                        AppPreferenceSupportingText(
                             text = uiPresetDescription.summary,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 16.dp),
+                            modifier = Modifier.padding(
+                                horizontal = preferenceContentHorizontalPadding
+                            ),
                         )
 
-                        Spacer(modifier = Modifier.height(16.dp))
-                        AppPreferenceDivider()
-                        Spacer(modifier = Modifier.height(8.dp))
+                        AppearancePreferenceSeparator()
 
                         SettingsSingleChoicePreference(
                             title = themeModeTitle,
@@ -518,9 +543,8 @@ fun AppearanceSettingsContent(
                             enter = androidx.compose.animation.expandVertically() + androidx.compose.animation.fadeIn(),
                             exit = androidx.compose.animation.shrinkVertically() + androidx.compose.animation.fadeOut()
                         ) {
-                            Column(modifier = Modifier.padding(top = 16.dp)) {
-                                AppPreferenceDivider()
-                                Spacer(modifier = Modifier.height(8.dp))
+                            Column {
+                                AppearancePreferenceSeparator()
                                 SettingsSingleChoicePreference(
                                     title = darkThemeStyleTitle,
                                     subtitle = darkThemeStyleSubtitle,
@@ -766,7 +790,7 @@ fun AppearanceSettingsContent(
                             }
                         }
 
-                        AppPreferenceDivider()
+                        AppearancePreferenceSeparator()
                         ThemePresetChoiceSetting(
                             icon = rememberSettingsSemanticIcon(SettingsIconRole.COLOR_STYLE),
                             title = "色彩风格",
@@ -776,7 +800,7 @@ fun AppearanceSettingsContent(
                             iconTint = iOSPurple
                         )
 
-                        AppPreferenceDivider()
+                        AppearancePreferenceSeparator()
                         ThemePresetChoiceSetting(
                             icon = rememberSettingsSemanticIcon(SettingsIconRole.COLOR_SPEC),
                             title = "色彩标准",
@@ -834,8 +858,7 @@ fun AppearanceSettingsContent(
                             onSelectionChange = viewModel::setAppFontSizePreset,
                         )
 
-                        Spacer(modifier = Modifier.height(16.dp))
-                        AppPreferenceDivider()
+                        AppearancePreferenceSeparator()
                         AppPreference(
                             icon = rememberSettingsSemanticIcon(SettingsIconRole.FONT_FILE),
                             title = "应用字体",
@@ -857,7 +880,7 @@ fun AppearanceSettingsContent(
                             exit = shrinkVertically() + fadeOut()
                         ) {
                             Column {
-                                AppPreferenceDivider()
+                                AppearancePreferenceSeparator()
                                 AppPreference(
                                     icon = rememberSettingsSemanticIcon(SettingsIconRole.REPLAY_ONBOARDING),
                                     title = "恢复默认字体",
@@ -873,9 +896,7 @@ fun AppearanceSettingsContent(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
-                        AppPreferenceDivider()
-                        Spacer(modifier = Modifier.height(8.dp))
+                        AppearancePreferenceSeparator()
 
                         SettingsSingleChoicePreference(
                             title = "界面缩放",
@@ -885,9 +906,7 @@ fun AppearanceSettingsContent(
                             onSelectionChange = viewModel::setAppUiScalePreset,
                         )
 
-                        Spacer(modifier = Modifier.height(16.dp))
-                        AppPreferenceDivider()
-                        Spacer(modifier = Modifier.height(8.dp))
+                        AppearancePreferenceSeparator()
 
                         AppSwitchPreference(
                             icon = rememberSettingsSemanticIcon(SettingsIconRole.DISPLAY_STYLE),
@@ -911,7 +930,8 @@ fun AppearanceSettingsContent(
                             enter = androidx.compose.animation.expandVertically() + androidx.compose.animation.fadeIn(),
                             exit = androidx.compose.animation.shrinkVertically() + androidx.compose.animation.fadeOut()
                         ) {
-                            Column(modifier = Modifier.padding(top = 16.dp)) {
+                            Column {
+                                AppearancePreferenceSeparator()
                                 SettingsSingleChoicePreference(
                                     title = "显示缩放",
                                     subtitle = "只调整 BiliPai 内文字和控件的整体大小，不修改系统显示设置",
@@ -922,19 +942,17 @@ fun AppearanceSettingsContent(
                                     }
                                 )
 
-                                Spacer(modifier = Modifier.height(16.dp))
-                                AppText(
+                                Spacer(modifier = Modifier.height(12.dp))
+                                AppPreferenceSupportingText(
                                     text = resolveDisplayMetricsSummary(displayMetricsSnapshot),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    modifier = Modifier.padding(
+                                        horizontal = preferenceContentHorizontalPadding
+                                    ),
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
-                        AppPreferenceDivider()
-                        Spacer(modifier = Modifier.height(8.dp))
+                        AppearancePreferenceSeparator()
 
                         SettingsSingleChoicePreference(
                             title = appLanguageTitle,
@@ -966,9 +984,7 @@ fun AppearanceSettingsContent(
                             onSelectionChange = viewModel::setAppIconStyle,
                         )
 
-                        Spacer(modifier = Modifier.height(16.dp))
-                        AppPreferenceDivider()
-                        Spacer(modifier = Modifier.height(8.dp))
+                        AppearancePreferenceSeparator()
 
                         SettingsSingleChoicePreference(
                             title = "列表条目样式",
@@ -978,10 +994,8 @@ fun AppearanceSettingsContent(
                             onSelectionChange = viewModel::setAppListItemStyle,
                         )
 
-                        if (isMiuixUi) {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            AppPreferenceDivider()
-                            Spacer(modifier = Modifier.height(8.dp))
+                        if (settingsVisualPolicy.singleChoicePresentationOverrideVisible) {
+                            AppearancePreferenceSeparator()
 
                             SettingsSingleChoicePreference(
                                 title = "单选项展示方式",
@@ -999,8 +1013,7 @@ fun AppearanceSettingsContent(
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
-                        AppPreferenceDivider()
+                        AppearancePreferenceSeparator()
                         AppSwitchPreference(
                             icon = rememberSettingsSemanticIcon(SettingsIconRole.ADVANCED_COLOR),
                             title = "高级配色",
@@ -2117,16 +2130,16 @@ internal fun restartApp(context: android.content.Context) {
 @Composable
 fun DynamicColorPreview() {
     val colorScheme = MaterialTheme.colorScheme
+    val contentHorizontalPadding = rememberAdaptiveListVisualCapabilities()
+        .componentSpec.sectionStartPaddingDp.dp
     
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(horizontal = contentHorizontalPadding, vertical = 12.dp)
     ) {
-        AppText(
+        AppPreferenceSupportingText(
             text = "当前取色预览",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 8.dp)
         )
         
@@ -2179,10 +2192,9 @@ fun ColorPreviewItem(
                 .background(color)
         )
         Spacer(modifier = Modifier.height(4.dp))
-        AppText(
+        AppPreferenceSupportingText(
             text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            maxLines = 1,
         )
     }
 }

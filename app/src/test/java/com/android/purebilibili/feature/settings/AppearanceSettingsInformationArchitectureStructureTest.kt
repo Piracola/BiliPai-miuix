@@ -118,13 +118,9 @@ class AppearanceSettingsInformationArchitectureStructureTest {
     fun singleChoicePresentationOverride_isExposedOnlyForMiuix() {
         val source = loadSource(appearanceScreen)
 
-        assertTrue(source.contains("val isMiuixUi = LocalAppUiStyle.current == AppUiStyle.MIUIX"))
-        assertTrue(
-            source.contains(
-                "(isMiuixUi && singleChoicePresentation != AppSingleChoicePresentation.WINDOW_POPUP)"
-            )
-        )
-        assertTrue(source.contains("if (isMiuixUi) {"))
+        // Theme-specific visibility belongs to SettingsVisualPolicy, not the feature screen.
+        assertTrue(source.contains("settingsVisualPolicy.singleChoicePresentationOverrideVisible"))
+        assertFalse(source.contains("isMiuixUi"))
     }
 
     private fun loadSource(path: String): String {

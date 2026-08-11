@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -11,8 +12,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.android.purebilibili.core.theme.AppUiStyle
+import com.android.purebilibili.core.theme.LocalAppUiStyle
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
  * Style-neutral preference entry points.
@@ -22,6 +27,32 @@ import androidx.compose.ui.unit.dp
  */
 @Composable
 fun AppPreferenceSectionTitle(title: String) = AdaptivePreferenceSectionTitleRenderer(title)
+
+/**
+ * Standalone supporting copy used inside a preference group.
+ * The text role stays shared while typography follows the active native renderer.
+ */
+@Composable
+fun AppPreferenceSupportingText(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    maxLines: Int = 2,
+) {
+    val style = if (LocalAppUiStyle.current == AppUiStyle.MIUIX) {
+        MiuixTheme.textStyles.body2
+    } else {
+        MaterialTheme.typography.bodyMedium
+    }
+    Text(
+        text = text,
+        modifier = modifier,
+        style = style,
+        color = color,
+        maxLines = maxLines,
+        overflow = TextOverflow.Ellipsis,
+    )
+}
 
 enum class AppPreferenceGroupPresentation {
     CARD,
@@ -139,7 +170,7 @@ fun AppPreference(
 @Composable
 fun AppPreferenceDivider(
     modifier: Modifier = Modifier,
-    startIndent: Dp = 66.dp,
+    startIndent: Dp? = null,
 ) = AdaptivePreferenceDividerRenderer(modifier = modifier, startIndent = startIndent)
 
 @Composable

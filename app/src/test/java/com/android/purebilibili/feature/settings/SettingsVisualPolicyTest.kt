@@ -23,6 +23,7 @@ class SettingsVisualPolicyTest {
         assertEquals(AppTopBarStyle.CENTERED, policy.topBarStyle)
         assertEquals(SettingsDividerMode.GROUP_SPACING_ONLY, policy.dividerMode)
         assertEquals(SettingsContentWidth.LIMITED, policy.contentWidth)
+        assertEquals(true, policy.singleChoicePresentationOverrideVisible)
     }
 
     @Test
@@ -36,6 +37,7 @@ class SettingsVisualPolicyTest {
         assertEquals(AppTopBarStyle.SMALL, policy.topBarStyle)
         assertEquals(SettingsDividerMode.WEAK_GROUP_DIVIDERS, policy.dividerMode)
         assertEquals(SettingsContentWidth.LIMITED, policy.contentWidth)
+        assertEquals(false, policy.singleChoicePresentationOverrideVisible)
     }
 
     @Test

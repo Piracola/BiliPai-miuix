@@ -59,6 +59,7 @@ data class SettingsVisualPolicy(
     val dividerMode: SettingsDividerMode,
     val contentWidth: SettingsContentWidth,
     val preferenceRowStyle: AppListItemStyle,
+    val singleChoicePresentationOverrideVisible: Boolean,
 )
 
 /**
@@ -80,6 +81,7 @@ fun resolveSettingsVisualPolicy(
         dividerMode = SettingsDividerMode.GROUP_SPACING_ONLY,
         contentWidth = SettingsContentWidth.LIMITED,
         preferenceRowStyle = resolveSettingsPreferenceRowStyle(overrides.preferenceRowStyle, uiStyle),
+        singleChoicePresentationOverrideVisible = true,
     )
 
     AppUiStyle.MATERIAL3 -> SettingsVisualPolicy(
@@ -89,6 +91,7 @@ fun resolveSettingsVisualPolicy(
         dividerMode = SettingsDividerMode.WEAK_GROUP_DIVIDERS,
         contentWidth = SettingsContentWidth.LIMITED,
         preferenceRowStyle = resolveSettingsPreferenceRowStyle(overrides.preferenceRowStyle, uiStyle),
+        singleChoicePresentationOverrideVisible = false,
     )
 }
 

@@ -615,8 +615,10 @@ internal fun AdaptiveSwitchPreferenceContent(
                 {
                     Text(
                         text = subtitleText,
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = subtitleColor,
+                        maxLines = 2,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     )
                 }
             },
@@ -731,7 +733,13 @@ internal fun AdaptiveSwitchPreferenceContent(
             Text(text = title, style = MaterialTheme.typography.bodyLarge, color = textColor)
             if (subtitle != null) {
                 Spacer(modifier = Modifier.height(2.dp))
-                Text(text = subtitle, style = MaterialTheme.typography.bodySmall, color = subtitleColor)
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = subtitleColor,
+                    maxLines = 2,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                )
             }
         }
         Spacer(modifier = Modifier.width(rowSpec.trailingSpacingDp.dp))
@@ -856,8 +864,10 @@ fun AdaptiveSliderPreferenceRenderer(
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = subtitleColor
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = subtitleColor,
+                        maxLines = 2,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     )
                 }
             }
@@ -913,8 +923,10 @@ private fun Md3NativeListItemContent(
             {
                 Text(
                     text = subtitleText,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = subtitleColor,
+                    maxLines = 2,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 )
             }
         },
@@ -945,12 +957,14 @@ private fun Md3NativeListItemContent(
                 if (!value.isNullOrBlank()) {
                     Text(
                         text = value,
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = valueColor,
                         maxLines = 1,
                         softWrap = false,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(start = 12.dp),
+                        modifier = Modifier
+                            .padding(start = 12.dp)
+                            .widthIn(max = 128.dp),
                     )
                 }
                 if (showChevron && onClick != null) {
@@ -1102,7 +1116,7 @@ internal fun AdaptivePreferenceContent(
                     if (trailingContent != null) Spacer(Modifier.width(8.dp))
                     Text(
                         text = value,
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MiuixTheme.textStyles.body2,
                         color = valueColor,
                         maxLines = 1,
                         softWrap = false,
@@ -1210,7 +1224,7 @@ internal fun AdaptivePreferenceContent(
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = subtitle,
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = subtitleColor,
                         maxLines = 2,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
@@ -1314,7 +1328,7 @@ internal fun AdaptivePreferenceContent(
                 if (!value.isNullOrBlank()) {
                     Text(
                         text = value,
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MiuixTheme.textStyles.body2,
                         color = AppSurfaceTokens.onSurfaceVariantSummary(),
                         maxLines = 1,
                         softWrap = false,
@@ -1428,7 +1442,7 @@ internal fun AdaptivePreferenceContent(
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = subtitle,
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = subtitleColor,
                         maxLines = 2,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
@@ -1475,7 +1489,7 @@ internal fun AdaptivePreferenceContent(
 @Composable
 fun AdaptivePreferenceDividerRenderer(
     modifier: Modifier = Modifier,
-    startIndent: androidx.compose.ui.unit.Dp = 66.dp
+    startIndent: androidx.compose.ui.unit.Dp? = null
 ) {
     val uiStyle = LocalAppUiStyle.current
     val visualSpec = remember(uiStyle) {
@@ -1483,7 +1497,9 @@ fun AdaptivePreferenceDividerRenderer(
     }
     if (visualSpec.dividerThicknessDp > 0f) {
         HorizontalDivider(
-            modifier = modifier.padding(start = startIndent),
+            modifier = modifier.padding(
+                start = startIndent ?: visualSpec.dividerStartIndentDp.dp
+            ),
             thickness = visualSpec.dividerThicknessDp.dp,
             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
         )
