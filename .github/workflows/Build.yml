@@ -59,6 +59,7 @@ jobs:
             --tests 'com.android.purebilibili.core.ui.lint.StyleLintAllowlistRatchetTest' \
             --tests 'com.android.purebilibili.core.ui.perf.FrameBudgetLintTest' \
             --no-daemon \
+            --no-configuration-cache \
             --console=plain
 
   check-fcm:

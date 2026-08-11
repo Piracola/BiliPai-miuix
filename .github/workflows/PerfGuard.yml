@@ -58,7 +58,8 @@ jobs:
             --tests 'com.android.purebilibili.core.store.SettingsManagerSizeRatchetTest' \
             --tests 'com.android.purebilibili.core.store.PreferenceKeyUniquenessTest' \
             --tests 'com.android.purebilibili.core.ui.performance.*' \
-            --tests 'com.android.purebilibili.core.ui.adaptive.RuntimeVisualGuard*'
+            --tests 'com.android.purebilibili.core.ui.adaptive.RuntimeVisualGuard*' \
+            --no-configuration-cache
 
       - name: 上传测试报告
         if: failure()
