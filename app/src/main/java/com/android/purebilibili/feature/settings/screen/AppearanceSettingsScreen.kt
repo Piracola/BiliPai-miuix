@@ -2111,82 +2111,6 @@ private suspend fun LazyListState.animateScrollToItemByKey(key: Any) {
     }
 }
 
-@Composable
-private fun AppearanceUiPresetDescriptionCard(
-    title: String,
-    summary: String
-) {
-    val icon = rememberAppSparklesIcon()
-    val colorScheme = MaterialTheme.colorScheme
-    val cardColors = remember(colorScheme) {
-        resolveAccessibleContainerColors(
-            containerColor = colorScheme.primaryContainer.copy(alpha = 0.44f),
-            contentColor = colorScheme.onPrimaryContainer,
-            backgroundColor = colorScheme.surface,
-            fallbackContentColors = listOf(colorScheme.onSurface, colorScheme.onBackground),
-        )
-    }
-    val iconColors = remember(colorScheme, cardColors.containerColor) {
-        resolveAccessibleContainerColors(
-            containerColor = colorScheme.primary.copy(alpha = 0.14f),
-            contentColor = colorScheme.primary,
-            backgroundColor = cardColors.containerColor,
-            fallbackContentColors = listOf(colorScheme.onSurface),
-            minimumContrast = ACCESSIBLE_UI_MIN_CONTRAST,
-        )
-    }
-    val borderColor = colorScheme.outlineVariant.copy(alpha = 0.55f)
-
-    AdaptivePlainTooltipBox(text = summary) {
-        AppSurface(
-            shape = AppShapes.borderedContainer(ContainerLevel.Dialog),
-            color = cardColors.containerColor,
-            contentColor = cardColors.contentColor,
-            tonalElevation = 0.dp,
-            border = androidx.compose.foundation.BorderStroke(1.dp, borderColor)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.Top
-            ) {
-                AppSurface(
-                    modifier = Modifier.size(34.dp),
-                    shape = CircleShape,
-                    color = iconColors.containerColor,
-                    contentColor = iconColors.contentColor,
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        AppIcon(
-                            imageVector = icon,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    AppText(
-                        text = title,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    AppText(
-                        text = summary,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = cardColors.contentColor
-                    )
-                }
-            }
-        }
-    }
-}
-
 private const val PROBE_PAGE_LIMIT = 64
 
 internal fun restartApp(context: android.content.Context) {
@@ -2196,12 +2120,10 @@ internal fun restartApp(context: android.content.Context) {
     context.startActivity(launchIntent)
 }
 
-
 /**
  *  动态取色预览组件
  * 显示从壁纸提取的 Material You 颜色
  */
-
 
 @Composable
 fun DynamicColorPreview() {
