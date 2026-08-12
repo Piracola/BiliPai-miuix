@@ -5,7 +5,6 @@ import com.android.purebilibili.core.ui.transition.VideoCardTransitionBackground
 import com.android.purebilibili.core.ui.transition.normalizeSharedElementSourceRoute
 import com.android.purebilibili.core.ui.transition.resolveVideoCardLiveReturnVisualHandoffAlpha
 import com.android.purebilibili.core.ui.transition.resolveVideoCardReturnListCoverContract
-import com.android.purebilibili.core.ui.transition.resolveVideoCardSourceChromeReturnAlpha
 
 internal data class VideoCardScrollLiteVisualPolicy(
     val coverShadowElevationDp: Float,
@@ -90,13 +89,12 @@ internal fun isVideoCardFlyingReturnContext(
 }
 
 /**
- * Stationary list-card pixels while a Miuix flying entry owns the morph.
+ * Stationary list-card **cover** while a Miuix flying entry owns the morph.
  *
- * Flying detail draws cover + title; the list card must stay fully transparent until the morph
- * is parked and the entry is gone. Revealing list chrome/cover on the same 72%–98% window as
- * the flying layer causes a double image and a visible jump on unload.
+ * Cover pixels stay on the flying media path until park; list cover stays 0 to avoid dual image.
+ * Title / UP / stats are drawn on the flying entry during morph (list chrome also stays 0).
  *
- * @return 0 while flying owns the card, 1 when the list may show again (or whole-card fallback).
+ * @return 0 while flying owns cover, 1 when the list cover may show again (or whole-card fallback).
  */
 internal fun resolveHomeCardStationaryRevealAlpha(
     isReturnContext: Boolean,
@@ -113,7 +111,7 @@ internal fun resolveHomeCardStationaryRevealAlpha(
         VideoCardTransitionBackgroundPhase.RETURNING,
         -> 0f
         VideoCardTransitionBackgroundPhase.HELD ->
-            // Predictive seek keeps HELD while depth < 1; only full detail rest may show list.
+            // Predictive seek keeps HELD while depth < 1; only full detail rest may show list cover.
             if (transitionBackgroundProgress.coerceIn(0f, 1f) < 0.999f) 0f else 1f
         VideoCardTransitionBackgroundPhase.IDLE -> 1f
     }
@@ -224,8 +222,9 @@ internal fun resolveHorizontalCardChromeMotionFrame(
  * 规则：
  * - 非源卡 / 无 shell：恒 1
  * - 进场（OPENING 或 shared 进行中且非返回）：0，避免字叠播放器
- * - 返回 + Miuix 飞行 entry：列表原位保持 0，字由飞行层绘制；卸层完成后再亮，避免双层跳动
- * - preferWholeCardReturn：列表立即显示完整源卡
+ * - 返回 + 飞行壳：列表原位 **0**（飞行层盖住列表，真卡露不出来）；字在飞行壳绘制
+ * - morph 结束后再亮列表真卡
+ * - preferWholeCardReturn：列表立即完整显示
  */
 internal fun resolveHomeCardChromeAlphaDuringShellReturnMorph(
     useCardContainerSharedBounds: Boolean,

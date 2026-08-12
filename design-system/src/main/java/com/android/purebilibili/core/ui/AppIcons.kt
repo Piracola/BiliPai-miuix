@@ -372,6 +372,9 @@ fun rememberAppBookmarkIcon(): ImageVector = resolveAppBookmarkIcon()
 fun rememberAppInboxIcon(): ImageVector = resolveAppInboxIcon()
 
 @Composable
+fun rememberAppEmptyIcon(): ImageVector = resolveAppEmptyIcon()
+
+@Composable
 fun rememberAppTvIcon(): ImageVector = resolveAppTvIcon()
 
 @Composable
@@ -517,6 +520,9 @@ fun resolveAppHistoryIcon(): ImageVector = Icons.Outlined.History
 fun resolveAppBookmarkIcon(): ImageVector = Icons.Outlined.BookmarkBorder
 
 fun resolveAppInboxIcon(): ImageVector = Icons.Outlined.MailOutline
+
+/** Empty list / no-results chrome — not mail (inbox is separate). */
+fun resolveAppEmptyIcon(): ImageVector = Icons.Filled.Search
 
 fun resolveAppTvIcon(): ImageVector = Icons.Outlined.LiveTv
 

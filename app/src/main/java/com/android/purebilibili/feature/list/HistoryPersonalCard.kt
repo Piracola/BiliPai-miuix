@@ -22,10 +22,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.android.purebilibili.core.ui.AppChromeSizeTokens
 import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.AppSpacingTokens
@@ -41,6 +43,8 @@ import com.android.purebilibili.core.ui.components.AppSurface
 import com.android.purebilibili.core.ui.components.AppText
 import com.android.purebilibili.core.ui.transition.LocalVideoCardSharedElementSourceRoute
 import com.android.purebilibili.core.ui.transition.LocalVideoSharedTransitionSpeedSettings
+import com.android.purebilibili.core.ui.transition.VideoCardSourceChromeSnapshot
+import com.android.purebilibili.core.ui.transition.VideoCardSourceLayout
 import com.android.purebilibili.core.ui.transition.resolveVideoCardSharedTransitionMotionSpec
 import com.android.purebilibili.core.ui.transition.shouldUseVideoCardShellSharedBounds
 import com.android.purebilibili.core.ui.transition.videoCardShellSharedBoundsOrEmpty
@@ -83,6 +87,7 @@ internal fun HistoryPersonalCard(
     modifier: Modifier = Modifier,
 ) {
     val video = item.videoItem
+    val context = LocalContext.current
     var menuExpanded by remember { mutableStateOf(false) }
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
@@ -117,6 +122,15 @@ internal fun HistoryPersonalCard(
             viewAt = video.view_at,
         )
     }
+    val stationaryCoverUrl = remember(video.pic) { FormatUtils.fixImageUrl(video.pic) }
+    val stationaryCoverRequest = remember(stationaryCoverUrl) {
+        ImageRequest.Builder(context)
+            .data(stationaryCoverUrl)
+            .crossfade(false)
+            .memoryCacheKey(stationaryCoverUrl)
+            .diskCacheKey(stationaryCoverUrl)
+            .build()
+    }
     val triggerClick = {
         if (!batchMode) {
             cardBounds.value?.let { bounds ->
@@ -128,6 +142,23 @@ internal fun HistoryPersonalCard(
                     screenHeight = screenHeightPx,
                     sourceCornerDp = 12,
                     coverBounds = coverBounds.value,
+                    sourceLayout = VideoCardSourceLayout.SIDE_BY_SIDE,
+                    sourceChromeSnapshot = VideoCardSourceChromeSnapshot(
+                        title = video.title,
+                        ownerName = video.owner.name.takeIf { it.isNotBlank() }
+                            ?: if (item.business == HistoryBusiness.PGC) "番剧" else "未知作者",
+                        ownerFaceUrl = video.owner.face,
+                        viewText = FormatUtils.formatStat(video.stat.view.toLong()),
+                        danmakuText = FormatUtils.formatStat(video.stat.danmaku.toLong()),
+                        durationText = FormatUtils.formatDuration(video.duration),
+                        infoPresentation = com.android.purebilibili.core.ui.transition
+                            .resolveVideoCardSourceInfoPresentation(
+                                publishTimeText = "",
+                                showStatsInInfo = true,
+                            ),
+                        coverUrl = stationaryCoverUrl,
+                        coverCacheKey = stationaryCoverUrl,
+                    ),
                 )
             }
         }
@@ -189,7 +220,7 @@ internal fun HistoryPersonalCard(
         },
         coverContent = {
             AsyncImage(
-                model = FormatUtils.fixImageUrl(video.pic),
+                model = stationaryCoverRequest,
                 contentDescription = video.title,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),

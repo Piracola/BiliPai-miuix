@@ -82,6 +82,19 @@ private object NoOpHapticFeedback : HapticFeedback {
     override fun performHapticFeedback(hapticFeedbackType: HapticFeedbackType) = Unit
 }
 
+/**
+ * Trailing preference value layout (version / channel / short detail on the right).
+ *
+ * Previously hard-capped at 120.dp + single-line ellipsis, which clipped common Chinese
+ * labels like「开源约定与官方渠道」and version strings on phone-width settings rows.
+ * Shared by every AdaptivePreferenceContent renderer (MD3 / Miuix / fallback).
+ */
+internal const val APP_PREFERENCE_VALUE_MAX_WIDTH_DP = 200
+internal const val APP_PREFERENCE_VALUE_MAX_LINES = 2
+
+internal fun Modifier.appPreferenceValueTextModifier(): Modifier =
+    this.widthIn(max = APP_PREFERENCE_VALUE_MAX_WIDTH_DP.dp)
+
 // ═══════════════════════════════════════════════════
 //  Common iOS List Components (Reused across Settings, Profile, etc.)
 // ═══════════════════════════════════════════════════
@@ -945,12 +958,13 @@ private fun Md3NativeListItemContent(
                         text = value,
                         style = MaterialTheme.typography.bodyMedium,
                         color = valueColor,
-                        maxLines = 1,
-                        softWrap = false,
+                        maxLines = APP_PREFERENCE_VALUE_MAX_LINES,
+                        softWrap = true,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.End,
                         modifier = Modifier
                             .padding(start = 12.dp)
-                            .widthIn(max = 128.dp),
+                            .appPreferenceValueTextModifier(),
                     )
                 }
                 if (showChevron && onClick != null) {
@@ -1104,12 +1118,12 @@ internal fun AdaptivePreferenceContent(
                         text = value,
                         style = MiuixTheme.textStyles.body2,
                         color = valueColor,
-                        maxLines = 1,
-                        softWrap = false,
+                        maxLines = APP_PREFERENCE_VALUE_MAX_LINES,
+                        softWrap = true,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                         textAlign = androidx.compose.ui.text.style.TextAlign.End,
                         modifier = Modifier
-                            .widthIn(max = 120.dp)
+                            .appPreferenceValueTextModifier()
                             .onLongPressAction(
                                 enabled = enableCopy && onCopyRequest != null,
                                 onLongPress = { onCopyRequest?.invoke(copyValue ?: value, title) },
@@ -1219,11 +1233,11 @@ internal fun AdaptivePreferenceContent(
                             style = MaterialTheme.typography.bodyMedium,
                             color = valueColor,
                             textAlign = androidx.compose.ui.text.style.TextAlign.End,
-                            maxLines = 1,
-                            softWrap = false,
+                            maxLines = APP_PREFERENCE_VALUE_MAX_LINES,
+                            softWrap = true,
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                             modifier = Modifier
-                                .widthIn(max = 120.dp)
+                                .appPreferenceValueTextModifier()
                                 .onLongPressAction(
                                     enabled = enableCopy && onCopyRequest != null,
                                     onLongPress = { onCopyRequest?.invoke(copyValue ?: value, title) },
@@ -1308,12 +1322,12 @@ internal fun AdaptivePreferenceContent(
                         text = value,
                         style = MiuixTheme.textStyles.body2,
                         color = AppSurfaceTokens.onSurfaceVariantSummary(),
-                        maxLines = 1,
-                        softWrap = false,
+                        maxLines = APP_PREFERENCE_VALUE_MAX_LINES,
+                        softWrap = true,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                         textAlign = androidx.compose.ui.text.style.TextAlign.End,
                         modifier = Modifier
-                            .widthIn(max = 120.dp)
+                            .appPreferenceValueTextModifier()
                             .onLongPressAction(
                                 enabled = enableCopy && onCopyRequest != null,
                                 onLongPress = { onCopyRequest?.invoke(copyValue ?: value, title) },
@@ -1438,12 +1452,12 @@ internal fun AdaptivePreferenceContent(
                         text = value,
                         style = MaterialTheme.typography.bodyMedium,
                         color = valueColor,
-                        maxLines = 1,
-                        softWrap = false,
+                        maxLines = APP_PREFERENCE_VALUE_MAX_LINES,
+                        softWrap = true,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                         textAlign = androidx.compose.ui.text.style.TextAlign.End,
                         modifier = Modifier
-                            .widthIn(max = 120.dp)
+                            .appPreferenceValueTextModifier()
                             .onLongPressAction(
                                 enabled = enableCopy && onCopyRequest != null,
                                 onLongPress = { onCopyRequest?.invoke(copyValue ?: value, title) },

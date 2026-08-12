@@ -1,13 +1,12 @@
 package com.android.purebilibili.feature.video.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -21,21 +20,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.android.purebilibili.core.ui.AppSpacingTokens
 import com.android.purebilibili.core.ui.AppSurfaceTokens
+import com.android.purebilibili.core.ui.MediaContrastPalette
 import com.android.purebilibili.core.ui.components.AppText
+import com.android.purebilibili.core.ui.feedContentTypography
 import com.android.purebilibili.core.ui.transition.LocalMiuixVideoCardTransitionState
 import com.android.purebilibili.core.ui.transition.VideoCardSourceChromeSnapshot
 import com.android.purebilibili.core.ui.transition.VideoCardSourceLayout
@@ -44,6 +46,8 @@ import com.android.purebilibili.core.ui.transition.resolveVideoCardSourceChromeV
 import com.android.purebilibili.core.ui.transition.resolveVideoCardSourceLayout
 import com.android.purebilibili.core.util.FormatUtils
 import com.android.purebilibili.data.model.response.ViewInfo
+import com.android.purebilibili.feature.home.resolveHomeCardInfoSurfaceAppearance
+import kotlin.math.roundToInt
 
 /**
  * Landing geometry for reconstructing the source card inside the Miuix flying entry.
@@ -56,8 +60,14 @@ internal data class VideoDetailReturnSourceCardLayout(
     val cardWidthPx: Float,
     val cardHeightPx: Float,
     val coverHeightPx: Float,
-    /** Cover band width within the card (screen px); full width for STACKED. */
+    /** Cover band width within the card (screen px); full width for STACKED when cover is flush. */
     val coverWidthPx: Float,
+    /**
+     * Cover origin inside the card (screen px). Non-zero when list cover is inset
+     * (e.g. single-column padding) — clip must start here or land frame looks larger then shrinks.
+     */
+    val coverOffsetXPx: Float = 0f,
+    val coverOffsetYPx: Float = 0f,
     val infoWidthPx: Float,
     val infoHeightPx: Float,
     val cardAnchorXInViewportPx: Float,
@@ -90,34 +100,115 @@ internal data class VideoDetailReturnSourceCardLayout(
 internal data class VideoDetailReturnSourceCardChromeModel(
     val title: String,
     val ownerName: String,
-    val viewText: String,
-    val danmakuText: String,
+    val viewText: String = "",
+    val danmakuText: String = "",
     val durationText: String = "",
     val followed: Boolean = false,
+    /** Mirrors list-card info rows frozen at click; drives what LandingInfoTexts paints. */
+    val infoPresentation: com.android.purebilibili.core.ui.transition.VideoCardSourceInfoPresentation =
+        com.android.purebilibili.core.ui.transition.VideoCardSourceInfoPresentation(),
 )
 
+/**
+ * Prefer click-time [snapshot] for layout flags so home (title/UP/发布于) does not pick up
+ * detail ViewInfo stats that were only on the cover as badges.
+ */
 internal fun resolveVideoDetailReturnSourceCardChromeModel(
     info: ViewInfo?,
     snapshot: VideoCardSourceChromeSnapshot?,
 ): VideoDetailReturnSourceCardChromeModel? {
-    if (info != null) {
+    val frozen = snapshot
+    if (frozen != null) {
         return VideoDetailReturnSourceCardChromeModel(
-            title = info.title,
-            ownerName = info.owner.name,
-            viewText = FormatUtils.formatStat(info.stat.view.toLong()),
-            danmakuText = FormatUtils.formatStat(info.stat.danmaku.toLong()),
-            durationText = "",
-            followed = false,
+            title = frozen.title.ifBlank { info?.title.orEmpty() },
+            ownerName = frozen.ownerName.ifBlank { info?.owner?.name.orEmpty() },
+            viewText = frozen.viewText,
+            danmakuText = frozen.danmakuText,
+            durationText = frozen.durationText,
+            followed = frozen.followed,
+            infoPresentation = frozen.infoPresentation,
+        ).takeIf { it.title.isNotBlank() || it.ownerName.isNotBlank() }
+    }
+    if (info == null) return null
+    // No snapshot: conservative home-like info (title / UP / publish), no invented 弹幕 row.
+    val publish = if (info.pubdate > 0L) FormatUtils.formatPublishTime(info.pubdate) else ""
+    return VideoDetailReturnSourceCardChromeModel(
+        title = info.title,
+        ownerName = info.owner.name,
+        followed = false,
+        infoPresentation = com.android.purebilibili.core.ui.transition.VideoCardSourceInfoPresentation(
+            publishTimeText = publish,
+            showStatsInInfo = false,
+        ),
+    )
+}
+
+/** Build the tertiary info line exactly as the list card would. */
+internal fun resolveVideoDetailReturnInfoSecondaryLine(
+    model: VideoDetailReturnSourceCardChromeModel,
+): String {
+    val presentation = model.infoPresentation
+    if (presentation.showStatsInInfo) {
+        return buildString {
+            if (model.viewText.isNotBlank()) {
+                append(model.viewText)
+                if (!model.viewText.endsWith("播放")) append("播放")
+            }
+            if (model.danmakuText.isNotBlank()) {
+                if (isNotEmpty()) append("  ·  ")
+                append(model.danmakuText)
+                if (!model.danmakuText.endsWith("弹幕") && !model.danmakuText.endsWith("评论")) {
+                    append("弹幕")
+                }
+            }
+            if (model.durationText.isNotBlank()) {
+                if (isNotEmpty()) append("  ·  ")
+                append(model.durationText)
+            }
+        }
+    }
+    return presentation.publishTimeText
+}
+
+/**
+ * Landing info plate colors for the flying chrome.
+ *
+ * When the list froze [useTintedInfoSurface], reuse home info-surface alphas
+ * (without realtime haze/liquid — flying overlay has no wallpaper sample).
+ */
+internal data class VideoDetailReturnInfoSurfaceSpec(
+    val useTintedSurface: Boolean,
+    val containerColor: Color,
+    val borderColor: Color,
+    val borderWidth: Dp,
+)
+
+internal fun resolveVideoDetailReturnInfoSurfaceSpec(
+    useTintedInfoSurface: Boolean,
+    isDarkTheme: Boolean,
+    baseContainerColor: Color,
+): VideoDetailReturnInfoSurfaceSpec {
+    if (!useTintedInfoSurface) {
+        return VideoDetailReturnInfoSurfaceSpec(
+            useTintedSurface = false,
+            containerColor = baseContainerColor,
+            borderColor = Color.Transparent,
+            borderWidth = 0.dp,
         )
     }
-    val frozen = snapshot ?: return null
-    return VideoDetailReturnSourceCardChromeModel(
-        title = frozen.title,
-        ownerName = frozen.ownerName,
-        viewText = frozen.viewText,
-        danmakuText = frozen.danmakuText,
-        durationText = frozen.durationText,
-        followed = frozen.followed,
+    val appearance = resolveHomeCardInfoSurfaceAppearance(
+        wallpaperTintEnabled = true,
+        isDarkTheme = isDarkTheme,
+        isDataSaverActive = false,
+        hasWallpaperHazeState = false,
+        hasLayerBackdrop = false,
+        blurEnabled = true,
+    )
+    return VideoDetailReturnInfoSurfaceSpec(
+        useTintedSurface = true,
+        containerColor = baseContainerColor.copy(alpha = appearance.containerAlpha),
+        borderColor = MediaContrastPalette.Foreground.copy(alpha = appearance.borderAlpha),
+        borderWidth = AppSpacingTokens.Micro * 0.4f,
     )
 }
 
@@ -129,6 +220,8 @@ private fun emptyLayout(
     cardHeightPx = 0f,
     coverHeightPx = 0f,
     coverWidthPx = 0f,
+    coverOffsetXPx = 0f,
+    coverOffsetYPx = 0f,
     infoWidthPx = 0f,
     infoHeightPx = 0f,
     cardAnchorXInViewportPx = 0f,
@@ -141,8 +234,8 @@ private fun emptyLayout(
 /**
  * 将全屏详情壳中的卡片几何反向补偿到点击时的源卡尺寸。
  *
- * - [VideoCardSourceLayout.STACKED]：封面在上、信息在下（推荐双列等）
- * - [VideoCardSourceLayout.SIDE_BY_SIDE]：封面在左、信息在右（分区横卡 / 相关推荐）
+ * - [VideoCardSourceLayout.STACKED]：实时画面在上、信息在下（推荐双列等）
+ * - [VideoCardSourceLayout.SIDE_BY_SIDE]：实时画面在左、信息在右（分区横卡等）
  */
 internal fun resolveVideoDetailReturnSourceCardLayout(
     viewportWidthPx: Float,
@@ -169,7 +262,10 @@ internal fun resolveVideoDetailReturnSourceCardLayout(
             if (!isFullWidthCover || !isVerticallyInsideCard) {
                 return emptyLayout(layout)
             }
-            val coverHeight = (coverBounds.bottom - bounds.top).coerceAtLeast(0f)
+            // Use measured cover rect (not cardTop→coverBottom) so 4:3 home covers match
+            // list pixels; expanding to card top over-clips and lands as a shrink.
+            val coverHeight = coverBounds.height.coerceAtLeast(0f)
+            val coverOffsetY = (coverBounds.top - bounds.top).coerceAtLeast(0f)
             val infoHeight = (bounds.bottom - coverBounds.bottom).coerceAtLeast(0f)
             if (infoHeight <= 1f || coverHeight <= 1f) {
                 return emptyLayout(layout)
@@ -179,13 +275,15 @@ internal fun resolveVideoDetailReturnSourceCardLayout(
                 cardWidthPx = bounds.width,
                 cardHeightPx = bounds.height,
                 coverHeightPx = coverHeight,
-                coverWidthPx = bounds.width,
+                coverWidthPx = coverBounds.width.coerceAtMost(bounds.width),
+                coverOffsetXPx = (coverBounds.left - bounds.left).coerceAtLeast(0f),
+                coverOffsetYPx = coverOffsetY,
                 infoWidthPx = bounds.width,
                 infoHeightPx = infoHeight,
                 cardAnchorXInViewportPx = cardAnchorX,
                 cardAnchorYInViewportPx = cardAnchorY,
                 infoAnchorXInViewportPx = 0f,
-                infoAnchorYInViewportPx = coverHeight / sourceScale,
+                infoAnchorYInViewportPx = (coverOffsetY + coverHeight) / sourceScale,
                 layout = layout,
             )
         }
@@ -194,18 +292,25 @@ internal fun resolveVideoDetailReturnSourceCardLayout(
             val coverNarrower = coverBounds.width < bounds.width * 0.85f
             val coverWidth: Float
             val coverHeight: Float
+            val coverOffsetX: Float
+            val coverOffsetY: Float
             val infoWidth: Float
             if (coverOnLeft && coverNarrower) {
-                coverWidth = (coverBounds.right - bounds.left).coerceAtLeast(0f)
-                coverHeight = (coverBounds.bottom - coverBounds.top)
+                // Exact measured cover box (includes list padding inset).
+                coverWidth = coverBounds.width.coerceAtLeast(1f)
+                coverHeight = coverBounds.height
                     .coerceAtLeast(1f)
                     .coerceAtMost(bounds.height)
+                coverOffsetX = (coverBounds.left - bounds.left).coerceAtLeast(0f)
+                coverOffsetY = (coverBounds.top - bounds.top).coerceAtLeast(0f)
                 infoWidth = (bounds.right - coverBounds.right).coerceAtLeast(0f)
             } else {
-                // Explicit SIDE_BY_SIDE (partition/related) with imperfect cover measure:
+                // Explicit SIDE_BY_SIDE with imperfect cover measure:
                 // left ~38% band matches HomeStyleSingleColumn cover vs full-width row.
                 coverWidth = bounds.width * 0.38f
                 coverHeight = bounds.height * 0.85f
+                coverOffsetX = 0f
+                coverOffsetY = (bounds.height - coverHeight) / 2f
                 infoWidth = bounds.width - coverWidth
             }
             val infoHeight = bounds.height.coerceAtLeast(0f)
@@ -218,11 +323,13 @@ internal fun resolveVideoDetailReturnSourceCardLayout(
                 cardHeightPx = bounds.height,
                 coverHeightPx = coverHeight,
                 coverWidthPx = coverWidth,
+                coverOffsetXPx = coverOffsetX,
+                coverOffsetYPx = coverOffsetY,
                 infoWidthPx = infoWidth,
                 infoHeightPx = infoHeight,
                 cardAnchorXInViewportPx = cardAnchorX,
                 cardAnchorYInViewportPx = cardAnchorY,
-                infoAnchorXInViewportPx = coverWidth / sourceScale,
+                infoAnchorXInViewportPx = (coverOffsetX + coverWidth) / sourceScale,
                 infoAnchorYInViewportPx = 0f,
                 layout = layout,
             )
@@ -239,7 +346,7 @@ internal fun resolveVideoDetailReturnCoverHeightInEntryPx(
     return layout.coverHeightPx / layout.sourceScale
 }
 
-/** Entry-space cover band width (SIDE_BY_SIDE left band). */
+/** Entry-space cover band width (SIDE_BY_SIDE / inset STACKED). */
 internal fun resolveVideoDetailReturnCoverWidthInEntryPx(
     layout: VideoDetailReturnSourceCardLayout,
 ): Float {
@@ -247,12 +354,112 @@ internal fun resolveVideoDetailReturnCoverWidthInEntryPx(
     return layout.coverWidthPx / layout.sourceScale
 }
 
+/** Entry-space cover left inset inside the flying card. */
+internal fun resolveVideoDetailReturnCoverOffsetXInEntryPx(
+    layout: VideoDetailReturnSourceCardLayout,
+): Float {
+    if (!layout.canRender) return 0f
+    return layout.coverOffsetXPx / layout.sourceScale
+}
+
+/** Entry-space cover top inset inside the flying card. */
+internal fun resolveVideoDetailReturnCoverOffsetYInEntryPx(
+    layout: VideoDetailReturnSourceCardLayout,
+): Float {
+    if (!layout.canRender) return 0f
+    return layout.coverOffsetYPx / layout.sourceScale
+}
+
 /**
- * 飞行详情内的来源卡落位层。
+ * Media geometry inside the full-size detail entry.
  *
- * - **STACKED**（推荐双列）：壳在播放器下 + 上方媒体；信息文案在封面下
- * - **SIDE_BY_SIDE**（分区横卡 / 相关）：整卡在飞行层重绘左封面图 + 右文字，避免
- *   把全屏播放器压进矮横卡变成黑块
+ * The child is actually measured at this size instead of drawing full-player pixels through a
+ * shrinking clip. That keeps [ContentScale.Crop] identical to the stationary list cover at the
+ * handoff frame, including 4:3 covers that are taller than the detail player viewport.
+ */
+internal data class VideoDetailReturnMediaLayoutFrame(
+    val offsetXPx: Int,
+    val offsetYPx: Int,
+    val widthPx: Int,
+    val heightPx: Int,
+)
+
+internal fun resolveVideoDetailReturnMediaLayoutFrame(
+    containerWidthPx: Int,
+    containerHeightPx: Int,
+    landingLayout: VideoDetailReturnSourceCardLayout?,
+    handoffProgress: Float,
+): VideoDetailReturnMediaLayoutFrame {
+    val safeContainerWidth = containerWidthPx.coerceAtLeast(1)
+    val safeContainerHeight = containerHeightPx.coerceAtLeast(1)
+    val landing = landingLayout?.takeIf { it.canRender }
+    val progress = if (landing == null) 0f else handoffProgress.coerceIn(0f, 1f)
+    fun interpolate(start: Float, end: Float): Int =
+        (start + (end - start) * progress).roundToInt()
+
+    val targetWidth = landing
+        ?.let(::resolveVideoDetailReturnCoverWidthInEntryPx)
+        ?.takeIf { it > 1f }
+        ?: safeContainerWidth.toFloat()
+    val targetHeight = landing
+        ?.let(::resolveVideoDetailReturnCoverHeightInEntryPx)
+        ?.takeIf { it > 1f }
+        ?: safeContainerHeight.toFloat()
+    val targetOffsetX = landing
+        ?.let(::resolveVideoDetailReturnCoverOffsetXInEntryPx)
+        ?: 0f
+    val targetOffsetY = landing
+        ?.let(::resolveVideoDetailReturnCoverOffsetYInEntryPx)
+        ?: 0f
+
+    return VideoDetailReturnMediaLayoutFrame(
+        offsetXPx = interpolate(0f, targetOffsetX),
+        offsetYPx = interpolate(0f, targetOffsetY),
+        widthPx = interpolate(safeContainerWidth.toFloat(), targetWidth).coerceAtLeast(1),
+        heightPx = interpolate(safeContainerHeight.toFloat(), targetHeight).coerceAtLeast(1),
+    )
+}
+
+/**
+ * Keeps the host at the normal player size while remeasuring and placing its media child at the
+ * returning list cover geometry. Providers are read during layout so gesture frames do not need
+ * to recompose the player subtree.
+ */
+internal fun Modifier.videoDetailReturnMediaLayout(
+    landingLayout: VideoDetailReturnSourceCardLayout?,
+    handoffProgressProvider: () -> Float,
+): Modifier = layout { measurable, constraints ->
+    if (!constraints.hasBoundedWidth || !constraints.hasBoundedHeight) {
+        val placeable = measurable.measure(constraints)
+        layout(placeable.width, placeable.height) {
+            placeable.place(0, 0)
+        }
+    } else {
+        val frame = resolveVideoDetailReturnMediaLayoutFrame(
+            containerWidthPx = constraints.maxWidth,
+            containerHeightPx = constraints.maxHeight,
+            landingLayout = landingLayout,
+            handoffProgress = handoffProgressProvider(),
+        )
+        val placeable = measurable.measure(
+            Constraints.fixed(
+                width = frame.widthPx,
+                height = frame.heightPx,
+            ),
+        )
+        layout(constraints.maxWidth, constraints.maxHeight) {
+            // Source bounds are physical screen coordinates; do not mirror this offset in RTL.
+            placeable.place(frame.offsetXPx, frame.offsetYPx)
+        }
+    }
+}
+
+/**
+ * 飞行详情内的来源卡落位层 — 与首页同源：整卡壳 + 实时画面 + 文字，无静态封面遮挡层。
+ *
+ * - **STACKED**（推荐双列）：壳在播放器下；实时画面在上方 cover 带；信息在下方
+ * - **SIDE_BY_SIDE**（分区横卡）：壳在播放器下；实时画面在左侧 cover 带；信息在右侧
+ *   （禁止再叠一层 AsyncImage 封面，否则会像双层相互遮挡）
  */
 @Composable
 internal fun BoxScope.VideoDetailReturnSourceCardChrome(
@@ -264,7 +471,7 @@ internal fun BoxScope.VideoDetailReturnSourceCardChrome(
     chromeModel: VideoDetailReturnSourceCardChromeModel? = null,
     info: ViewInfo? = null,
     sourceChromeSnapshot: VideoCardSourceChromeSnapshot? = null,
-    coverUrl: String? = null,
+    @Suppress("UNUSED_PARAMETER") coverUrl: String? = null,
     phaseProvider: () -> VideoCardTransitionBackgroundPhase = {
         VideoCardTransitionBackgroundPhase.RETURNING
     },
@@ -275,7 +482,6 @@ internal fun BoxScope.VideoDetailReturnSourceCardChrome(
         ?: return
     val density = LocalDensity.current
     val configuration = LocalConfiguration.current
-    val context = LocalContext.current
     val miuixHost = LocalMiuixVideoCardTransitionState.current
     val viewportWidthPx = miuixHost.layoutWidthProvider().takeIf { it > 1f }
         ?: with(density) { configuration.screenWidthDp.dp.toPx() }
@@ -292,23 +498,12 @@ internal fun BoxScope.VideoDetailReturnSourceCardChrome(
     val cardHeight = with(density) { layout.cardHeightPx.toDp() }
     val cardAnchorX = with(density) { layout.cardAnchorXInViewportPx.toDp() }
     val cardAnchorY = with(density) { layout.cardAnchorYInViewportPx.toDp() }
-    val coverWidth = with(density) { layout.coverWidthPx.toDp() }
     val coverHeight = with(density) { layout.coverHeightPx.toDp() }
     val infoWidth = with(density) { layout.infoWidthPx.toDp() }
     val infoHeight = with(density) { layout.infoHeightPx.toDp() }
     val infoAnchorX = with(density) { layout.infoAnchorXInViewportPx.toDp() }
     val infoAnchorY = with(density) { layout.infoAnchorYInViewportPx.toDp() }
     val inverseScale = 1f / layout.sourceScale
-    val resolvedCoverUrl = coverUrl?.trim()?.takeIf { it.isNotBlank() }
-        ?: info?.pic?.trim()?.takeIf { it.isNotBlank() }
-    val coverRequest = remember(resolvedCoverUrl) {
-        resolvedCoverUrl?.let { url ->
-            ImageRequest.Builder(context)
-                .data(FormatUtils.resolveVideoCoverUrl(url, useLowQuality = false))
-                .crossfade(false)
-                .build()
-        }
-    }
 
     fun Modifier.landingLayer(): Modifier = graphicsLayer {
         val frame = resolveVideoCardSourceChromeVisualFrame(
@@ -323,61 +518,47 @@ internal fun BoxScope.VideoDetailReturnSourceCardChrome(
         alpha = frame.alpha
     }
 
-    when (layout.layout) {
-        VideoCardSourceLayout.SIDE_BY_SIDE -> {
-            // Complete horizontal card on the flying layer (covers black player strip).
-            Box(
-                modifier = modifier
-                    .zIndex(2f)
-                    .align(Alignment.TopStart)
-                    .offset(x = cardAnchorX, y = cardAnchorY)
-                    .width(cardWidth)
-                    .height(cardHeight)
-                    .landingLayer()
-                    .background(AppSurfaceTokens.cardContainer())
-                    .padding(AppSpacingTokens.Small),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalArrangement = Arrangement.spacedBy(AppSpacingTokens.Medium),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .width(coverWidth.coerceAtMost(cardWidth * 0.5f))
-                            .height(coverHeight.coerceAtMost(cardHeight - AppSpacingTokens.Small * 2))
-                            .clip(RoundedCornerShape(AppSpacingTokens.Small))
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
-                    ) {
-                        if (coverRequest != null) {
-                            AsyncImage(
-                                model = coverRequest,
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize(),
-                            )
-                        }
-                        if (model.durationText.isNotBlank()) {
-                            AppText(
-                                text = model.durationText,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                style = MaterialTheme.typography.labelSmall,
-                                modifier = Modifier
-                                    .align(Alignment.BottomEnd)
-                                    .padding(AppSpacingTokens.ExtraSmall),
-                            )
-                        }
-                    }
-                    SideBySideInfoColumn(
-                        model = model,
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
-                    )
-                }
-            }
+    val isDarkTheme = AppSurfaceTokens.chromeBackground().luminance() < 0.5f
+    val baseContainer = AppSurfaceTokens.cardContainer()
+    val infoSurfaceSpec = remember(
+        model.infoPresentation.useTintedInfoSurface,
+        isDarkTheme,
+        baseContainer,
+    ) {
+        resolveVideoDetailReturnInfoSurfaceSpec(
+            useTintedInfoSurface = model.infoPresentation.useTintedInfoSurface,
+            isDarkTheme = isDarkTheme,
+            baseContainerColor = baseContainer,
+        )
+    }
+    // STACKED: bottom corners only (matches VideoCard info plate under cover).
+    val stackedInfoShape = RoundedCornerShape(
+        topStart = 0.dp,
+        topEnd = 0.dp,
+        bottomStart = AppSpacingTokens.Small,
+        bottomEnd = AppSpacingTokens.Small,
+    )
+    val sideInfoShape = RoundedCornerShape(AppSpacingTokens.Small)
+
+    fun Modifier.landingInfoSurface(shape: RoundedCornerShape): Modifier {
+        if (!infoSurfaceSpec.useTintedSurface) {
+            return this.background(infoSurfaceSpec.containerColor, shape)
         }
-        VideoCardSourceLayout.STACKED -> {
+        return this
+            .clip(shape)
+            .background(color = infoSurfaceSpec.containerColor, shape = shape)
+            .border(
+                width = infoSurfaceSpec.borderWidth,
+                color = infoSurfaceSpec.borderColor,
+                shape = shape,
+            )
+    }
+
+    when (layout.layout) {
+        // Home whole-card contract; only info region placement differs:
+        // STACKED = below cover, SIDE_BY_SIDE = right of cover.
+        // Live media owns the cover band; themed info plate mirrors list card.
+        VideoCardSourceLayout.SIDE_BY_SIDE -> {
             Box(
                 modifier = modifier
                     .zIndex(-1f)
@@ -386,7 +567,46 @@ internal fun BoxScope.VideoDetailReturnSourceCardChrome(
                     .width(cardWidth)
                     .height(cardHeight)
                     .landingLayer()
-                    .background(AppSurfaceTokens.cardContainer()),
+                    .background(baseContainer),
+            )
+            Box(
+                modifier = modifier
+                    .zIndex(1f)
+                    .align(Alignment.TopStart)
+                    .offset(x = infoAnchorX, y = cardAnchorY)
+                    .width(infoWidth)
+                    .height(cardHeight)
+                    .landingLayer()
+                    .landingInfoSurface(sideInfoShape)
+                    .padding(
+                        start = AppSpacingTokens.Medium,
+                        end = AppSpacingTokens.Small,
+                        top = AppSpacingTokens.Small,
+                        bottom = AppSpacingTokens.Small,
+                    ),
+                contentAlignment = Alignment.CenterStart,
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(coverHeight.coerceAtMost(cardHeight - AppSpacingTokens.Small * 2)),
+                    verticalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    LandingInfoTexts(model = model, info = info)
+                }
+            }
+        }
+        VideoCardSourceLayout.STACKED -> {
+            // Transparent under cover; only info plate carries themed container (list card does too).
+            Box(
+                modifier = modifier
+                    .zIndex(-1f)
+                    .align(Alignment.TopStart)
+                    .offset(x = cardAnchorX, y = cardAnchorY)
+                    .width(cardWidth)
+                    .height(cardHeight)
+                    .landingLayer()
+                    .background(Color.Transparent),
             )
             Column(
                 modifier = modifier
@@ -396,6 +616,7 @@ internal fun BoxScope.VideoDetailReturnSourceCardChrome(
                     .width(infoWidth)
                     .height(infoHeight)
                     .landingLayer()
+                    .landingInfoSurface(stackedInfoShape)
                     .padding(
                         horizontal = AppSpacingTokens.Small + AppSpacingTokens.Micro,
                         vertical = AppSpacingTokens.Small,
@@ -409,100 +630,61 @@ internal fun BoxScope.VideoDetailReturnSourceCardChrome(
     }
 }
 
-@Composable
-private fun SideBySideInfoColumn(
-    model: VideoDetailReturnSourceCardChromeModel,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(AppSpacingTokens.ExtraSmall),
-    ) {
-        AppText(
-            text = model.title,
-            modifier = Modifier.fillMaxWidth(),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontWeight = FontWeight.Medium,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-        AppText(
-            text = buildString {
-                append("UP ")
-                append(model.ownerName)
-            },
-            modifier = Modifier.fillMaxWidth(),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(AppSpacingTokens.Small),
-        ) {
-            AppText(
-                text = model.viewText,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-            )
-            AppText(
-                text = model.danmakuText,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-            )
-        }
-    }
-}
-
+/**
+ * Home-recommendation info copy used for both STACKED (below) and SIDE_BY_SIDE (right).
+ * Typography follows [feedContentTypography] like list cards.
+ */
 @Composable
 private fun LandingInfoTexts(
     model: VideoDetailReturnSourceCardChromeModel,
-    info: ViewInfo?,
+    @Suppress("UNUSED_PARAMETER") info: ViewInfo?,
 ) {
+    val contentTypography = feedContentTypography()
+    // Only paint rows the list card froze in [model.infoPresentation] — no invented 弹幕.
     AppText(
         text = model.title,
         modifier = Modifier.fillMaxWidth(),
-        style = MaterialTheme.typography.titleSmall,
+        style = contentTypography.title,
         color = MaterialTheme.colorScheme.onSurface,
         fontWeight = FontWeight.Medium,
         maxLines = 2,
         overflow = TextOverflow.Ellipsis,
     )
-    AppText(
-        text = buildString {
-            append(model.ownerName)
+    if (model.ownerName.isNotBlank() || model.followed) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(AppSpacingTokens.ExtraSmall),
+        ) {
+            if (model.ownerName.isNotBlank()) {
+                AppText(
+                    text = model.ownerName,
+                    style = contentTypography.author,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+            }
             if (model.followed) {
-                append("  ·  已关注")
+                AppText(
+                    text = "已关注",
+                    style = contentTypography.coverBadge,
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1,
+                )
             }
-        },
-        modifier = Modifier.fillMaxWidth(),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-    )
-    AppText(
-        text = buildString {
-            append(model.viewText)
-            append("播放  ·  ")
-            append(model.danmakuText)
-            append("弹幕")
-            if (model.durationText.isNotBlank()) {
-                append("  ·  ")
-                append(model.durationText)
-            } else if (info != null && info.pubdate > 0L) {
-                append("  ·  ")
-                append(FormatUtils.formatPublishTime(info.pubdate))
-            }
-        },
-        modifier = Modifier.fillMaxWidth(),
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-    )
+        }
+    }
+    val secondaryLine = resolveVideoDetailReturnInfoSecondaryLine(model)
+    if (secondaryLine.isNotBlank()) {
+        AppText(
+            text = secondaryLine,
+            modifier = Modifier.fillMaxWidth(),
+            style = contentTypography.statistic,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
 }

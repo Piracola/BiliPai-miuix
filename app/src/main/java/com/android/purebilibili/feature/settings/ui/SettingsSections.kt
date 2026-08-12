@@ -1461,7 +1461,7 @@ fun PrivacySection(
     val privacyModeTint = rememberSettingsEntryTint(AppSemanticAccentRole.TERTIARY, iOSPurple)
     val permissionVisual = rememberSettingsEntryVisual(SettingsSearchTarget.PERMISSION)
     val blockedListVisual = rememberSettingsEntryVisual(SettingsSearchTarget.BLOCKED_LIST)
-    val visibilityOffIcon = rememberSettingsSemanticIcon(SettingsIconRole.PRIVACY_PERMISSION)
+    val visibilityOffIcon = rememberSettingsSemanticIcon(SettingsIconRole.PRIVACY_HISTORY)
     val contentAuthenticationIcon = rememberSettingsSemanticIcon(
         SettingsIconRole.PRIVACY_CONTENT_AUTHENTICATION,
     )
@@ -1649,8 +1649,8 @@ fun DeveloperSection(
     val analyticsTint = rememberSettingsEntryTint(AppSemanticAccentRole.PRIMARY, iOSBlue)
     val pluginsVisual = rememberSettingsEntryVisual(SettingsSearchTarget.PLUGINS)
     val exportLogsVisual = rememberSettingsEntryVisual(SettingsSearchTarget.EXPORT_LOGS)
-    val crashTrackingIcon = rememberSettingsSemanticIcon(SettingsIconRole.CRASH_TRACKING)
-    val analyticsIcon = rememberSettingsSemanticIcon(SettingsIconRole.ANALYTICS)
+    val crashTrackingIcon = rememberSettingsSemanticIcon(SettingsIconRole.DEVELOPER_CRASH_TRACKING)
+    val analyticsIcon = rememberSettingsSemanticIcon(SettingsIconRole.DEVELOPER_ANALYTICS)
 
     SettingsCardGroup {
         SettingSwitchItem(
@@ -1739,7 +1739,7 @@ fun AboutSection(
     val releaseNotesVisual = rememberSettingsEntryVisual(SettingsSearchTarget.VIEW_RELEASE_NOTES)
     val replayOnboardingVisual = rememberSettingsEntryVisual(SettingsSearchTarget.REPLAY_ONBOARDING)
     val notificationIcon = rememberSettingsSemanticIcon(SettingsIconRole.AUTO_CHECK_UPDATE)
-    val infoIcon = rememberSettingsSemanticIcon(SettingsIconRole.ABOUT_SUPPORT)
+    val infoIcon = rememberSettingsSemanticIcon(SettingsIconRole.APP_VERSION)
     val sparklesIcon = rememberSettingsSemanticIcon(SettingsIconRole.EASTER_EGG)
     val verificationIcon = rememberSettingsSemanticIcon(SettingsIconRole.BUILD_VERIFICATION)
     val buildSourceIcon = rememberSettingsSemanticIcon(SettingsIconRole.BUILD_SOURCE)
@@ -1961,8 +1961,8 @@ fun AboutSection(
         SettingClickableItem(
             icon = replayOnboardingVisual.icon,
             iconPainter = replayOnboardingVisual.iconResId?.let { painterResource(id = it) },
-            title = "重播新手引导",
-            value = "了解应用功能",
+            title = "重看使用须知",
+            value = "开源约定与官方渠道",
             onClick = onReplayOnboardingClick,
             iconTint = replayOnboardingVisual.iconTint
         )

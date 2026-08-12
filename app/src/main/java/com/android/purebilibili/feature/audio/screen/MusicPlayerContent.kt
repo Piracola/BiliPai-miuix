@@ -130,18 +130,25 @@ import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop as rememberMiuixLayerBac
 private val MusicFallbackColor = Color(0xFF342B42)
 
 private val LocalMusicContentColor = staticCompositionLocalOf { Color.White }
+private val LocalMusicAccentColor = staticCompositionLocalOf { Color.White }
 
-/** 当前听视频页前景色（随封面色板明暗 + 主题 token 切换）。 */
+/** 当前听视频页前景色（随封面色板明暗切换，保证可读）。 */
 private val MusicContentColor: Color
     @Composable
     @ReadOnlyComposable
     get() = LocalMusicContentColor.current
 
+/** 与视频播放器一致的主题强调色（控件高亮、进度、选中态）。 */
+private val MusicAccentColor: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = LocalMusicAccentColor.current
+
 /**
- * 听视频/音乐页正文色：按背景亮度在主题 token 间切换，**不硬编码**黑白。
+ * 听视频/音乐页正文色：按背景亮度在可读 token 间切换。
  *
- * - 亮底 → [onLightBackground]（通常 `MaterialTheme.colorScheme.onSurface`）
- * - 暗底 → [onDarkBackground]（通常 `MaterialTheme.colorScheme.inverseOnSurface`）
+ * - 亮底 → [onLightBackground]
+ * - 暗底 → [onDarkBackground]（应用层应传高对比色，避免 inverseOnSurface 在自定义主题下发灰）
  */
 internal fun resolveMusicPlayerContentColor(
     backgroundColor: Color,
@@ -155,6 +162,9 @@ internal fun resolveMusicPlayerContentColor(
         onDarkBackground
     }
 }
+
+/** 听视频强调色：直接使用应用主题 primary，与播放器一致。 */
+internal fun resolveMusicPlayerAccentColor(primary: Color): Color = primary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -227,13 +237,18 @@ internal fun MusicPlayerContent(
         isAppInBackground = BackgroundManager.isInBackground,
         reduceMotion = effectiveReduceMotion
     )
+    // 暗底强制白字，避免 inverseOnSurface 在自定义主题下发成低对比灰/褐。
     val resolvedContentColor = resolveMusicPlayerContentColor(
         backgroundColor = backgroundColor,
         onLightBackground = MaterialTheme.colorScheme.onSurface,
-        onDarkBackground = MaterialTheme.colorScheme.inverseOnSurface,
+        onDarkBackground = Color.White,
     )
+    val resolvedAccentColor = resolveMusicPlayerAccentColor(MaterialTheme.colorScheme.primary)
 
-    CompositionLocalProvider(LocalMusicContentColor provides resolvedContentColor) {
+    CompositionLocalProvider(
+        LocalMusicContentColor provides resolvedContentColor,
+        LocalMusicAccentColor provides resolvedAccentColor,
+    ) {
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
@@ -344,6 +359,10 @@ internal fun MusicPlayerContent(
                             liquidGlassEffectsEnabled = glassEnabled,
                             preferInlineContentStyle = false,
                             miuixBackdrop = musicBackdrop,
+                            containerColorOverride = MusicContentColor.copy(alpha = 0.14f),
+                            selectedTextColorOverride = MusicAccentColor,
+                            unselectedTextColorOverride = MusicContentColor.copy(alpha = 0.78f),
+                            indicatorIdleSurfaceColorOverride = MusicAccentColor.copy(alpha = 0.22f),
                             isScrollInProgressProvider = { pagerState.isScrollInProgress },
                             indicatorPositionProvider = {
                                 resolveMusicPagerIndicatorPosition(
@@ -713,7 +732,7 @@ private fun PlayerPage(
         Column(Modifier.fillMaxWidth()) {
             AppText(
                 text = state.title,
-                color = MusicContentColor,
+                color = MusicAccentColor,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 maxLines = 2,
@@ -721,7 +740,7 @@ private fun PlayerPage(
             )
             AppText(
                 text = state.artist.ifBlank { "未知艺术家" },
-                color = MusicContentColor.copy(alpha = 0.64f),
+                color = MusicContentColor.copy(alpha = 0.82f),
                 style = MaterialTheme.typography.titleMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -765,7 +784,7 @@ private fun MusicAudioQualityControl(
             .fillMaxWidth()
             .heightIn(min = 40.dp)
             .clip(RoundedCornerShape(14.dp))
-            .background(MusicContentColor.copy(alpha = 0.12f))
+            .background(MusicAccentColor.copy(alpha = 0.16f))
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -773,13 +792,13 @@ private fun MusicAudioQualityControl(
     ) {
         AppText(
             text = "音质",
-            color = MusicContentColor.copy(alpha = 0.72f),
+            color = MusicContentColor.copy(alpha = 0.82f),
             style = MaterialTheme.typography.labelLarge
         )
         Spacer(Modifier.weight(1f))
         AppText(
             text = label.ifBlank { "音质" },
-            color = MusicContentColor,
+            color = MusicAccentColor,
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold
         )
@@ -811,7 +830,12 @@ private fun MusicPlayModeDock(
         labelFontSize = 13.sp,
         liquidGlassEffectsEnabled = glassEnabled,
         preferInlineContentStyle = false,
-        miuixBackdrop = miuixBackdrop
+        miuixBackdrop = miuixBackdrop,
+        // 贴封面色板背景时，勿用 Material onSurface（会发灰/发褐）；与播放器同一套主题色。
+        containerColorOverride = MusicContentColor.copy(alpha = 0.14f),
+        selectedTextColorOverride = MusicAccentColor,
+        unselectedTextColorOverride = MusicContentColor.copy(alpha = 0.78f),
+        indicatorIdleSurfaceColorOverride = MusicAccentColor.copy(alpha = 0.22f),
     )
 }
 
@@ -868,14 +892,14 @@ private fun MusicProgress(state: MusicPlayerUiState, onSeek: (Long) -> Unit) {
         },
         valueRange = 0f..duration.toFloat(),
         colors = SliderDefaults.colors(
-            thumbColor = MusicContentColor,
-            activeTrackColor = MusicContentColor,
-            inactiveTrackColor = MusicContentColor.copy(alpha = 0.24f)
+            thumbColor = MusicAccentColor,
+            activeTrackColor = MusicAccentColor,
+            inactiveTrackColor = MusicContentColor.copy(alpha = 0.28f)
         )
     )
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        AppText(formatMusicTime(state.positionMs), color = MusicContentColor.copy(alpha = 0.7f), fontSize = 12.sp)
-        AppText("-${formatMusicTime((state.durationMs - state.positionMs).coerceAtLeast(0L))}", color = MusicContentColor.copy(alpha = 0.7f), fontSize = 12.sp)
+        AppText(formatMusicTime(state.positionMs), color = MusicContentColor.copy(alpha = 0.78f), fontSize = 12.sp)
+        AppText("-${formatMusicTime((state.durationMs - state.positionMs).coerceAtLeast(0L))}", color = MusicContentColor.copy(alpha = 0.78f), fontSize = 12.sp)
     }
 }
 
@@ -900,12 +924,12 @@ private fun PlaybackControls(
         )
         AppIconButton(onClick = onPlayPause, modifier = Modifier.size(72.dp)) {
             if (state.isBuffering) {
-                AppCircularProgressIndicator(color = MusicContentColor, modifier = Modifier.size(36.dp))
+                AppCircularProgressIndicator(color = MusicAccentColor, modifier = Modifier.size(36.dp))
             } else {
                 AppIcon(
                     imageVector = if (state.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                     contentDescription = if (state.isPlaying) "暂停" else "播放",
-                    tint = MusicContentColor,
+                    tint = MusicAccentColor,
                     modifier = Modifier.size(46.dp)
                 )
             }

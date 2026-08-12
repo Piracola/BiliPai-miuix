@@ -179,6 +179,19 @@ fun RelatedVideoItem(
     )
     val cardCoordinatesRef = remember { object { var value: LayoutCoordinates? = null } }
     val coverCoordinatesRef = remember { object { var value: LayoutCoordinates? = null } }
+    val context = LocalContext.current
+    // Same URL + cache key as the list AsyncImage so return handoff reuses stationary pixels.
+    val stationaryCoverUrl = remember(video.pic) {
+        FormatUtils.resolveVideoCoverUrl(video.pic, useLowQuality = false)
+    }
+    val coverRequest = remember(stationaryCoverUrl) {
+        ImageRequest.Builder(context)
+            .data(stationaryCoverUrl)
+            .crossfade(false)
+            .memoryCacheKey(stationaryCoverUrl)
+            .diskCacheKey(stationaryCoverUrl)
+            .build()
+    }
     val triggerRelatedVideoClick = {
         cardCoordinatesRef.value
             ?.takeIf { it.isAttached }
@@ -204,6 +217,14 @@ fun RelatedVideoItem(
                         danmakuText = FormatUtils.formatStat(video.stat.danmaku.toLong()),
                         durationText = FormatUtils.formatDuration(video.duration),
                         followed = isFollowed,
+                        // Related horizontal card keeps play/danmaku in the info column.
+                        infoPresentation = com.android.purebilibili.core.ui.transition
+                            .resolveVideoCardSourceInfoPresentation(
+                                publishTimeText = "",
+                                showStatsInInfo = true,
+                            ),
+                        coverUrl = stationaryCoverUrl,
+                        coverCacheKey = stationaryCoverUrl,
                     ),
                 )
             }
@@ -220,13 +241,6 @@ fun RelatedVideoItem(
     val titleTwoLinesHeight = contentTypography.title.lineHeight.let { line ->
         if (line.isSp) line else contentTypography.title.fontSize * 1.2f
     }.let { with(density) { (it * 2).toDp() } }
-    val context = LocalContext.current
-    val coverRequest = remember(video.pic) {
-        ImageRequest.Builder(context)
-            .data(FormatUtils.resolveVideoCoverUrl(video.pic, useLowQuality = false))
-            .crossfade(false)
-            .build()
-    }
 
     Row(
         modifier = modifier

@@ -72,9 +72,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -96,6 +98,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -159,14 +162,22 @@ import com.android.purebilibili.feature.video.ui.components.AudioQualitySelectio
 import com.android.purebilibili.feature.video.ui.components.QualitySelectionMenu
 import com.android.purebilibili.feature.video.ui.components.SpeedSelectionMenuDialog
 import com.android.purebilibili.feature.video.ui.components.UpPreviewSheet
+import com.android.purebilibili.feature.video.ui.components.UP_PREVIEW_SHEET_HEIGHT_FRACTION
+import com.android.purebilibili.feature.video.ui.components.resolvePortraitOverlaySheetExpansion
 import com.android.purebilibili.feature.video.ui.components.VideoAspectRatio
 import com.android.purebilibili.feature.video.ui.components.resolveSafeVideoAspectRatio
 import com.android.purebilibili.feature.video.ui.overlay.FullscreenDoubleTapAction
+import com.android.purebilibili.feature.video.ui.overlay.ImmersiveAmbientLetterboxBackdrop
 import com.android.purebilibili.feature.video.ui.overlay.PortraitFullscreenOverlay
 import com.android.purebilibili.feature.video.ui.overlay.PortraitSubtitleHost
+import com.android.purebilibili.feature.video.ui.overlay.VIDEO_STATUS_BAR_AMBIENT_CAPTURE_INTERVAL_MS
+import com.android.purebilibili.feature.video.ui.overlay.VIDEO_STATUS_BAR_AMBIENT_SAMPLE_HEIGHT_PX
+import com.android.purebilibili.feature.video.ui.overlay.VIDEO_STATUS_BAR_AMBIENT_SAMPLE_WIDTH_PX
 import com.android.purebilibili.feature.video.ui.overlay.nextFullscreenSeekFeedbackEvent
 import com.android.purebilibili.feature.video.ui.overlay.resolveFullscreenDoubleTapAction
+import com.android.purebilibili.feature.video.ui.overlay.resolvePortraitLetterboxBarHeightPx
 import com.android.purebilibili.feature.video.ui.overlay.shouldShowPortraitSubtitleChip
+import com.android.purebilibili.feature.video.util.captureVideoAmbientFrame
 import com.android.purebilibili.feature.video.subtitle.SubtitleAutoPreference
 import com.android.purebilibili.feature.video.subtitle.isSubtitleFeatureEnabledForUser
 import com.android.purebilibili.feature.video.player.resolveHandleAudioFocusByPolicy
@@ -194,6 +205,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
@@ -246,8 +258,13 @@ fun PortraitVideoPager(
     sharedPlayer: ExoPlayer? = null,
     useTextureSurfaceForNavigation: Boolean = false,
     initialStartPositionMs: Long = 0L,
-    onProgressUpdate: (String, Long, Long) -> Unit = { _, _, _ -> },
-    onExitSnapshot: (String, Long, Long) -> Unit = { _, _, _ -> },
+    /**
+     * 竖屏流进度同步：(bvid, positionMs, cid, coverUrl)。
+     * cover 必须是当前页封面，供切回横屏时避免闪成路由首个视频封面。
+     */
+    onProgressUpdate: (String, Long, Long, String) -> Unit = { _, _, _, _ -> },
+    /** 离开竖屏前快照：(bvid, positionMs, cid, coverUrl)。 */
+    onExitSnapshot: (String, Long, Long, String) -> Unit = { _, _, _, _ -> },
     onSearchClick: () -> Unit = {},
     onUserClick: (Long) -> Unit,
     onRotateToLandscape: () -> Unit
@@ -1599,11 +1616,11 @@ private fun VideoPageItem(
     danmakuEnabled: Boolean,
     danmakuSmartOcclusion: Boolean,
     portraitDanmakuDisplayAreaMode: PortraitDanmakuDisplayAreaMode,
-    onExitSnapshot: (String, Long, Long) -> Unit,
+    onExitSnapshot: (String, Long, Long, String) -> Unit,
     onSearchClick: () -> Unit,
     onUserClick: (Long) -> Unit,
     onRotateToLandscape: () -> Unit,
-    onProgressUpdate: (String, Long, Long) -> Unit,
+    onProgressUpdate: (String, Long, Long, String) -> Unit,
     watchLaterVideos: List<RelatedVideo>,
     recommendationVideos: List<RelatedVideo>,
     knownVideoAspectRatio: Float?,
@@ -1875,6 +1892,7 @@ private fun VideoPageItem(
     var showDetailSheet by remember { mutableStateOf(false) }
     var showUpPreview by remember(bvid) { mutableStateOf(false) }
     var commentSheetVisibilityProgress by remember { mutableFloatStateOf(0f) }
+    var upPreviewVisibilityProgress by remember(bvid) { mutableFloatStateOf(0f) }
     val subReplyState by commentViewModel.subReplyState.collectAsStateWithLifecycle()
     var portraitPageWidthPx by remember { mutableIntStateOf(0) }
     var portraitPageHeightPx by remember { mutableIntStateOf(0) }
@@ -1900,14 +1918,33 @@ private fun VideoPageItem(
             isLandscape = portraitPageWidthPx > portraitPageHeightPx
         ).dp.toPx()
     }
-    val commentExpansionTransform = resolvePortraitCommentPlayerTransform(
+    // 评论 / UP 半屏共用上缩：取较大进度；下拉 UP 预览时 progress 下降，视频跟手回位。
+    val overlaySheetExpansion = resolvePortraitOverlaySheetExpansion(
         commentVisibilityProgress = commentSheetVisibilityProgress,
+        upPreviewVisibilityProgress = upPreviewVisibilityProgress,
+        commentSheetHeightFraction = 0.60f,
+        upPreviewSheetHeightFraction = UP_PREVIEW_SHEET_HEIGHT_FRACTION,
+    )
+    // UP 预览：缩放贴合顶区可用高度（对齐官方上浮幅度）；评论仍用固定 0.58。
+    val upPreviewDominatesOverlay =
+        upPreviewVisibilityProgress >= commentSheetVisibilityProgress &&
+            upPreviewVisibilityProgress > 0.001f
+    val commentExpansionTransform = resolvePortraitCommentPlayerTransform(
+        commentVisibilityProgress = overlaySheetExpansion.progress,
         containerWidthPx = portraitPageWidthPx,
         containerHeightPx = portraitPageHeightPx,
         currentVideoAspect = portraitPagerViewportAspect,
         viewportVerticalOffsetPx = portraitViewportVerticalOffsetPx,
-        fillContainer = portraitPagerFillContainer
+        fillContainer = portraitPagerFillContainer,
+        commentSheetHeightFraction = overlaySheetExpansion.sheetHeightFraction,
+        fitToAvailableBand = upPreviewDominatesOverlay,
     )
+    // UP 预览 / 简介半屏打开时必须关掉页级 pointerInput。
+    // 父层 awaitFirstDown(requireUnconsumed=false) 会在整段单指滑动中占住手势循环，
+    // LazyVerticalGrid 收不到跟手滚动（评论半屏靠 playerGesturesEnabled=false 才正常）。
+    val playerGesturesEnabled =
+        commentExpansionTransform.playerGesturesEnabled &&
+            !showDetailSheet
 
     LaunchedEffect(isCurrentPage, bvid) {
         if (!isCurrentPage) {
@@ -1920,6 +1957,7 @@ private fun VideoPageItem(
             showRatioMenu = false
             showSpeedMenu = false
             commentSheetVisibilityProgress = 0f
+            upPreviewVisibilityProgress = 0f
             onCommentOverlayActiveChange(false)
             onUpPreviewActiveChange(false)
         }
@@ -1940,8 +1978,11 @@ private fun VideoPageItem(
         )
     }
 
-    LaunchedEffect(isCurrentPage, showUpPreview) {
-        onUpPreviewActiveChange(isCurrentPage && showUpPreview)
+    LaunchedEffect(isCurrentPage, showUpPreview, upPreviewVisibilityProgress) {
+        // 收起动画中 progress 仍 >0，继续挡竖滑，避免半屏回弹时被 pager 抢走手势
+        onUpPreviewActiveChange(
+            isCurrentPage && (showUpPreview || upPreviewVisibilityProgress > 0.001f)
+        )
     }
 
     // 进度状态 (从播放器获取)
@@ -1990,7 +2031,7 @@ private fun VideoPageItem(
                         buffered = exoPlayer.bufferedPosition
                     )
                     if (exoPlayer.isPlaying || effectivePosition > 0L) {
-                        onProgressUpdate(bvid, effectivePosition, snapshotCid)
+                        onProgressUpdate(bvid, effectivePosition, snapshotCid, cover)
                     }
                 }
                 delay(200)
@@ -2090,15 +2131,71 @@ private fun VideoPageItem(
         onCurrentPageScaleChange(if (isCurrentPage) scale else 1f)
     }
 
+    // 横屏视频在竖屏页上下 letterbox 黑边：动态采样模糊（默认开，设置可关）
+    val letterboxAmbientHazeEnabled by SettingsManager
+        .getPortraitLetterboxAmbientHaze(context)
+        .collectAsStateWithLifecycle(
+            initialValue = SettingsManager.getPortraitLetterboxAmbientHazeSync(context),
+        )
+    val letterboxViewportSize = remember(
+        portraitPageWidthPx,
+        portraitPageHeightPx,
+        portraitPagerViewportAspect,
+        portraitPagerFillContainer,
+    ) {
+        resolvePortraitVideoViewportSize(
+            containerWidth = portraitPageWidthPx,
+            containerHeight = portraitPageHeightPx,
+            currentVideoAspect = portraitPagerViewportAspect,
+            fillContainer = portraitPagerFillContainer,
+        )
+    }
+    val letterboxBarHeightPx = resolvePortraitLetterboxBarHeightPx(
+        containerHeightPx = portraitPageHeightPx,
+        viewportHeightPx = letterboxViewportSize.height,
+        fillContainer = portraitPagerFillContainer,
+    )
+    val letterboxBarHeightDp = with(density) { letterboxBarHeightPx.toDp() }
+    val letterboxAmbientFrame = remember(bvid) { mutableStateOf<ImageBitmap?>(null) }
+    val shouldCaptureLetterboxAmbient =
+        isCurrentPage &&
+            letterboxAmbientHazeEnabled &&
+            letterboxBarHeightPx > 0 &&
+            isPlayerReadyForThisVideo
+    LaunchedEffect(
+        playerViewRef,
+        shouldCaptureLetterboxAmbient,
+        isPlaying,
+        bvid,
+    ) {
+        if (!shouldCaptureLetterboxAmbient) {
+            letterboxAmbientFrame.value = null
+            return@LaunchedEffect
+        }
+        val playerView = playerViewRef ?: return@LaunchedEffect
+        while (isActive) {
+            if (playerView.isAttachedToWindow && playerView.width > 0 && playerView.height > 0) {
+                letterboxAmbientFrame.value = captureVideoAmbientFrame(
+                    playerView = playerView,
+                    targetWidth = VIDEO_STATUS_BAR_AMBIENT_SAMPLE_WIDTH_PX,
+                    targetHeight = VIDEO_STATUS_BAR_AMBIENT_SAMPLE_HEIGHT_PX,
+                )?.asImageBitmap()
+            }
+            if (!isPlaying) break
+            delay(VIDEO_STATUS_BAR_AMBIENT_CAPTURE_INTERVAL_MS)
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color.Black)
             .onSizeChanged { size ->
                 portraitPageWidthPx = size.width
                 portraitPageHeightPx = size.height
             }
-            .pointerInput(isCurrentPage, bvid, commentExpansionTransform.playerGesturesEnabled) {
-                if (!isCurrentPage || !commentExpansionTransform.playerGesturesEnabled) return@pointerInput
+            .pointerInput(isCurrentPage, bvid, playerGesturesEnabled) {
+                if (!isCurrentPage || !playerGesturesEnabled) return@pointerInput
 
                 awaitEachGesture {
                     awaitFirstDown(requireUnconsumed = false)
@@ -2155,7 +2252,7 @@ private fun VideoPageItem(
                 longPressSpeed,
                 currentAudioQuality,
                 isCurrentPage,
-                commentExpansionTransform.playerGesturesEnabled,
+                playerGesturesEnabled,
                 portraitOverlayVisible,
                 doubleTapSeekEnabled,
                 seekForwardSeconds,
@@ -2164,7 +2261,7 @@ private fun VideoPageItem(
                 detectTapGestures(
                     onTap = {
                         if (
-                            !commentExpansionTransform.playerGesturesEnabled ||
+                            !playerGesturesEnabled ||
                             !shouldHandlePortraitTapGesture(scale = scale)
                         ) {
                             return@detectTapGestures
@@ -2175,7 +2272,7 @@ private fun VideoPageItem(
                     },
                     onDoubleTap = { offset ->
                         if (
-                            !commentExpansionTransform.playerGesturesEnabled ||
+                            !playerGesturesEnabled ||
                             !shouldHandlePortraitTapGesture(scale = scale) ||
                             !isCurrentPage
                         ) {
@@ -2239,7 +2336,7 @@ private fun VideoPageItem(
                     },
                     onLongPress = {
                         if (
-                            !commentExpansionTransform.playerGesturesEnabled ||
+                            !playerGesturesEnabled ||
                             !shouldHandlePortraitLongPressGesture(scale = scale)
                         ) {
                             return@detectTapGestures
@@ -2271,13 +2368,13 @@ private fun VideoPageItem(
                 progressState.duration,
                 scale,
                 isCurrentPage,
-                commentExpansionTransform.playerGesturesEnabled
+                playerGesturesEnabled
             ) {
                 detectHorizontalDragGestures(
                     onDragStart = { 
                         if (
                             isCurrentPage &&
-                            commentExpansionTransform.playerGesturesEnabled &&
+                            playerGesturesEnabled &&
                             progressState.duration > 0 &&
                             shouldHandlePortraitSeekGesture(scale = scale)
                         ) {
@@ -2333,6 +2430,28 @@ private fun VideoPageItem(
             }
         val pageDanmakuTopInset = with(density) {
             WindowInsets.statusBars.getTop(this).toDp()
+        }
+
+        // 横屏 letterbox 上下黑边：照搬播放页沉浸状态栏的动态 haze（默认可关）
+        if (letterboxBarHeightPx > 0) {
+            ImmersiveAmbientLetterboxBackdrop(
+                ambientFrame = letterboxAmbientFrame,
+                height = letterboxBarHeightDp,
+                useAmbientHaze = letterboxAmbientHazeEnabled,
+                contentAlignment = Alignment.TopCenter,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .zIndex(0f),
+            )
+            ImmersiveAmbientLetterboxBackdrop(
+                ambientFrame = letterboxAmbientFrame,
+                height = letterboxBarHeightDp,
+                useAmbientHaze = letterboxAmbientHazeEnabled,
+                contentAlignment = Alignment.BottomCenter,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .zIndex(0f),
+            )
         }
 
         // [核心逻辑]
@@ -2864,6 +2983,8 @@ private fun VideoPageItem(
             onAuthorClick = {
                 if (isCurrentPage && (portraitDetailInfo?.owner?.mid ?: 0L) > 0L) {
                     showUpPreview = true
+                    // Sync before next frame so pager/page pointerInput release immediately.
+                    onUpPreviewActiveChange(true)
                 }
             },
             onLikeClick = {
@@ -2950,11 +3071,11 @@ private fun VideoPageItem(
             ),
             
             onBack = {
-                onExitSnapshot(bvid, exoPlayer.currentPosition, snapshotCid)
+                onExitSnapshot(bvid, exoPlayer.currentPosition, snapshotCid, cover)
                 onBack()
             },
             onHomeClick = {
-                onExitSnapshot(bvid, exoPlayer.currentPosition, snapshotCid)
+                onExitSnapshot(bvid, exoPlayer.currentPosition, snapshotCid, cover)
                 onHomeClick()
             },
             onPlayPause = {
@@ -3062,14 +3183,14 @@ private fun VideoPageItem(
             },
             onToggleStatusBar = { },
             onSearchClick = {
-                onExitSnapshot(bvid, exoPlayer.currentPosition, snapshotCid)
+                onExitSnapshot(bvid, exoPlayer.currentPosition, snapshotCid, cover)
                 onSearchClick()
             },
             onMoreClick = {
                 showDetailSheet = true
             },
             onRotateToLandscape = {
-                onExitSnapshot(bvid, exoPlayer.currentPosition, snapshotCid)
+                onExitSnapshot(bvid, exoPlayer.currentPosition, snapshotCid, cover)
                 onRotateToLandscape()
             },
             
@@ -3276,7 +3397,7 @@ private fun VideoPageItem(
             },
             onAuthorClick = { mid ->
                 showDetailSheet = false
-                onExitSnapshot(bvid, exoPlayer.currentPosition, snapshotCid)
+                onExitSnapshot(bvid, exoPlayer.currentPosition, snapshotCid, cover)
                 onUserClick(mid)
             },
             danmakuEnabled = danmakuEnabled,
@@ -3291,16 +3412,24 @@ private fun VideoPageItem(
                 followerCount = currentSuccess?.ownerFollowerCount,
                 videoCount = currentSuccess?.ownerVideoCount,
                 seedVideos = upPreviewSeedVideos,
-                onDismiss = { showUpPreview = false },
+                onDismiss = {
+                    showUpPreview = false
+                    onUpPreviewActiveChange(false)
+                },
                 onFollowClick = { onToggleFollow(authorMid, isFollowing) },
                 onEnterSpace = { mid ->
                     showUpPreview = false
-                    onExitSnapshot(bvid, exoPlayer.currentPosition, snapshotCid)
+                    onUpPreviewActiveChange(false)
+                    onExitSnapshot(bvid, exoPlayer.currentPosition, snapshotCid, cover)
                     onUserClick(mid)
                 },
                 onVideoClick = { targetBvid, _ ->
                     showUpPreview = false
+                    onUpPreviewActiveChange(false)
                     onRequestVideoChange(targetBvid)
+                },
+                onVisibilityProgressChange = { progress ->
+                    upPreviewVisibilityProgress = progress
                 },
             )
         }

@@ -15,11 +15,11 @@ import com.android.purebilibili.core.ui.transition.LocalVideoCardTransitionBackg
 import com.android.purebilibili.core.util.CardPositionManager
 
 /**
- * 源卡信息区（标题/UP 等）在 shell morph 时的 chrome 视觉。
- * 信息区与封面都在飞行的 sharedBounds 内形变：信息区使用 72%–96%，
- * 封面使用更晚的 82%–98%，避免落位卡片只剩封面而标题仍为空。
- * 横卡可选择随主进度短距离移动。
- * 所有进度都在绘制阶段读取，避免整卡重组。
+ * 源卡信息区在 shell morph 时的 chrome 视觉。
+ *
+ * morph 中列表真卡保持透明（飞行层盖住列表）；卸层后再亮。
+ * 返回途中可见的标题/UP 由飞行壳 [VideoDetailReturnSourceCardChrome] 绘制。
+ * 横卡可选择随主进度短距离移动。进度在绘制阶段读取，避免整卡重组。
  */
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable

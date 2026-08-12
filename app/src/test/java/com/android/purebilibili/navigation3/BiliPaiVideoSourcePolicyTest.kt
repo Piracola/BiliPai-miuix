@@ -8,11 +8,11 @@ import kotlin.test.assertTrue
 class BiliPaiVideoSourcePolicyTest {
 
     @Test
-    fun partitionAndRelatedShareCardMorphGateWithListSources() {
+    fun partitionAndRelatedShareTheRecordedCardMorphGate() {
         assertTrue(isRelatedVideoCardMorphSourceRoute("video/BV_PARENT"))
         assertFalse(isRelatedVideoCardMorphSourceRoute("partition"))
         assertFalse(isRelatedVideoCardMorphSourceRoute("home?category=1"))
-        // 分区 (partition) + 相关 (video/*) + 推荐列表 同一门闩；布局由 sourceLayout 区分。
+        // 分区横卡与相关推荐横卡都已记录整卡几何，走同一套 Miuix 整卡 morph。
         listOf(
             "partition",
             "video/BV_PARENT",

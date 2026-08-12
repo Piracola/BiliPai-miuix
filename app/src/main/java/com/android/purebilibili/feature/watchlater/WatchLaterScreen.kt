@@ -41,6 +41,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.android.purebilibili.core.coroutines.AppScope
 import com.android.purebilibili.core.refresh.WatchLaterRefreshBus
 import com.android.purebilibili.core.ui.AppScaffold
@@ -69,6 +70,8 @@ import com.android.purebilibili.core.network.NetworkModule
 import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.ui.transition.LocalVideoCardSharedElementSourceRoute
 import com.android.purebilibili.core.ui.transition.LocalVideoSharedTransitionSpeedSettings
+import com.android.purebilibili.core.ui.transition.VideoCardSourceChromeSnapshot
+import com.android.purebilibili.core.ui.transition.VideoCardSourceLayout
 import com.android.purebilibili.core.ui.transition.resolveVideoCardSharedTransitionMotionSpec
 import com.android.purebilibili.core.ui.transition.shouldUseVideoCardShellSharedBounds
 import com.android.purebilibili.core.ui.transition.videoCardShellSharedBoundsOrEmpty
@@ -1212,6 +1215,15 @@ private fun WatchLaterVideoCard(
             speedSettings = sharedTransitionSpeedSettings
         )
     }
+    val stationaryCoverUrl = remember(item.pic) { fixCoverUrl(item.pic) }
+    val stationaryCoverRequest = remember(stationaryCoverUrl) {
+        ImageRequest.Builder(context)
+            .data(stationaryCoverUrl)
+            .crossfade(false)
+            .memoryCacheKey(stationaryCoverUrl)
+            .diskCacheKey(stationaryCoverUrl)
+            .build()
+    }
     val cardClick = {
         if (!isBatchMode) {
             cardBoundsRef.value?.let { bounds ->
@@ -1223,6 +1235,22 @@ private fun WatchLaterVideoCard(
                     screenHeight = screenHeightPx,
                     sourceCornerDp = 8,
                     coverBounds = coverBoundsRef.value,
+                    sourceLayout = VideoCardSourceLayout.SIDE_BY_SIDE,
+                    sourceChromeSnapshot = VideoCardSourceChromeSnapshot(
+                        title = item.title,
+                        ownerName = item.owner.name.ifBlank { "未知UP主" },
+                        ownerFaceUrl = item.owner.face,
+                        viewText = formatNumber(item.stat.view),
+                        danmakuText = formatNumber(item.stat.danmaku),
+                        durationText = formatDuration(item.duration),
+                        infoPresentation = com.android.purebilibili.core.ui.transition
+                            .resolveVideoCardSourceInfoPresentation(
+                                publishTimeText = "",
+                                showStatsInInfo = true,
+                            ),
+                        coverUrl = stationaryCoverUrl,
+                        coverCacheKey = stationaryCoverUrl,
+                    ),
                 )
             }
         }
@@ -1302,7 +1330,7 @@ private fun WatchLaterVideoCard(
         },
         coverContent = {
             AsyncImage(
-                model = fixCoverUrl(item.pic),
+                model = stationaryCoverRequest,
                 contentDescription = item.title,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),

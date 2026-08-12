@@ -16,8 +16,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Cloud
-import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.DriveFolderUpload
+import androidx.compose.material.icons.filled.FolderCopy
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Restore
@@ -177,7 +179,7 @@ fun WebDavBackupScreen(
                     )
                     AppPreferenceDivider(startIndent = 66.dp)
                     AppPreference(
-                        icon = Icons.Filled.Folder,
+                        icon = Icons.Filled.DriveFolderUpload,
                         title = "远端目录",
                         value = uiState.config.remoteDir,
                         onClick = {
@@ -231,7 +233,7 @@ fun WebDavBackupScreen(
                 AppPreferenceGroup {
                     if (uiState.remoteBackups.isEmpty()) {
                         AppPreference(
-                            icon = Icons.Filled.Folder,
+                            icon = Icons.Filled.Inventory2,
                             title = "暂无备份",
                             value = "可先点击“立即备份”生成第一份快照",
                             onClick = null,
@@ -241,7 +243,7 @@ fun WebDavBackupScreen(
                     } else {
                         uiState.remoteBackups.take(10).forEachIndexed { index, entry ->
                             AppPreference(
-                                icon = Icons.Filled.Folder,
+                                icon = Icons.Filled.FolderCopy,
                                 title = entry.fileName,
                                 value = "${entry.sizeBytes} B",
                                 onClick = null,

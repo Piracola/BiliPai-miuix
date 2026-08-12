@@ -42,9 +42,9 @@ internal fun normalizeBiliPaiVideoSourceRoute(route: String?): String? {
 }
 
 /**
- * Related-detail hops use source route `video/{parentBvid}` (cover left, text right).
- * Same morph **contract** as home/category (分区); only the landing layout differs
- * ([VideoCardSourceLayout.SIDE_BY_SIDE] vs STACKED).
+ * Related-detail hops use source route `video/{parentBvid}`.
+ * This identifies the nested detail source; it does not disable card morph. Related cards record
+ * the same click-time geometry contract as partition cards and use SIDE_BY_SIDE landing layout.
  */
 internal fun isRelatedVideoCardMorphSourceRoute(sourceRoute: String?): Boolean {
     val route = sourceRoute?.substringBefore('?')?.trim().orEmpty()
@@ -52,16 +52,16 @@ internal fun isRelatedVideoCardMorphSourceRoute(sourceRoute: String?): Boolean {
 }
 
 /**
- * Whole-card Miuix morph gate — **home/category (分区) is the reference path**.
+ * Whole-card Miuix morph gate — **partition SIDE_BY_SIDE cards are the reference path**.
  *
- * Shared contract for every source (home, category, search, related, …):
+ * Shared contract for every recorded card source (home, partition, related, search, …):
  * 1. Click freezes cardBounds + coverBounds + layout + chrome snapshot
  * 2. Outer entry morphs host ↔ cardBounds (one opaque flying card)
- * 3. Flying entry draws shell + chrome; list stationary pixels stay alpha 0 until IDLE
+ * 3. Flying entry draws shell + live media + chrome; list stays alpha 0 until IDLE
  * 4. Inverse scale uses Nav host layout width (same as outer morph)
  * 5. Layout-specific landing only:
- *    - STACKED (分区/双列): cover top, info bottom, FillWidthTop media
- *    - SIDE_BY_SIDE (相关/横卡): cover left, info right, CropCenter media
+ *    - STACKED (双列): live media top, info bottom
+ *    - SIDE_BY_SIDE (分区横卡、相关推荐): live media left, info right
  */
 internal fun shouldUseMiuixVideoCardMorph(
     cardTransitionEnabled: Boolean,

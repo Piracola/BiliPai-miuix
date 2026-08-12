@@ -308,6 +308,41 @@ class TopTabMotionVelocityTest {
     }
 
     @Test
+    fun `top tab row disables unsynchronized stretch overscroll`() {
+        val source = loadSource("app/src/main/java/com/android/purebilibili/feature/home/components/TopBar.kt")
+        val lazyRowSource = source
+            .substringAfter("LazyRow(")
+            .substringBefore("itemsIndexed(")
+
+        assertTrue(lazyRowSource.contains("overscrollEffect = null"))
+    }
+
+    @Test
+    fun `top tab export defers lazy row scroll reads to its graphics layer`() {
+        val source = loadSource("app/src/main/java/com/android/purebilibili/feature/home/components/TopBar.kt")
+        val exportSource = source
+            .substringAfter("val topTabListScrollOffsetPxProvider = {")
+            .substringBefore("LazyRow(")
+
+        assertTrue(exportSource.contains("listState.firstVisibleItemScrollOffset"))
+        assertEquals(3, exportSource.split("topTabListScrollOffsetPxProvider()").size - 1)
+    }
+
+    @Test
+    fun `top tab liquid panel offset moves indicator without rebounding labels`() {
+        val source = loadSource("app/src/main/java/com/android/purebilibili/feature/home/components/TopBar.kt")
+        val stableContentGroup = source
+            .substringAfter("val topTabIndicatorPanelOffsetPx =")
+            .substringBefore("// stable export + visible content with indicator-only motion")
+
+        assertFalse(stableContentGroup.contains("translationX = topTabIndicatorPanelOffsetPx"))
+        assertEquals(
+            3,
+            stableContentGroup.split("indicatorPanelOffsetPx = topTabIndicatorPanelOffsetPx").size - 1
+        )
+    }
+
+    @Test
     fun `top tab drag does not change search or list layout clearance`() {
         val headerSource = loadSource("app/src/main/java/com/android/purebilibili/feature/home/components/HomeHeader.kt")
         val homeSource = loadSource("app/src/main/java/com/android/purebilibili/feature/home/HomeScreen.kt")

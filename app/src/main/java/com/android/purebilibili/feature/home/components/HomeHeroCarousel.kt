@@ -77,6 +77,7 @@ import com.android.purebilibili.core.ui.LocalSharedTransitionEnabled
 import com.android.purebilibili.core.ui.LocalSharedTransitionScope
 import com.android.purebilibili.core.ui.transition.LocalVideoCardSharedElementSourceRoute
 import com.android.purebilibili.core.ui.transition.LocalVideoSharedTransitionSpeedSettings
+import com.android.purebilibili.core.ui.transition.VideoCardSourceChromeSnapshot
 import com.android.purebilibili.core.ui.transition.resolveVideoCardSharedTransitionMotionSpec
 import com.android.purebilibili.core.ui.transition.videoCardShellSharedBoundsOrEmpty
 import com.android.purebilibili.feature.home.components.cards.videoCardShellReturnChromeAlpha
@@ -192,6 +193,7 @@ private fun HomeHeroCarouselCard(
     onVideoClick: () -> Unit,
     onGetPreviewUrl: suspend (String, Long) -> String?
 ) {
+    val context = LocalContext.current
     var previewUrl by remember(video.bvid, video.cid) { mutableStateOf<String?>(null) }
     LaunchedEffect(activeForPlayback, video.bvid, video.cid) {
         if (activeForPlayback && previewUrl == null && video.bvid.isNotBlank() && video.cid > 0L) {
@@ -244,6 +246,15 @@ private fun HomeHeroCarouselCard(
 
     val cardShape = AppShapes.container(ContainerLevel.Card)
     val cardCornerDp = AppShapes.containerCornerDp(ContainerLevel.Card)
+    val normalizedCoverUrl = remember(video.pic) { FormatUtils.fixImageUrl(video.pic) }
+    val stationaryCoverRequest = remember(normalizedCoverUrl) {
+        ImageRequest.Builder(context)
+            .data(normalizedCoverUrl)
+            .crossfade(false)
+            .memoryCacheKey(normalizedCoverUrl)
+            .diskCacheKey(normalizedCoverUrl)
+            .build()
+    }
 
     // 记录源卡位置后进入详情。
     val clickAction: () -> Unit = {
@@ -257,6 +268,21 @@ private fun HomeHeroCarouselCard(
                 density = densityValue,
                 sourceCornerDp = cardCornerDp.value.roundToInt(),
                 coverBounds = bounds,
+                sourceChromeSnapshot = VideoCardSourceChromeSnapshot(
+                    title = video.title,
+                    ownerName = video.owner.name,
+                    ownerFaceUrl = video.owner.face,
+                    viewText = FormatUtils.formatStat(video.stat.view.toLong()),
+                    danmakuText = FormatUtils.formatStat(video.stat.danmaku.toLong()),
+                    durationText = FormatUtils.formatDuration(video.duration),
+                    infoPresentation = com.android.purebilibili.core.ui.transition
+                        .resolveVideoCardSourceInfoPresentation(
+                            publishTimeText = "",
+                            showStatsInInfo = false,
+                        ),
+                    coverUrl = normalizedCoverUrl,
+                    coverCacheKey = normalizedCoverUrl,
+                ),
             )
         }
         onVideoClick()
@@ -294,8 +320,6 @@ private fun HomeHeroCarouselCard(
             .clickable(onClick = clickAction)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            val normalizedCoverUrl = remember(video.pic) { FormatUtils.fixImageUrl(video.pic) }
-
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -306,10 +330,7 @@ private fun HomeHeroCarouselCard(
                     }
             ) {
                 AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(normalizedCoverUrl)
-                        .crossfade(true)
-                        .build(),
+                    model = stationaryCoverRequest,
                     contentDescription = video.title,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()

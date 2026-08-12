@@ -465,10 +465,16 @@ class VideoCardTransitionBackgroundPolicyTest {
 
         assertEquals(0.009f, relatedReduction, 0.0001f)
         assertEquals(0.012f, partitionReduction, 0.0001f)
-        assertFalse(
+        assertTrue(
             shouldUseRealtimeVideoCardTransitionBackgroundBlur(
                 source = VideoCardTransitionBackgroundSource.RelatedVideo,
                 realtimeBlurEnabled = true,
+            )
+        )
+        assertFalse(
+            shouldUseRealtimeVideoCardTransitionBackgroundBlur(
+                source = VideoCardTransitionBackgroundSource.RelatedVideo,
+                realtimeBlurEnabled = false,
             )
         )
         assertTrue(

@@ -125,6 +125,8 @@ import com.android.purebilibili.core.ui.common.rememberClipboardCopyHandler
 import com.android.purebilibili.core.ui.transition.LocalVideoCardSharedElementSourceRoute
 import com.android.purebilibili.core.ui.transition.LocalVideoSharedTransitionSpeedSettings
 import com.android.purebilibili.core.ui.transition.VIDEO_SHARED_COVER_ASPECT_RATIO
+import com.android.purebilibili.core.ui.transition.VideoCardSourceChromeSnapshot
+import com.android.purebilibili.core.ui.transition.VideoCardSourceLayout
 import com.android.purebilibili.core.ui.AppSpacingTokens
 import com.android.purebilibili.core.ui.feedContentTypography
 import com.android.purebilibili.core.theme.LocalCornerRadiusScale
@@ -2937,6 +2939,7 @@ private fun SpaceHomeVideoCard(
     animatedVisibilityScope: AnimatedVisibilityScope? = null,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val locateHighlightColor by animateColorAsState(
         targetValue = if (isLocateHighlight) {
             MaterialTheme.colorScheme.primary
@@ -2956,7 +2959,19 @@ private fun SpaceHomeVideoCard(
     }
     val densityValue = density.density
     val sourceRoute = LocalVideoCardSharedElementSourceRoute.current
+    var cardBounds by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
     var coverBounds by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
+    val stationaryCoverUrl = remember(video.pic) {
+        FormatUtils.buildSizedImageUrl(video.pic, width = 640, height = 360)
+    }
+    val stationaryCoverRequest = remember(stationaryCoverUrl) {
+        ImageRequest.Builder(context)
+            .data(stationaryCoverUrl)
+            .crossfade(false)
+            .memoryCacheKey(stationaryCoverUrl)
+            .diskCacheKey(stationaryCoverUrl)
+            .build()
+    }
     val coverShape = RoundedCornerShape(cardCornerRadius)
     val sharedTransitionReady = sharedTransitionKey != null &&
         sharedTransitionScope != null &&
@@ -3001,8 +3016,11 @@ private fun SpaceHomeVideoCard(
             )
             .border(width = 3.dp, color = locateHighlightColor, shape = coverShape)
             .clip(coverShape)
+            .onGloballyPositioned { coordinates ->
+                cardBounds = coordinates.boundsInRoot()
+            }
             .clickable {
-                coverBounds?.let { bounds ->
+                cardBounds?.let { bounds ->
                     CardPositionManager.recordVideoCardPosition(
                         bvid = sharedTransitionKey.orEmpty(),
                         sourceRoute = sourceRoute,
@@ -3011,7 +3029,23 @@ private fun SpaceHomeVideoCard(
                         screenHeight = screenHeightPx,
                         density = densityValue,
                         sourceCornerDp = cardCornerRadius.value.roundToInt(),
-                        coverBounds = bounds,
+                        coverBounds = coverBounds,
+                        sourceLayout = VideoCardSourceLayout.STACKED,
+                        sourceChromeSnapshot = VideoCardSourceChromeSnapshot(
+                            title = video.title,
+                            ownerName = video.author,
+                            ownerFaceUrl = "",
+                            viewText = FormatUtils.formatStat(video.play.toLong()),
+                            danmakuText = FormatUtils.formatStat(video.comment.toLong()),
+                            durationText = video.length,
+                            infoPresentation = com.android.purebilibili.core.ui.transition
+                                .resolveVideoCardSourceInfoPresentation(
+                                    publishTimeText = "",
+                                    showStatsInInfo = true,
+                                ),
+                            coverUrl = stationaryCoverUrl,
+                            coverCacheKey = stationaryCoverUrl,
+                        ),
                     )
                 }
                 onClick()
@@ -3027,10 +3061,7 @@ private fun SpaceHomeVideoCard(
                 .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
             AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(FormatUtils.buildSizedImageUrl(video.pic, width = 640, height = 360))
-                    .crossfade(true)
-                    .build(),
+                model = stationaryCoverRequest,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -3130,6 +3161,7 @@ private fun SpaceAggregateMediaCard(
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedVisibilityScope: AnimatedVisibilityScope? = null
 ) {
+    val context = LocalContext.current
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
     val screenWidthPx = remember(configuration.screenWidthDp, density) {
@@ -3141,6 +3173,17 @@ private fun SpaceAggregateMediaCard(
     val densityValue = density.density
     val sourceRoute = LocalVideoCardSharedElementSourceRoute.current
     var coverBounds by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
+    val stationaryCoverUrl = remember(item.cover) {
+        FormatUtils.buildSizedImageUrl(item.cover, width = 640, height = 360)
+    }
+    val stationaryCoverRequest = remember(stationaryCoverUrl) {
+        ImageRequest.Builder(context)
+            .data(stationaryCoverUrl)
+            .crossfade(false)
+            .memoryCacheKey(stationaryCoverUrl)
+            .diskCacheKey(stationaryCoverUrl)
+            .build()
+    }
     val coverShape = RoundedCornerShape(14.dp)
     val coverModifier = Modifier.spaceVideoCoverSharedBounds(
         sharedTransitionKey = sharedTransitionKey,
@@ -3164,6 +3207,21 @@ private fun SpaceAggregateMediaCard(
                         density = densityValue,
                         sourceCornerDp = 14,
                         coverBounds = bounds,
+                        sourceChromeSnapshot = VideoCardSourceChromeSnapshot(
+                            title = item.title,
+                            ownerName = item.author,
+                            ownerFaceUrl = "",
+                            viewText = FormatUtils.formatStat(item.play.toLong()),
+                            danmakuText = FormatUtils.formatStat(item.danmaku.toLong()),
+                            durationText = item.length,
+                            infoPresentation = com.android.purebilibili.core.ui.transition
+                                .resolveVideoCardSourceInfoPresentation(
+                                    publishTimeText = "",
+                                    showStatsInInfo = true,
+                                ),
+                            coverUrl = stationaryCoverUrl,
+                            coverCacheKey = stationaryCoverUrl,
+                        ),
                     )
                 }
                 onClick()
@@ -3180,10 +3238,7 @@ private fun SpaceAggregateMediaCard(
                 .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
             AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(FormatUtils.buildSizedImageUrl(item.cover, width = 640, height = 360))
-                    .crossfade(true)
-                    .build(),
+                model = stationaryCoverRequest,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
@@ -3280,6 +3335,7 @@ private fun SpaceTopVideoCard(
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedVisibilityScope: AnimatedVisibilityScope? = null
 ) {
+    val context = LocalContext.current
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
     val screenWidthPx = remember(configuration.screenWidthDp, density) {
@@ -3291,6 +3347,17 @@ private fun SpaceTopVideoCard(
     val densityValue = density.density
     val sourceRoute = LocalVideoCardSharedElementSourceRoute.current
     var coverBounds by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
+    val stationaryCoverUrl = remember(video.pic) {
+        FormatUtils.buildSizedImageUrl(video.pic, width = 560, height = 352)
+    }
+    val stationaryCoverRequest = remember(stationaryCoverUrl) {
+        ImageRequest.Builder(context)
+            .data(stationaryCoverUrl)
+            .crossfade(false)
+            .memoryCacheKey(stationaryCoverUrl)
+            .diskCacheKey(stationaryCoverUrl)
+            .build()
+    }
     val coverShape = RoundedCornerShape(12.dp)
     val coverModifier = Modifier.spaceVideoCoverSharedBounds(
         sharedTransitionKey = sharedTransitionKey,
@@ -3316,6 +3383,21 @@ private fun SpaceTopVideoCard(
                         density = densityValue,
                         sourceCornerDp = 12,
                         coverBounds = bounds,
+                        sourceChromeSnapshot = VideoCardSourceChromeSnapshot(
+                            title = video.title,
+                            ownerName = "",
+                            ownerFaceUrl = "",
+                            viewText = FormatUtils.formatStat(video.stat.view),
+                            danmakuText = FormatUtils.formatStat(video.stat.danmaku),
+                            durationText = FormatUtils.formatDuration(video.duration),
+                            infoPresentation = com.android.purebilibili.core.ui.transition
+                                .resolveVideoCardSourceInfoPresentation(
+                                    publishTimeText = "",
+                                    showStatsInInfo = true,
+                                ),
+                            coverUrl = stationaryCoverUrl,
+                            coverCacheKey = stationaryCoverUrl,
+                        ),
                     )
                 }
                 onClick()
@@ -3341,10 +3423,7 @@ private fun SpaceTopVideoCard(
                     .background(MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(FormatUtils.buildSizedImageUrl(video.pic, width = 560, height = 352))
-                        .crossfade(true)
-                        .build(),
+                    model = stationaryCoverRequest,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
@@ -3422,6 +3501,7 @@ private fun SpaceArchiveListItemRow(
     animatedVisibilityScope: AnimatedVisibilityScope? = null,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val locateHighlightColor by animateColorAsState(
         targetValue = if (isLocateHighlight) {
             MaterialTheme.colorScheme.primary
@@ -3441,6 +3521,17 @@ private fun SpaceArchiveListItemRow(
     }
     val densityValue = density.density
     val sourceRoute = LocalVideoCardSharedElementSourceRoute.current
+    val stationaryCoverUrl = remember(cover) {
+        FormatUtils.buildSizedImageUrl(cover, width = 560, height = 350)
+    }
+    val stationaryCoverRequest = remember(stationaryCoverUrl) {
+        ImageRequest.Builder(context)
+            .data(stationaryCoverUrl)
+            .crossfade(false)
+            .memoryCacheKey(stationaryCoverUrl)
+            .diskCacheKey(stationaryCoverUrl)
+            .build()
+    }
     val sharedTransitionSpeedSettings = LocalVideoSharedTransitionSpeedSettings.current
     val cardSharedTransitionMotionSpec = remember(
         sourceRoute,
@@ -3453,6 +3544,7 @@ private fun SpaceArchiveListItemRow(
             speedSettings = sharedTransitionSpeedSettings
         )
     }
+    var cardBounds by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
     var coverBounds by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
     val coverWidth = 160.dp
     val coverHeight = coverWidth / VIDEO_SHARED_COVER_ASPECT_RATIO
@@ -3479,9 +3571,12 @@ private fun SpaceArchiveListItemRow(
                 clipShape = cardShellShape
             )
             .border(width = 3.dp, color = locateHighlightColor, shape = cardShellShape)
+            .onGloballyPositioned { coordinates ->
+                cardBounds = coordinates.boundsInRoot()
+            }
             .padding(horizontal = 16.dp)
             .clickable {
-                coverBounds?.let { bounds ->
+                cardBounds?.let { bounds ->
                     CardPositionManager.recordVideoCardPosition(
                         bvid = sharedTransitionKey.orEmpty(),
                         sourceRoute = sourceRoute,
@@ -3490,7 +3585,23 @@ private fun SpaceArchiveListItemRow(
                         screenHeight = screenHeightPx,
                         density = densityValue,
                         sourceCornerDp = 12,
-                        coverBounds = bounds,
+                        coverBounds = coverBounds,
+                        sourceLayout = VideoCardSourceLayout.SIDE_BY_SIDE,
+                        sourceChromeSnapshot = VideoCardSourceChromeSnapshot(
+                            title = title,
+                            ownerName = "",
+                            ownerFaceUrl = "",
+                            viewText = FormatUtils.formatStat(play),
+                            danmakuText = FormatUtils.formatStat(secondaryCount),
+                            durationText = duration,
+                            infoPresentation = com.android.purebilibili.core.ui.transition
+                                .resolveVideoCardSourceInfoPresentation(
+                                    publishTimeText = "",
+                                    showStatsInInfo = true,
+                                ),
+                            coverUrl = stationaryCoverUrl,
+                            coverCacheKey = stationaryCoverUrl,
+                        ),
                     )
                 }
                 onClick()
@@ -3509,10 +3620,7 @@ private fun SpaceArchiveListItemRow(
                 .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
             AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(FormatUtils.buildSizedImageUrl(cover, width = 560, height = 350))
-                    .crossfade(true)
-                    .build(),
+                model = stationaryCoverRequest,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()

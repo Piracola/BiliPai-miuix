@@ -657,6 +657,16 @@ internal fun shouldTriggerFullscreenBySwipe(
     }
 }
 
+/**
+ * Vertical inline videos own a dedicated portrait-fullscreen pager. Routing their completed
+ * upward gesture through the orientation fullscreen toggle can leave the activity in portrait
+ * without ever activating that pager, so dispatch directly to the portrait callback.
+ */
+internal fun shouldEnterPortraitFullscreenFromSwipe(
+    isFullscreen: Boolean,
+    isVerticalVideo: Boolean,
+): Boolean = !isFullscreen && isVerticalVideo
+
 internal fun shouldAllowPlaybackStateAutoFullscreen(
     smallestScreenWidthDp: Int
 ): Boolean {

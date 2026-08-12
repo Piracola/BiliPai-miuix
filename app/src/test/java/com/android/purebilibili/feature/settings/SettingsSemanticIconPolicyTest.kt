@@ -69,6 +69,32 @@ class SettingsSemanticIconPolicyTest {
         )
     }
 
+    @Test
+    fun directSettingsIconAssignments_doNotReuseTheSameSemanticRole() {
+        val usages = settingsSourceFiles().flatMap { file ->
+            DIRECT_ROLE_USAGE_REGEX.findAll(file.readText()).map { match ->
+                file.path to match.groupValues[1]
+            }.toList()
+        }
+        val duplicates = usages
+            .groupBy { it.second }
+            .filterValues { roleUsages -> roleUsages.size > 1 }
+
+        assertTrue(
+            duplicates.isEmpty(),
+            duplicates.entries.joinToString(separator = "\n") { (role, roleUsages) ->
+                "$role reused in ${roleUsages.joinToString { it.first }}"
+            }
+        )
+    }
+
+    @Test
+    fun themeRoleColorRows_useDistinctSemanticRoles() {
+        val roles = ThemeRoleColorTarget.entries.map(::resolveThemeRoleColorIconRole)
+
+        assertEquals(roles.size, roles.toSet().size)
+    }
+
     private fun assertSettingsRoleIconsAreUnique(iconFamily: AppSemanticIconFamily) {
         val duplicates = SettingsIconRole.entries
             .groupBy { role -> resolveSettingsSemanticIcon(role, iconFamily).assetKey() }
@@ -163,5 +189,8 @@ class SettingsSemanticIconPolicyTest {
 
     private companion object {
         val ROLE_USAGE_REGEX = Regex("""SettingsIconRole\.([A-Z0-9_]+)""")
+        val DIRECT_ROLE_USAGE_REGEX = Regex(
+            """rememberSettingsSemanticIcon\(\s*SettingsIconRole\.([A-Z0-9_]+)"""
+        )
     }
 }

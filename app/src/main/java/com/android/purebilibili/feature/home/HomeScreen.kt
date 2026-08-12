@@ -2420,13 +2420,16 @@ fun HomeScreen(
     var consentDialogHandled by rememberSaveable { mutableStateOf(false) }
     var showConsentDialog by remember { mutableStateOf(false) }
     
-    //  检查欢迎弹窗是否已显示过（确保弹窗顺序显示，不会同时出现）
+    // 使用须知确认后再展示崩溃统计同意（避免与门禁叠层）
     val welcomePrefs = remember { context.getSharedPreferences("app_welcome", Context.MODE_PRIVATE) }
-    val welcomeAlreadyShown = welcomePrefs.getBoolean("first_launch_shown", false)
-    
-    // 检查是否需要显示弹窗（欢迎弹窗已显示过 且 同意弹窗尚未显示过 且 本次会话未处理过）
+    val userAgreementAcked = welcomePrefs.getBoolean(
+        com.android.purebilibili.feature.onboarding.USER_AGREEMENT_ACK_KEY,
+        false
+    ) || welcomePrefs.getBoolean("first_launch_shown", false)
+
+    // 检查是否需要显示弹窗（使用须知已确认 且 同意弹窗尚未显示过 且 本次会话未处理过）
     LaunchedEffect(crashTrackingConsentShown) {
-        if (welcomeAlreadyShown && !crashTrackingConsentShown && !consentDialogHandled) {
+        if (userAgreementAcked && !crashTrackingConsentShown && !consentDialogHandled) {
             showConsentDialog = true
         }
     }

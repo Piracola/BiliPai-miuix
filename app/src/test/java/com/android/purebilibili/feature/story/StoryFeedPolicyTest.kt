@@ -1,9 +1,12 @@
 package com.android.purebilibili.feature.story
 
+import com.android.purebilibili.data.model.response.Owner
+import com.android.purebilibili.data.model.response.Stat
 import com.android.purebilibili.data.model.response.StoryItem
 import com.android.purebilibili.data.model.response.StoryOwner
 import com.android.purebilibili.data.model.response.StoryPlayerArgs
 import com.android.purebilibili.data.model.response.StoryStat
+import com.android.purebilibili.data.model.response.VideoItem
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -126,6 +129,41 @@ class StoryFeedPolicyTest {
         assertEquals("BV_FIRST", portraitFeed.initialInfo.bvid)
         assertEquals(listOf("BV_SECOND", "av102"), portraitFeed.recommendations.map { it.bvid })
         assertEquals(listOf(1101L, 1102L), portraitFeed.recommendations.map { it.cid })
+    }
+
+    @Test
+    fun videoItemToStoryItem_mapsHomeRecommendIntoStoryShape() {
+        val story = videoItemToStoryItem(
+            VideoItem(
+                id = 9L,
+                bvid = "BV_HOME",
+                aid = 900L,
+                cid = 0L,
+                title = "Home clip",
+                pic = "https://img/home.jpg",
+                owner = Owner(mid = 1L, name = "UP", face = "f"),
+                stat = Stat(view = 12, danmaku = 3, like = 4),
+                duration = 88,
+            )
+        )
+        val mapped = assertNotNull(story)
+        assertEquals("Home clip", mapped.title)
+        assertEquals("BV_HOME", mapped.playerArgs?.bvid)
+        assertEquals(900L, mapped.playerArgs?.aid)
+        assertEquals(0L, mapped.playerArgs?.cid)
+
+        val feed = buildStoryPortraitFeed(listOf(mapped))
+        val portrait = assertNotNull(feed)
+        assertEquals("BV_HOME", portrait.initialInfo.bvid)
+    }
+
+    @Test
+    fun videoItemToStoryItem_rejectsItemsWithoutPlayableId() {
+        assertNull(
+            videoItemToStoryItem(
+                VideoItem(bvid = "", aid = 0L, title = "x")
+            )
+        )
     }
 
     private fun storyItem(

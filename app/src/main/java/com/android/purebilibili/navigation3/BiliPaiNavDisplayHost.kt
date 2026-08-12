@@ -97,6 +97,7 @@ internal fun BiliPaiNavDisplayHost(
         BiliPaiPredictiveBackAnimationStyle.MIUIX,
     predictiveBackExitDirection: BiliPaiPredictiveBackExitDirection =
         BiliPaiPredictiveBackExitDirection.ALWAYS_RIGHT,
+    miuixTransitionBlurEnabled: Boolean = true,
     sourceMetadata: BiliPaiNavSourceMetadata,
     programmaticBackDispatcher: BiliPaiProgrammaticBackDispatcher,
     preferWholeCardReturn: Boolean = false,
@@ -153,11 +154,17 @@ internal fun BiliPaiNavDisplayHost(
     } else {
         predictiveBackAnimationStyle
     }
-    val globalTransition = remember(style, predictiveBackExitDirection, isLightBackground) {
+    val globalTransition = remember(
+        style,
+        predictiveBackExitDirection,
+        isLightBackground,
+        miuixTransitionBlurEnabled,
+    ) {
         biliPaiMiuixNavTransition(
             animation = style,
             exitDirection = predictiveBackExitDirection,
             isLightBackground = isLightBackground,
+            miuixTransitionBlurEnabled = miuixTransitionBlurEnabled,
         )
     }
     val cardMorphAvailable = shouldUseMiuixVideoCardMorph(

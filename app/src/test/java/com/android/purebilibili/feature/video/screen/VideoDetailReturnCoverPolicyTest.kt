@@ -11,6 +11,63 @@ import java.io.File
 class VideoDetailReturnCoverPolicyTest {
 
     @Test
+    fun flyingReturnSourceCardChromeMustDrawBecauseOverlayCoversList() {
+        assertTrue(shouldDrawFlyingReturnSourceCardChrome())
+    }
+
+    @Test
+    fun expandPlayerViewportForSharedReturn_whenExitOrGesture() {
+        assertTrue(
+            shouldExpandPlayerViewportForSharedReturn(
+                isExitTransitionInProgress = true,
+                isReturnGestureInProgress = false,
+            )
+        )
+        assertTrue(
+            shouldExpandPlayerViewportForSharedReturn(
+                isExitTransitionInProgress = false,
+                isReturnGestureInProgress = true,
+            )
+        )
+        assertTrue(
+            shouldExpandPlayerViewportForSharedReturn(
+                isExitTransitionInProgress = false,
+                isReturnGestureInProgress = false,
+                isGestureRestoreInProgress = true,
+            )
+        )
+        assertFalse(
+            shouldExpandPlayerViewportForSharedReturn(
+                isExitTransitionInProgress = false,
+                isReturnGestureInProgress = false,
+            )
+        )
+        assertFalse(
+            shouldExpandPlayerViewportForSharedReturn(
+                isExitTransitionInProgress = true,
+                isReturnGestureInProgress = true,
+                sharedReturnLikely = false,
+            )
+        )
+        assertEquals(
+            0f,
+            resolvePlayerCollapseProgressForLayout(
+                manualOrCompactCollapseProgress = 0.85f,
+                expandForSharedReturn = true,
+            ),
+            0.0001f,
+        )
+        assertEquals(
+            0.85f,
+            resolvePlayerCollapseProgressForLayout(
+                manualOrCompactCollapseProgress = 0.85f,
+                expandForSharedReturn = false,
+            ),
+            0.0001f,
+        )
+    }
+
+    @Test
     fun exitTransitionInProgressFallsBackToCardClockReturning() {
         assertTrue(
             shouldTreatVideoDetailExitTransitionInProgress(
@@ -1181,5 +1238,85 @@ class VideoDetailReturnCoverPolicyTest {
             liveReturnMorph = true,
         )
         assertEquals(0f, playerNearEnd, 0.0001f)
+    }
+
+    @Test
+    fun residentCoverPrefersStationaryListSnapshotOverRouteCover() {
+        val snapshot = com.android.purebilibili.core.ui.transition.VideoCardSourceChromeSnapshot(
+            title = "t",
+            ownerName = "up",
+            viewText = "1",
+            danmakuText = "2",
+            durationText = "1:00",
+            coverUrl = "https://i0.hdslb.com/bfs/cover.jpg@640w_400h.webp",
+            coverCacheKey = "cover_BV1_n_640x400",
+            coverDecodeWidthPx = 640,
+            coverDecodeHeightPx = 400,
+        )
+        val source = resolveVideoDetailResidentCoverSource(
+            sourceChromeSnapshot = snapshot,
+            routeCoverUrl = "https://i0.hdslb.com/bfs/cover.jpg",
+            bvid = "BV1",
+        )
+        assertEquals(snapshot.coverUrl, source!!.url)
+        assertEquals(snapshot.coverCacheKey, source.cacheKey)
+        assertEquals(640, source.decodeWidthPx)
+        assertEquals(400, source.decodeHeightPx)
+    }
+
+    @Test
+    fun residentCoverUsesClickSnapshotThenPrefetchBeforeRoute() {
+        val click = com.android.purebilibili.core.ui.transition.VideoCardSourceChromeSnapshot(
+            title = "t",
+            ownerName = "up",
+            viewText = "1",
+            danmakuText = "2",
+            durationText = "1:00",
+            coverUrl = "https://list/cover@480w_300h.webp",
+            coverCacheKey = "cover_BV1_n_480x300",
+            coverDecodeWidthPx = 480,
+            coverDecodeHeightPx = 300,
+        )
+        val fromClick = resolveVideoDetailResidentCoverSource(
+            sourceChromeSnapshot = null,
+            clickChromeSnapshot = click,
+            prefetchUrl = "https://prefetch",
+            prefetchCacheKey = "prefetch_key",
+            routeCoverUrl = "https://route",
+            bvid = "BV1",
+        )
+        assertEquals(click.coverUrl, fromClick!!.url)
+        assertEquals(click.coverCacheKey, fromClick.cacheKey)
+
+        val fromPrefetch = resolveVideoDetailResidentCoverSource(
+            sourceChromeSnapshot = null,
+            clickChromeSnapshot = null,
+            prefetchUrl = "https://prefetch@640w_400h.webp",
+            prefetchCacheKey = "cover_BV1_n_640x400",
+            routeCoverUrl = "https://route",
+            bvid = "BV1",
+        )
+        assertEquals("https://prefetch@640w_400h.webp", fromPrefetch!!.url)
+        assertEquals("cover_BV1_n_640x400", fromPrefetch.cacheKey)
+    }
+
+    @Test
+    fun residentCoverFallsBackToRouteWhenSnapshotHasNoCover() {
+        val source = resolveVideoDetailResidentCoverSource(
+            sourceChromeSnapshot = com.android.purebilibili.core.ui.transition.VideoCardSourceChromeSnapshot(
+                title = "t",
+                ownerName = "up",
+                viewText = "1",
+                danmakuText = "2",
+                durationText = "1:00",
+            ),
+            routeCoverUrl = "http://i0.hdslb.com/bfs/cover.jpg",
+            bvid = "BV1",
+        )
+        assertEquals("https://i0.hdslb.com/bfs/cover.jpg", source!!.url)
+        assertEquals(
+            com.android.purebilibili.core.ui.transition.resolveVideoSharedCoverCacheKey("BV1"),
+            source.cacheKey,
+        )
     }
 }

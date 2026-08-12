@@ -51,6 +51,31 @@ class BiliPaiNavBackStackPolicyTest {
     }
 
     @Test
+    fun push_existingSearchPopsToItsUniqueBackStackInstance() {
+        val stack = listOf(
+            BiliPaiNavKey.MainHost,
+            BiliPaiNavKey.Search,
+            BiliPaiNavKey.VideoDetail("BV1", sourceRoute = "search", openId = 1L),
+        )
+
+        assertEquals(
+            listOf(BiliPaiNavKey.MainHost, BiliPaiNavKey.Search),
+            pushBiliPaiNavKey(stack, BiliPaiNavKey.Search),
+        )
+    }
+
+    @Test
+    fun push_distinctInstanceKeyStillAppends() {
+        val first = BiliPaiNavKey.VideoDetail("BV1", sourceRoute = "search", openId = 1L)
+        val second = first.copy(openId = 2L)
+
+        assertEquals(
+            listOf(BiliPaiNavKey.MainHost, first, second),
+            pushBiliPaiNavKey(listOf(BiliPaiNavKey.MainHost, first), second),
+        )
+    }
+
+    @Test
     fun push_liveAreaDetailReentryKeepsDistinctInstances() {
         // 回归：同一直播分区经同级 chips 互跳后再次进入时，openId 使每次 push 的
         // contentKey 实例唯一，避免 Miuix 抛出 Duplicate contentKey 崩溃。
@@ -173,9 +198,11 @@ class BiliPaiNavBackStackPolicyTest {
             .substringAfter("BiliPaiNavEntryContentRole.ONBOARDING")
             .substringBefore("BiliPaiNavEntryContentRole.SETTINGS")
 
-        assertTrue(onboardingFinishBlock.contains("onApplySettingsProfile"))
-        assertTrue(onboardingFinishBlock.contains("applyOnboardingSettingsGuidePreset("))
+        assertTrue(onboardingFinishBlock.contains("USER_AGREEMENT_ACK_KEY"))
+        assertTrue(onboardingFinishBlock.contains("onDisagree"))
+        assertTrue(onboardingFinishBlock.contains("finishAffinity()"))
         assertTrue(onboardingFinishBlock.contains("resolveInitialBiliPaiBackStack("))
+        assertFalse(onboardingFinishBlock.contains("applyOnboardingSettingsGuidePreset("))
         assertFalse(onboardingFinishBlock.contains("navigation3BackStack = listOf(BiliPaiNavKey.Home)"))
     }
 }

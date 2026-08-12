@@ -22,7 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.android.purebilibili.core.ui.AppSpacingTokens
-import com.android.purebilibili.core.ui.rememberAppInboxIcon
+import com.android.purebilibili.core.ui.rememberAppEmptyIcon
 import com.android.purebilibili.core.ui.rememberAppWarningIcon
 
 enum class AppContentStatePresentation {
@@ -101,7 +101,7 @@ fun AppEmptyState(
         primaryAction = primaryAction,
         secondaryAction = secondaryAction,
         showIcon = showIcon,
-        icon = iconOverride ?: rememberAppInboxIcon(),
+        icon = iconOverride ?: rememberAppEmptyIcon(),
         isError = false,
     )
 }

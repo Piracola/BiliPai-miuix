@@ -594,7 +594,7 @@ fun AppearanceSettingsContent(
                         Spacer(modifier = Modifier.height(12.dp))
                         AppPreferenceDivider()
                         AppPreference(
-                            icon = rememberSettingsSemanticIcon(SettingsIconRole.DYNAMIC_COLOR),
+                            icon = rememberSettingsSemanticIcon(SettingsIconRole.CUSTOM_MD3_COLOR),
                             title = "自定义 MD3 颜色",
                             subtitle = if (state.md3ColorSource == Md3ColorSource.CUSTOM) {
                                 "可直接使用取色器，也可输入 #RRGGBB 色值"
@@ -851,7 +851,7 @@ fun AppearanceSettingsContent(
                 AppPreferenceGroup {
                     Column {
                         SettingsSingleChoicePreference(
-                            title = "字体大小",
+                            title = "字体大小：${state.appFontSizePreset.label}",
                             subtitle = "仅调整应用内文字比例",
                             options = resolveAppFontSizeSegmentOptions(),
                             selectedValue = state.appFontSizePreset,
@@ -899,7 +899,7 @@ fun AppearanceSettingsContent(
                         AppearancePreferenceSeparator()
 
                         SettingsSingleChoicePreference(
-                            title = "界面缩放",
+                            title = "界面缩放：${state.appUiScalePreset.label}",
                             subtitle = "调整列表、卡片与控件的整体密度",
                             options = resolveAppUiScaleSegmentOptions(),
                             selectedValue = state.appUiScalePreset,
@@ -909,7 +909,7 @@ fun AppearanceSettingsContent(
                         AppearancePreferenceSeparator()
 
                         AppSwitchPreference(
-                            icon = rememberSettingsSemanticIcon(SettingsIconRole.DISPLAY_STYLE),
+                            icon = rememberSettingsSemanticIcon(SettingsIconRole.DISPLAY_SCALE),
                             title = "应用显示缩放（高级）",
                             subtitle = resolveDpiOverrideSubtitle(
                                 systemDensityDpi = displayMetricsSnapshot.systemDensityDpi,
@@ -933,7 +933,7 @@ fun AppearanceSettingsContent(
                             Column {
                                 AppearancePreferenceSeparator()
                                 SettingsSingleChoicePreference(
-                                    title = "显示缩放",
+                                    title = "显示缩放：${resolveDisplayedAppDpiPercent(state.appDpiOverridePercent)}%",
                                     subtitle = "只调整 BiliPai 内文字和控件的整体大小，不修改系统显示设置",
                                     options = resolveAppDpiOverrideSegmentOptions(),
                                     selectedValue = resolveDisplayedAppDpiPercent(state.appDpiOverridePercent),
@@ -1376,7 +1376,7 @@ fun AppearanceSettingsContent(
 
                         AppPreferenceDivider(modifier = Modifier.padding(start = 16.dp))
                         AppSwitchPreference(
-                            icon = rememberSettingsSemanticIcon(SettingsIconRole.DISPLAY_STYLE),
+                            icon = rememberSettingsSemanticIcon(SettingsIconRole.HOME_HERO_CAROUSEL),
                             title = "首页顶部轮播封面",
                             subtitle = if (homeHeroCarouselEnabled) {
                                 "推荐页顶部显示官方比例的视频封面轮播"
@@ -1396,7 +1396,7 @@ fun AppearanceSettingsContent(
                             Column {
                                 AppPreferenceDivider(modifier = Modifier.padding(start = 16.dp))
                                 AppSwitchPreference(
-                                    icon = rememberSettingsSemanticIcon(SettingsIconRole.AUTO_PLAY_ON_OPEN),
+                                    icon = rememberSettingsSemanticIcon(SettingsIconRole.HOME_HERO_AUTOPLAY),
                                     title = "轮播默认播放",
                                     subtitle = if (homeHeroCarouselAutoplayEnabled) {
                                         "当前轮播项进入视野后静音循环播放"
@@ -1609,7 +1609,7 @@ fun AppearanceSettingsContent(
 
                         AppPreferenceDivider(modifier = Modifier.padding(start = 16.dp))
 	                        AppSwitchPreference(
-	                            icon = rememberSettingsSemanticIcon(SettingsIconRole.ONLINE_COUNT),
+	                            icon = rememberSettingsSemanticIcon(SettingsIconRole.HOME_ONLINE_COUNT),
                             title = "卡片与视频页观看人数",
                             subtitle = if (showOnlineCount) {
                                 "首页、搜索等视频卡片和视频页显示“xx人正在看”"
@@ -1736,6 +1736,19 @@ internal enum class ThemeRoleColorTarget(val label: String) {
     }
 }
 
+internal fun resolveThemeRoleColorIconRole(
+    target: ThemeRoleColorTarget,
+): SettingsIconRole = when (target) {
+    ThemeRoleColorTarget.LIGHT_BACKGROUND -> SettingsIconRole.THEME_LIGHT_BACKGROUND
+    ThemeRoleColorTarget.LIGHT_PRIMARY_TEXT -> SettingsIconRole.THEME_LIGHT_PRIMARY_TEXT
+    ThemeRoleColorTarget.LIGHT_SECONDARY_TEXT -> SettingsIconRole.THEME_LIGHT_SECONDARY_TEXT
+    ThemeRoleColorTarget.LIGHT_CONTROL -> SettingsIconRole.THEME_LIGHT_CONTROL
+    ThemeRoleColorTarget.DARK_BACKGROUND -> SettingsIconRole.THEME_DARK_BACKGROUND
+    ThemeRoleColorTarget.DARK_PRIMARY_TEXT -> SettingsIconRole.THEME_DARK_PRIMARY_TEXT
+    ThemeRoleColorTarget.DARK_SECONDARY_TEXT -> SettingsIconRole.THEME_DARK_SECONDARY_TEXT
+    ThemeRoleColorTarget.DARK_CONTROL -> SettingsIconRole.THEME_DARK_CONTROL
+}
+
 @Composable
 private fun ThemeRoleOverrideEditor(
     overrides: ThemeRoleOverrides,
@@ -1803,7 +1816,7 @@ internal fun ThemeRoleModeEditor(
         }
         targets.forEachIndexed { index, target ->
             AppPreference(
-                icon = rememberSettingsSemanticIcon(SettingsIconRole.DYNAMIC_COLOR),
+                icon = rememberSettingsSemanticIcon(resolveThemeRoleColorIconRole(target)),
                 title = target.label,
                 subtitle = colors[index],
                 value = colors[index],

@@ -224,6 +224,31 @@ class VideoGestureFeedbackPolicyTest {
     }
 
     @Test
+    fun `vertical inline swipe dispatches directly to portrait fullscreen`() {
+        assertEquals(
+            true,
+            shouldEnterPortraitFullscreenFromSwipe(
+                isFullscreen = false,
+                isVerticalVideo = true,
+            )
+        )
+        assertEquals(
+            false,
+            shouldEnterPortraitFullscreenFromSwipe(
+                isFullscreen = false,
+                isVerticalVideo = false,
+            )
+        )
+        assertEquals(
+            false,
+            shouldEnterPortraitFullscreenFromSwipe(
+                isFullscreen = true,
+                isVerticalVideo = true,
+            )
+        )
+    }
+
+    @Test
     fun `resolveVerticalGestureMode uses portrait swipe setting for upward entry`() {
         assertEquals(
             VideoGestureMode.SwipeToFullscreen,

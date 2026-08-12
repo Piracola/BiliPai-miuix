@@ -188,6 +188,9 @@ fun GlassVideoCard(
             speedSettings = sharedTransitionSpeedSettings
         )
     }
+    val coverCacheKey = remember(video.bvid, useLowQualityCover) {
+        resolveVideoSharedCoverCacheKey(video.bvid, useLowQualityCover)
+    }
     val triggerCardClick = {
         cardBoundsRef.value?.let { bounds ->
             CardPositionManager.recordVideoCardPosition(
@@ -206,6 +209,14 @@ fun GlassVideoCard(
                     viewText = FormatUtils.formatStat(video.stat.view.toLong()),
                     danmakuText = FormatUtils.formatStat(video.stat.danmaku.toLong()),
                     durationText = FormatUtils.formatDuration(video.duration),
+                    // Glass card paints play/danmaku on cover; info is title/UP style.
+                    infoPresentation = com.android.purebilibili.core.ui.transition
+                        .resolveVideoCardSourceInfoPresentation(
+                            publishTimeText = "",
+                            showStatsInInfo = false,
+                        ),
+                    coverUrl = coverUrl,
+                    coverCacheKey = coverCacheKey,
                 ),
             )
         }
@@ -239,9 +250,6 @@ fun GlassVideoCard(
         useCoverSharedBounds = useCardShellSharedBounds,
         isSharedReturnTarget = isSharedReturnTarget,
     )
-    val coverCacheKey = remember(video.bvid, useLowQualityCover) {
-        resolveVideoSharedCoverCacheKey(video.bvid, useLowQualityCover)
-    }
     // 🌈 彩虹渐变边框色
     val rainbowColors = HomeVisualPalette.GlassSpectrum
     

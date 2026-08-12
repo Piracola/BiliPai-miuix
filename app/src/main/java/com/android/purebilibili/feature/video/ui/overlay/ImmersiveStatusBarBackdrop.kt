@@ -49,6 +49,27 @@ internal fun ImmersiveStatusBarBackdrop(
     useAmbientHaze: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    ImmersiveAmbientLetterboxBackdrop(
+        ambientFrame = ambientFrame,
+        height = height,
+        useAmbientHaze = useAmbientHaze,
+        contentAlignment = Alignment.TopCenter,
+        modifier = modifier,
+    )
+}
+
+/**
+ * 竖屏详情横屏视频上下黑边区域的动态模糊条（与状态栏沉浸采样同源）。
+ * 顶部/底部各放一条，[contentAlignment] 决定裁切采样的对齐边。
+ */
+@Composable
+internal fun ImmersiveAmbientLetterboxBackdrop(
+    ambientFrame: State<ImageBitmap?>?,
+    height: Dp,
+    useAmbientHaze: Boolean,
+    contentAlignment: Alignment = Alignment.TopCenter,
+    modifier: Modifier = Modifier,
+) {
     if (height.value <= 0f) return
     val currentAmbientFrame = if (useAmbientHaze) ambientFrame?.value else null
     val hazeState = rememberRecoverableHazeState()
@@ -65,7 +86,7 @@ internal fun ImmersiveStatusBarBackdrop(
                 bitmap = currentAmbientFrame,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                alignment = Alignment.TopCenter,
+                alignment = contentAlignment,
                 modifier = Modifier
                     .fillMaxSize()
                     .hazeSourceCompat(hazeState),
@@ -82,4 +103,19 @@ internal fun ImmersiveStatusBarBackdrop(
             )
         }
     }
+}
+
+/**
+ * 竖屏页横屏视频 letterbox 上下黑边高度（各半）。
+ * fillContainer 或无效尺寸时返回 0。
+ */
+internal fun resolvePortraitLetterboxBarHeightPx(
+    containerHeightPx: Int,
+    viewportHeightPx: Int,
+    fillContainer: Boolean,
+): Int {
+    if (fillContainer || containerHeightPx <= 0 || viewportHeightPx <= 0) return 0
+    val leftover = (containerHeightPx - viewportHeightPx).coerceAtLeast(0)
+    if (leftover <= 1) return 0
+    return leftover / 2
 }

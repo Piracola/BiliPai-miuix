@@ -44,4 +44,22 @@ class MusicPlayerContentColorPolicyTest {
             )
         )
     }
+
+    @Test
+    fun accentColorUsesThemePrimary() {
+        val primary = Color(0xFFFF2D55)
+        assertEquals(primary, resolveMusicPlayerAccentColor(primary))
+    }
+
+    @Test
+    fun darkBackgroundCanUseHighContrastWhite() {
+        assertEquals(
+            Color.White,
+            resolveMusicPlayerContentColor(
+                backgroundColor = Color(0xFF2A2A2A),
+                onLightBackground = onLight,
+                onDarkBackground = Color.White,
+            )
+        )
+    }
 }

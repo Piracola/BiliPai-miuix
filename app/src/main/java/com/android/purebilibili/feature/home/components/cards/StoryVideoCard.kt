@@ -210,6 +210,15 @@ internal fun StoryVideoCard(
                     viewText = FormatUtils.formatStat(video.stat.view.toLong()),
                     danmakuText = FormatUtils.formatStat(video.stat.danmaku.toLong()),
                     durationText = FormatUtils.formatDuration(video.duration),
+                    infoPresentation = com.android.purebilibili.core.ui.transition
+                        .resolveVideoCardSourceInfoPresentation(
+                            publishTimeText = "",
+                            showStatsInInfo = false,
+                        ),
+                    coverUrl = coverUrl,
+                    coverCacheKey = coverCacheKey,
+                    coverDecodeWidthPx = coverRequestSpec?.widthPx ?: 0,
+                    coverDecodeHeightPx = coverRequestSpec?.heightPx ?: 0,
                 ),
             )
         }

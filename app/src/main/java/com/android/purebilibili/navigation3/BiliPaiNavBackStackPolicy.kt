@@ -21,7 +21,15 @@ internal fun pushBiliPaiNavKey(
     key: BiliPaiNavKey
 ): List<BiliPaiNavKey> {
     val base = currentStack.ifEmpty { listOf(BiliPaiNavKey.MainHost) }
-    return if (base.last() == key) base else base + key
+    val existingIndex = base.indexOfLast { it == key }
+    return if (existingIndex >= 0) {
+        // Miuix NavDisplay requires every contentKey in the back stack to be unique. Reopening a
+        // singleton destination (for example Search from a video that was opened from Search)
+        // returns to its existing instance instead of producing [Search, VideoDetail, Search].
+        base.take(existingIndex + 1)
+    } else {
+        base + key
+    }
 }
 
 /**

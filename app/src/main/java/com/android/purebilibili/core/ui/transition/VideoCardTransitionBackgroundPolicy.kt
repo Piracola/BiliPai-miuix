@@ -102,14 +102,17 @@ internal fun resolveVideoCardTransitionBackgroundScaleReduction(
 }
 
 /**
- * A nested related-video return already reveals a retained VideoDetail containing an Android
- * player surface. Full-page snapshot blur can neither capture that surface reliably nor preserve
- * the parent's visual structure, so this path keeps only the lightweight depth scrim.
+ * Whether the retained source snapshot should receive the progress-driven blur effect.
+ *
+ * Related-video navigation now places a click-time, player-composited freeze frame over the
+ * parent detail before the source layer is recorded. The transition therefore blurs that SDR
+ * snapshot instead of touching the live player surface (and its HDR output path).
  */
+@Suppress("UNUSED_PARAMETER")
 internal fun shouldUseRealtimeVideoCardTransitionBackgroundBlur(
     source: VideoCardTransitionBackgroundSource,
     realtimeBlurEnabled: Boolean,
-): Boolean = realtimeBlurEnabled && source != VideoCardTransitionBackgroundSource.RelatedVideo
+): Boolean = realtimeBlurEnabled
 
 internal data class VideoCardTransitionBackgroundFrame(
     val blurRadiusPx: Float,

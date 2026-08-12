@@ -65,6 +65,20 @@ class VideoDetailScreenPolicyTest {
     }
 
     @Test
+    fun portraitExitPlayerTarget_doesNotFallBackToRouteCoverForPortraitNextWithoutSwitchedCover() {
+        // 竖屏已切到下一片但尚未写入 switchedCover 时，entry 应为空，
+        // 避免 resolvePreferredVideoCoverUrl 用路由首个视频封面冒充当前片。
+        val resolved = resolveVideoPlayerSectionTarget(
+            routeBvid = "BV_ROUTE",
+            routeCoverUrl = "https://img/first.jpg",
+            currentBvid = "BV_PORTRAIT_NEXT",
+            switchedCoverUrl = "",
+        )
+        assertEquals("BV_PORTRAIT_NEXT", resolved.bvid)
+        assertEquals("", resolved.entryCoverUrl)
+    }
+
+    @Test
     fun portraitExitPlayerTarget_keepsRouteCoverWhenStillShowingRouteVideo() {
         val resolved = resolveVideoPlayerSectionTarget(
             routeBvid = "BV_ROUTE",

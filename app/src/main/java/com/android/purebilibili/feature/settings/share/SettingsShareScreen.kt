@@ -16,10 +16,13 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DataObject
 import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Pending
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.UploadFile
 import com.android.purebilibili.core.ui.AdaptiveLoadingIndicator
@@ -128,7 +131,7 @@ fun SettingsShareScreen(
                 AppPreferenceGroup {
                     // 状态放 subtitle，避免右侧 value 窄列把长文案拆成「操作」单独一行。
                     AppPreference(
-                        icon = if (uiState.isBusy) Icons.Filled.Info else Icons.Filled.CheckCircle,
+                        icon = if (uiState.isBusy) Icons.Filled.Pending else Icons.Filled.History,
                         title = if (uiState.isBusy) "正在处理" else "最近状态",
                         subtitle = uiState.statusMessage ?: "尚未执行导入导出操作",
                         onClick = if (uiState.statusMessage != null) ({ viewModel.clearStatus() }) else null,
@@ -169,7 +172,7 @@ fun SettingsShareScreen(
                         subtitle = "安卓版本、UI 名称、密度、分辨率等，便于排查界面问题（导入时忽略）",
                         checked = uiState.includeDeviceDebug,
                         onCheckedChange = viewModel::setIncludeDeviceDebug,
-                        icon = Icons.Filled.Info,
+                        icon = Icons.Filled.BugReport,
                         iconTint = iOSOrange,
                     )
                 }
@@ -219,7 +222,7 @@ fun SettingsShareScreen(
                 AppPreferenceSectionTitle("文件格式")
                 AppPreferenceGroup {
                     AppPreference(
-                        icon = Icons.Filled.Info,
+                        icon = Icons.Filled.DataObject,
                         title = "设置包（JSON）",
                         subtitle = "支持用户查看，也支持应用内一键导入",
                         value = "格式版本 v$SETTINGS_SHARE_SCHEMA_VERSION",

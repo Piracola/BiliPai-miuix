@@ -481,7 +481,7 @@ fun BottomBarSettingsContent(
                             )
                             AppPreferenceDivider()
                             SettingsSingleChoicePreference(
-                                icon = Icons.Outlined.ViewList,
+                                icon = Icons.Outlined.Reorder,
                                 iconTint = com.android.purebilibili.core.theme.iOSPurple,
                                 title = "首页顶部布局",
                                 options = HomeTopLayoutOrder.entries.map { order ->

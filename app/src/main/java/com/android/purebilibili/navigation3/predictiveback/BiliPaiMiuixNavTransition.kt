@@ -21,10 +21,14 @@ internal fun biliPaiMiuixNavTransition(
     animation: BiliPaiPredictiveBackAnimationStyle,
     exitDirection: BiliPaiPredictiveBackExitDirection,
     isLightBackground: Boolean,
+    miuixTransitionBlurEnabled: Boolean = true,
 ): NavTransition = when (animation) {
     BiliPaiPredictiveBackAnimationStyle.NONE -> NoPredictiveBackTransition
     BiliPaiPredictiveBackAnimationStyle.MIUIX ->
-        miuixRealtimeCoveredBlurTransition(isLightBackground)
+        miuixRealtimeCoveredBlurTransition(
+            isLightBackground = isLightBackground,
+            blurEnabled = miuixTransitionBlurEnabled,
+        )
     BiliPaiPredictiveBackAnimationStyle.AOSP -> AospNavTransition
     BiliPaiPredictiveBackAnimationStyle.SCALE -> scaleNavTransition(exitDirection)
     BiliPaiPredictiveBackAnimationStyle.CLASSIC -> ClassicNavTransition
@@ -39,6 +43,7 @@ internal fun biliPaiMiuixNavTransition(
  */
 private fun miuixRealtimeCoveredBlurTransition(
     isLightBackground: Boolean,
+    blurEnabled: Boolean,
 ): NavTransition {
     return object : NavTransition {
         override fun Modifier.transformEntry(scope: NavTransitionScope): Modifier {
@@ -58,16 +63,20 @@ private fun miuixRealtimeCoveredBlurTransition(
                     alpha = 1f - 0.1f * coveredDepth
                 }
 
-                val blurFrame = resolvePredictiveBackBlurFrame(
-                    progress = if (scope.gesture != null || scope.settle != null) {
-                        resolveMiuixNavCoveredBlurProgress(depth)
-                    } else {
-                        0f
-                    },
-                    motionTier = MotionTier.Normal,
-                    isLightBackground = isLightBackground,
-                )
-                renderEffect = renderEffectCache.resolve(blurFrame.blurRadiusPx)
+                renderEffect = if (blurEnabled) {
+                    val blurFrame = resolvePredictiveBackBlurFrame(
+                        progress = if (scope.gesture != null || scope.settle != null) {
+                            resolveMiuixNavCoveredBlurProgress(depth)
+                        } else {
+                            0f
+                        },
+                        motionTier = MotionTier.Normal,
+                        isLightBackground = isLightBackground,
+                    )
+                    renderEffectCache.resolve(blurFrame.blurRadiusPx)
+                } else {
+                    null
+                }
             }
         }
     }

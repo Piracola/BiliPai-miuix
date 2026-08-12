@@ -835,6 +835,7 @@ data class AppNavigationSettings(
     val predictiveBackEnabled: Boolean = true,
     val predictiveBackAnimationStyle: String = "miuix",
     val predictiveBackExitDirection: String = "always_right",
+    val miuixTransitionBlurEnabled: Boolean = true,
 )
 
 internal data class BottomTabMigrationResult(
@@ -915,6 +916,8 @@ data class PlayerInteractionSettings(
     val fullscreenSwipeSeekEnabled: Boolean = true,
     val fullscreenGestureReverse: Boolean = false,
     val hideVideoPageStatusBar: Boolean = false,
+    /** 竖屏详情横屏视频上下黑边动态模糊，默认开启。 */
+    val portraitLetterboxAmbientHaze: Boolean = true,
     val tabletCommentPanelWidthPreset: TabletCommentPanelWidthPreset =
         TabletCommentPanelWidthPreset.STANDARD,
     val autoEnterFullscreenEnabled: Boolean = false,
@@ -1566,6 +1569,8 @@ object SettingsManager {
             fullscreenSwipeSeekEnabled = preferences[KEY_FULLSCREEN_SWIPE_SEEK_ENABLED] ?: true,
             fullscreenGestureReverse = preferences[KEY_FULLSCREEN_GESTURE_REVERSE] ?: false,
             hideVideoPageStatusBar = preferences[KEY_HIDE_VIDEO_PAGE_STATUS_BAR] ?: false,
+            portraitLetterboxAmbientHaze =
+                preferences[KEY_PORTRAIT_LETTERBOX_AMBIENT_HAZE] ?: true,
             tabletCommentPanelWidthPreset = TabletCommentPanelWidthPreset.fromValue(
                 preferences[KEY_TABLET_COMMENT_PANEL_WIDTH_PRESET]
                     ?: TabletCommentPanelWidthPreset.STANDARD.value
@@ -5768,6 +5773,8 @@ object SettingsManager {
     
     private val KEY_SWIPE_HIDE_PLAYER = booleanPreferencesKey("swipe_hide_player")
     private val KEY_PORTRAIT_PLAYER_COLLAPSE_MODE = intPreferencesKey("portrait_player_collapse_mode")
+    /** Auto-pause when the detail player is swipe-collapsed; default on. */
+    private val KEY_PAUSE_ON_PLAYER_COLLAPSE = booleanPreferencesKey("pause_on_player_collapse")
     private val KEY_PORTRAIT_SWIPE_TO_FULLSCREEN = booleanPreferencesKey("portrait_swipe_to_fullscreen")
     private val KEY_CENTER_SWIPE_TO_FULLSCREEN = booleanPreferencesKey("center_swipe_to_fullscreen")
     private val KEY_INLINE_SWIPE_SEEK_SECONDS = intPreferencesKey("inline_swipe_seek_seconds")
@@ -5775,6 +5782,8 @@ object SettingsManager {
     private val KEY_FULLSCREEN_SWIPE_SEEK_SECONDS = intPreferencesKey("fullscreen_swipe_seek_seconds")
     private val KEY_FULLSCREEN_GESTURE_REVERSE = booleanPreferencesKey("fullscreen_gesture_reverse")
     private val KEY_HIDE_VIDEO_PAGE_STATUS_BAR = booleanPreferencesKey("hide_video_page_status_bar")
+    private val KEY_PORTRAIT_LETTERBOX_AMBIENT_HAZE =
+        booleanPreferencesKey("portrait_letterbox_ambient_haze")
     private val KEY_TABLET_COMMENT_PANEL_WIDTH_PRESET =
         intPreferencesKey("tablet_comment_panel_width_preset")
     private val KEY_AUTO_ENTER_FULLSCREEN = booleanPreferencesKey("auto_enter_fullscreen")
@@ -5806,6 +5815,8 @@ object SettingsManager {
         booleanPreferencesKey("quality_switch_failure_dialog_shown")
     private val KEY_SUBTITLE_AUTO_PREFERENCE = intPreferencesKey("subtitle_auto_preference")
     private val KEY_BOTTOM_PROGRESS_BEHAVIOR = intPreferencesKey("bottom_progress_behavior")
+    private val KEY_PROGRESS_PEAK_DANMAKU_ENABLED =
+        booleanPreferencesKey("progress_peak_danmaku_enabled")
     private val KEY_HORIZONTAL_ADAPTATION = booleanPreferencesKey("horizontal_adaptation_enabled")
     private val KEY_FULLSCREEN_MODE = intPreferencesKey("fullscreen_mode")
     private val KEY_FULLSCREEN_ASPECT_RATIO = intPreferencesKey("fullscreen_aspect_ratio")
@@ -5849,6 +5860,18 @@ object SettingsManager {
         context.settingsDataStore.edit { preferences ->
             preferences[KEY_PORTRAIT_PLAYER_COLLAPSE_MODE] = mode.value
             preferences[KEY_SWIPE_HIDE_PLAYER] = mode != PortraitPlayerCollapseMode.OFF
+        }
+    }
+
+    // --- 播放器缩小后自动暂停（默认开启） ---
+    fun getPauseOnPlayerCollapseEnabled(context: Context): Flow<Boolean> =
+        context.settingsDataStore.data.map { preferences ->
+            preferences[KEY_PAUSE_ON_PLAYER_COLLAPSE] ?: true
+        }
+
+    suspend fun setPauseOnPlayerCollapseEnabled(context: Context, value: Boolean) {
+        context.settingsDataStore.edit { preferences ->
+            preferences[KEY_PAUSE_ON_PLAYER_COLLAPSE] = value
         }
     }
 
@@ -5964,6 +5987,21 @@ object SettingsManager {
     fun getHideVideoPageStatusBarSync(context: Context): Boolean {
         return context.getSharedPreferences(VIDEO_PAGE_STATUS_BAR_CACHE_PREFS, Context.MODE_PRIVATE)
             .getBoolean(CACHE_KEY_HIDE_VIDEO_PAGE_STATUS_BAR, false)
+    }
+
+    fun getPortraitLetterboxAmbientHaze(context: Context): Flow<Boolean> =
+        context.settingsDataStore.data
+            .map { preferences -> preferences[KEY_PORTRAIT_LETTERBOX_AMBIENT_HAZE] ?: true }
+
+    suspend fun setPortraitLetterboxAmbientHaze(context: Context, enabled: Boolean) {
+        context.settingsDataStore.edit { preferences ->
+            preferences[KEY_PORTRAIT_LETTERBOX_AMBIENT_HAZE] = enabled
+        }
+    }
+
+    fun getPortraitLetterboxAmbientHazeSync(context: Context): Boolean {
+        // 无独立 cache；冷启动先用默认 true，DataStore 回填后以 Flow 为准。
+        return true
     }
 
     fun getTabletCommentPanelWidthPreset(context: Context): Flow<TabletCommentPanelWidthPreset> =
@@ -6242,6 +6280,18 @@ object SettingsManager {
         }
     }
 
+    /** 进度条上的 PBP 弹幕峰值曲线，默认关闭。 */
+    fun getProgressPeakDanmakuEnabled(context: Context): Flow<Boolean> =
+        context.settingsDataStore.data.map { preferences ->
+            preferences[KEY_PROGRESS_PEAK_DANMAKU_ENABLED] ?: false
+        }
+
+    suspend fun setProgressPeakDanmakuEnabled(context: Context, enabled: Boolean) {
+        context.settingsDataStore.edit { preferences ->
+            preferences[KEY_PROGRESS_PEAK_DANMAKU_ENABLED] = enabled
+        }
+    }
+
     fun getHorizontalAdaptationEnabled(context: Context): Flow<Boolean> = context.settingsDataStore.data
         .map { preferences ->
             preferences[KEY_HORIZONTAL_ADAPTATION] ?: isTabletConfiguration(context)
@@ -6293,6 +6343,8 @@ object SettingsManager {
     private val KEY_PREDICTIVE_BACK_ENABLED = booleanPreferencesKey("predictive_back_enabled")
     private val KEY_PREDICTIVE_BACK_ANIMATION_STYLE = stringPreferencesKey("predictive_back_animation_style")
     private val KEY_PREDICTIVE_BACK_EXIT_DIRECTION = stringPreferencesKey("predictive_back_exit_direction")
+    private val KEY_MIUIX_TRANSITION_BLUR_ENABLED =
+        booleanPreferencesKey("miuix_transition_blur_enabled")
     
     /**
      *  平板导航模式
@@ -6332,6 +6384,7 @@ object SettingsManager {
             predictiveBackAnimationStyle = preferences[KEY_PREDICTIVE_BACK_ANIMATION_STYLE] ?: "miuix",
             predictiveBackExitDirection =
                 preferences[KEY_PREDICTIVE_BACK_EXIT_DIRECTION] ?: "always_right",
+            miuixTransitionBlurEnabled = preferences[KEY_MIUIX_TRANSITION_BLUR_ENABLED] ?: true,
         )
     }
 
@@ -6367,6 +6420,10 @@ object SettingsManager {
 
     suspend fun setPredictiveBackExitDirection(context: Context, direction: String) {
         NavigationSettingsStore.setPredictiveBackExitDirection(context, direction)
+    }
+
+    suspend fun setMiuixTransitionBlurEnabled(context: Context, enabled: Boolean) {
+        NavigationSettingsStore.setMiuixTransitionBlurEnabled(context, enabled)
     }
 
     fun getFullScreenSwipeBackEnabled(context: Context): Flow<Boolean> =
@@ -6639,6 +6696,10 @@ object SettingsManager {
                 KEY_VIDEO_TRANSITION_REALTIME_BLUR_ENABLED,
                 SettingsShareSection.APPEARANCE
             ),
+            BooleanShareablePreferenceDefinition(
+                KEY_MIUIX_TRANSITION_BLUR_ENABLED,
+                SettingsShareSection.APPEARANCE,
+            ),
             IntShareablePreferenceDefinition(KEY_VIDEO_SHARED_TRANSITION_SPEED, SettingsShareSection.APPEARANCE),
             IntShareablePreferenceDefinition(
                 KEY_VIDEO_SHARED_TRANSITION_CUSTOM_DURATION_MILLIS,
@@ -6693,6 +6754,10 @@ object SettingsManager {
             IntShareablePreferenceDefinition(KEY_FULLSCREEN_ASPECT_RATIO, SettingsShareSection.PLAYBACK),
             IntShareablePreferenceDefinition(KEY_SUBTITLE_AUTO_PREFERENCE, SettingsShareSection.PLAYBACK),
             IntShareablePreferenceDefinition(KEY_BOTTOM_PROGRESS_BEHAVIOR, SettingsShareSection.PLAYBACK),
+            BooleanShareablePreferenceDefinition(
+                KEY_PROGRESS_PEAK_DANMAKU_ENABLED,
+                SettingsShareSection.PLAYBACK,
+            ),
             BooleanShareablePreferenceDefinition(KEY_HORIZONTAL_ADAPTATION, SettingsShareSection.PLAYBACK),
             BooleanShareablePreferenceDefinition(KEY_HIDE_VIDEO_PAGE_STATUS_BAR, SettingsShareSection.PLAYBACK),
             IntShareablePreferenceDefinition(KEY_TABLET_COMMENT_PANEL_WIDTH_PRESET, SettingsShareSection.PLAYBACK),
@@ -6721,6 +6786,7 @@ object SettingsManager {
             BooleanShareablePreferenceDefinition(KEY_DOUBLE_TAP_LIKE, SettingsShareSection.GESTURE),
             BooleanShareablePreferenceDefinition(KEY_SWIPE_HIDE_PLAYER, SettingsShareSection.GESTURE),
             IntShareablePreferenceDefinition(KEY_PORTRAIT_PLAYER_COLLAPSE_MODE, SettingsShareSection.GESTURE),
+            BooleanShareablePreferenceDefinition(KEY_PAUSE_ON_PLAYER_COLLAPSE, SettingsShareSection.GESTURE),
             BooleanShareablePreferenceDefinition(KEY_PORTRAIT_SWIPE_TO_FULLSCREEN, SettingsShareSection.GESTURE),
             BooleanShareablePreferenceDefinition(KEY_CENTER_SWIPE_TO_FULLSCREEN, SettingsShareSection.GESTURE),
             IntShareablePreferenceDefinition(KEY_INLINE_SWIPE_SEEK_SECONDS, SettingsShareSection.GESTURE),

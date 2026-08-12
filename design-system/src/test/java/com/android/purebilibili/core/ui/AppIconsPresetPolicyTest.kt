@@ -62,6 +62,7 @@ class AppIconsPresetPolicyTest {
         assertEquals(Icons.Outlined.History, resolveAppHistoryIcon())
         assertEquals(Icons.Outlined.BookmarkBorder, resolveAppBookmarkIcon())
         assertEquals(Icons.Outlined.MailOutline, resolveAppInboxIcon())
+        assertEquals(Icons.Filled.Search, resolveAppEmptyIcon())
         assertEquals(Icons.Outlined.LiveTv, resolveAppTvIcon())
         assertEquals(Icons.AutoMirrored.Outlined.ExitToApp, resolveAppLogoutIcon())
         assertEquals(Icons.Outlined.Timer, resolveAppTimerIcon())

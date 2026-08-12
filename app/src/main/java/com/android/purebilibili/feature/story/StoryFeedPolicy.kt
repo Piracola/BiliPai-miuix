@@ -5,6 +5,10 @@ import com.android.purebilibili.data.model.response.Page
 import com.android.purebilibili.data.model.response.RelatedVideo
 import com.android.purebilibili.data.model.response.Stat
 import com.android.purebilibili.data.model.response.StoryItem
+import com.android.purebilibili.data.model.response.StoryOwner
+import com.android.purebilibili.data.model.response.StoryPlayerArgs
+import com.android.purebilibili.data.model.response.StoryStat
+import com.android.purebilibili.data.model.response.VideoItem
 import com.android.purebilibili.data.model.response.ViewInfo
 
 internal data class StoryPortraitFeed(
@@ -160,15 +164,60 @@ private data class PlayableStoryItem(
 internal fun storyItemToRelatedVideo(item: StoryItem): RelatedVideo? =
     toPlayableStoryItem(item)?.toRelatedVideo()
 
+/**
+ * Map home-recommend [VideoItem] into Story feed shape so the portrait pager can reuse
+ * existing merge / build / load-more helpers while sourcing more diverse content.
+ *
+ * Requires a playable id (bvid or aid). [cid] may be 0; the player resolves it on demand.
+ */
+internal fun videoItemToStoryItem(item: VideoItem): StoryItem? {
+    val bvid = item.bvid.trim()
+    val aid = item.aid.takeIf { it > 0L } ?: item.id.takeIf { it > 0L } ?: 0L
+    if (bvid.isEmpty() && aid <= 0L) return null
+    return StoryItem(
+        id = aid.takeIf { it > 0L } ?: item.id,
+        goto = "av",
+        title = item.title,
+        cover = item.pic,
+        playerArgs = StoryPlayerArgs(
+            aid = aid,
+            cid = item.cid,
+            bvid = bvid,
+        ),
+        stat = StoryStat(
+            view = item.stat.view,
+            like = item.stat.like,
+            reply = item.stat.reply,
+            share = item.stat.share,
+            coin = item.stat.coin,
+            favorite = item.stat.favorite,
+            danmaku = item.stat.danmaku,
+        ),
+        owner = StoryOwner(
+            mid = item.owner.mid,
+            name = item.owner.name,
+            face = item.owner.face,
+        ),
+        duration = item.duration.coerceAtLeast(0),
+    )
+}
+
+internal fun videoItemsToStoryItems(items: List<VideoItem>): List<StoryItem> =
+    items.mapNotNull(::videoItemToStoryItem)
+
 private fun toPlayableStoryItem(item: StoryItem): PlayableStoryItem? {
     val args = item.playerArgs ?: return null
-    val aid = args.aid.takeIf { it > 0L } ?: return null
-    val cid = args.cid.takeIf { it > 0L } ?: return null
-    val playbackId = args.bvid.trim().ifBlank { "av$aid" }
+    val aid = args.aid.takeIf { it > 0L } ?: 0L
+    val bvid = args.bvid.trim()
+    // Home feed often has bvid without cid; still allow entry — player resolves cid later.
+    if (aid <= 0L && bvid.isEmpty()) return null
+    val playbackId = bvid.ifBlank {
+        if (aid > 0L) "av$aid" else return null
+    }
     return PlayableStoryItem(
         source = item,
         aid = aid,
-        cid = cid,
+        cid = args.cid.coerceAtLeast(0L),
         playbackId = playbackId
     )
 }

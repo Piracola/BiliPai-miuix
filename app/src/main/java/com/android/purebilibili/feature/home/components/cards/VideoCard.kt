@@ -769,6 +769,19 @@ internal fun ElegantVideoCard(
                     danmakuText = secondaryStatText
                         ?: FormatUtils.formatStat(video.stat.danmaku.toLong()),
                     durationText = durationText,
+                    followed = video.isFollowed,
+                    // Remember what the list info column actually paints (not cover badges).
+                    infoPresentation = com.android.purebilibili.core.ui.transition
+                        .resolveVideoCardSourceInfoPresentation(
+                            publishTimeText = publishTimeRowText,
+                            showStatsInInfo = scrollLitePolicy.showSecondaryStatsRow,
+                            useTintedInfoSurface = infoSurfaceAppearance.useTintedSurface,
+                        ),
+                    // Exact stationary list cover request (URL + key + Coil size).
+                    coverUrl = coverUrl,
+                    coverCacheKey = coverCacheKey,
+                    coverDecodeWidthPx = coverRequestSpec?.widthPx ?: 0,
+                    coverDecodeHeightPx = coverRequestSpec?.heightPx ?: 0,
                 ),
             )
         }

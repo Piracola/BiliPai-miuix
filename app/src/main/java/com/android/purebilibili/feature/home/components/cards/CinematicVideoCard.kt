@@ -164,6 +164,9 @@ fun CinematicVideoCard(
             speedSettings = sharedTransitionSpeedSettings
         )
     }
+    val coverCacheKey = remember(video.bvid, useLowQualityCover) {
+        resolveVideoSharedCoverCacheKey(video.bvid, useLowQualityCover)
+    }
     val triggerCardClick = {
         cardBoundsRef.value?.let { bounds ->
             CardPositionManager.recordVideoCardPosition(
@@ -183,6 +186,13 @@ fun CinematicVideoCard(
                     viewText = FormatUtils.formatStat(video.stat.view.toLong()),
                     danmakuText = FormatUtils.formatStat(video.stat.danmaku.toLong()),
                     durationText = FormatUtils.formatDuration(video.duration),
+                    infoPresentation = com.android.purebilibili.core.ui.transition
+                        .resolveVideoCardSourceInfoPresentation(
+                            publishTimeText = "",
+                            showStatsInInfo = false,
+                        ),
+                    coverUrl = coverUrl,
+                    coverCacheKey = coverCacheKey,
                 ),
             )
         }
@@ -219,9 +229,6 @@ fun CinematicVideoCard(
         useCoverSharedBounds = useCardShellSharedBounds,
         isSharedReturnTarget = isSharedReturnTarget,
     )
-    val coverCacheKey = remember(video.bvid, useLowQualityCover) {
-        resolveVideoSharedCoverCacheKey(video.bvid, useLowQualityCover)
-    }
     val cardShellShape = remember(cardCornerRadius) { RoundedCornerShape(cardCornerRadius) }
     val enterAnimationEnabledAtMount = remember(video.bvid) {
         resolveHomeCardEnterAnimationEnabledAtMount(

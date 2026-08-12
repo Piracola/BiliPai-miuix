@@ -1225,8 +1225,13 @@ internal fun VideoCommentTab(
             } else if (replies.isEmpty()) {
                 item {
                     Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                        // replyCount 来自详情/游标 all_count：>0 却列表空 = 最热链路空成功，勿误报「暂无」
                         AppText(
-                            text = "暂无评论",
+                            text = if (replyCount > 0) {
+                                "评论暂时无法加载，可切换「最新」或稍后重试"
+                            } else {
+                                "暂无评论"
+                            },
                             color = commentAppearance.secondaryTextColor
                         )
                     }

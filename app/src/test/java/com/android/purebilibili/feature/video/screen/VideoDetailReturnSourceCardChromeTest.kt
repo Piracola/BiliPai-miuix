@@ -1,9 +1,14 @@
 package com.android.purebilibili.feature.video.screen
 
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Color
 import com.android.purebilibili.core.ui.transition.VideoCardSourceChromeSnapshot
+import com.android.purebilibili.core.ui.transition.VideoCardSourceInfoPresentation
 import com.android.purebilibili.core.ui.transition.VideoCardSourceLayout
 import com.android.purebilibili.core.ui.transition.resolveVideoCardSourceChromeVisualFrame
+import com.android.purebilibili.data.model.response.Owner
+import com.android.purebilibili.data.model.response.Stat
+import com.android.purebilibili.data.model.response.ViewInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -27,8 +32,10 @@ class VideoDetailReturnSourceCardChromeTest {
         assertEquals(0.5f, layout.sourceScale, 0.0001f)
         assertEquals(500f, layout.cardWidthPx, 0.0001f)
         assertEquals(600f, layout.cardHeightPx, 0.0001f)
+        // Measured cover height (not cardTop→coverBottom expansion).
         assertEquals(375f, layout.coverHeightPx, 0.0001f)
         assertEquals(500f, layout.coverWidthPx, 0.0001f)
+        assertEquals(0f, layout.coverOffsetYPx, 0.0001f)
         assertEquals(500f, layout.infoWidthPx, 0.0001f)
         assertEquals(225f, layout.infoHeightPx, 0.0001f)
         // Info top = cover bottom in entry space: 375 / 0.5 = 750.
@@ -64,6 +71,51 @@ class VideoDetailReturnSourceCardChromeTest {
     }
 
     @Test
+    fun landedMediaIsRemeasuredToTheExactStationaryCover() {
+        val landing = resolveVideoDetailReturnSourceCardLayout(
+            viewportWidthPx = 1000f,
+            sourceBounds = Rect(left = 0f, top = 0f, right = 500f, bottom = 600f),
+            // A 4:3 cover becomes 1000x750 in entry space, taller than a 16:10 player.
+            sourceCoverBounds = Rect(left = 0f, top = 0f, right = 500f, bottom = 375f),
+        )
+
+        val frame = resolveVideoDetailReturnMediaLayoutFrame(
+            containerWidthPx = 1000,
+            containerHeightPx = 625,
+            landingLayout = landing,
+            handoffProgress = 1f,
+        )
+
+        assertEquals(0, frame.offsetXPx)
+        assertEquals(0, frame.offsetYPx)
+        assertEquals(1000, frame.widthPx)
+        // Do not clamp to the player height: that would shrink again at the list-card handoff.
+        assertEquals(750, frame.heightPx)
+    }
+
+    @Test
+    fun mediaLayoutInterpolatesTowardInsetCoverWithoutChangingHostSize() {
+        val landing = resolveVideoDetailReturnSourceCardLayout(
+            viewportWidthPx = 1000f,
+            sourceBounds = Rect(left = 10f, top = 50f, right = 510f, bottom = 650f),
+            sourceCoverBounds = Rect(left = 30f, top = 70f, right = 480f, bottom = 370f),
+        )
+
+        val frame = resolveVideoDetailReturnMediaLayoutFrame(
+            containerWidthPx = 1000,
+            containerHeightPx = 625,
+            landingLayout = landing,
+            handoffProgress = 0.5f,
+        )
+
+        // sourceScale=0.5, so the target cover is (40,40) + 900x600 in entry space.
+        assertEquals(20, frame.offsetXPx)
+        assertEquals(20, frame.offsetYPx)
+        assertEquals(950, frame.widthPx)
+        assertEquals(613, frame.heightPx)
+    }
+
+    @Test
     fun coverOnlyOrHorizontalLandingDoesNotInventABelowCoverRegion() {
         val layout = resolveVideoDetailReturnSourceCardLayout(
             viewportWidthPx = 1000f,
@@ -90,26 +142,32 @@ class VideoDetailReturnSourceCardChromeTest {
         assertEquals(0.968f, layout.sourceScale, 0.001f)
         assertEquals(984f - 166f, layout.infoWidthPx, 0.0001f)
         assertEquals(580f - 400f, layout.infoHeightPx, 0.0001f)
-        assertEquals(166f - 16f, layout.coverWidthPx, 0.0001f)
-        assertEquals((166f - 16f) / layout.sourceScale, layout.infoAnchorXInViewportPx, 0.001f)
+        // Exact measured cover box (not expanded to card left).
+        assertEquals(166f - 22f, layout.coverWidthPx, 0.0001f)
+        assertEquals(22f - 16f, layout.coverOffsetXPx, 0.0001f)
+        assertEquals(406f - 400f, layout.coverOffsetYPx, 0.0001f)
+        assertEquals(
+            (layout.coverOffsetXPx + layout.coverWidthPx) / layout.sourceScale,
+            layout.infoAnchorXInViewportPx,
+            0.001f,
+        )
         assertEquals(0f, layout.infoAnchorYInViewportPx, 0.001f)
         assertEquals(
-            (166f - 16f) / layout.sourceScale,
+            layout.coverWidthPx / layout.sourceScale,
             resolveVideoDetailReturnCoverWidthInEntryPx(layout),
+            0.001f,
+        )
+        assertEquals(
+            layout.coverOffsetXPx / layout.sourceScale,
+            resolveVideoDetailReturnCoverOffsetXInEntryPx(layout),
             0.001f,
         )
     }
 
     @Test
-    fun sideBySideLandingFacadeIsSolidForWholeReturnMorph() {
-        val sideStart = com.android.purebilibili.core.ui.transition
-            .resolveVideoCardSourceChromeVisualFrame(
-                morphDepthProgress = 0.99f,
-                phase = com.android.purebilibili.core.ui.transition
-                    .VideoCardTransitionBackgroundPhase.HELD,
-                isReturnGestureInProgress = true,
-                sourceLayout = VideoCardSourceLayout.SIDE_BY_SIDE,
-            )
+    fun sideBySideSharesHomeLateChromeHandoffWithStacked() {
+        // SIDE_BY_SIDE no longer paints a solid facade for the whole morph; it uses the same
+        // late 72%–96% chrome window as STACKED so live media stays visible early.
         val sideMid = com.android.purebilibili.core.ui.transition
             .resolveVideoCardSourceChromeVisualFrame(
                 morphDepthProgress = 0.5f,
@@ -117,16 +175,23 @@ class VideoDetailReturnSourceCardChromeTest {
                     .VideoCardTransitionBackgroundPhase.RETURNING,
                 sourceLayout = VideoCardSourceLayout.SIDE_BY_SIDE,
             )
-        val stackedLate = com.android.purebilibili.core.ui.transition
+        val stackedMid = com.android.purebilibili.core.ui.transition
             .resolveVideoCardSourceChromeVisualFrame(
-                morphDepthProgress = 0.82f,
+                morphDepthProgress = 0.5f,
                 phase = com.android.purebilibili.core.ui.transition
                     .VideoCardTransitionBackgroundPhase.RETURNING,
                 sourceLayout = VideoCardSourceLayout.STACKED,
             )
-        assertEquals(1f, sideStart.alpha, 0.001f)
-        assertEquals(1f, sideMid.alpha, 0.001f)
-        assertEquals(0f, stackedLate.alpha, 0.001f)
+        val sideNearLand = com.android.purebilibili.core.ui.transition
+            .resolveVideoCardSourceChromeVisualFrame(
+                morphDepthProgress = 0.04f,
+                phase = com.android.purebilibili.core.ui.transition
+                    .VideoCardTransitionBackgroundPhase.RETURNING,
+                sourceLayout = VideoCardSourceLayout.SIDE_BY_SIDE,
+            )
+        assertEquals(0f, sideMid.alpha, 0.001f)
+        assertEquals(stackedMid.alpha, sideMid.alpha, 0.001f)
+        assertEquals(1f, sideNearLand.alpha, 0.001f)
     }
 
     @Test
@@ -139,7 +204,85 @@ class VideoDetailReturnSourceCardChromeTest {
 
         assertTrue(layout.canRender)
         assertEquals(VideoCardSourceLayout.SIDE_BY_SIDE, layout.layout)
+        assertEquals(240f, layout.coverWidthPx, 0.0001f)
+        assertEquals(0f, layout.coverOffsetXPx, 0.0001f)
         assertEquals(760f, layout.infoWidthPx, 0.0001f)
+    }
+
+    @Test
+    fun infoSurfaceSpecMirrorsTintedHomePlateWhenFlagged() {
+        val plain = resolveVideoDetailReturnInfoSurfaceSpec(
+            useTintedInfoSurface = false,
+            isDarkTheme = true,
+            baseContainerColor = Color(0xFF1C1B1F),
+        )
+        assertFalse(plain.useTintedSurface)
+
+        val tinted = resolveVideoDetailReturnInfoSurfaceSpec(
+            useTintedInfoSurface = true,
+            isDarkTheme = true,
+            baseContainerColor = Color(0xFF1C1B1F),
+        )
+        assertTrue(tinted.useTintedSurface)
+        assertTrue(tinted.containerColor.alpha < 1f)
+        assertTrue(tinted.borderWidth.value > 0f)
+    }
+
+    @Test
+    fun infoSecondaryLineFollowsFrozenListPresentation() {
+        val homeLike = VideoDetailReturnSourceCardChromeModel(
+            title = "t",
+            ownerName = "up",
+            viewText = "1.2万",
+            danmakuText = "300",
+            followed = true,
+            infoPresentation = VideoCardSourceInfoPresentation(
+                publishTimeText = "发布于 昨天",
+                showStatsInInfo = false,
+            ),
+        )
+        assertEquals("发布于 昨天", resolveVideoDetailReturnInfoSecondaryLine(homeLike))
+        assertFalse(resolveVideoDetailReturnInfoSecondaryLine(homeLike).contains("弹幕"))
+
+        val withStats = homeLike.copy(
+            infoPresentation = VideoCardSourceInfoPresentation(
+                publishTimeText = "发布于 昨天",
+                showStatsInInfo = true,
+            ),
+        )
+        val statsLine = resolveVideoDetailReturnInfoSecondaryLine(withStats)
+        assertTrue(statsLine.contains("播放"))
+        assertTrue(statsLine.contains("弹幕"))
+        assertFalse(statsLine.contains("发布于"))
+    }
+
+    @Test
+    fun chromeModelPrefersClickSnapshotPresentationOverDetailStats() {
+        val snapshot = VideoCardSourceChromeSnapshot(
+            title = "list-title",
+            ownerName = "list-up",
+            viewText = "9.9万",
+            danmakuText = "888",
+            durationText = "10:00",
+            followed = true,
+            infoPresentation = VideoCardSourceInfoPresentation(
+                publishTimeText = "发布于 2026-07-30",
+                showStatsInInfo = false,
+            ),
+        )
+        val info = ViewInfo(
+            title = "detail-title",
+            owner = Owner(name = "detail-up"),
+            stat = Stat(view = 1, danmaku = 2),
+            pubdate = 1_700_000_000L,
+        )
+        val model = resolveVideoDetailReturnSourceCardChromeModel(info = info, snapshot = snapshot)
+        assertNotNull(model)
+        assertEquals("list-title", model!!.title)
+        assertEquals("list-up", model.ownerName)
+        assertTrue(model.followed)
+        assertFalse(model.infoPresentation.showStatsInInfo)
+        assertEquals("发布于 2026-07-30", resolveVideoDetailReturnInfoSecondaryLine(model))
     }
 
     @Test
@@ -167,27 +310,17 @@ class VideoDetailReturnSourceCardChromeTest {
     }
 
     @Test
-    fun sourceChromeIsHostedOnFullViewportEntryNotUnderPlayerColumn() {
+    fun flyingReturnChromeIsDrawnOnOverlayBecauseListIsCovered() {
         val holder = File(
             "app/src/main/java/com/android/purebilibili/feature/video/screen/VideoDetailScreenStateHolder.kt",
         ).takeIf { it.isFile }?.readText()
             ?: File(
                 "src/main/java/com/android/purebilibili/feature/video/screen/VideoDetailScreenStateHolder.kt",
             ).readText()
-        val chromeCall = holder
-            .substringAfter("VideoDetailReturnSourceCardChrome(")
-            .substringBefore("Full-viewport source-card chrome host")
-        assertTrue(holder.contains("手机竖屏布局结束（Column）"))
-        assertTrue(holder.contains("Full-viewport source-card chrome host (phone + tablet)"))
-        val phoneBranchEnd = holder.indexOf("phone portrait branch of useTabletLayout")
-        val chromeStart = holder.indexOf("VideoDetailReturnSourceCardChrome(")
-        assertTrue(phoneBranchEnd in 1 until chromeStart)
-        assertTrue(chromeCall.contains("align(Alignment.TopStart)"))
-        assertTrue(chromeCall.contains("sourceLayout = miuixCardTransitionState.sourceLayout"))
-        assertTrue(chromeCall.contains("sourceChromeSnapshot = miuixCardTransitionState.sourceChromeSnapshot"))
-        assertTrue(holder.contains("sourceChromeSnapshot != null"))
-        // Whole-card shell behind player + cover height clip for flush land.
-        assertTrue(holder.contains("landingCoverHeightEntryPx"))
-        assertTrue(holder.contains("resolveVideoDetailReturnCoverHeightInEntryPx"))
+        assertTrue(holder.contains("shouldDrawFlyingReturnSourceCardChrome()"))
+        assertTrue(shouldDrawFlyingReturnSourceCardChrome())
+        assertTrue(holder.contains("VideoDetailReturnSourceCardChrome("))
+        assertTrue(holder.contains("returnMediaHandoffProgressProvider"))
+        assertTrue(holder.contains(".videoDetailReturnMediaLayout("))
     }
 }

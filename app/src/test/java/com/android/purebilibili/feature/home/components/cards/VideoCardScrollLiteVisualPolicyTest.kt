@@ -438,7 +438,7 @@ class VideoCardScrollLiteVisualPolicyTest {
                 transitionBackgroundProgress = 0.4f,
             )
         )
-        // Stationary list stays fully hidden while flying entry owns the morph (no dual layer).
+        // List chrome+cover stay 0 while flying layer owns the morph (under overlay).
         assertEquals(
             0f,
             resolveHomeCardChromeAlphaDuringShellReturnMorph(
@@ -468,16 +468,7 @@ class VideoCardScrollLiteVisualPolicyTest {
     }
 
     @Test
-    fun homeCardChromeTransformsBeforeLateCoverHandoffInsideTheFlyingShell() {
-        assertTrue(
-            shouldSuppressHomeCardVisualDuringShellReturnMorph(
-                useCardContainerSharedBounds = true,
-                isSharedMorphSourceCard = true,
-                isReturningFromDetail = true,
-                isSharedTransitionActive = true,
-                transitionBackgroundProgress = 1f,
-            )
-        )
+    fun homeCardChromeStaysHiddenUntilFlyingMorphParks() {
         assertEquals(
             0f,
             resolveHomeCardChromeAlphaDuringShellReturnMorph(
@@ -497,47 +488,11 @@ class VideoCardScrollLiteVisualPolicyTest {
                 isReturningFromDetail = true,
                 transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.RETURNING,
                 isSharedTransitionActive = true,
-                transitionBackgroundProgress = 0.32f,
-            ),
-            0.001f,
-        )
-        assertEquals(
-            0f,
-            resolveHomeCardChromeAlphaDuringShellReturnMorph(
-                useCardContainerSharedBounds = true,
-                isSharedMorphSourceCard = true,
-                isReturningFromDetail = true,
-                transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.RETURNING,
-                isSharedTransitionActive = false,
-                transitionBackgroundProgress = 0.4f,
-            ),
-            0.001f,
-        )
-        // Mid / late return: list still 0; flying entry draws the card.
-        assertEquals(
-            0f,
-            resolveHomeCardChromeAlphaDuringShellReturnMorph(
-                useCardContainerSharedBounds = true,
-                isSharedMorphSourceCard = true,
-                isReturningFromDetail = true,
-                transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.RETURNING,
-                isSharedTransitionActive = false,
                 transitionBackgroundProgress = 0.16f,
             ),
             0.001f,
         )
-        assertEquals(
-            0f,
-            resolveHomeCardChromeAlphaDuringShellReturnMorph(
-                useCardContainerSharedBounds = true,
-                isSharedMorphSourceCard = true,
-                isReturningFromDetail = true,
-                transitionBackgroundPhase = VideoCardTransitionBackgroundPhase.RETURNING,
-                transitionBackgroundProgress = 0.04f,
-            ),
-            0.001f,
-        )
-        // Morph finished (IDLE): list may show again without dual-layer jump.
+        // Morph finished: list chrome can show again.
         assertEquals(
             1f,
             resolveHomeCardChromeAlphaDuringShellReturnMorph(
@@ -550,31 +505,6 @@ class VideoCardScrollLiteVisualPolicyTest {
             ),
             0.001f,
         )
-        assertEquals(
-            1f,
-            resolveHomeCardChromeAlphaDuringShellReturnMorph(
-                useCardContainerSharedBounds = true,
-                isSharedMorphSourceCard = true,
-                isReturningFromDetail = false,
-                isSharedTransitionActive = false,
-                transitionBackgroundProgress = 0f,
-            ),
-            0.001f,
-        )
-        // 快速返回仍可能保留 LIVE surface，正文继续使用同一内部形变窗口。
-        assertEquals(
-            0f,
-            resolveHomeCardChromeAlphaDuringShellReturnMorph(
-                useCardContainerSharedBounds = true,
-                isSharedMorphSourceCard = true,
-                isReturningFromDetail = true,
-                isSharedTransitionActive = true,
-                transitionBackgroundProgress = 1f,
-                isQuickReturnFromDetail = true,
-            ),
-            0.001f,
-        )
-        // 显式整卡回退没有 LIVE surface，可立即显示。
         assertEquals(
             1f,
             resolveHomeCardChromeAlphaDuringShellReturnMorph(

@@ -71,10 +71,10 @@ import com.android.purebilibili.feature.settings.share.SettingsShareViewModel
 import com.android.purebilibili.feature.settings.share.SettingsShareViewModelFactory
 import com.android.purebilibili.feature.settings.webdav.WebDavBackupViewModel
 import com.android.purebilibili.feature.settings.webdav.WebDavBackupViewModelFactory
-import com.android.purebilibili.feature.settings.OFFICIAL_GITHUB_URL
-import com.android.purebilibili.feature.settings.OFFICIAL_TELEGRAM_URL
+import com.android.purebilibili.feature.onboarding.APP_WELCOME_PREFS_NAME
+import com.android.purebilibili.feature.onboarding.USER_AGREEMENT_ACK_KEY
+import com.android.purebilibili.feature.onboarding.isUserAgreementRequired
 import com.android.purebilibili.feature.settings.RELEASE_DISCLAIMER_ACK_KEY
-import com.android.purebilibili.feature.settings.ReleaseChannelDisclaimerDialog
 import com.android.purebilibili.feature.list.CommonListScreen
 import com.android.purebilibili.feature.list.HistoryViewModel
 import com.android.purebilibili.feature.list.LikedVideosViewModel
@@ -419,17 +419,14 @@ fun AppNavigation(
             onInitialSearchKeywordConsumed(consumedKeyword)
         }
     }
-    // 🚀 [新手引导] 检查是否首次启动
-    // 如果是首次启动，则进入 OnboardingScreen，否则进入 HomeScreen
-    val welcomePrefs = androidx.compose.runtime.remember { context.getSharedPreferences("app_welcome", android.content.Context.MODE_PRIVATE) }
-    // 注意：这里仅读取初始状态用于设置 startDestination
-    // 后续状态更新由 OnboardingScreen 完成
-    val firstLaunchShown = welcomePrefs.getBoolean("first_launch_shown", false)
-    val launchDisclaimerAck = welcomePrefs.getBoolean(RELEASE_DISCLAIMER_ACK_KEY, false)
-    var showLaunchDisclaimer by remember {
-        mutableStateOf(!firstLaunchShown && !launchDisclaimerAck)
+    // 使用须知：新/老用户只要未确认 user_agreement_ack_v1 都必须进入门禁页
+    val welcomePrefs = androidx.compose.runtime.remember {
+        context.getSharedPreferences(APP_WELCOME_PREFS_NAME, android.content.Context.MODE_PRIVATE)
     }
-    val startDestination = if (firstLaunchShown) ScreenRoutes.Home.route else ScreenRoutes.Onboarding.route
+    val userAgreementAcked = welcomePrefs.getBoolean(USER_AGREEMENT_ACK_KEY, false)
+    val agreementRequired = isUserAgreementRequired(userAgreementAcked)
+    val startDestination =
+        if (agreementRequired) ScreenRoutes.Onboarding.route else ScreenRoutes.Home.route
     val cachedPortraitStartupRoute = remember(context) {
         SettingsManager.getCachedLaunchToPortraitFeedOnStartup(context)
     }
@@ -478,10 +475,10 @@ fun AppNavigation(
             startDestination,
             launchToPortraitFeedOnStartupAtInit,
         ) {
-            resolveInitialBiliPaiBackStack(
+                resolveInitialBiliPaiBackStack(
                     firstRoute = startDestination,
-                    onboardingRequired = !firstLaunchShown,
-                    openPortraitFeedOnStartup = firstLaunchShown && launchToPortraitFeedOnStartupAtInit
+                    onboardingRequired = agreementRequired,
+                    openPortraitFeedOnStartup = launchToPortraitFeedOnStartupAtInit
                 )
         }
         @Suppress("UNCHECKED_CAST")
@@ -2420,20 +2417,25 @@ fun AppNavigation(
                         }
                         BiliPaiNavEntryContentRole.ONBOARDING ->
                             com.android.purebilibili.feature.onboarding.OnboardingScreen(
-                                onApplySettingsProfile = { profile ->
-                                    com.android.purebilibili.feature.onboarding.applyOnboardingSettingsGuidePreset(
-                                        context,
-                                        profile
+                                onFinish = {
+                                    welcomePrefs.edit()
+                                        .putBoolean(USER_AGREEMENT_ACK_KEY, true)
+                                        // Keep legacy flags in sync so splash / older checks stay consistent.
+                                        .putBoolean("first_launch_shown", true)
+                                        .putBoolean(RELEASE_DISCLAIMER_ACK_KEY, true)
+                                        .apply()
+                                    replaceNavigation3BackStack(
+                                        resolveInitialBiliPaiBackStack(
+                                            firstRoute = ScreenRoutes.Home.route,
+                                            onboardingRequired = false,
+                                            openPortraitFeedOnStartup = launchToPortraitFeedOnStartupAtInit
+                                        )
                                     )
                                 },
-                                onFinish = {
-                                    welcomePrefs.edit().putBoolean("first_launch_shown", true).apply()
-                                    replaceNavigation3BackStack(resolveInitialBiliPaiBackStack(
-                                        firstRoute = ScreenRoutes.Home.route,
-                                        onboardingRequired = false,
-                                        openPortraitFeedOnStartup = launchToPortraitFeedOnStartupAtInit
-                                    ))
-                                }
+                                onDisagree = {
+                                    // Leave no residual task: disagree means exit the app.
+                                    context.findActivity()?.finishAffinity()
+                                },
                             )
                         BiliPaiNavEntryContentRole.SETTINGS ->
                             SettingsTabletEntry {
@@ -3341,6 +3343,8 @@ fun AppNavigation(
                     videoCardClock = videoCardTransitionClock,
                     predictiveBackAnimationStyle = predictiveBackAnimationStyle,
                     predictiveBackExitDirection = predictiveBackExitDirection,
+                    miuixTransitionBlurEnabled =
+                        appNavigationSettings.miuixTransitionBlurEnabled,
                     sourceMetadata = navigation3SourceMetadata,
                     programmaticBackDispatcher = navigation3ProgrammaticBackDispatcher,
                     // 来源卡内容进入飞行 shared-bounds 壳，在后段由播放器/详情信息
@@ -3469,18 +3473,6 @@ fun AppNavigation(
                     }
                 },
             )
-
-            if (showLaunchDisclaimer) {
-                ReleaseChannelDisclaimerDialog(
-                    title = "首次使用声明",
-                    onDismiss = {
-                        showLaunchDisclaimer = false
-                        welcomePrefs.edit().putBoolean(RELEASE_DISCLAIMER_ACK_KEY, true).apply()
-                    },
-                    onOpenGithub = { uriHandler.openUri(OFFICIAL_GITHUB_URL) },
-                    onOpenTelegram = { uriHandler.openUri(OFFICIAL_TELEGRAM_URL) }
-                )
-            }
 
             ImagePreviewOverlayHost(
                 modifier = Modifier

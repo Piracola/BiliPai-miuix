@@ -127,10 +127,15 @@ internal fun HomeStyleSingleColumnVideoCard(
         sourceRoute = sourceRoute,
         transitionEnabled = sharedReady,
     )
-    val coverRequest = remember(video.pic) {
+    val stationaryCoverUrl = remember(video.pic) {
+        FormatUtils.resolveVideoCoverUrl(video.pic, useLowQuality = false)
+    }
+    val coverRequest = remember(stationaryCoverUrl) {
         ImageRequest.Builder(context)
-            .data(FormatUtils.resolveVideoCoverUrl(video.pic, useLowQuality = false))
+            .data(stationaryCoverUrl)
             .crossfade(false)
+            .memoryCacheKey(stationaryCoverUrl)
+            .diskCacheKey(stationaryCoverUrl)
             .build()
     }
     val triggerClick = {
@@ -153,6 +158,14 @@ internal fun HomeStyleSingleColumnVideoCard(
                     danmakuText = FormatUtils.formatStat(video.stat.danmaku.toLong()),
                     durationText = FormatUtils.formatDuration(video.duration),
                     followed = isFollowing,
+                    // Single-column paints play/danmaku in the info column (not on cover only).
+                    infoPresentation = com.android.purebilibili.core.ui.transition
+                        .resolveVideoCardSourceInfoPresentation(
+                            publishTimeText = "",
+                            showStatsInInfo = true,
+                        ),
+                    coverUrl = stationaryCoverUrl,
+                    coverCacheKey = stationaryCoverUrl,
                 ),
             )
         }

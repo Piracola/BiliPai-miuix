@@ -215,7 +215,7 @@ fun AnimationSettingsContent(
                 Box(modifier = Modifier.entrance()) {
                     AppPreferenceGroup {
                         AppSwitchPreference(
-                            icon = rememberSettingsSemanticIcon(SettingsIconRole.CARD_ENTRANCE_ANIMATION),
+                            icon = rememberSettingsSemanticIcon(SettingsIconRole.UI_ENTRANCE_ANIMATION),
                             title = "界面入场动画",
                             subtitle = "进入设置等页面时，让内容依次淡入；关闭后页面会直接显示",
                             checked = uiEntranceAnimationEnabled,
@@ -316,6 +316,30 @@ fun AnimationSettingsContent(
                             },
                             iconTint = iOSTeal
                         )
+                        if (predictiveBackStyle == BiliPaiPredictiveBackAnimationStyle.MIUIX) {
+                            AppPreferenceDivider()
+                            AppSwitchPreference(
+                                icon = rememberSettingsSemanticIcon(
+                                    SettingsIconRole.MIUIX_TRANSITION_BLUR
+                                ),
+                                title = "Miuix 过渡模糊",
+                                subtitle = if (appNavigationSettings.miuixTransitionBlurEnabled) {
+                                    "页面返回时为下层页面添加实时景深模糊"
+                                } else {
+                                    "保留 Miuix 位移与层级动画，不使用实时模糊"
+                                },
+                                checked = appNavigationSettings.miuixTransitionBlurEnabled,
+                                onCheckedChange = { enabled ->
+                                    scope.launch {
+                                        SettingsManager.setMiuixTransitionBlurEnabled(
+                                            context,
+                                            enabled,
+                                        )
+                                    }
+                                },
+                                iconTint = iOSTeal,
+                            )
+                        }
                         if (predictiveBackStyle == BiliPaiPredictiveBackAnimationStyle.SCALE) {
                             AppPreferenceDivider()
                             SettingsSingleChoicePreference(
@@ -335,7 +359,7 @@ fun AnimationSettingsContent(
                         }
                         AppPreferenceDivider()
                         AppSwitchPreference(
-                            icon = rememberSettingsSemanticIcon(SettingsIconRole.CENTER_SWIPE_FULLSCREEN),
+                            icon = rememberSettingsSemanticIcon(SettingsIconRole.FULLSCREEN_SWIPE_BACK),
                             title = "全屏滑动返回",
                             subtitle = if (fullScreenSwipeBackEnabled) {
                                 "列表与设置页支持全屏右滑返回；播放器、详情与网页页不受影响"

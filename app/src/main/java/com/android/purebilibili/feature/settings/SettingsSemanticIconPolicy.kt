@@ -78,6 +78,7 @@ internal enum class SettingsIconRole {
     CARD_TRANSITION_ANIMATION,
     LIVE_SURFACE_TRANSITION,
     PREDICTIVE_BACK,
+    MIUIX_TRANSITION_BLUR,
     TOP_DOCK_GLASS,
     HOME_SEARCH_GLASS,
     BOTTOM_BAR_GLASS,
@@ -87,10 +88,15 @@ internal enum class SettingsIconRole {
     FLOATING_BOTTOM_BAR,
     HARDWARE_DECODER,
     PLAYBACK_SPEED,
+    LONG_PRESS_SPEED_HINT,
+    RESUME_PLAYBACK_PROMPT,
     STOP_ON_EXIT,
     BACKGROUND_PLAYBACK,
+    PLAYLIST_AUTO_CONTINUE,
     AUDIO_FOCUS,
+    SLIDE_VOLUME_BRIGHTNESS,
     PIP_DANMAKU,
+    DANMAKU_CLOUD_SYNC,
     AUDIO_MODE_PIP,
     PLAYER_DIAGNOSTICS,
     QUALITY_WARNING,
@@ -119,6 +125,8 @@ internal enum class SettingsIconRole {
     DIRECTED_TRAFFIC,
     AUTO_HIGHEST_QUALITY,
     AUTO_PLAY_ON_OPEN,
+    STARTUP_PORTRAIT_FEED,
+    HOME_HERO_AUTOPLAY,
     AUTO_PLAY_NEXT,
     VIDEO_NOTE_COLLAPSE,
     INTERACTIVE_COMMANDS,
@@ -127,10 +135,31 @@ internal enum class SettingsIconRole {
     SYSTEM_BRIGHTNESS,
     APP_ICON,
     HOME_CARD_STATS_COMPACT,
+    HOME_HERO_CAROUSEL,
+    HOME_ONLINE_COUNT,
+    PORTRAIT_STORY_ENTRY,
+    DISPLAY_SCALE,
+    UI_ENTRANCE_ANIMATION,
+    FULLSCREEN_SWIPE_BACK,
+    FOLLOW_BUTTON,
+    PRIVACY_HISTORY,
+    CUSTOM_MD3_COLOR,
+    THEME_LIGHT_BACKGROUND,
+    THEME_LIGHT_PRIMARY_TEXT,
+    THEME_LIGHT_SECONDARY_TEXT,
+    THEME_LIGHT_CONTROL,
+    THEME_DARK_BACKGROUND,
+    THEME_DARK_PRIMARY_TEXT,
+    THEME_DARK_SECONDARY_TEXT,
+    THEME_DARK_CONTROL,
+    DEVELOPER_CRASH_TRACKING,
+    DEVELOPER_ANALYTICS,
+    APP_VERSION,
     BOTTOM_BAR_GLASS_PREVIEW,
     ADVANCED_COLOR,
     CAST_BUTTON,
     LONG_PRESS_HINT,
+    PROGRESS_PEAK_DANMAKU
 }
 
 @Composable
@@ -258,6 +287,7 @@ private fun resolveMd3SettingsSemanticIcon(role: SettingsIconRole): ImageVector 
     SettingsIconRole.CARD_TRANSITION_ANIMATION -> Icons.Outlined.SyncAlt
     SettingsIconRole.LIVE_SURFACE_TRANSITION -> Icons.Outlined.Movie
     SettingsIconRole.PREDICTIVE_BACK -> Icons.AutoMirrored.Outlined.ArrowBack
+    SettingsIconRole.MIUIX_TRANSITION_BLUR -> Icons.Outlined.Gradient
     SettingsIconRole.TOP_DOCK_GLASS -> Icons.Outlined.Layers
     SettingsIconRole.HOME_SEARCH_GLASS -> Icons.AutoMirrored.Outlined.ManageSearch
     SettingsIconRole.BOTTOM_BAR_GLASS -> Icons.Outlined.BlurCircular
@@ -267,10 +297,15 @@ private fun resolveMd3SettingsSemanticIcon(role: SettingsIconRole): ImageVector 
     SettingsIconRole.FLOATING_BOTTOM_BAR -> Icons.Outlined.ViewAgenda
     SettingsIconRole.HARDWARE_DECODER -> Icons.Outlined.Memory
     SettingsIconRole.PLAYBACK_SPEED -> Icons.Outlined.Speed
+    SettingsIconRole.LONG_PRESS_SPEED_HINT -> Icons.Outlined.VisibilityOff
+    SettingsIconRole.RESUME_PLAYBACK_PROMPT -> Icons.Outlined.Restore
     SettingsIconRole.STOP_ON_EXIT -> Icons.Outlined.StopCircle
     SettingsIconRole.BACKGROUND_PLAYBACK -> Icons.Outlined.MusicNote
+    SettingsIconRole.PLAYLIST_AUTO_CONTINUE -> Icons.Outlined.QueuePlayNext
     SettingsIconRole.AUDIO_FOCUS -> Icons.Outlined.Headphones
+    SettingsIconRole.SLIDE_VOLUME_BRIGHTNESS -> Icons.Outlined.SwapVert
     SettingsIconRole.PIP_DANMAKU -> Icons.Outlined.Textsms
+    SettingsIconRole.DANMAKU_CLOUD_SYNC -> Icons.Outlined.CloudSync
     SettingsIconRole.AUDIO_MODE_PIP -> Icons.Outlined.PictureInPicture
     SettingsIconRole.PLAYER_DIAGNOSTICS -> Icons.Outlined.QueryStats
     SettingsIconRole.QUALITY_WARNING -> Icons.Outlined.ReportProblem
@@ -300,6 +335,8 @@ private fun resolveMd3SettingsSemanticIcon(role: SettingsIconRole): ImageVector 
     SettingsIconRole.DIRECTED_TRAFFIC -> Icons.Outlined.NetworkLocked
     SettingsIconRole.AUTO_HIGHEST_QUALITY -> Icons.Outlined.SettingsSuggest
     SettingsIconRole.AUTO_PLAY_ON_OPEN -> Icons.Outlined.PlayArrow
+    SettingsIconRole.STARTUP_PORTRAIT_FEED -> Icons.Outlined.VerticalAlignTop
+    SettingsIconRole.HOME_HERO_AUTOPLAY -> Icons.Outlined.SmartDisplay
     SettingsIconRole.AUTO_PLAY_NEXT -> Icons.AutoMirrored.Outlined.PlaylistPlay
     SettingsIconRole.VIDEO_NOTE_COLLAPSE -> Icons.AutoMirrored.Outlined.ShortText
     SettingsIconRole.INTERACTIVE_COMMANDS -> Icons.Outlined.CommentsDisabled
@@ -308,8 +345,29 @@ private fun resolveMd3SettingsSemanticIcon(role: SettingsIconRole): ImageVector 
     SettingsIconRole.SYSTEM_BRIGHTNESS -> Icons.Outlined.BrightnessMedium
     SettingsIconRole.APP_ICON -> Icons.Outlined.Apps
     SettingsIconRole.HOME_CARD_STATS_COMPACT -> Icons.Outlined.StackedBarChart
+    SettingsIconRole.HOME_HERO_CAROUSEL -> Icons.Outlined.ViewDay
+    SettingsIconRole.HOME_ONLINE_COUNT -> Icons.Outlined.Groups
+    SettingsIconRole.PORTRAIT_STORY_ENTRY -> Icons.Outlined.StayCurrentPortrait
+    SettingsIconRole.DISPLAY_SCALE -> Icons.Outlined.ZoomOutMap
+    SettingsIconRole.UI_ENTRANCE_ANIMATION -> Icons.Outlined.MotionPhotosOn
+    SettingsIconRole.FULLSCREEN_SWIPE_BACK -> Icons.Outlined.SwipeRight
+    SettingsIconRole.FOLLOW_BUTTON -> Icons.Outlined.PersonAdd
+    SettingsIconRole.PRIVACY_HISTORY -> Icons.Outlined.HistoryToggleOff
+    SettingsIconRole.CUSTOM_MD3_COLOR -> Icons.Outlined.FormatPaint
+    SettingsIconRole.THEME_LIGHT_BACKGROUND -> Icons.Outlined.LightMode
+    SettingsIconRole.THEME_LIGHT_PRIMARY_TEXT -> Icons.Outlined.TextFields
+    SettingsIconRole.THEME_LIGHT_SECONDARY_TEXT -> Icons.Outlined.FormatSize
+    SettingsIconRole.THEME_LIGHT_CONTROL -> Icons.Outlined.Tune
+    SettingsIconRole.THEME_DARK_BACKGROUND -> Icons.Outlined.DarkMode
+    SettingsIconRole.THEME_DARK_PRIMARY_TEXT -> Icons.Outlined.TextFormat
+    SettingsIconRole.THEME_DARK_SECONDARY_TEXT -> Icons.Outlined.Notes
+    SettingsIconRole.THEME_DARK_CONTROL -> Icons.Outlined.ControlPoint
+    SettingsIconRole.DEVELOPER_CRASH_TRACKING -> Icons.Outlined.HealthAndSafety
+    SettingsIconRole.DEVELOPER_ANALYTICS -> Icons.Outlined.DataUsage
+    SettingsIconRole.APP_VERSION -> Icons.Outlined.NewReleases
     SettingsIconRole.BOTTOM_BAR_GLASS_PREVIEW -> Icons.Outlined.LensBlur
     SettingsIconRole.ADVANCED_COLOR -> Icons.Outlined.InvertColors
     SettingsIconRole.CAST_BUTTON -> Icons.Outlined.Cast
     SettingsIconRole.LONG_PRESS_HINT -> Icons.Outlined.Gesture
+    SettingsIconRole.PROGRESS_PEAK_DANMAKU -> Icons.Outlined.GraphicEq
 }

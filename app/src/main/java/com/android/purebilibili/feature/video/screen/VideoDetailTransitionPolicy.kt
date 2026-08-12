@@ -4,6 +4,7 @@ import com.android.purebilibili.core.ui.transition.VideoCardTransitionBackground
 
 import androidx.compose.animation.core.Easing
 import com.android.purebilibili.core.ui.transition.VideoCardReturnCoverOwnership
+import com.android.purebilibili.core.ui.transition.VideoCardSourceChromeSnapshot
 import com.android.purebilibili.core.ui.transition.VideoSharedTransitionPlaybackIntent
 import com.android.purebilibili.core.ui.transition.isVideoCardLiveReturnMorphOwnership
 import com.android.purebilibili.core.ui.transition.resolveReturnSessionLockedCoverOwnership
@@ -12,6 +13,7 @@ import com.android.purebilibili.core.ui.transition.resolveVideoCardLiveReturnVis
 import com.android.purebilibili.core.ui.transition.resolveVideoCardReturnCoverOwnership
 import com.android.purebilibili.core.ui.transition.resolveVideoCardSharedTransitionEnterEasing
 import com.android.purebilibili.core.ui.transition.resolveVideoCardSharedTransitionReturnEasing
+import com.android.purebilibili.core.ui.transition.resolveVideoSharedCoverCacheKey
 import com.android.purebilibili.core.ui.transition.shouldHandVisualOwnershipToResidentCoverForOwnership
 import com.android.purebilibili.core.ui.transition.shouldUseVideoCardLiveReturnMorph
 
@@ -254,6 +256,67 @@ internal fun resolveVideoDetailReturnPlayerAlpha(
     isReturnGestureInProgress = keepLivePlayerForPredictiveBack,
 ).playerAlpha
 
+/**
+ * Resident / player-section cover — must match the **stationary list card** Coil request.
+ *
+ * Priority: Miuix session snapshot → click [CardPositionManager] snapshot → home prefetch
+ * registry → route cover (last resort, may not match list pixels).
+ */
+internal data class VideoDetailResidentCoverSource(
+    val url: String,
+    val cacheKey: String,
+    val decodeWidthPx: Int = 0,
+    val decodeHeightPx: Int = 0,
+)
+
+internal fun resolveVideoDetailResidentCoverSource(
+    sourceChromeSnapshot: VideoCardSourceChromeSnapshot?,
+    routeCoverUrl: String?,
+    bvid: String,
+    clickChromeSnapshot: VideoCardSourceChromeSnapshot? = null,
+    prefetchUrl: String? = null,
+    prefetchCacheKey: String? = null,
+    prefetchDecodeWidthPx: Int = 0,
+    prefetchDecodeHeightPx: Int = 0,
+): VideoDetailResidentCoverSource? {
+    fun fromSnapshot(snapshot: VideoCardSourceChromeSnapshot?): VideoDetailResidentCoverSource? {
+        val url = snapshot?.coverUrl?.trim()?.takeIf { it.isNotBlank() } ?: return null
+        val key = snapshot.coverCacheKey.trim().takeIf { it.isNotBlank() } ?: url
+        return VideoDetailResidentCoverSource(
+            url = url,
+            cacheKey = key,
+            decodeWidthPx = snapshot.coverDecodeWidthPx.coerceAtLeast(0),
+            decodeHeightPx = snapshot.coverDecodeHeightPx.coerceAtLeast(0),
+        )
+    }
+    fromSnapshot(sourceChromeSnapshot)?.let { return it }
+    fromSnapshot(clickChromeSnapshot)?.let { return it }
+    val prefetch = prefetchUrl?.trim()?.takeIf { it.isNotBlank() }
+    val prefetchKey = prefetchCacheKey?.trim()?.takeIf { it.isNotBlank() }
+    if (prefetch != null && prefetchKey != null) {
+        return VideoDetailResidentCoverSource(
+            url = prefetch,
+            cacheKey = prefetchKey,
+            decodeWidthPx = prefetchDecodeWidthPx.coerceAtLeast(0),
+            decodeHeightPx = prefetchDecodeHeightPx.coerceAtLeast(0),
+        )
+    }
+    val route = routeCoverUrl?.trim().orEmpty().let { url ->
+        when {
+            url.isBlank() -> ""
+            url.startsWith("https://") -> url
+            url.startsWith("http://") -> url.replace("http://", "https://")
+            url.startsWith("//") -> "https:$url"
+            else -> url
+        }
+    }
+    if (route.isBlank()) return null
+    return VideoDetailResidentCoverSource(
+        url = route,
+        cacheKey = resolveVideoSharedCoverCacheKey(bvid.trim()),
+    )
+}
+
 @Suppress("UNUSED_PARAMETER")
 internal fun resolveVideoDetailReturnContentAlpha(
     transitionProgress: Float,
@@ -324,6 +387,49 @@ internal fun shouldKeepPlaybackSessionActiveForSharedReturnMorph(
 ): Boolean {
     if (isVisible) return true
     return sharedBoundsActive && isExitTransitionInProgress
+}
+
+/**
+ * 返回 shared morph 时强制展开详情播放器视口。
+ *
+ * 用户在简介/相关列表下滑后，inline 播放器会折叠到很矮的高度；若此时手势返回，
+ * sharedBounds 从折叠框起算 + ContentScale.Crop → 封面只剩中间一截（截图里的「不完整」）。
+ * 顶部未下滑时视口是完整 16:9，所以返回封面正常。
+ *
+ * 规则：只要处于返回手势或已提交的 exit morph，布局层把折叠进度压为 0，
+ * 让飞行壳带着完整封面缩回列表卡。
+ */
+internal fun shouldExpandPlayerViewportForSharedReturn(
+    isExitTransitionInProgress: Boolean,
+    isReturnGestureInProgress: Boolean,
+    isGestureRestoreInProgress: Boolean = false,
+    sharedReturnLikely: Boolean = true,
+): Boolean {
+    if (!sharedReturnLikely) return false
+    return isExitTransitionInProgress ||
+        isReturnGestureInProgress ||
+        isGestureRestoreInProgress
+}
+
+/**
+ * 是否在飞行详情壳内绘制信息区。
+ *
+ * **必须为 true**：sharedBounds 飞行层盖在列表之上，列表真卡即使 alpha=1 也看不见；
+ * 信息区只能画在飞行壳上。列表真卡在 morph 结束后再露（cover/chrome stationary reveal）。
+ *
+ * 文案来自点击时冻结的 [VideoCardSourceChromeSnapshot] + 详情 ViewInfo，尽量与列表卡一致。
+ */
+internal fun shouldDrawFlyingReturnSourceCardChrome(): Boolean = true
+
+/**
+ * 布局用折叠进度：返回 morph 中强制 0（展开），其余沿用手势/评论折叠进度。
+ */
+internal fun resolvePlayerCollapseProgressForLayout(
+    manualOrCompactCollapseProgress: Float,
+    expandForSharedReturn: Boolean,
+): Float {
+    if (expandForSharedReturn) return 0f
+    return manualOrCompactCollapseProgress.coerceIn(0f, 1f)
 }
 
 internal fun shouldForceBackPreviewPlayerCover(

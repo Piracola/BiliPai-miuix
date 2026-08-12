@@ -246,6 +246,7 @@ internal fun PortraitInlineVideoPlayerHost(
                 ?: { _, _, _ -> },
             bvid = videoPlayerSectionTarget.bvid,
             coverUrl = videoPlayerSectionTarget.entryCoverUrl,
+            // Host path without residentCoverSource — section falls back to entry/route cover.
             sharedElementBvid = videoPlayerSectionTarget.sharedElementBvid,
             onDoubleTapLike = onDoubleTapLike,
             sponsorSegment = sponsorSegment,

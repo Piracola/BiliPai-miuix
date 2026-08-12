@@ -72,11 +72,33 @@ class AdaptiveGroupSurfaceShapeStructureTest {
         assertTrue(md3Block.contains("Column(modifier = Modifier.weight(1f))"))
         assertTrue(md3Block.contains("text = title"))
         assertTrue(md3Block.contains("text = subtitle"))
-        // Title/value must not paint over each other on long search-result rows.
+        // Title stays single-line; trailing value may wrap within shared max width.
         assertTrue(md3Block.contains("maxLines = 1"))
-        assertTrue(md3Block.contains("widthIn(max = 120.dp)"))
-        assertTrue(md3Block.contains("softWrap = false"))
+        assertTrue(md3Block.contains("appPreferenceValueTextModifier()"))
+        assertTrue(md3Block.contains("APP_PREFERENCE_VALUE_MAX_LINES"))
+        assertTrue(md3Block.contains("softWrap = true"))
+        assertFalse(md3Block.contains("widthIn(max = 120.dp)"))
         assertFalse(md3Block.contains("BasicComponent("))
+    }
+
+    @Test
+    fun preferenceValueLayout_isSharedAcrossRenderers() {
+        val source = loadSource(
+            "design-system/src/main/java/com/android/purebilibili/core/ui/components/AdaptivePreferenceComponents.kt",
+        )
+        assertTrue(source.contains("APP_PREFERENCE_VALUE_MAX_WIDTH_DP = 200"))
+        assertTrue(source.contains("APP_PREFERENCE_VALUE_MAX_LINES = 2"))
+        assertTrue(source.contains("fun Modifier.appPreferenceValueTextModifier()"))
+        // All trailing-value paths must share the helper (no leftover 120.dp cap).
+        assertFalse(
+            Regex("""widthIn\(max = 120\.dp\)""").containsMatchIn(source),
+            "Preference value width must not hard-cap at 120.dp",
+        )
+        val valueHelperUses = Regex("""\.appPreferenceValueTextModifier\(\)""").findAll(source).count()
+        assertTrue(
+            valueHelperUses >= 4,
+            "Expected shared value modifier on MD3/Miuix/fallback paths, found $valueHelperUses",
+        )
     }
 
     @Test

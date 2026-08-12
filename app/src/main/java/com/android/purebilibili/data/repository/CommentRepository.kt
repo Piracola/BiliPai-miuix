@@ -162,6 +162,44 @@ object CommentRepository {
         return guestApi.getReplyListMain(params)
     }
 
+    /**
+     * Legacy `x/v2/reply` still returns the separate `hots[]` bucket that mode=3
+     * `wbi/main` / guest `main` sometimes omit on empty-success (code=0, replies=null).
+     * sort=1 ≈ 点赞序，与桌面「按热度」最接近；同时 nohot 默认 0 会带上热评。
+     */
+    private suspend fun fetchLegacyHotCommentsCompat(
+        oid: Long,
+        type: Int,
+        page: Int,
+        ps: Int,
+    ): ReplyResponse {
+        Logger.d(
+            "CommentRepo",
+            " getComments (LegacyHotCompat): oid=$oid, type=$type, page=$page, sort=1 (点赞/热评)"
+        )
+        // Prefer guest first: empty-success is most common on restricted / guest-like sessions.
+        val guestResponse = guestApi.getReplyListLegacy(
+            oid = oid,
+            type = type,
+            pn = page,
+            ps = ps,
+            sort = 1,
+        )
+        if (
+            guestResponse.code == 0 &&
+            hasRenderableCommentPayload(guestResponse.data)
+        ) {
+            return guestResponse
+        }
+        return api.getReplyListLegacy(
+            oid = oid,
+            type = type,
+            pn = page,
+            ps = ps,
+            sort = 1,
+        )
+    }
+
     private suspend fun fetchCommentEmptySuccessFallback(
         readPlan: CommentReadPlan,
         oid: Long,
@@ -181,9 +219,11 @@ object CommentRepository {
                 paginationOffset = paginationOffset
             )
             val compatNeedsFallback =
-                shouldFallbackCommentReadOnEmptyRenderableSuccess(
+                shouldFallbackHotCommentReadOnEmptySuccess(
+                    page = page,
+                    mode = mode,
                     responseCode = compatResponse.code,
-                    data = compatResponse.data
+                    data = compatResponse.data,
                 ) || (
                     compatResponse.code != 0 &&
                         readPlan.fallback != null &&
@@ -193,7 +233,7 @@ object CommentRepository {
         }
 
         val fallbackMode = readPlan.fallback
-        return if (fallbackMode != null) {
+        val identityResponse = if (fallbackMode != null) {
             Logger.w(
                 "CommentRepo",
                 "getComments empty-success identity fallback: to=$fallbackMode, oid=$oid, type=$type, page=$page, mode=$mode"
@@ -208,8 +248,59 @@ object CommentRepository {
                 paginationOffset = paginationOffset
             )
         } else {
-            compatResponse ?: ReplyResponse(code = -1, message = "empty comment payload")
+            null
         }
+
+        val preferred = identityResponse ?: compatResponse
+        // Residual hot empty: wbi/main + guest main + identity all returned code=0 with no
+        // renderable replies/hots/tops. Legacy list still exposes hots[] for many of these.
+        if (
+            mode == 3 &&
+            page == 1 &&
+            (
+                preferred == null ||
+                    shouldFallbackHotCommentReadOnEmptySuccess(
+                        page = page,
+                        mode = mode,
+                        responseCode = preferred.code,
+                        data = preferred.data,
+                    ) ||
+                    shouldFallbackCommentReadOnEmptyRenderableSuccess(
+                        responseCode = preferred.code,
+                        data = preferred.data,
+                    )
+                )
+        ) {
+            Logger.w(
+                "CommentRepo",
+                "getComments empty-success legacy hot fallback: oid=$oid, type=$type, page=$page"
+            )
+            val legacyResponse = fetchLegacyHotCommentsCompat(
+                oid = oid,
+                type = type,
+                page = page,
+                ps = ps,
+            )
+            if (
+                legacyResponse.code == 0 &&
+                hasRenderableCommentPayload(legacyResponse.data)
+            ) {
+                return legacyResponse
+            }
+            // Prefer a non-empty-count payload for UI/retry signals when legacy also blank.
+            if (
+                preferred != null &&
+                preferred.code == 0 &&
+                (preferred.data?.getAllCount() ?: 0) > 0
+            ) {
+                return preferred
+            }
+            if (legacyResponse.code == 0) return legacyResponse
+        }
+
+        return preferred
+            ?: compatResponse
+            ?: ReplyResponse(code = -1, message = "empty comment payload")
     }
 
     /**
@@ -256,7 +347,17 @@ object CommentRepository {
                 )
                 if (grpcResult.isSuccess) {
                     val grpcData = grpcResult.getOrNull()
-                    if (shouldFallbackCommentReadOnEmptyRenderableSuccess(responseCode = 0, data = grpcData)) {
+                    if (
+                        shouldFallbackHotCommentReadOnEmptySuccess(
+                            page = page,
+                            mode = mode,
+                            responseCode = 0,
+                            data = grpcData,
+                        ) || shouldFallbackCommentReadOnEmptyRenderableSuccess(
+                            responseCode = 0,
+                            data = grpcData,
+                        )
+                    ) {
                         Logger.w(
                             "CommentRepo",
                             "getComments gRPC fallback to REST: oid=$oid, type=$type, page=$page, mode=$mode, reason=empty-renderable-success"
@@ -291,9 +392,14 @@ object CommentRepository {
                 paginationOffset = paginationOffset
             )
             val finalResponse = if (
-                shouldFallbackCommentReadOnEmptyRenderableSuccess(
+                shouldFallbackHotCommentReadOnEmptySuccess(
+                    page = page,
+                    mode = mode,
                     responseCode = primaryResponse.code,
-                    data = primaryResponse.data
+                    data = primaryResponse.data,
+                ) || shouldFallbackCommentReadOnEmptyRenderableSuccess(
+                    responseCode = primaryResponse.code,
+                    data = primaryResponse.data,
                 )
             ) {
                 Logger.w(
