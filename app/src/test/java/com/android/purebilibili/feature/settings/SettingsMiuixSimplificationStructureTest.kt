@@ -17,24 +17,24 @@ class SettingsMiuixSimplificationStructureTest {
         assertFalse(source.contains("resolveAndroidNativeVariantSegmentOptions("))
         assertFalse(source.contains("viewModel.setUiPreset("))
         assertFalse(source.contains("viewModel.setAndroidNativeVariant("))
-        assertTrue(source.contains("安卓原生液态玻璃"))
-        assertTrue(source.contains("toggleAndroidNativeLiquidGlass("))
+        assertFalse(source.contains("安卓原生液态玻璃"))
+        assertFalse(source.contains("toggleAndroidNativeLiquidGlass("))
         assertTrue(source.contains("SettingsPageScaffold("))
         assertFalse(source.contains("MiuixScaffold("))
         assertFalse(source.contains("MiuixSmallTopAppBar("))
     }
 
     @Test
-    fun `animation settings expose independent glass toggles without duplicating global native control`() {
+    fun `animation settings keep only haze blur toggles after liquid glass removal`() {
         val source = loadSource("app/src/main/java/com/android/purebilibili/feature/settings/screen/AnimationSettingsScreen.kt")
 
         assertFalse(source.contains("previewLiquidGlassProgress"))
         assertFalse(source.contains("通透到磨砂"))
-        assertTrue(source.contains("顶部标签栏液态玻璃"))
-        assertTrue(source.contains("toggleTopBarLiquidGlass("))
-        assertTrue(source.contains("首页搜索框液态玻璃"))
-        assertTrue(source.contains("toggleHomeSearchLiquidGlass("))
-        assertTrue(source.contains("底栏液态玻璃"))
+        assertFalse(source.contains("顶部标签栏液态玻璃"))
+        assertFalse(source.contains("toggleTopBarLiquidGlass("))
+        assertFalse(source.contains("首页搜索框液态玻璃"))
+        assertFalse(source.contains("toggleHomeSearchLiquidGlass("))
+        assertFalse(source.contains("底栏液态玻璃"))
         assertFalse(source.contains("title = \"安卓原生液态玻璃\""))
         assertFalse(source.contains("toggleAndroidNativeLiquidGlass("))
         assertTrue(source.contains("转场时模糊背景"))
@@ -43,21 +43,15 @@ class SettingsMiuixSimplificationStructureTest {
     }
 
     @Test
-    fun `animation liquid glass section keeps independent top dock and bottom bar toggles`() {
+    fun `animation glass section keeps only blur section title`() {
         val source = loadSource("app/src/main/java/com/android/purebilibili/feature/settings/screen/AnimationSettingsScreen.kt")
 
-        assertTrue(
-            Regex("""icon = rememberSettingsSemanticIcon\(SettingsIconRole\.TOP_DOCK_GLASS\),\s*title = "顶部标签栏液态玻璃"""")
-                .containsMatchIn(source)
-        )
-        assertTrue(
-            Regex("""icon = rememberSettingsSemanticIcon\(SettingsIconRole\.HOME_SEARCH_GLASS\),\s*title = "首页搜索框液态玻璃"""")
-                .containsMatchIn(source)
-        )
-        assertTrue(
-            Regex("""icon = rememberSettingsSemanticIcon\(SettingsIconRole\.BOTTOM_BAR_GLASS\),\s*title = "底栏液态玻璃"""")
-                .containsMatchIn(source)
-        )
+        assertTrue(source.contains("AppPreferenceSectionTitle(\"玻璃效果\")"))
+        assertFalse(source.contains("SettingsIconRole.TOP_DOCK_GLASS"))
+        assertFalse(source.contains("SettingsIconRole.HOME_SEARCH_GLASS"))
+        assertFalse(source.contains("SettingsIconRole.BOTTOM_BAR_GLASS"))
+        assertTrue(source.contains("SettingsIconRole.TOP_BAR_BLUR"))
+        assertTrue(source.contains("SettingsIconRole.BOTTOM_BAR_BLUR"))
     }
 
     @Test

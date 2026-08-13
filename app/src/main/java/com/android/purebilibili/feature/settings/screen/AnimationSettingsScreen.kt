@@ -27,7 +27,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.purebilibili.R
 import com.android.purebilibili.core.theme.*
 import com.android.purebilibili.core.ui.blur.BlurIntensity
-import com.android.purebilibili.core.ui.blur.shouldAllowHomeChromeLiquidGlass
 import com.android.purebilibili.core.store.LiquidGlassMode
 import com.android.purebilibili.core.store.AppNavigationSettings
 import com.android.purebilibili.core.store.SettingsManager
@@ -42,8 +41,6 @@ import com.android.purebilibili.core.ui.transition.VIDEO_SHARED_TRANSITION_CUSTO
 import com.android.purebilibili.core.ui.transition.VideoSharedTransitionSpeed
 import com.android.purebilibili.core.ui.transition.normalizeVideoSharedTransitionCustomDurationMillis
 import com.android.purebilibili.core.util.LocalWindowSizeClass
-import com.android.purebilibili.feature.home.components.LiquidGlassTuning
-import com.android.purebilibili.feature.home.components.resolveLiquidGlassTuning
 import androidx.compose.material.icons.outlined.*
 import com.android.purebilibili.core.ui.components.*
 import kotlinx.coroutines.delay
@@ -120,8 +117,6 @@ fun AnimationSettingsContent(
             MotionTier.Enhanced -> "更明显的层级与动势，适合大屏展示"
         }
     }
-    val isLiquidGlassAvailable = shouldAllowHomeChromeLiquidGlass(Build.VERSION.SDK_INT)
-    val bottomBarLiquidGlassEnabled = state.bottomBarLiquidGlassEnabled
     val appNavigationSettings by SettingsManager.getAppNavigationSettings(context)
         .collectAsStateWithLifecycle(initialValue = AppNavigationSettings())
     val videoTransitionRealtimeBlurEnabled by SettingsManager
@@ -319,59 +314,9 @@ fun AnimationSettingsContent(
             item {
                 Box(modifier = Modifier) {
                     AppPreferenceGroup {
-                        if (isLiquidGlassAvailable) {
-                            AppSwitchPreference(
-                                icon = rememberSettingsSemanticIcon(SettingsIconRole.TOP_DOCK_GLASS),
-                                title = "顶部标签栏液态玻璃",
-                                subtitle = "为首页顶部的搜索框和标签栏增加折射与滑动效果",
-                                checked = state.topBarLiquidGlassEnabled,
-                                onCheckedChange = { viewModel.toggleTopBarLiquidGlass(it) },
-                                iconTint = iOSBlue
-                            )
-                            AppPreferenceDivider()
-                            AppSwitchPreference(
-                                icon = rememberSettingsSemanticIcon(SettingsIconRole.HOME_SEARCH_GLASS),
-                                title = "首页搜索框液态玻璃",
-                                subtitle = "首页搜索框上下滑动时的液态玻璃折射效果",
-                                checked = state.homeSearchLiquidGlassEnabled,
-                                onCheckedChange = { viewModel.toggleHomeSearchLiquidGlass(it) },
-                                iconTint = iOSBlue
-                            )
-                            AppPreferenceDivider()
-                            AppSwitchPreference(
-                                icon = rememberSettingsSemanticIcon(SettingsIconRole.BOTTOM_BAR_GLASS),
-                                title = "底栏液态玻璃",
-                                subtitle = "底部导航栏的液态玻璃折射效果",
-                                checked = bottomBarLiquidGlassEnabled,
-                                onCheckedChange = { viewModel.toggleBottomBarLiquidGlass(it) },
-                                iconTint = iOSBlue
-                            )
-                            androidx.compose.animation.AnimatedVisibility(
-                                visible = bottomBarLiquidGlassEnabled,
-                                enter = androidx.compose.animation.expandVertically() + androidx.compose.animation.fadeIn(),
-                                exit = androidx.compose.animation.shrinkVertically() + androidx.compose.animation.fadeOut()
-                            ) {
-                                Column {
-                                    AppPreferenceDivider()
-                                    Column(modifier = Modifier.padding(16.dp)) {
-                                        AppText(
-                                            "当前使用固定材质策略",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                        AppText(
-                                            text = "开启全局液态玻璃后，顶部栏、搜索框、选择控件和底栏会统一使用同一套玻璃效果。",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
-                            }
-                            AppPreferenceDivider()
-                        }
                         // 磨砂效果 (始终显示)
-	                        AppSwitchPreference(
-	                            icon = rememberSettingsSemanticIcon(SettingsIconRole.TOP_BAR_BLUR),
+		                        AppSwitchPreference(
+		                            icon = rememberSettingsSemanticIcon(SettingsIconRole.TOP_BAR_BLUR),
                             title = "顶部栏磨砂",
                             subtitle = "顶部导航栏的毛玻璃模糊效果",
                             checked = state.headerBlurEnabled,
@@ -379,8 +324,8 @@ fun AnimationSettingsContent(
                             iconTint = iOSBlue
                         )
                         AppPreferenceDivider()
-	                        AppSwitchPreference(
-	                            icon = rememberSettingsSemanticIcon(SettingsIconRole.BOTTOM_BAR_BLUR),
+		                        AppSwitchPreference(
+		                            icon = rememberSettingsSemanticIcon(SettingsIconRole.BOTTOM_BAR_BLUR),
                             title = "底栏磨砂",
                             subtitle = "底部导航栏的毛玻璃模糊效果",
                             checked = state.bottomBarBlurEnabled,

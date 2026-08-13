@@ -8,19 +8,16 @@ import kotlin.test.assertTrue
 class AnimationSettingsScreenStructureTest {
 
     @Test
-    fun animationSettingsScreen_controlsGlobalPredictivePreviewIndependently() {
+    fun animationSettingsScreen_noLongerExposesPredictiveBackStyleControls() {
         val source = animationSettingsSource()
 
-        assertTrue(source.contains("title = \"预测性返回手势\""))
-        assertTrue(source.contains("SettingsManager.setPredictiveBackEnabled(context, enabled)"))
-        val predictiveItem = source
-            .substringAfter("title = \"预测性返回手势\"")
-            .substringBefore("AppPreferenceDivider()")
-        assertFalse(predictiveItem.contains("enabled = state.cardTransitionEnabled"))
+        // 极简版：预测返回收敛为单一固定转场，不再提供风格/方向/开关。
+        assertFalse(source.contains("setPredictiveBackEnabled"))
         assertFalse(source.contains("setPredictiveBackAnimationStyle"))
         assertFalse(source.contains("setPredictiveBackExitDirection"))
         assertFalse(source.contains("resolvePredictiveBackStyleOptions"))
         assertFalse(source.contains("resolvePredictiveBackExitDirectionOptions"))
+        assertFalse(source.contains("title = \"预测性返回手势\""))
     }
 
     @Test

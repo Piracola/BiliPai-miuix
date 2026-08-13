@@ -457,7 +457,6 @@ fun AppearanceSettingsContent(
     val showOnlineCount by SettingsManager
         .getShowOnlineCount(context)
         .collectAsStateWithLifecycle(initialValue = false)
-    val isLiquidGlassAvailable = shouldAllowHomeChromeLiquidGlass(Build.VERSION.SDK_INT)
     val showThemeColorPicker = state.md3ColorSource == Md3ColorSource.CUSTOM
     var showMd3ColorPickerDialog by remember { mutableStateOf(false) }
     var roleColorTarget by remember { mutableStateOf<ThemeRoleColorTarget?>(null) }
@@ -523,24 +522,6 @@ fun AppearanceSettingsContent(
                             selectedValue = state.themeSelection,
                             onSelectionChange = viewModel::setThemeSelection,
                         )
-
-                        Column(modifier = Modifier.padding(top = 16.dp)) {
-                            AppPreferenceDivider()
-                            Spacer(modifier = Modifier.height(8.dp))
-                            AppSwitchPreference(
-                                icon = rememberSettingsSemanticIcon(SettingsIconRole.ANDROID_LIQUID_GLASS),
-                                title = "安卓原生液态玻璃",
-                                subtitle = if (isLiquidGlassAvailable) {
-                                    "全局开启后，顶部 Dock、搜索框、底栏、分段控件与评论区统一复用底栏液态玻璃材质"
-                                } else {
-                                    "当前 Android 版本暂不支持液态玻璃效果"
-                                },
-                                checked = state.androidNativeLiquidGlassEnabled,
-                                onCheckedChange = { viewModel.toggleAndroidNativeLiquidGlass(it) },
-                                enabled = isLiquidGlassAvailable,
-                                iconTint = iOSBlue
-                            )
-                        }
 
                         Spacer(modifier = Modifier.height(12.dp))
                         AppearanceUiPresetDescriptionCard(
