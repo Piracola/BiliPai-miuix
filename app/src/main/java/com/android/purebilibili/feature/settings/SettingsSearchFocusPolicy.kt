@@ -177,7 +177,6 @@ internal fun resolveSettingsSceneDetailFocus(
     SettingsSearchTarget.CHECK_UPDATE,
     SettingsSearchTarget.VIEW_RELEASE_NOTES,
     SettingsSearchTarget.REPLAY_ONBOARDING,
-    SettingsSearchTarget.TIPS,
     SettingsSearchTarget.OPEN_LINKS,
     SettingsSearchTarget.DONATE,
     SettingsSearchTarget.TELEGRAM,

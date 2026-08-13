@@ -26,7 +26,6 @@ internal fun resolveSettingsSearchNavigation(result: SettingsSearchResult): Bili
         SettingsSearchTarget.SETTINGS_SHARE -> BiliPaiNavKey.SettingsShare
         SettingsSearchTarget.WEBDAV_BACKUP -> BiliPaiNavKey.WebDavBackup
         SettingsSearchTarget.OPEN_SOURCE_LICENSES -> BiliPaiNavKey.OpenSourceLicenses
-        SettingsSearchTarget.TIPS -> BiliPaiNavKey.TipsSettings
         else -> null
     }
 }

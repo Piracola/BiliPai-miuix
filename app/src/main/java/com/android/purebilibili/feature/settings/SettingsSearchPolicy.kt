@@ -31,7 +31,6 @@ enum class SettingsSearchTarget {
     CHECK_UPDATE,
     VIEW_RELEASE_NOTES,
     REPLAY_ONBOARDING,
-    TIPS,
     OPEN_LINKS,
     DONATE,
     TELEGRAM,
@@ -123,9 +122,9 @@ private val SETTINGS_SEARCH_INDEX: List<SettingsSearchEntry> = listOf(
     SettingsSearchEntry(
         target = SettingsSearchTarget.ABOUT_SUPPORT,
         title = "关于与支持",
-        subtitle = "版本、更新、开源、发布渠道、小贴士、默认打开链接、社群与捐赠",
+        subtitle = "版本、更新、开源、发布渠道、默认打开链接、社群与捐赠",
         section = "设置",
-        aliases = listOf("关于", "支持", "版本", "更新", "开源", "发布渠道", "小贴士", "默认打开链接", "telegram", "twitter", "捐赠", "打赏")
+        aliases = listOf("关于", "支持", "版本", "更新", "开源", "发布渠道", "默认打开链接", "telegram", "twitter", "捐赠", "打赏")
     ),
     SettingsSearchEntry(
         target = SettingsSearchTarget.APPEARANCE,
@@ -433,13 +432,6 @@ private val SETTINGS_SEARCH_INDEX: List<SettingsSearchEntry> = listOf(
         subtitle = "开源约定与官方渠道",
         section = "关于",
         aliases = listOf("新手引导", "教程", "引导", "使用须知", "用户协议")
-    ),
-    SettingsSearchEntry(
-        target = SettingsSearchTarget.TIPS,
-        title = "小贴士 & 隐藏操作",
-        subtitle = "探索更多功能",
-        section = "帮助与系统",
-        aliases = listOf("贴士", "技巧", "帮助", "隐藏操作", "摸鱼模式", "空降助手", "自动连播", "自动横竖屏")
     ),
     SettingsSearchEntry(
         target = SettingsSearchTarget.OPEN_LINKS,

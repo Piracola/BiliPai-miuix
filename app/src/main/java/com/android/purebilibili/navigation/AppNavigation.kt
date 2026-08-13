@@ -2374,7 +2374,6 @@ fun AppNavigation(
                                     onSettingsShareClick = { pushNavigation3Key(BiliPaiNavKey.SettingsShare) },
                                     onWebDavBackupClick = { pushNavigation3Key(BiliPaiNavKey.WebDavBackup) },
                                     onNavigateToBottomBarSettings = { pushNavigation3Key(BiliPaiNavKey.BottomBarSettings) },
-                                    onTipsClick = { pushNavigation3Key(BiliPaiNavKey.TipsSettings) },
                                     onReplayOnboardingClick = { pushNavigation3Route(ScreenRoutes.Onboarding.route) },
                                     onCategoryClick = { category ->
                                         pushNavigation3Key(
@@ -2404,7 +2403,6 @@ fun AppNavigation(
                                     onSettingsShareClick = { pushNavigation3Key(BiliPaiNavKey.SettingsShare) },
                                     onWebDavBackupClick = { pushNavigation3Key(BiliPaiNavKey.WebDavBackup) },
                                     onNavigateToBottomBarSettings = { pushNavigation3Key(BiliPaiNavKey.BottomBarSettings) },
-                                    onTipsClick = { pushNavigation3Key(BiliPaiNavKey.TipsSettings) },
                                     onReplayOnboardingClick = { pushNavigation3Route(ScreenRoutes.Onboarding.route) },
                                     onCategoryClick = { category ->
                                         pushNavigation3Key(
@@ -2546,12 +2544,6 @@ fun AppNavigation(
                                 )
                             }
                         }
-                        BiliPaiNavEntryContentRole.TIPS_SETTINGS ->
-                            SettingsTabletEntry {
-                                com.android.purebilibili.feature.settings.TipsSettingsScreen(
-                                    onBack = { performSystemBackAction() }
-                                )
-                            }
                         BiliPaiNavEntryContentRole.WATCH_LATER -> {
                                 val watchLaterViewModel: com.android.purebilibili.feature.watchlater.WatchLaterViewModel = viewModel()
                                 val watchLaterSearchKey = key as? BiliPaiNavKey.WatchLaterSearch

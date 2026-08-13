@@ -135,7 +135,6 @@ internal fun resolveSettingsRootCategoryForSearchTarget(
     SettingsSearchTarget.TELEGRAM,
     SettingsSearchTarget.TWITTER,
     SettingsSearchTarget.DONATE,
-    SettingsSearchTarget.TIPS,
     SettingsSearchTarget.OPEN_LINKS -> SettingsRootCategory.SYSTEM_ABOUT
 }
 

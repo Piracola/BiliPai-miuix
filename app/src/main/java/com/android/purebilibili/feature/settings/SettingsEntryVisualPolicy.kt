@@ -66,7 +66,6 @@ private fun resolveIosSettingsEntryTint(
     SettingsSearchTarget.CHECK_UPDATE -> iOSBlue
     SettingsSearchTarget.VIEW_RELEASE_NOTES -> iOSTeal
     SettingsSearchTarget.REPLAY_ONBOARDING -> iOSPink
-    SettingsSearchTarget.TIPS -> iOSOrange
     SettingsSearchTarget.OPEN_LINKS -> iOSTeal
     SettingsSearchTarget.DONATE -> iOSRed
     SettingsSearchTarget.TELEGRAM -> iOSBlue

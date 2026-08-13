@@ -40,7 +40,6 @@ internal enum class SettingsIconRole {
     CHECK_UPDATE,
     VIEW_RELEASE_NOTES,
     REPLAY_ONBOARDING,
-    TIPS,
     OPEN_LINKS,
     DONATE,
     DISCLAIMER,
@@ -204,7 +203,6 @@ internal fun resolveSettingsSearchTargetIconRole(
     SettingsSearchTarget.CHECK_UPDATE -> SettingsIconRole.CHECK_UPDATE
     SettingsSearchTarget.VIEW_RELEASE_NOTES -> SettingsIconRole.VIEW_RELEASE_NOTES
     SettingsSearchTarget.REPLAY_ONBOARDING -> SettingsIconRole.REPLAY_ONBOARDING
-    SettingsSearchTarget.TIPS -> SettingsIconRole.TIPS
     SettingsSearchTarget.OPEN_LINKS -> SettingsIconRole.OPEN_LINKS
     SettingsSearchTarget.DONATE -> SettingsIconRole.DONATE
     SettingsSearchTarget.TELEGRAM -> SettingsIconRole.OPEN_LINKS
@@ -253,7 +251,6 @@ private fun resolveMiuixSettingsSemanticIcon(role: SettingsIconRole): ImageVecto
     SettingsIconRole.CHECK_UPDATE -> MiuixIcons.Update
     SettingsIconRole.VIEW_RELEASE_NOTES -> MiuixIcons.NotesFill
     SettingsIconRole.REPLAY_ONBOARDING -> MiuixIcons.Reset
-    SettingsIconRole.TIPS -> MiuixIcons.Help
     SettingsIconRole.OPEN_LINKS -> MiuixIcons.Link
     SettingsIconRole.DONATE -> MiuixIcons.BankCards
     SettingsIconRole.DISCLAIMER -> MiuixIcons.Report
@@ -405,7 +402,6 @@ private fun resolveMd3SettingsSemanticIcon(role: SettingsIconRole): ImageVector 
     SettingsIconRole.CHECK_UPDATE -> Icons.Outlined.SystemUpdate
     SettingsIconRole.VIEW_RELEASE_NOTES -> Icons.Outlined.Newspaper
     SettingsIconRole.REPLAY_ONBOARDING -> Icons.Outlined.Replay
-    SettingsIconRole.TIPS -> Icons.Outlined.Lightbulb
     SettingsIconRole.OPEN_LINKS -> Icons.Outlined.Link
     SettingsIconRole.DONATE -> Icons.Outlined.CardGiftcard
     SettingsIconRole.DISCLAIMER -> Icons.Outlined.WarningAmber

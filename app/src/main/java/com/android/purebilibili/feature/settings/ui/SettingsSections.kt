@@ -226,7 +226,6 @@ internal data class SettingsRootCategoryActions(
     val onViewReleaseNotesClick: () -> Unit,
     val onVersionClick: () -> Unit,
     val onReplayOnboardingClick: () -> Unit,
-    val onTipsClick: () -> Unit,
     val onOpenLinksClick: () -> Unit,
     val onPrivacyModeChange: (Boolean) -> Unit,
     val onPrivacyContentAuthenticationChange: (Boolean) -> Unit,
@@ -1031,7 +1030,6 @@ internal fun SettingsRootCategoryContent(
                 SettingsRootCategoryEntranceSection {
                     SettingsDetailGroup(title = "帮助与系统") {
                         SupportToolsSection(
-                            onTipsClick = actions.onTipsClick,
                             onOpenLinksClick = actions.onOpenLinksClick,
                         )
                     }
@@ -1083,30 +1081,19 @@ internal fun SettingsRootCategoryContent(
 
 @Composable
 fun SupportToolsSection(
-    onTipsClick: () -> Unit,
     onOpenLinksClick: () -> Unit
 ) {
-    val tipsVisual = rememberSettingsEntryVisual(SettingsSearchTarget.TIPS)
     val openLinksVisual = rememberSettingsEntryVisual(SettingsSearchTarget.OPEN_LINKS)
     val siblingTints = remember { resolveSettingsSiblingIconTints(2, paletteOffset = 1) }
 
     SettingsCardGroup {
-        SettingClickableItem(
-            icon = tipsVisual.icon,
-            iconPainter = tipsVisual.iconResId?.let { painterResource(id = it) },
-            title = "小贴士 & 隐藏操作",
-            value = "探索更多功能",
-            onClick = onTipsClick,
-            iconTint = siblingTints[0]
-        )
-        SettingsAdaptiveDivider()
         SettingClickableItem(
             icon = openLinksVisual.icon,
             iconPainter = openLinksVisual.iconResId?.let { painterResource(id = it) },
             title = "默认打开链接",
             value = "设置应用链接支持",
             onClick = onOpenLinksClick,
-            iconTint = siblingTints[1]
+            iconTint = siblingTints[0]
         )
     }
 }

@@ -20,7 +20,6 @@
     <string name="permission_management_title">权限管理</string>
     <string name="plugins_center_title">插件中心</string>
     <string name="open_source_licenses_title">开源许可证</string>
-    <string name="tips_title">小贴士</string>
 
     <string name="appearance_theme_color_section">主题与颜色</string>
     <string name="appearance_ui_preset_title">界面预设</string>

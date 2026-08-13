@@ -24,7 +24,6 @@ internal enum class BiliPaiNavEntryContentRole {
     BOTTOM_BAR_SETTINGS,
     SETTINGS_SHARE,
     WEB_DAV_BACKUP,
-    TIPS_SETTINGS,
     PROFILE,
     VIDEO_DETAIL,
     HISTORY,
@@ -89,7 +88,6 @@ internal fun resolveBiliPaiNavEntryContentRole(key: BiliPaiNavKey): BiliPaiNavEn
         BiliPaiNavKey.BottomBarSettings -> BiliPaiNavEntryContentRole.BOTTOM_BAR_SETTINGS
         BiliPaiNavKey.SettingsShare -> BiliPaiNavEntryContentRole.SETTINGS_SHARE
         BiliPaiNavKey.WebDavBackup -> BiliPaiNavEntryContentRole.WEB_DAV_BACKUP
-        BiliPaiNavKey.TipsSettings -> BiliPaiNavEntryContentRole.TIPS_SETTINGS
         BiliPaiNavKey.Profile -> BiliPaiNavEntryContentRole.PROFILE
         is BiliPaiNavKey.VideoDetail -> BiliPaiNavEntryContentRole.VIDEO_DETAIL
         BiliPaiNavKey.History -> BiliPaiNavEntryContentRole.HISTORY
