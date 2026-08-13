@@ -21,7 +21,6 @@ internal fun NavEntryBuilder.biliPaiNavEntries(
     entry<BiliPaiNavKey.OpenSourceLicenses>(swipeDismiss = swipeBackDirection, content = content)
     entry<BiliPaiNavKey.AppearanceSettings>(swipeDismiss = swipeBackDirection, content = content)
     entry<BiliPaiNavKey.HomeSettings>(swipeDismiss = swipeBackDirection, content = content)
-    entry<BiliPaiNavKey.IconSettings>(swipeDismiss = swipeBackDirection, content = content)
     entry<BiliPaiNavKey.AnimationSettings>(swipeDismiss = swipeBackDirection, content = content)
     entry<BiliPaiNavKey.PlaybackSettings>(swipeDismiss = swipeBackDirection, content = content)
     entry<BiliPaiNavKey.PermissionSettings>(swipeDismiss = swipeBackDirection, content = content)

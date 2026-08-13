@@ -39,7 +39,6 @@ internal fun BiliPaiNavKey.toLegacyRoute(): String {
         BiliPaiNavKey.OpenSourceLicenses -> ScreenRoutes.OpenSourceLicenses.route
         BiliPaiNavKey.AppearanceSettings -> ScreenRoutes.AppearanceSettings.route
         BiliPaiNavKey.HomeSettings -> ScreenRoutes.HomeSettings.route
-        BiliPaiNavKey.IconSettings -> ScreenRoutes.IconSettings.route
         BiliPaiNavKey.AnimationSettings -> ScreenRoutes.AnimationSettings.route
         BiliPaiNavKey.PlaybackSettings -> ScreenRoutes.PlaybackSettings.route
         BiliPaiNavKey.PermissionSettings -> ScreenRoutes.PermissionSettings.route
@@ -147,7 +146,6 @@ internal fun legacyRouteToBiliPaiNavKey(route: String?): BiliPaiNavKey {
         normalized == ScreenRoutes.OpenSourceLicenses.route -> BiliPaiNavKey.OpenSourceLicenses
         normalized == ScreenRoutes.AppearanceSettings.route -> BiliPaiNavKey.AppearanceSettings
         normalized == ScreenRoutes.HomeSettings.route -> BiliPaiNavKey.HomeSettings
-        normalized == ScreenRoutes.IconSettings.route -> BiliPaiNavKey.IconSettings
         normalized == ScreenRoutes.AnimationSettings.route -> BiliPaiNavKey.AnimationSettings
         normalized == ScreenRoutes.PlaybackSettings.route -> BiliPaiNavKey.PlaybackSettings
         normalized == ScreenRoutes.PermissionSettings.route -> BiliPaiNavKey.PermissionSettings

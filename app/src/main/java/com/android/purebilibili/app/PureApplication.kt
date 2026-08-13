@@ -7,7 +7,6 @@ import android.app.NotificationManager
 import android.content.ComponentCallbacks2
 import android.content.ComponentName
 import android.content.Context
-import android.content.res.Configuration
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -30,12 +29,6 @@ import com.android.purebilibili.core.store.DEFAULT_ANALYTICS_ENABLED
 import com.android.purebilibili.core.store.DEFAULT_CRASH_TRACKING_ENABLED
 import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.store.TokenManager
-import com.android.purebilibili.core.store.allManagedAppIconLauncherAliases
-import com.android.purebilibili.core.store.DEFAULT_APP_ICON_KEY
-import com.android.purebilibili.core.store.AppIconAppearance
-import com.android.purebilibili.core.store.normalizeAppIconKey
-import com.android.purebilibili.core.store.resolveAppIconLauncherAlias
-import com.android.purebilibili.core.store.supportsAppIconAppearance
 import com.android.purebilibili.core.util.AnalyticsHelper
 import com.android.purebilibili.core.util.CrashReporter
 import com.android.purebilibili.core.util.Logger
@@ -58,22 +51,12 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-internal fun shouldRefreshLauncherIconForNightModeChange(
-    previousUiMode: Int,
-    currentUiMode: Int
-): Boolean {
-    val previousNightMode = previousUiMode and Configuration.UI_MODE_NIGHT_MASK
-    val currentNightMode = currentUiMode and Configuration.UI_MODE_NIGHT_MASK
-    return previousNightMode != currentNightMode
-}
-
 //  实现 ImageLoaderFactory 以提供自定义 Coil 配置
 //  实现 ComponentCallbacks2 响应系统内存警告
 class PureApplication : Application(), ImageLoaderFactory, ComponentCallbacks2 {
     
     //  保存 ImageLoader 引用以便在 onTrimMemory 中使用
     private var _imageLoader: ImageLoader? = null
-    private var launcherIconUiModeSnapshot: Int? = null
 
     private val telemetryListener =
         PureApplicationRuntimeConfig.createTelemetryBackgroundStateListener()
@@ -126,7 +109,6 @@ class PureApplication : Application(), ImageLoaderFactory, ComponentCallbacks2 {
         applyThemePreference()
         
         super.onCreate()
-        launcherIconUiModeSnapshot = resources.configuration.uiMode
         Logger.init(this)
         CrashReporter.installGlobalExceptionHandler()
 
@@ -178,18 +160,6 @@ class PureApplication : Application(), ImageLoaderFactory, ComponentCallbacks2 {
                 .penaltyLog()
                 .build()
         )
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        val previousUiMode = launcherIconUiModeSnapshot
-        super.onConfigurationChanged(newConfig)
-        launcherIconUiModeSnapshot = newConfig.uiMode
-        if (
-            previousUiMode != null &&
-            shouldRefreshLauncherIconForNightModeChange(previousUiMode, newConfig.uiMode)
-        ) {
-            refreshActiveLauncherAliasForNightMode()
-        }
     }
 
     private fun runStartupTask(task: AppStartupTask) {
@@ -251,7 +221,6 @@ class PureApplication : Application(), ImageLoaderFactory, ComponentCallbacks2 {
             SettingsManager.forceDanmakuDefaults(this@PureApplication)
         }
 
-        syncAppIconState()
     }
 
     private fun requestDex2OatProfileInstallNow() {
@@ -427,163 +396,4 @@ class PureApplication : Application(), ImageLoaderFactory, ComponentCallbacks2 {
      * 
      * 修复：重装后检测 icon 偏好与 Manifest 默认状态冲突，自动重置为默认图标。
      */
-    private fun syncAppIconState() {
-        // [Optim] Use IO dispatcher to prevent ANR during startup (PackageManager is heavy)
-        AppScope.ioScope.launch {
-            try {
-                val pm = packageManager
-                val packageName = this@PureApplication.packageName
-                // 读取用户保存的图标偏好
-                val currentIcon = normalizeAppIconKey(
-                    SettingsManager.getAppIcon(this@PureApplication).first()
-                )
-                val appearance = SettingsManager.getAppIconAppearance(this@PureApplication).first()
-                val defaultLauncherAlias = resolveAppIconLauncherAlias(
-                    packageName = packageName,
-                    rawKey = DEFAULT_APP_ICON_KEY,
-                    appearance = appearance
-                )
-                val splashIconVisible = SettingsManager.isSplashIconAnimationEnabledSync(this@PureApplication)
-                val cacheSynced = this@PureApplication
-                    .getSharedPreferences("app_icon_cache", Context.MODE_PRIVATE)
-                    .edit()
-                    .putString("current_icon", currentIcon)
-                    .putInt("appearance", appearance.storedValue)
-                    .commit()
-                Logger.d(PureApplicationRuntimeConfig.TAG, " Synced app icon cache from DataStore: $currentIcon (success=$cacheSynced)")
-
-                val allUniqueAliases = allManagedAppIconLauncherAliases(packageName)
-                val targetAlias = resolveAppIconLauncherAlias(
-                    packageName = packageName,
-                    rawKey = currentIcon,
-                    splashIconVisible = splashIconVisible,
-                    appearance = appearance
-                )
-                
-                val targetAliasComponent = android.content.ComponentName(packageName, targetAlias)
-                val targetState = pm.getComponentEnabledSetting(targetAliasComponent)
-
-                // 如果目标 alias 是 disabled（说明之前被禁用了，可能是重装），强制重置为默认图标。
-                if (currentIcon != DEFAULT_APP_ICON_KEY && targetState == android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED) {
-                    Logger.d(PureApplicationRuntimeConfig.TAG, " Detected reinstall: target icon '$currentIcon' is disabled, resetting to '$DEFAULT_APP_ICON_KEY'")
-                    
-                    SettingsManager.setAppIcon(this@PureApplication, DEFAULT_APP_ICON_KEY)
-                    
-                    // 确保默认图标被启用
-                    val aliasDefault = android.content.ComponentName(packageName, defaultLauncherAlias)
-                    pm.setComponentEnabledSetting(
-                        aliasDefault,
-                        android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                        android.content.pm.PackageManager.DONT_KILL_APP
-                    )
-                    // 禁用其他所有alias
-                    allUniqueAliases.filter { it != defaultLauncherAlias }.forEach { aliasFullName ->
-                        pm.setComponentEnabledSetting(
-                            android.content.ComponentName(packageName, aliasFullName),
-                            android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                            android.content.pm.PackageManager.DONT_KILL_APP
-                        )
-                    }
-                    Logger.d(PureApplicationRuntimeConfig.TAG, " Reset to default icon: $DEFAULT_APP_ICON_KEY")
-                    return@launch
-                }
-                
-                // 同步所有 alias 状态：只有目标启用，其他禁用
-                allUniqueAliases.forEach { aliasFullName ->
-                    try {
-                        val currentState = pm.getComponentEnabledSetting(
-                            android.content.ComponentName(packageName, aliasFullName)
-                        )
-                        val shouldBeEnabled = aliasFullName == targetAlias
-                        val targetState = if (shouldBeEnabled) {
-                            android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED
-                        } else {
-                            android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-                        }
-                        
-                        // 只在状态不一致时修改，减少不必要的操作
-                        if (currentState != targetState) {
-                            pm.setComponentEnabledSetting(
-                                android.content.ComponentName(packageName, aliasFullName),
-                                targetState,
-                                android.content.pm.PackageManager.DONT_KILL_APP
-                            )
-                        }
-                    } catch (e: Exception) {
-                        //  [容错] 忽略不存在的组件，防止崩溃
-                        Logger.d(PureApplicationRuntimeConfig.TAG, "⚠️ Component $aliasFullName not found, skipping")
-                    }
-                }
-                
-                Logger.d(PureApplicationRuntimeConfig.TAG, " Synced app icon state: $currentIcon")
-            } catch (e: Exception) {
-                android.util.Log.e(PureApplicationRuntimeConfig.TAG, "Failed to sync app icon state", e)
-            }
-        }
-    }
-
-    private fun refreshActiveLauncherAliasForNightMode() {
-        AppScope.ioScope.launch {
-            val appearance = SettingsManager.getAppIconAppearanceSync(this@PureApplication)
-            if (appearance != AppIconAppearance.FOLLOW_SYSTEM) return@launch
-            val currentIcon = SettingsManager.getAppIconSync(this@PureApplication)
-            if (!supportsAppIconAppearance(currentIcon)) return@launch
-            val splashIconVisible = SettingsManager.isSplashIconAnimationEnabledSync(this@PureApplication)
-            val alias = resolveAppIconLauncherAlias(
-                packageName = packageName,
-                rawKey = currentIcon,
-                splashIconVisible = splashIconVisible,
-                appearance = appearance
-            )
-            val component = ComponentName(packageName, alias)
-            val pm = packageManager
-            var aliasDisabled = false
-            try {
-                if (
-                    pm.getComponentEnabledSetting(component) ==
-                    android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-                ) {
-                    Logger.w(
-                        PureApplicationRuntimeConfig.TAG,
-                        "Launcher icon refresh skipped because alias is disabled: $alias"
-                    )
-                    return@launch
-                }
-                pm.setComponentEnabledSetting(
-                    component,
-                    android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                    android.content.pm.PackageManager.DONT_KILL_APP
-                )
-                aliasDisabled = true
-                delay(100)
-            } catch (throwable: Exception) {
-                Logger.e(
-                    PureApplicationRuntimeConfig.TAG,
-                    "Failed to invalidate launcher icon after night mode change",
-                    throwable
-                )
-            } finally {
-                if (aliasDisabled) {
-                    runCatching {
-                        pm.setComponentEnabledSetting(
-                            component,
-                            android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                            android.content.pm.PackageManager.DONT_KILL_APP
-                        )
-                    }.onSuccess {
-                        Logger.d(
-                            PureApplicationRuntimeConfig.TAG,
-                            "Launcher icon refreshed after night mode change: $alias"
-                        )
-                    }.onFailure { throwable ->
-                        Logger.e(
-                            PureApplicationRuntimeConfig.TAG,
-                            "Failed to restore launcher icon alias after night mode change",
-                            throwable
-                        )
-                    }
-                }
-            }
-        }
-    }
 }

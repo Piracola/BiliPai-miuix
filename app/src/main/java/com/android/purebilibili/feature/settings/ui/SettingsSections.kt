@@ -1830,13 +1830,7 @@ fun AboutSection(
     buildFingerprintSubtitle: String = "暂未读取到当前安装包 SHA-256",
 ) {
     val context = LocalContext.current
-    val appIconAppearance by SettingsManager.getAppIconAppearance(context)
-        .collectAsStateWithLifecycle(
-            initialValue = SettingsManager.getAppIconAppearanceSync(context)
-        )
-    val appIconRes = remember(appIconKey, appIconAppearance) {
-        resolveIconOptionPreviewRes(appIconKey, appIconAppearance)
-    }
+    val appIconRes = com.android.purebilibili.R.mipmap.ic_launcher_blue_snow_maid_round
     var detailDialogContent by remember { mutableStateOf<AppBuildInfoDialogContent?>(null) }
     val updateSiblingTints = remember { resolveSettingsSiblingIconTints(5, paletteOffset = 3) }
     val licensesVisual = rememberSettingsEntryVisual(SettingsSearchTarget.OPEN_SOURCE_LICENSES)

@@ -441,65 +441,11 @@ internal fun shouldClearPendingCrashLogAfterAction(
 internal fun shouldUseRealtimeSplashBlur(sdkInt: Int): Boolean =
     sdkInt >= Build.VERSION_CODES.S && sdkInt < 36
 
+/**
+ * 极简版：启动器图标固定为默认「蓝雪女仆」，不再按启动 alias 类名切换多套图标。
+ */
 internal fun resolveSplashIconResIdForComponentClassName(className: String?): Int {
-    return when (className?.substringAfterLast('.')) {
-        "MainActivityAliasBlueSnowMaid",
-        "MainActivityAliasBlueSnowMaidNoIcon" -> R.mipmap.ic_launcher_blue_snow_maid
-        "MainActivitySplashBlueSnowMaid" -> R.drawable.splash_icon_blue_snow_maid
-        "MainActivityAliasBlueSnowMaidAnnouncement",
-        "MainActivityAliasBlueSnowMaidAnnouncementNoIcon" -> R.mipmap.ic_launcher_blue_snow_maid_announcement
-        "MainActivitySplashBlueSnowMaidAnnouncement" -> R.drawable.splash_icon_blue_snow_maid_announcement
-        "MainActivityAliasBlueSnowMaidAnnouncementLight",
-        "MainActivityAliasBlueSnowMaidAnnouncementLightNoIcon" -> R.mipmap.ic_launcher_blue_snow_maid_announcement_light
-        "MainActivitySplashBlueSnowMaidAnnouncementLight" -> R.drawable.splash_icon_blue_snow_maid_announcement_light
-        "MainActivityAliasBlueSnowMaidAnnouncementDark",
-        "MainActivityAliasBlueSnowMaidAnnouncementDarkNoIcon" -> R.mipmap.ic_launcher_blue_snow_maid_announcement_dark
-        "MainActivitySplashBlueSnowMaidAnnouncementDark" -> R.drawable.splash_icon_blue_snow_maid_announcement_dark
-        "MainActivityAliasBlueSnowMaidLight",
-        "MainActivityAliasBlueSnowMaidLightNoIcon" -> R.mipmap.ic_launcher_blue_snow_maid_light
-        "MainActivitySplashBlueSnowMaidLight" -> R.drawable.splash_icon_blue_snow_maid_light
-        "MainActivityAliasBlueSnowMaidDark",
-        "MainActivityAliasBlueSnowMaidDarkNoIcon" -> R.mipmap.ic_launcher_blue_snow_maid_dark
-        "MainActivitySplashBlueSnowMaidDark" -> R.drawable.splash_icon_blue_snow_maid_dark
-        "MainActivityAliasBlueSnowMaidFront",
-        "MainActivityAliasBlueSnowMaidFrontNoIcon" -> R.mipmap.ic_launcher_blue_snow_maid_front
-        "MainActivitySplashBlueSnowMaidFront" -> R.drawable.splash_icon_blue_snow_maid_front
-        "MainActivityAliasBlueSnowMaidFrontLight",
-        "MainActivityAliasBlueSnowMaidFrontLightNoIcon" -> R.mipmap.ic_launcher_blue_snow_maid_front_light
-        "MainActivitySplashBlueSnowMaidFrontLight" -> R.drawable.splash_icon_blue_snow_maid_front_light
-        "MainActivityAliasBlueSnowMaidFrontDark",
-        "MainActivityAliasBlueSnowMaidFrontDarkNoIcon" -> R.mipmap.ic_launcher_blue_snow_maid_front_dark
-        "MainActivitySplashBlueSnowMaidFrontDark" -> R.drawable.splash_icon_blue_snow_maid_front_dark
-        "MainActivityAlias3DLauncher",
-        "MainActivityAlias3D",
-        "MainActivityAlias3DNoIcon",
-        "MainActivitySplashIcon3D" -> R.mipmap.ic_launcher_3d
-        "MainActivityAliasBiliPai",
-        "MainActivityAliasBiliPaiNoIcon",
-        "MainActivitySplashBiliPai" -> R.mipmap.ic_launcher_bilipai
-        "MainActivityAliasBiliPaiPink",
-        "MainActivityAliasBiliPaiPinkNoIcon",
-        "MainActivitySplashBiliPaiPink" -> R.mipmap.ic_launcher_bilipai_pink
-        "MainActivityAliasBiliPaiWhite",
-        "MainActivityAliasBiliPaiWhiteNoIcon",
-        "MainActivitySplashBiliPaiWhite" -> R.mipmap.ic_launcher_bilipai_white
-        "MainActivityAliasBiliPaiMonet",
-        "MainActivityAliasBiliPaiMonetNoIcon" -> R.mipmap.ic_launcher_bilipai_monet
-        "MainActivitySplashBiliPaiMonet" -> R.mipmap.splash_icon_bilipai_monet
-        "MainActivityAliasFlat",
-        "MainActivityAliasFlatNoIcon",
-        "MainActivityAliasTelegramBlue",
-        "MainActivityAliasTelegramBlueNoIcon",
-        "MainActivityAliasDark",
-        "MainActivityAliasDarkNoIcon",
-        "MainActivityAliasYuki",
-        "MainActivityAliasYukiNoIcon",
-        "MainActivityAliasAnime",
-        "MainActivityAliasAnimeNoIcon",
-        "MainActivityAliasHeadphone",
-        "MainActivityAliasHeadphoneNoIcon" -> R.mipmap.ic_launcher_3d
-        else -> 0
-    }
+    return R.mipmap.ic_launcher_blue_snow_maid
 }
 
 @Suppress("DEPRECATION")

@@ -14,7 +14,6 @@ internal enum class BiliPaiNavEntryContentRole {
     OPEN_SOURCE_LICENSES,
     APPEARANCE_SETTINGS,
     HOME_SETTINGS,
-    ICON_SETTINGS,
     ANIMATION_SETTINGS,
     PLAYBACK_SETTINGS,
     PERMISSION_SETTINGS,
@@ -78,7 +77,6 @@ internal fun resolveBiliPaiNavEntryContentRole(key: BiliPaiNavKey): BiliPaiNavEn
         BiliPaiNavKey.OpenSourceLicenses -> BiliPaiNavEntryContentRole.OPEN_SOURCE_LICENSES
         BiliPaiNavKey.AppearanceSettings -> BiliPaiNavEntryContentRole.APPEARANCE_SETTINGS
         BiliPaiNavKey.HomeSettings -> BiliPaiNavEntryContentRole.HOME_SETTINGS
-        BiliPaiNavKey.IconSettings -> BiliPaiNavEntryContentRole.ICON_SETTINGS
         BiliPaiNavKey.AnimationSettings -> BiliPaiNavEntryContentRole.ANIMATION_SETTINGS
         BiliPaiNavKey.PlaybackSettings -> BiliPaiNavEntryContentRole.PLAYBACK_SETTINGS
         BiliPaiNavKey.PermissionSettings -> BiliPaiNavEntryContentRole.PERMISSION_SETTINGS

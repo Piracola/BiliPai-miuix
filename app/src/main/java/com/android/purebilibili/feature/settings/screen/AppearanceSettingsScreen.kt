@@ -96,7 +96,6 @@ enum class AppearanceSettingsContentMode {
 fun AppearanceSettingsScreen(
     viewModel: SettingsViewModel = viewModel(),
     onBack: () -> Unit,
-    onNavigateToIconSettings: () -> Unit = {},
     contentMode: AppearanceSettingsContentMode = AppearanceSettingsContentMode.APPEARANCE,
 ) {
     val context = LocalContext.current
@@ -153,7 +152,6 @@ fun AppearanceSettingsScreen(
         CompositionLocalProvider(LocalSettingsLiquidGlassEnabled provides state.isLiquidGlassEnabled) {
             AppearanceSettingsContent(
                 state = state,
-                onNavigateToIconSettings = onNavigateToIconSettings,
                 contentMode = contentMode,
                 viewModel = viewModel,
                 context = context,
@@ -212,7 +210,6 @@ fun HomeSettingsScreen(
 fun AppearanceSettingsContent(
     modifier: Modifier = Modifier,
     state: SettingsUiState,
-    onNavigateToIconSettings: () -> Unit,
     contentMode: AppearanceSettingsContentMode,
     viewModel: SettingsViewModel,
     context: android.content.Context,
@@ -1131,45 +1128,8 @@ fun AppearanceSettingsContent(
             }
         }
         
-        //  个性化
-        item { 
-            Box(modifier = Modifier) {
-                AppPreferenceSectionTitle("开屏与图标")
-            }
         }
-        item {
-            Box(modifier = Modifier) {
-                AppPreferenceGroup {
-                    // 图标设置
-	                    AppPreference(
-	                        icon = rememberSettingsSemanticIcon(SettingsIconRole.APP_ICON),
-                        title = "应用图标",
-                        value = when(state.appIcon) {
-                            "Blue Snow Maid", "蓝雪女仆", "icon_blue_snow_maid" -> "蓝雪女仆"
-                            "Blue Snow Maid Front", "蓝雪女仆·正面", "icon_blue_snow_maid_front" -> "蓝雪女仆·正面"
-                            // 🎀 二次元少女系列
-                            "BiliPai", "icon_bilipai" -> "BiliPai"
-                            "BiliPai Pink", "icon_bilipai_pink" -> "BiliPai 粉"
-                            "BiliPai White", "icon_bilipai_white" -> "BiliPai 白"
-                            "BiliPai Monet", "icon_bilipai_monet" -> "BiliPai Monet"
-                            "Yuki" -> "比心少女"
-                            "Anime", "icon_anime" -> "蓝发电视"
-                            "Headphone" -> "耳机少女"
-                            // 经典系列
-                            "3D", "icon_3d" -> "3D立体"
-                            "Flat", "icon_flat" -> "扁平现代"
-                            "Telegram Blue", "icon_telegram_blue" -> "纸飞机蓝"
-                            "Dark", "icon_telegram_dark" -> "暗夜蓝"
-                            else -> "蓝雪女仆"
-                        },
-                        onClick = onNavigateToIconSettings,
-                        iconTint = iOSPurple
-                    )
-                }
-            }
-        } // End of Personalization item
-        }
-
+        
         if (contentMode == AppearanceSettingsContentMode.HOME) {
             //  首页与列表
             item { 

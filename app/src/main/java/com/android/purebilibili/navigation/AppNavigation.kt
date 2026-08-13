@@ -2446,7 +2446,6 @@ fun AppNavigation(
                                 AppearanceSettingsScreen(
                                     viewModel = settingsViewModel,
                                     onBack = { performSystemBackAction() },
-                                    onNavigateToIconSettings = { pushNavigation3Key(BiliPaiNavKey.IconSettings) },
                                 )
                             }
                         BiliPaiNavEntryContentRole.HOME_SETTINGS ->
@@ -2454,13 +2453,6 @@ fun AppNavigation(
                                 com.android.purebilibili.feature.settings.HomeSettingsScreen(
                                     viewModel = settingsViewModel,
                                     onBack = { performSystemBackAction() },
-                                )
-                            }
-                        BiliPaiNavEntryContentRole.ICON_SETTINGS ->
-                            SettingsTabletEntry {
-                                com.android.purebilibili.feature.settings.IconSettingsScreen(
-                                    viewModel = settingsViewModel,
-                                    onBack = { performSystemBackAction() }
                                 )
                             }
                         BiliPaiNavEntryContentRole.ANIMATION_SETTINGS ->

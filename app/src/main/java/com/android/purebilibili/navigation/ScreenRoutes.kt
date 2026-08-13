@@ -118,7 +118,6 @@ sealed class ScreenRoutes(val route: String) {
     object WebDavBackup : ScreenRoutes("webdav_backup") // WebDAV 备份中心
     //  [新增] 更多外观设置子页面
 
-    object IconSettings : ScreenRoutes("icon_settings")  // 图标设置
     object AnimationSettings : ScreenRoutes("animation_settings")  // 动画设置
 
     // [修复] 添加 aid 参数支持，用于移动端推荐流（可能只返回 aid）
