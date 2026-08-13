@@ -8,12 +8,13 @@ import kotlin.test.assertTrue
 class SettingsMiuixSimplificationStructureTest {
 
     @Test
-    fun `appearance settings expose one ui style selection while keeping miuix scaffold`() {
+    fun `appearance settings drop ui style preset selection keeping miuix scaffold`() {
         val source = loadSource("app/src/main/java/com/android/purebilibili/feature/settings/screen/AppearanceSettingsScreen.kt")
 
-        assertTrue(source.contains("resolveThemeSelectionOptions("))
-        assertTrue(source.contains("resolveAppearanceUiPresetDescription("))
-        assertTrue(source.contains("onSelectionChange = viewModel::setThemeSelection"))
+        // 极简版：主题固定 Miuix，不再提供 MD3/Miuix 预设切换。
+        assertFalse(source.contains("resolveThemeSelectionOptions("))
+        assertFalse(source.contains("resolveAppearanceUiPresetDescription("))
+        assertFalse(source.contains("onSelectionChange = viewModel::setThemeSelection"))
         assertFalse(source.contains("resolveAndroidNativeVariantSegmentOptions("))
         assertFalse(source.contains("viewModel.setUiPreset("))
         assertFalse(source.contains("viewModel.setAndroidNativeVariant("))
