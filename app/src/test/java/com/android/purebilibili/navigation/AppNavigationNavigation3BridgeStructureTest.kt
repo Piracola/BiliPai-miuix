@@ -121,7 +121,7 @@ class AppNavigationNavigation3BridgeStructureTest {
         assertTrue(videoDetailBranch.contains("keepLoadedContentForBackPreview ="))
         assertTrue(
             videoDetailBranch.contains(
-                "navigation3BackStack.getOrNull(navigation3BackStack.lastIndex - 1) == videoKey"
+                "navigation3BackStack.lastOrNull() == videoKey"
             )
         )
     }
@@ -129,11 +129,7 @@ class AppNavigationNavigation3BridgeStructureTest {
     @Test
     fun videoBackCancellationRestoresOnlyTheCurrentVideoPlayerSurface() {
         val source = appNavigationSource()
-        val navHostCall = source
-            .substringAfter("BiliPaiNavDisplayHost(")
-            .substringBefore(") { key ->")
 
-        assertTrue(navHostCall.contains("onNativeVideoBackCancelled ="))
         assertTrue(source.contains("predictiveBackCancelRecoveryGeneration ="))
         assertTrue(source.contains("shouldBindVideoDetailBackPreviewPlayer("))
     }
@@ -353,8 +349,6 @@ class AppNavigationNavigation3BridgeStructureTest {
         assertTrue(source.contains("val predictiveBackEnabled = appNavigationSettings.predictiveBackEnabled"))
         assertTrue(source.contains("LocalPredictiveBackGestureEnabled provides predictiveBackEnabled"))
         assertTrue(source.contains("isQuickReturnFromDetail = navigation3ReturnSession.isQuickReturnFromDetail"))
-        assertTrue(source.contains("BiliPaiPredictiveBackAnimationStyle.fromStorageValue("))
-        assertTrue(source.contains("appNavigationSettings.predictiveBackAnimationStyle"))
         assertFalse(source.contains("shouldUseClassicBackHandler"))
     }
 
@@ -377,7 +371,7 @@ class AppNavigationNavigation3BridgeStructureTest {
         val buildFile = appBuildGradleSource()
 
         assertTrue(source.contains("BiliPaiNavDisplayHost("))
-        assertTrue(source.contains("sharedTransitionScope = LocalSharedTransitionScope.current"))
+        assertTrue(source.contains("sharedTransitionScope = null"))
         assertTrue(source.contains("resolveBiliPaiNavEntryContentRole"))
         assertTrue(source.contains("BiliPaiNavEntryContentRole.HOME ->"))
         assertTrue(source.contains("BiliPaiNavEntryContentRole.DYNAMIC ->"))

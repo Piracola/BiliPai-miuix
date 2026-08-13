@@ -29,9 +29,6 @@ class AppNavigationSettingsMappingPolicyTest {
         assertFalse(result.tabletUseSidebar)
         assertTrue(result.sidebarAccountSwitcherEnabled)
         assertTrue(result.predictiveBackEnabled)
-        assertEquals("scale", result.predictiveBackAnimationStyle)
-        assertEquals("auto", result.predictiveBackExitDirection)
-        assertTrue(result.miuixTransitionBlurEnabled)
     }
 
     @Test
@@ -57,7 +54,6 @@ class AppNavigationSettingsMappingPolicyTest {
             stringPreferencesKey("bottom_bar_item_colors") to "HOME:2,PROFILE:4,INVALID:x,NO_COLON",
             booleanPreferencesKey("tablet_use_sidebar") to true,
             booleanPreferencesKey("sidebar_account_switcher_enabled") to false,
-            booleanPreferencesKey("miuix_transition_blur_enabled") to false,
         )
 
         val result = mapAppNavigationSettingsFromPreferences(prefs)
@@ -67,7 +63,6 @@ class AppNavigationSettingsMappingPolicyTest {
         assertEquals(mapOf("HOME" to 2, "PROFILE" to 4, "INVALID" to 0), result.bottomBarItemColors)
         assertTrue(result.tabletUseSidebar)
         assertFalse(result.sidebarAccountSwitcherEnabled)
-        assertFalse(result.miuixTransitionBlurEnabled)
     }
 
     @Test

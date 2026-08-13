@@ -191,8 +191,6 @@ import com.android.purebilibili.navigation3.shouldBindVideoDetailBackPreviewPlay
 import com.android.purebilibili.navigation3.shouldActivateVideoDetailPlaybackSession
 import com.android.purebilibili.navigation3.shouldRecoverVideoPlayerAfterBackCancellation
 import com.android.purebilibili.navigation3.resolveBiliPaiVideoSource
-import com.android.purebilibili.navigation3.predictiveback.BiliPaiPredictiveBackAnimationStyle
-import com.android.purebilibili.navigation3.predictiveback.BiliPaiPredictiveBackExitDirection
 import com.android.purebilibili.navigation3.resolveInitialBiliPaiBackStack
 import com.android.purebilibili.navigation3.toLegacyRoute
 import androidx.compose.ui.Alignment
@@ -1172,20 +1170,6 @@ fun AppNavigation(
             )
             prefetchHomeCoverImages(context = context, entries = candidates)
         }
-        // 预测返回样式/方向从设置读取。style 为 legacy 存储值(默认 "scale"),
-        // 经 fromStorageValue 归一化后由策略层按 routeTransition 分发,不再改变 handler 选择;
-        // exitDirection 默认 "auto" 时走 autoDerived(卡片来源方向),显式值(follow_gesture /
-        // always_left / always_right)直接覆盖。
-        val predictiveBackAnimationStyle = if (appNavigationSettings.predictiveBackEnabled) {
-            BiliPaiPredictiveBackAnimationStyle.fromStorageValue(
-                appNavigationSettings.predictiveBackAnimationStyle,
-            )
-        } else {
-            BiliPaiPredictiveBackAnimationStyle.NONE
-        }
-        val predictiveBackExitDirection = BiliPaiPredictiveBackExitDirection.fromStorageValue(
-            appNavigationSettings.predictiveBackExitDirection
-        )
         val shouldInterceptTabBack = backGestureDecision.interceptSystemBack
         val isVideoDetailDestination = isVideoDetailRoute(currentRoute)
         val bottomBarMountRoute = if (isVideoDetailDestination) {
@@ -3378,10 +3362,6 @@ fun AppNavigation(
                     videoSharedTransitionDurationMillis =
                         effectiveVideoCardTransitionDurationMillis,
                     videoCardClock = videoCardTransitionClock,
-                    predictiveBackAnimationStyle = predictiveBackAnimationStyle,
-                    predictiveBackExitDirection = predictiveBackExitDirection,
-                    miuixTransitionBlurEnabled =
-                        appNavigationSettings.miuixTransitionBlurEnabled,
                     sourceMetadata = navigation3SourceMetadata,
                     programmaticBackDispatcher = navigation3ProgrammaticBackDispatcher,
                     // 来源卡内容进入飞行 shared-bounds 壳，在后段由播放器/详情信息

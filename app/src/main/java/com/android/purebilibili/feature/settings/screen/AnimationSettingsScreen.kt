@@ -44,8 +44,6 @@ import com.android.purebilibili.core.ui.transition.normalizeVideoSharedTransitio
 import com.android.purebilibili.core.util.LocalWindowSizeClass
 import com.android.purebilibili.feature.home.components.LiquidGlassTuning
 import com.android.purebilibili.feature.home.components.resolveLiquidGlassTuning
-import com.android.purebilibili.navigation3.predictiveback.BiliPaiPredictiveBackAnimationStyle
-import com.android.purebilibili.navigation3.predictiveback.BiliPaiPredictiveBackExitDirection
 import androidx.compose.material.icons.outlined.*
 import com.android.purebilibili.core.ui.components.*
 import kotlinx.coroutines.delay
@@ -143,36 +141,6 @@ fun AnimationSettingsContent(
             AppSegmentOption(VideoSharedTransitionSpeed.CUSTOM, "自定")
         )
     }
-    val predictiveBackStyle = remember(appNavigationSettings) {
-        if (appNavigationSettings.predictiveBackEnabled) {
-            BiliPaiPredictiveBackAnimationStyle.fromStorageValue(
-                appNavigationSettings.predictiveBackAnimationStyle
-            )
-        } else {
-            BiliPaiPredictiveBackAnimationStyle.NONE
-        }
-    }
-    val predictiveBackStyleOptions = remember {
-        listOf(
-            AppSegmentOption(BiliPaiPredictiveBackAnimationStyle.NONE, "无"),
-            AppSegmentOption(BiliPaiPredictiveBackAnimationStyle.AOSP, "AOSP"),
-            AppSegmentOption(BiliPaiPredictiveBackAnimationStyle.MIUIX, "Miuix"),
-            AppSegmentOption(BiliPaiPredictiveBackAnimationStyle.SCALE, "缩放"),
-            AppSegmentOption(BiliPaiPredictiveBackAnimationStyle.CLASSIC, "经典"),
-        )
-    }
-    val predictiveBackExitDirection = remember(appNavigationSettings.predictiveBackExitDirection) {
-        BiliPaiPredictiveBackExitDirection.fromStorageValue(
-            appNavigationSettings.predictiveBackExitDirection
-        )
-    }
-    val predictiveBackExitDirectionOptions = remember {
-        listOf(
-            AppSegmentOption(BiliPaiPredictiveBackExitDirection.FOLLOW_GESTURE, "跟随手势"),
-            AppSegmentOption(BiliPaiPredictiveBackExitDirection.ALWAYS_RIGHT, "始终向右"),
-            AppSegmentOption(BiliPaiPredictiveBackExitDirection.ALWAYS_LEFT, "始终向左"),
-        )
-    }
     var customTransitionDurationMillis by remember(state.videoSharedTransitionCustomDurationMillis) {
         mutableIntStateOf(state.videoSharedTransitionCustomDurationMillis)
     }
@@ -262,65 +230,6 @@ fun AnimationSettingsContent(
                             onCheckedChange = { viewModel.toggleVideoTransitionRealtimeBlur(it) },
                             iconTint = iOSTeal
                         )
-                        AppPreferenceDivider()
-                        SettingsSingleChoicePreference(
-                            icon = rememberSettingsSemanticIcon(SettingsIconRole.PREDICTIVE_BACK),
-                            title = "全局返回动画",
-                            subtitle = "普通返回与预测性返回统一使用 Miuix 导航动画",
-                            options = predictiveBackStyleOptions,
-                            selectedValue = predictiveBackStyle,
-                            onSelectionChange = { style ->
-                                scope.launch {
-                                    SettingsManager.setPredictiveBackEnabled(context, true)
-                                    SettingsManager.setPredictiveBackAnimationStyle(
-                                        context,
-                                        style.storageValue,
-                                    )
-                                }
-                            },
-                            iconTint = iOSTeal
-                        )
-                        if (predictiveBackStyle == BiliPaiPredictiveBackAnimationStyle.MIUIX) {
-                            AppPreferenceDivider()
-                            AppSwitchPreference(
-                                icon = rememberSettingsSemanticIcon(
-                                    SettingsIconRole.MIUIX_TRANSITION_BLUR
-                                ),
-                                title = "Miuix 过渡模糊",
-                                subtitle = if (appNavigationSettings.miuixTransitionBlurEnabled) {
-                                    "页面返回时为下层页面添加实时景深模糊"
-                                } else {
-                                    "保留 Miuix 位移与层级动画，不使用实时模糊"
-                                },
-                                checked = appNavigationSettings.miuixTransitionBlurEnabled,
-                                onCheckedChange = { enabled ->
-                                    scope.launch {
-                                        SettingsManager.setMiuixTransitionBlurEnabled(
-                                            context,
-                                            enabled,
-                                        )
-                                    }
-                                },
-                                iconTint = iOSTeal,
-                            )
-                        }
-                        if (predictiveBackStyle == BiliPaiPredictiveBackAnimationStyle.SCALE) {
-                            AppPreferenceDivider()
-                            SettingsSingleChoicePreference(
-                                title = "缩放退出方向",
-                                subtitle = "仅缩放样式使用",
-                                options = predictiveBackExitDirectionOptions,
-                                selectedValue = predictiveBackExitDirection,
-                                onSelectionChange = { direction ->
-                                    scope.launch {
-                                        SettingsManager.setPredictiveBackExitDirection(
-                                            context,
-                                            direction.storageValue,
-                                        )
-                                    }
-                                },
-                            )
-                        }
                         AppPreferenceDivider()
                         AppSwitchPreference(
                             icon = rememberSettingsSemanticIcon(SettingsIconRole.FULLSCREEN_SWIPE_BACK),

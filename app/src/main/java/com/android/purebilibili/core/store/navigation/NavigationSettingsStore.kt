@@ -18,10 +18,6 @@ object NavigationSettingsStore {
     private val keySidebarAccountSwitcherEnabled =
         booleanPreferencesKey("sidebar_account_switcher_enabled")
     private val keyPredictiveBackEnabled = booleanPreferencesKey("predictive_back_enabled")
-    private val keyPredictiveBackAnimationStyle = stringPreferencesKey("predictive_back_animation_style")
-    private val keyPredictiveBackExitDirection = stringPreferencesKey("predictive_back_exit_direction")
-    private val keyMiuixTransitionBlurEnabled =
-        booleanPreferencesKey("miuix_transition_blur_enabled")
     private val keyFullScreenSwipeBackEnabled =
         booleanPreferencesKey("full_screen_swipe_back_enabled")
     private val keyBottomBarOrder = stringPreferencesKey("bottom_bar_order")
@@ -94,24 +90,6 @@ object NavigationSettingsStore {
     suspend fun setPredictiveBackEnabled(context: Context, enabled: Boolean) {
         context.settingsDataStore.edit { preferences ->
             preferences[keyPredictiveBackEnabled] = enabled
-        }
-    }
-
-    suspend fun setPredictiveBackAnimationStyle(context: Context, style: String) {
-        context.settingsDataStore.edit { preferences ->
-            preferences[keyPredictiveBackAnimationStyle] = style
-        }
-    }
-
-    suspend fun setPredictiveBackExitDirection(context: Context, direction: String) {
-        context.settingsDataStore.edit { preferences ->
-            preferences[keyPredictiveBackExitDirection] = direction
-        }
-    }
-
-    suspend fun setMiuixTransitionBlurEnabled(context: Context, enabled: Boolean) {
-        context.settingsDataStore.edit { preferences ->
-            preferences[keyMiuixTransitionBlurEnabled] = enabled
         }
     }
 

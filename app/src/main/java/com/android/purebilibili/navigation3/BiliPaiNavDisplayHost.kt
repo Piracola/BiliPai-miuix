@@ -51,8 +51,6 @@ import com.android.purebilibili.core.ui.transition.shouldReleaseHostOwnedDepthLa
 import com.android.purebilibili.core.ui.transition.shouldShowVideoCardTransitionNavBackdrop
 import com.android.purebilibili.core.ui.transition.shouldUseHostOwnedVideoCardTransitionSnapshot
 import com.android.purebilibili.core.ui.adaptive.MotionTier
-import com.android.purebilibili.navigation3.predictiveback.BiliPaiPredictiveBackAnimationStyle
-import com.android.purebilibili.navigation3.predictiveback.BiliPaiPredictiveBackExitDirection
 import com.android.purebilibili.navigation3.predictiveback.biliPaiMiuixNavTransition
 import com.android.purebilibili.navigation3.predictiveback.miuixVideoCardNavTransition
 import com.android.purebilibili.navigation3.predictiveback.MiuixVideoCardContentScale
@@ -94,11 +92,6 @@ internal fun BiliPaiNavDisplayHost(
     reduceMotion: Boolean = false,
     videoSharedTransitionDurationMillis: Int,
     videoCardClock: VideoCardTransitionClock,
-    predictiveBackAnimationStyle: BiliPaiPredictiveBackAnimationStyle =
-        BiliPaiPredictiveBackAnimationStyle.MIUIX,
-    predictiveBackExitDirection: BiliPaiPredictiveBackExitDirection =
-        BiliPaiPredictiveBackExitDirection.ALWAYS_RIGHT,
-    miuixTransitionBlurEnabled: Boolean = true,
     sourceMetadata: BiliPaiNavSourceMetadata,
     programmaticBackDispatcher: BiliPaiProgrammaticBackDispatcher,
     preferWholeCardReturn: Boolean = false,
@@ -150,22 +143,9 @@ internal fun BiliPaiNavDisplayHost(
         onDispose { programmaticBackDispatcher.unregister(performBack) }
     }
 
-    val style = if (reduceMotion) {
-        BiliPaiPredictiveBackAnimationStyle.NONE
-    } else {
-        predictiveBackAnimationStyle
-    }
-    val globalTransition = remember(
-        style,
-        predictiveBackExitDirection,
-        isLightBackground,
-        miuixTransitionBlurEnabled,
-    ) {
+    val globalTransition = remember(isLightBackground) {
         biliPaiMiuixNavTransition(
-            animation = style,
-            exitDirection = predictiveBackExitDirection,
             isLightBackground = isLightBackground,
-            miuixTransitionBlurEnabled = miuixTransitionBlurEnabled,
         )
     }
     val cardMorphAvailable = shouldUseMiuixVideoCardMorph(
@@ -376,9 +356,7 @@ internal fun BiliPaiNavDisplayHost(
     }
 
     val navCornerRadius = rememberDeviceCornerRadius(defaultRadius = 0.dp)
-    val roundAllCorners = style == BiliPaiPredictiveBackAnimationStyle.AOSP ||
-        style == BiliPaiPredictiveBackAnimationStyle.SCALE ||
-        style == BiliPaiPredictiveBackAnimationStyle.CLASSIC
+    val roundAllCorners = false
     // Video-card morph owns all four corners. Keeping NavDisplay's Leading clip enabled here
     // applies a second, device-radius clip only to the left edge and makes it visibly rounder
     // than the right edge during return.
@@ -430,8 +408,7 @@ internal fun BiliPaiNavDisplayHost(
     } else {
         NavSwipeDirection.None
     }
-    val interceptPredictiveBack =
-        style == BiliPaiPredictiveBackAnimationStyle.NONE && backStack.size > 1
+    val interceptPredictiveBack = backStack.size > 1
 
     Box(
         modifier = modifier

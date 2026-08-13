@@ -23,8 +23,6 @@ internal val FastOutExtraSlowIn: Easing = run {
     }
 }
 
-internal val BackGestureEasing: Easing = CubicBezierEasing(0.1f, 0.1f, 0f, 1f)
-
 internal fun topProgress(depth: Float): Float = (1f + depth).coerceIn(0f, 1f)
 
 internal fun coverProgress(depth: Float): Float = depth.coerceIn(0f, 1f)

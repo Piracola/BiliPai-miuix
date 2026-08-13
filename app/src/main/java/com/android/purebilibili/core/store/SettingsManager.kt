@@ -833,9 +833,6 @@ data class AppNavigationSettings(
     val tabletUseSidebar: Boolean = false,
     val sidebarAccountSwitcherEnabled: Boolean = true,
     val predictiveBackEnabled: Boolean = true,
-    val predictiveBackAnimationStyle: String = "miuix",
-    val predictiveBackExitDirection: String = "always_right",
-    val miuixTransitionBlurEnabled: Boolean = true,
 )
 
 internal data class BottomTabMigrationResult(
@@ -6336,10 +6333,6 @@ object SettingsManager {
     private val KEY_SIDEBAR_ACCOUNT_SWITCHER_ENABLED =
         booleanPreferencesKey("sidebar_account_switcher_enabled")
     private val KEY_PREDICTIVE_BACK_ENABLED = booleanPreferencesKey("predictive_back_enabled")
-    private val KEY_PREDICTIVE_BACK_ANIMATION_STYLE = stringPreferencesKey("predictive_back_animation_style")
-    private val KEY_PREDICTIVE_BACK_EXIT_DIRECTION = stringPreferencesKey("predictive_back_exit_direction")
-    private val KEY_MIUIX_TRANSITION_BLUR_ENABLED =
-        booleanPreferencesKey("miuix_transition_blur_enabled")
     
     /**
      *  平板导航模式
@@ -6376,10 +6369,6 @@ object SettingsManager {
             sidebarAccountSwitcherEnabled =
                 preferences[KEY_SIDEBAR_ACCOUNT_SWITCHER_ENABLED] ?: true,
             predictiveBackEnabled = preferences[KEY_PREDICTIVE_BACK_ENABLED] ?: true,
-            predictiveBackAnimationStyle = preferences[KEY_PREDICTIVE_BACK_ANIMATION_STYLE] ?: "miuix",
-            predictiveBackExitDirection =
-                preferences[KEY_PREDICTIVE_BACK_EXIT_DIRECTION] ?: "always_right",
-            miuixTransitionBlurEnabled = preferences[KEY_MIUIX_TRANSITION_BLUR_ENABLED] ?: true,
         )
     }
 
@@ -6407,18 +6396,6 @@ object SettingsManager {
 
     suspend fun setPredictiveBackEnabled(context: Context, enabled: Boolean) {
         NavigationSettingsStore.setPredictiveBackEnabled(context, enabled)
-    }
-
-    suspend fun setPredictiveBackAnimationStyle(context: Context, style: String) {
-        NavigationSettingsStore.setPredictiveBackAnimationStyle(context, style)
-    }
-
-    suspend fun setPredictiveBackExitDirection(context: Context, direction: String) {
-        NavigationSettingsStore.setPredictiveBackExitDirection(context, direction)
-    }
-
-    suspend fun setMiuixTransitionBlurEnabled(context: Context, enabled: Boolean) {
-        NavigationSettingsStore.setMiuixTransitionBlurEnabled(context, enabled)
     }
 
     fun getFullScreenSwipeBackEnabled(context: Context): Flow<Boolean> =
@@ -6689,10 +6666,6 @@ object SettingsManager {
             BooleanShareablePreferenceDefinition(
                 KEY_VIDEO_TRANSITION_REALTIME_BLUR_ENABLED,
                 SettingsShareSection.APPEARANCE
-            ),
-            BooleanShareablePreferenceDefinition(
-                KEY_MIUIX_TRANSITION_BLUR_ENABLED,
-                SettingsShareSection.APPEARANCE,
             ),
             IntShareablePreferenceDefinition(KEY_VIDEO_SHARED_TRANSITION_SPEED, SettingsShareSection.APPEARANCE),
             IntShareablePreferenceDefinition(
