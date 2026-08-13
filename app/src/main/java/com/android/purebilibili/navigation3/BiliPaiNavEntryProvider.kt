@@ -3,12 +3,9 @@ package com.android.purebilibili.navigation3
 import androidx.compose.runtime.Composable
 import top.yukonga.miuix.kmp.nav.core.NavEntryBuilder
 import top.yukonga.miuix.kmp.nav.transition.NavSwipeDirection
-import top.yukonga.miuix.kmp.nav.transition.NavTransition
 
 internal fun NavEntryBuilder.biliPaiNavEntries(
     swipeBackDirection: NavSwipeDirection,
-    videoCardTransition: NavTransition,
-    fullscreenVideoCardTransition: NavTransition,
     content: @Composable (BiliPaiNavKey) -> Unit,
 ) {
     entry<BiliPaiNavKey.MainHost>(swipeDismiss = NavSwipeDirection.None, content = content)
@@ -60,22 +57,14 @@ internal fun NavEntryBuilder.biliPaiNavEntries(
     entry<BiliPaiNavKey.SystemNotice>(swipeDismiss = swipeBackDirection, content = content)
     entry<BiliPaiNavKey.Chat>(swipeDismiss = swipeBackDirection, content = content)
     entry<BiliPaiNavKey.Partition>(swipeDismiss = NavSwipeDirection.None, content = content)
-    entry<BiliPaiNavKey.Story>(
-        transition = fullscreenVideoCardTransition,
-        swipeDismiss = NavSwipeDirection.None,
-        content = content,
-    )
+    entry<BiliPaiNavKey.Story>(swipeDismiss = NavSwipeDirection.None, content = content)
     entry<BiliPaiNavKey.AudioMode>(swipeDismiss = NavSwipeDirection.None, content = content)
     entry<BiliPaiNavKey.SeasonSeriesDetail>(swipeDismiss = NavSwipeDirection.None, content = content)
     entry<BiliPaiNavKey.Bangumi>(swipeDismiss = NavSwipeDirection.None, content = content)
     entry<BiliPaiNavKey.BangumiPlayer>(swipeDismiss = NavSwipeDirection.None, content = content)
     entry<BiliPaiNavKey.MusicDetail>(swipeDismiss = NavSwipeDirection.None, content = content)
     entry<BiliPaiNavKey.NativeMusic>(swipeDismiss = NavSwipeDirection.None, content = content)
-    entry<BiliPaiNavKey.VideoDetail>(
-        transition = videoCardTransition,
-        swipeDismiss = NavSwipeDirection.None,
-        content = content,
-    )
+    entry<BiliPaiNavKey.VideoDetail>(swipeDismiss = NavSwipeDirection.None, content = content)
     entry<BiliPaiNavKey.ArticleDetail>(swipeDismiss = NavSwipeDirection.None, content = content)
     entry<BiliPaiNavKey.DynamicDetail>(swipeDismiss = NavSwipeDirection.None, content = content)
     entry<BiliPaiNavKey.Space>(swipeDismiss = swipeBackDirection, content = content)

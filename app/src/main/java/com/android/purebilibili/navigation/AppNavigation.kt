@@ -100,7 +100,6 @@ import com.android.purebilibili.core.util.BilibiliNavigationTarget
 import com.android.purebilibili.core.util.BilibiliNavigationTargetParser
 import com.android.purebilibili.resolveShortcutRoute
 import com.android.purebilibili.shouldNavigateToVideoFromNotification
-import com.android.purebilibili.core.ui.transition.LocalPredictiveBackBackgroundState
 import com.android.purebilibili.core.ui.transition.LocalVideoCardSharedElementSourceRoute
 import com.android.purebilibili.core.ui.transition.LocalVideoCardTransitionBackgroundState
 import com.android.purebilibili.core.ui.transition.LocalVideoSharedTransitionSpeedSettings
@@ -109,9 +108,6 @@ import com.android.purebilibili.core.ui.transition.VideoCardTransitionVisualTime
 import com.android.purebilibili.core.ui.motion.rememberSystemReduceMotion
 import com.android.purebilibili.core.ui.transition.VideoSharedTransitionSpeedSettings
 import com.android.purebilibili.core.ui.transition.resolveVideoSharedTransitionDurationMillis
-import com.android.purebilibili.core.ui.transition.predictiveBackBackgroundEffect
-import com.android.purebilibili.core.ui.transition.pinSourcePageDuringSharedTransition
-import com.android.purebilibili.core.ui.transition.shouldApplyPredictiveBackBlurToRoute
 import com.android.purebilibili.core.ui.transition.shouldApplyVideoCardTransitionBackgroundToRoute
 import com.android.purebilibili.core.ui.transition.resolveVideoCardTransitionBackgroundScaleReduction
 import com.android.purebilibili.core.ui.transition.resolveVideoCardTransitionBackgroundSource
@@ -1722,102 +1718,6 @@ fun AppNavigation(
                 }
 
                 @Composable
-                fun VideoCardTransitionBackgroundRouteContent(
-                    key: BiliPaiNavKey,
-                    content: @Composable () -> Unit
-                ) {
-                    val entryRoute = key.toLegacyRoute()
-                    val backgroundState = LocalVideoCardTransitionBackgroundState.current
-                    val predictiveBackState = LocalPredictiveBackBackgroundState.current
-                    val backgroundSource = resolveVideoCardTransitionBackgroundSource(
-                        sourceRoute = backgroundState.sourceRouteProvider(),
-                    )
-                    val backgroundScaleReduction = resolveVideoCardTransitionBackgroundScaleReduction(
-                        backgroundSource
-                    )
-                    val shouldApplyBackground = cardTransitionEnabled &&
-                        shouldApplyVideoCardTransitionBackgroundToRoute(
-                            entryRoute = entryRoute,
-                            sourceRoute = backgroundState.sourceRouteProvider(),
-                            activeMainHostRoute = activeMainHostRoute
-                        )
-                    val useHostOwnedBackgroundSnapshot =
-                        shouldUseHostOwnedVideoCardTransitionSnapshot(
-                            backgroundState.sourceRouteProvider()
-                        )
-                    val shouldApplyPredictiveBlur = shouldApplyPredictiveBackBlurToRoute(
-                        entryKey = key,
-                        targetBackKey = predictiveBackState.targetKeyProvider(),
-                        videoCardBackgroundApplied = shouldApplyBackground,
-                    )
-                    val routeModifier = Modifier
-                        .fillMaxSize()
-                        .let { baseModifier ->
-                            baseModifier
-                                .let { modifier ->
-                                    if (shouldApplyBackground) {
-                                        val pinnedModifier = modifier
-                                            .pinSourcePageDuringSharedTransition()
-                                        if (useHostOwnedBackgroundSnapshot) {
-                                            pinnedModifier.videoCardTransitionBackgroundEffect(
-                                                progressProvider = backgroundState.progressProvider,
-                                                phaseProvider = backgroundState.phaseProvider,
-                                                exposureProvider = backgroundState.exposureProvider,
-                                                isGestureRestoreInProgressProvider = backgroundState.isGestureRestoreInProgressProvider,
-                                                motionTierProvider = backgroundState.motionTierProvider,
-                                                isLightBackgroundProvider = backgroundState.isLightBackgroundProvider,
-                                                realtimeBlurEnabledProvider = {
-                                                    shouldUseRealtimeVideoCardTransitionBackgroundBlur(
-                                                        source = backgroundSource,
-                                                        realtimeBlurEnabled = videoTransitionRealtimeBlurEnabled,
-                                                    )
-                                                },
-                                                scaleReductionProvider = {
-                                                    backgroundScaleReduction
-                                                },
-                                                snapshotHandle = backgroundState.snapshotHandle,
-                                            )
-                                        } else {
-                                            pinnedModifier.videoCardTransitionLiveBackgroundEffect(
-                                                progressProvider = backgroundState.progressProvider,
-                                                phaseProvider = backgroundState.phaseProvider,
-                                                exposureProvider = backgroundState.exposureProvider,
-                                                isGestureRestoreInProgressProvider = backgroundState.isGestureRestoreInProgressProvider,
-                                                motionTierProvider = backgroundState.motionTierProvider,
-                                                isLightBackgroundProvider = backgroundState.isLightBackgroundProvider,
-                                                realtimeBlurEnabledProvider = {
-                                                    shouldUseRealtimeVideoCardTransitionBackgroundBlur(
-                                                        source = backgroundSource,
-                                                        realtimeBlurEnabled = videoTransitionRealtimeBlurEnabled,
-                                                    )
-                                                },
-                                                scaleReductionProvider = {
-                                                    backgroundScaleReduction
-                                                },
-                                            )
-                                        }
-                                    } else {
-                                        modifier
-                                    }
-                                }
-                                .let { modifier ->
-                                    if (shouldApplyPredictiveBlur) {
-                                        modifier.predictiveBackBackgroundEffect(
-                                            progressProvider = predictiveBackState.progressProvider,
-                                            motionTierProvider = predictiveBackState.motionTierProvider,
-                                            isLightBackgroundProvider = predictiveBackState.isLightBackgroundProvider,
-                                        )
-                                    } else {
-                                        modifier
-                                    }
-                                }
-                        }
-                    Box(modifier = routeModifier) {
-                        content()
-                    }
-                }
-
-                @Composable
                 fun RenderNavigationContent(
                     key: BiliPaiNavKey,
                     isBottomPagerPageActive: Boolean = true,
@@ -3355,42 +3255,16 @@ fun AppNavigation(
 
                 BiliPaiNavDisplayHost(
                     backStack = navigation3BackStack,
-                    cardTransitionEnabled = sharedVideoCardTransitionEnabled,
-                    videoTransitionRealtimeBlurEnabled = videoTransitionRealtimeBlurEnabled,
                     isLightBackground = isLightBackground,
                     reduceMotion = systemReduceMotion,
-                    videoSharedTransitionDurationMillis =
-                        effectiveVideoCardTransitionDurationMillis,
-                    videoCardClock = videoCardTransitionClock,
-                    sourceMetadata = navigation3SourceMetadata,
                     programmaticBackDispatcher = navigation3ProgrammaticBackDispatcher,
-                    // 来源卡内容进入飞行 shared-bounds 壳，在后段由播放器/详情信息
-                    // 形变为封面、标题和统计；不能把完整源卡留在列表原位直接揭示。
-                    preferWholeCardReturn = false,
                     onBack = { performSystemBackAction() },
-                    onPrepareVideoCardSharedReturn = {
-                        // 普通返回(顶部按钮/系统手势提交)兜底预热。
-                        maybePrefetchHomeCoversForVideoReturn()
-                        val previousKey =
-                            navigation3BackStack.getOrNull(navigation3BackStack.lastIndex - 1)
-                        markNavigation3VideoReturnBeforeBackAction(targetKey = previousKey)
-                        navigation3ReturnSession.isQuickReturnFromDetail
-                    },
-                    onRelatedVideoDetailReturned = {
-                        navigation3ReturnSession =
-                            navigation3ReturnSession.restorePreviousVideoSourceAfterRelatedReturn()
-                        CardPositionManager.restoreVideoSourceKey(
-                            navigation3ReturnSession.lastVideoSourceKey
-                        )
-                    },
                     modifier = Modifier.fillMaxSize(),
                 ) { key ->
                     navigation3SaveableStateHolder.SaveableStateProvider(
                         key = resolveNavigation3SaveableStateKey(key)
                     ) {
-                        VideoCardTransitionBackgroundRouteContent(key) {
-                            RenderNavigationContent(key)
-                        }
+                        RenderNavigationContent(key)
                     }
                 }
                 }
