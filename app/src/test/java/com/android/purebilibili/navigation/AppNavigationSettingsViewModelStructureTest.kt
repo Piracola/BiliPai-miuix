@@ -15,7 +15,6 @@ class AppNavigationSettingsViewModelStructureTest {
         listOf(
             "SettingsScreen",
             "AppearanceSettingsScreen",
-            "IconSettingsScreen",
             "AnimationSettingsScreen",
             "PlaybackSettingsScreen",
         ).forEach { screen ->

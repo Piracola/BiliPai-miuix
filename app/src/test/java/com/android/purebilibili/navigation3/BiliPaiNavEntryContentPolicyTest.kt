@@ -54,7 +54,6 @@ class BiliPaiNavEntryContentPolicyTest {
         assertEquals(BiliPaiNavEntryContentRole.OPEN_SOURCE_LICENSES, resolveBiliPaiNavEntryContentRole(BiliPaiNavKey.OpenSourceLicenses))
         assertEquals(BiliPaiNavEntryContentRole.APPEARANCE_SETTINGS, resolveBiliPaiNavEntryContentRole(BiliPaiNavKey.AppearanceSettings))
         assertEquals(BiliPaiNavEntryContentRole.HOME_SETTINGS, resolveBiliPaiNavEntryContentRole(BiliPaiNavKey.HomeSettings))
-        assertEquals(BiliPaiNavEntryContentRole.ICON_SETTINGS, resolveBiliPaiNavEntryContentRole(BiliPaiNavKey.IconSettings))
         assertEquals(BiliPaiNavEntryContentRole.ANIMATION_SETTINGS, resolveBiliPaiNavEntryContentRole(BiliPaiNavKey.AnimationSettings))
         assertEquals(BiliPaiNavEntryContentRole.PLAYBACK_SETTINGS, resolveBiliPaiNavEntryContentRole(BiliPaiNavKey.PlaybackSettings))
         assertEquals(BiliPaiNavEntryContentRole.PERMISSION_SETTINGS, resolveBiliPaiNavEntryContentRole(BiliPaiNavKey.PermissionSettings))
@@ -62,7 +61,6 @@ class BiliPaiNavEntryContentPolicyTest {
         assertEquals(BiliPaiNavEntryContentRole.BOTTOM_BAR_SETTINGS, resolveBiliPaiNavEntryContentRole(BiliPaiNavKey.BottomBarSettings))
         assertEquals(BiliPaiNavEntryContentRole.SETTINGS_SHARE, resolveBiliPaiNavEntryContentRole(BiliPaiNavKey.SettingsShare))
         assertEquals(BiliPaiNavEntryContentRole.WEB_DAV_BACKUP, resolveBiliPaiNavEntryContentRole(BiliPaiNavKey.WebDavBackup))
-        assertEquals(BiliPaiNavEntryContentRole.TIPS_SETTINGS, resolveBiliPaiNavEntryContentRole(BiliPaiNavKey.TipsSettings))
     }
 
     @Test

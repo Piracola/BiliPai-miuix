@@ -71,10 +71,6 @@ class SettingsRootCategoryPolicyTest {
         )
         assertEquals(
             SettingsRootCategory.SYSTEM_ABOUT,
-            resolveSettingsRootCategoryForSearchTarget(SettingsSearchTarget.TIPS),
-        )
-        assertEquals(
-            SettingsRootCategory.SYSTEM_ABOUT,
             resolveSettingsRootCategoryForSearchTarget(SettingsSearchTarget.EXPORT_LOGS),
         )
     }

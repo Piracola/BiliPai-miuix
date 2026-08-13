@@ -258,18 +258,6 @@ class SettingsRootCategoryContentStructureTest {
     }
 
     @Test
-    fun tipsSettingsScreen_usesSharedPageScaffold() {
-        val source = listOf(
-            File("app/src/main/java/com/android/purebilibili/feature/settings/screen/TipsSettingsScreen.kt"),
-            File("src/main/java/com/android/purebilibili/feature/settings/screen/TipsSettingsScreen.kt")
-        ).first { it.exists() }.readText().replace("\r\n", "\n")
-
-        assertTrue(source.contains("SettingsPageScaffold("))
-        assertFalse(source.contains("SettingsLargeTitleHeader("))
-        assertFalse(source.contains("AppScaffold("))
-    }
-
-    @Test
     fun aboutSupport_keepsReleaseChannelBelowAboutDetailsWithoutDuplicateAuthorCard() {
         val source = listOf(
             File("app/src/main/java/com/android/purebilibili/feature/settings/ui/SettingsSections.kt"),

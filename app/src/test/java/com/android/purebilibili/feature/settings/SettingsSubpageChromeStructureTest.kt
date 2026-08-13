@@ -9,13 +9,11 @@ class SettingsSubpageChromeStructureTest {
 
     private val settingsPageScaffoldScreens = listOf(
         "app/src/main/java/com/android/purebilibili/feature/settings/screen/PermissionSettingsScreen.kt",
-        "app/src/main/java/com/android/purebilibili/feature/settings/screen/TipsSettingsScreen.kt",
         "app/src/main/java/com/android/purebilibili/feature/settings/screen/PlaybackSettingsScreen.kt",
         "app/src/main/java/com/android/purebilibili/feature/settings/screen/AppearanceSettingsScreen.kt",
         "app/src/main/java/com/android/purebilibili/feature/settings/screen/AnimationSettingsScreen.kt",
         "app/src/main/java/com/android/purebilibili/feature/settings/screen/BottomBarSettingsScreen.kt",
         "app/src/main/java/com/android/purebilibili/feature/settings/screen/PluginsScreen.kt",
-        "app/src/main/java/com/android/purebilibili/feature/settings/screen/IconSettingsScreen.kt",
         "app/src/main/java/com/android/purebilibili/feature/settings/screen/BlockedListScreen.kt",
         "app/src/main/java/com/android/purebilibili/feature/settings/screen/JsonPluginEditorScreen.kt",
         "app/src/main/java/com/android/purebilibili/feature/settings/screen/OpenSourceLicensesScreen.kt",

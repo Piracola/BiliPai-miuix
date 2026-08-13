@@ -253,7 +253,6 @@ internal data class SettingsRootCategoryState(
     val customImageSavePath: String?,
     val cacheSize: String,
     val versionName: String,
-    val appIcon: String,
     val updateStatusText: String,
     val isCheckingUpdate: Boolean,
     val autoCheckUpdateEnabled: Boolean,
@@ -1039,7 +1038,6 @@ internal fun SettingsRootCategoryContent(
                     SettingsDetailGroup(title = "关于与发布") {
                         AboutSection(
                             versionName = state.versionName,
-                            appIconKey = state.appIcon,
                             onLicenseClick = actions.onLicenseClick,
                             onGithubClick = actions.onGithubClick,
                             onVerificationClick = actions.onVerificationClick,
@@ -1805,7 +1803,6 @@ fun DeveloperSection(
 @Composable
 fun AboutSection(
     versionName: String,
-    appIconKey: String,
     onLicenseClick: () -> Unit,
     onGithubClick: () -> Unit,
     onVerificationClick: () -> Unit,

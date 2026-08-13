@@ -31,14 +31,12 @@ class SettingsScreenTokenAdoptionTest {
         "src/main/java/com/android/purebilibili/feature/settings/screen/AppearanceSettingsScreen.kt",
         "src/main/java/com/android/purebilibili/feature/settings/screen/BottomBarSettingsScreen.kt",
         "src/main/java/com/android/purebilibili/feature/settings/screen/BlockedListScreen.kt",
-        "src/main/java/com/android/purebilibili/feature/settings/screen/IconSettingsScreen.kt",
         "src/main/java/com/android/purebilibili/feature/settings/screen/JsonPluginEditorScreen.kt",
         "src/main/java/com/android/purebilibili/feature/settings/screen/OpenSourceLicensesScreen.kt",
         "src/main/java/com/android/purebilibili/feature/settings/screen/PermissionSettingsScreen.kt",
         "src/main/java/com/android/purebilibili/feature/settings/screen/PlaybackSettingsScreen.kt",
         "src/main/java/com/android/purebilibili/feature/settings/screen/SettingsScreen.kt",
         "src/main/java/com/android/purebilibili/feature/settings/screen/SettingsTabletShell.kt",
-        "src/main/java/com/android/purebilibili/feature/settings/screen/TipsSettingsScreen.kt",
         "src/main/java/com/android/purebilibili/feature/settings/ui/SettingsComponents.kt",
         "src/main/java/com/android/purebilibili/feature/settings/ui/SettingsSections.kt"
     )
