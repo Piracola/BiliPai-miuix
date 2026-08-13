@@ -1697,21 +1697,6 @@ class VideoPlayerSectionPolicyTest {
     }
 
     @Test
-    fun videoOutputRouter_doesNotOwnSteadyStateDirectPlayerBinding() {
-        val routerSource = listOf(
-            File("app/src/main/java/com/android/purebilibili/feature/video/ui/section/VideoOutputRouter.kt"),
-            File("src/main/java/com/android/purebilibili/feature/video/ui/section/VideoOutputRouter.kt")
-        ).first { it.exists() }.readText()
-        val releaseBlock = routerSource.substringAfter("fun release()")
-            .substringBefore("private fun applyRoute()")
-        val directRouteBlock = routerSource.substringAfter("val wasUsingAnime4K")
-
-        assertFalse(releaseBlock.contains(".player = null"))
-        assertFalse(directRouteBlock.contains("view.player = player"))
-        assertTrue(directRouteBlock.contains("if (wasUsingAnime4K && shouldBindDirectPlayerView)"))
-    }
-
-    @Test
     fun playerReplacement_doesNotRestartActivityLifecycleRecovery() {
         val lifecycleBlock = loadVideoPlayerSectionSource()
             .substringAfter("// Activity 生命周期监听必须只跟随 LifecycleOwner")

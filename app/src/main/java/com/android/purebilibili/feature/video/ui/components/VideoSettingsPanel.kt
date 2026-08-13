@@ -54,10 +54,6 @@ import com.android.purebilibili.core.ui.components.AppSwitchPreference
 import com.android.purebilibili.core.ui.components.formatDefaultPlaybackSpeed
 import com.android.purebilibili.data.model.response.AiAudioInfo
 import com.android.purebilibili.feature.plugin.CdnLineDiagnostic
-import com.android.purebilibili.feature.anime4k.Anime4KBypassReason
-import com.android.purebilibili.feature.anime4k.Anime4KPreset
-import com.android.purebilibili.feature.anime4k.DEFAULT_FSR_SHARPNESS
-import com.android.purebilibili.feature.anime4k.VideoEnhancementAlgorithm
 import com.android.purebilibili.feature.video.playback.audio.AudioQualityOption
 import com.android.purebilibili.core.ui.AppSurfaceTokens
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -200,16 +196,6 @@ fun VideoSettingsPanel(
     currentAudioQuality: Int = -1,
     availableAudioQualities: List<AudioQualityOption> = emptyList(),
     onAudioQualityChange: (Int) -> Unit = {},
-    anime4kEnabled: Boolean = false,
-    anime4kAvailable: Boolean = false,
-    anime4kBypassReason: Anime4KBypassReason = Anime4KBypassReason.DISABLED,
-    videoEnhancementAlgorithm: VideoEnhancementAlgorithm = VideoEnhancementAlgorithm.ANIME4K,
-    anime4kPreset: Anime4KPreset = Anime4KPreset.FAST,
-    fsrSharpness: Float = DEFAULT_FSR_SHARPNESS,
-    onAnime4kToggle: (Boolean) -> Unit = {},
-    onVideoEnhancementAlgorithmChange: (VideoEnhancementAlgorithm) -> Unit = {},
-    onAnime4kPresetChange: (Anime4KPreset) -> Unit = {},
-    onFsrSharpnessChange: (Float) -> Unit = {},
     // [New] 音频语言 (AI Translation)
     aiAudioInfo: AiAudioInfo? = null,
     currentAudioLang: String? = null,
@@ -350,49 +336,6 @@ fun VideoSettingsPanel(
                         onDismiss()
                     }
                 )
-                SettingsDivider()
-            }
-
-            item {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    VideoSettingsSwitchRow(
-                        icon = qualityIcon,
-                        title = "画质增强",
-                        subtitle = resolveAnime4KSettingsSubtitle(
-                            enabled = anime4kEnabled,
-                            available = anime4kAvailable,
-                            bypassReason = anime4kBypassReason
-                        ),
-                        checked = anime4kEnabled && anime4kAvailable,
-                        onCheckedChange = { enabled ->
-                            if (anime4kAvailable) onAnime4kToggle(enabled)
-                        }
-                    )
-                    AnimatedVisibility(
-                        visible = anime4kEnabled && anime4kAvailable
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            VideoEnhancementAlgorithmOptions(
-                                algorithm = videoEnhancementAlgorithm,
-                                onAlgorithmChange = onVideoEnhancementAlgorithmChange
-                            )
-                            if (videoEnhancementAlgorithm == VideoEnhancementAlgorithm.ANIME4K) {
-                                Anime4KPresetOptions(
-                                    preset = anime4kPreset,
-                                    onPresetChange = onAnime4kPresetChange
-                                )
-                            } else {
-                                FsrSharpnessOptions(
-                                    sharpness = fsrSharpness,
-                                    onSharpnessChange = onFsrSharpnessChange
-                                )
-                            }
-                        }
-                    }
-                }
                 SettingsDivider()
             }
 

@@ -36,7 +36,6 @@ import com.android.purebilibili.feature.settings.applyAppLanguage
 import com.android.purebilibili.feature.settings.AppThemeMode
 import com.android.purebilibili.feature.settings.resolveThemeModePreference
 import com.android.purebilibili.feature.plugin.AdFilterPlugin
-import com.android.purebilibili.feature.plugin.Anime4KPlugin
 import com.android.purebilibili.feature.plugin.CdnRegionPlugin
 import com.android.purebilibili.feature.plugin.DanmakuEnhancePlugin
 import com.android.purebilibili.feature.plugin.EyeProtectionPlugin
@@ -194,7 +193,6 @@ class PureApplication : Application(), ImageLoaderFactory, ComponentCallbacks2 {
         PluginManager.initialize(this)
         PluginManager.register(SponsorBlockPlugin())
         PluginManager.register(AdFilterPlugin())
-        PluginManager.register(Anime4KPlugin())
         PluginManager.register(DanmakuEnhancePlugin())
         PluginManager.register(EyeProtectionPlugin())
         PluginManager.register(TodayWatchPlugin())

@@ -41,7 +41,6 @@ import com.android.purebilibili.feature.video.ui.components.resolveSafeVideoAspe
 import com.android.purebilibili.feature.video.ui.components.resolveVideoViewportLayout
 import com.android.purebilibili.feature.video.ui.components.schedulePlayerViewViewportRefresh
 import com.android.purebilibili.feature.video.ui.components.shouldUseFillMaxPlayerViewport
-import com.android.purebilibili.feature.video.ui.components.toAnime4KDisplayScaleMode
 import com.android.purebilibili.feature.video.ui.components.toFullscreenAspectRatio
 import com.android.purebilibili.feature.video.ui.components.toVideoAspectRatio
 import com.android.purebilibili.feature.video.ui.gesture.GestureLevelOverlayHost
@@ -69,7 +68,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.view.LayoutInflater
-import android.view.Surface
 import android.view.SurfaceView
 import android.view.TextureView
 import android.view.View
@@ -148,7 +146,6 @@ import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.VideoSize
 import androidx.media3.ui.PlayerView
 import com.android.purebilibili.core.store.FullscreenAspectRatio
-import com.android.purebilibili.core.plugin.PluginManager
 import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.ui.rememberAppPlayerChromeProfile
 import com.android.purebilibili.core.ui.performance.TrackJankStateFlag
@@ -168,15 +165,6 @@ import com.android.purebilibili.core.util.HapticType
 import com.android.purebilibili.core.util.Logger
 import com.android.purebilibili.core.util.rememberHapticFeedback
 import com.android.purebilibili.feature.screenshot.AppScreenshotGestureBlockState
-import com.android.purebilibili.feature.anime4k.Anime4KConfig
-import com.android.purebilibili.feature.anime4k.Anime4KBypassReason
-import com.android.purebilibili.feature.anime4k.ANIME4K_FIRST_FRAME_FALLBACK_TIMEOUT_MS
-import com.android.purebilibili.feature.anime4k.isAnime4KGles3Available
-import com.android.purebilibili.feature.anime4k.resolveInitialVideoEnhancementEnabled
-import com.android.purebilibili.feature.anime4k.resolveAnime4KOutputDecision
-import com.android.purebilibili.feature.anime4k.shouldFallbackAnime4KBeforeFirstFrame
-import com.android.purebilibili.feature.anime4k.gl.Anime4KGLSurfaceView
-import com.android.purebilibili.feature.plugin.Anime4KPlugin
 import com.android.purebilibili.feature.video.subtitle.SubtitleDisplayMode
 import com.android.purebilibili.feature.video.subtitle.SubtitleAutoPreference
 import com.android.purebilibili.feature.video.subtitle.buildSubtitleTrackOptions
@@ -542,67 +530,10 @@ fun VideoPlayerSection(
     val lifecycleOwner = LocalLifecycleOwner.current
     val lifecycleState by lifecycleOwner.lifecycle.currentStateAsState()
     val hostLifecycleStarted = lifecycleState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)
-    val registeredPlugins by PluginManager.pluginsFlow.collectAsStateWithLifecycle()
-    val anime4kPluginInfo = registeredPlugins.firstOrNull { it.plugin.id == Anime4KPlugin.PLUGIN_ID }
-    val anime4kPlugin = anime4kPluginInfo?.plugin as? Anime4KPlugin
-    val anime4kConfig = if (anime4kPlugin == null) {
-        Anime4KConfig()
-    } else {
-        anime4kPlugin.configState.collectAsStateWithLifecycle().value
-    }
     val videoInputFormat by playerState.videoInputFormat.collectAsStateWithLifecycle()
-    val anime4kGlesAvailable = remember(context) { isAnime4KGles3Available(context) }
-    var anime4kPipelineFailed by remember(playerState.player) { mutableStateOf(false) }
-    var anime4kInputSurface by remember(playerState.player) { mutableStateOf<Surface?>(null) }
-    var anime4kDisplayedFirstFrame by remember(bvid, playerState.player) { mutableStateOf(false) }
-    var anime4kSurfaceViewRef by remember(playerState.player) { mutableStateOf<Anime4KGLSurfaceView?>(null) }
-    var videoEnhancementSessionOverride by remember(bvid, playerState.player) {
-        mutableStateOf<Boolean?>(null)
-    }
-    val videoEnhancementSessionRequested = videoEnhancementSessionOverride
-        ?: resolveInitialVideoEnhancementEnabled(
-            pluginEnabled = anime4kPluginInfo?.enabled == true,
-            config = anime4kConfig
-        )
-    val videoEnhancementEnabled = anime4kPluginInfo?.enabled == true &&
-        videoEnhancementSessionRequested
-    LaunchedEffect(anime4kConfig.algorithm) {
-        anime4kPipelineFailed = false
-    }
-    val anime4kOutputDecision = remember(
-        videoEnhancementEnabled,
-        anime4kGlesAvailable,
-        anime4kPipelineFailed,
-        videoInputFormat,
-        isInPipMode,
-        isAudioOnly,
-        lifecycleState
-    ) {
-        resolveAnime4KOutputDecision(
-            pluginEnabled = videoEnhancementEnabled,
-            glAvailable = anime4kGlesAvailable && !anime4kPipelineFailed,
-            colorTransfer = videoInputFormat?.colorInfo?.colorTransfer ?: 0,
-            sampleMimeType = videoInputFormat?.sampleMimeType,
-            isInPipMode = isInPipMode,
-            isAudioOnly = isAudioOnly,
-            hostLifecycleStarted = lifecycleState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)
-        )
-    }
-    val shouldUseAnime4kPipeline = anime4kOutputDecision.shouldUsePipeline
-    val anime4kBypassReason = anime4kOutputDecision.bypassReason
-    val latestAnime4kPipelineRequested by rememberUpdatedState(shouldUseAnime4kPipeline)
-    val latestAnime4kDisplayedFirstFrame by rememberUpdatedState(anime4kDisplayedFirstFrame)
     val videoOutputRouter = remember(playerState.player) { VideoOutputRouter(playerState.player) }
     DisposableEffect(videoOutputRouter) {
         onDispose { videoOutputRouter.release() }
-    }
-    LaunchedEffect(hostLifecycleStarted, shouldUseAnime4kPipeline, anime4kSurfaceViewRef) {
-        val surfaceView = anime4kSurfaceViewRef ?: return@LaunchedEffect
-        if (shouldUseAnime4kPipeline && hostLifecycleStarted) {
-            surfaceView.onResume()
-        } else {
-            surfaceView.onPause()
-        }
     }
     val configuration = LocalConfiguration.current
     val uiLayoutWidthDp = remember(configuration.screenWidthDp, viewportWidthDpOverride) {
@@ -1131,61 +1062,17 @@ fun VideoPlayerSection(
             liveBackPreview = liveBackPreview
         )
     }
-    val anime4kSurfaceReady = shouldUseAnime4kPipeline && anime4kInputSurface != null
-    val anime4kFrameVisible = anime4kSurfaceReady && anime4kDisplayedFirstFrame
-    val shouldBindDirectPlayerView = shouldBindInlinePlayerView && !anime4kSurfaceReady
     // In-page collection switches replace the player/router while reusing the same PlayerView.
     // Key the effect by the router so the new player always receives the existing video surface.
     LaunchedEffect(
         videoOutputRouter,
         playerViewRef,
-        anime4kInputSurface,
-        shouldBindInlinePlayerView,
-        shouldUseAnime4kPipeline
+        shouldBindInlinePlayerView
     ) {
         videoOutputRouter.update(
             playerView = playerViewRef,
-            inputSurface = anime4kInputSurface,
-            shouldBindDirectPlayerView = shouldBindInlinePlayerView,
-            shouldUseAnime4K = shouldUseAnime4kPipeline
+            shouldBindDirectPlayerView = shouldBindInlinePlayerView
         )
-    }
-    LaunchedEffect(playerState.player, anime4kSurfaceReady, shouldUseAnime4kPipeline) {
-        if (!anime4kSurfaceReady || !shouldUseAnime4kPipeline) return@LaunchedEffect
-        var playbackIntentStartedAtMs: Long? = null
-        while (isActive && shouldUseAnime4kPipeline && !anime4kDisplayedFirstFrame) {
-            delay(120L)
-            val player = playerState.player
-            val hasPlaybackIntent = player.playWhenReady && player.mediaItemCount > 0
-            if (!hasPlaybackIntent) {
-                playbackIntentStartedAtMs = null
-                continue
-            }
-            val nowMs = android.os.SystemClock.elapsedRealtime()
-            val startedAtMs = playbackIntentStartedAtMs ?: nowMs.also {
-                playbackIntentStartedAtMs = it
-            }
-            val elapsedMs = nowMs - startedAtMs
-            if (
-                shouldFallbackAnime4KBeforeFirstFrame(
-                    pipelineRequested = shouldUseAnime4kPipeline,
-                    inputSurfaceReady = anime4kInputSurface != null,
-                    displayedFirstFrame = anime4kDisplayedFirstFrame,
-                    playWhenReady = player.playWhenReady,
-                    mediaItemCount = player.mediaItemCount,
-                    elapsedMs = elapsedMs,
-                )
-            ) {
-                Logger.w(
-                    "VideoPlayerSection",
-                    "Anime4K first frame timed out after ${ANIME4K_FIRST_FRAME_FALLBACK_TIMEOUT_MS}ms; " +
-                        "falling back to direct PlayerView output for bvid=$bvid"
-                )
-                anime4kPipelineFailed = true
-                anime4kInputSurface = null
-                break
-            }
-        }
     }
 
     // 进度手势相关状态
@@ -2607,9 +2494,7 @@ fun VideoPlayerSection(
             val player = playerState.player
             videoOutputRouter.update(
                 playerView = playerViewRef,
-                inputSurface = anime4kInputSurface,
-                shouldBindDirectPlayerView = shouldBindInlinePlayerView,
-                shouldUseAnime4K = shouldUseAnime4kPipeline
+                shouldBindDirectPlayerView = shouldBindInlinePlayerView
             )
             videoOutputRouter.rebindDirectSurfaceIfNeeded()
             if (
@@ -3052,7 +2937,6 @@ fun VideoPlayerSection(
 
         // 1. PlayerView (底层) - key 触发 graphicsLayer 强制更新
         //  [修复] 添加 isPortraitFullscreen 到 key，确保从全屏返回时重建 PlayerView 并重新绑定 Surface (解决黑屏问题)
-        // Anime4K 只切换输出 Surface，不能作为 key 重建 PlayerView，否则会触发播放器恢复路径并丢失进度。
         // HDR/Dolby 必须 SurfaceView：升级到 125/126 后重建 PlayerView 才能把色彩元数据送到屏幕。
         val currentQualityId =
             (uiState as? VideoPlaybackUiState.Success)?.currentQuality ?: 0
@@ -3119,9 +3003,9 @@ fun VideoPlayerSection(
                         }
                         basePlayerView.apply {
                             playerViewRef = this
-                            // 普通直出同步绑定 PlayerView；Anime4K 仅在输入 Surface 就绪后接管。
+                            // 普通直出同步绑定 PlayerView。
                             // 合集换片会替换 Player，不能等待后续 effect 才补绑，否则解码器可能无输出窗口。
-                            player = if (shouldBindDirectPlayerView) playerState.player else null
+                            player = if (shouldBindInlinePlayerView) playerState.player else null
                             setKeepContentOnPlayerReset(
                                 shouldKeepInlinePlayerContentOnReset(
                                     isPortraitFullscreen = isPortraitFullscreen,
@@ -3140,7 +3024,7 @@ fun VideoPlayerSection(
                                 resizeMode = targetResizeMode,
                                 forceRelayout = false,
                             )
-                            visibility = if (!anime4kFrameVisible && shouldShowInlinePlayerView(
+                            visibility = if (shouldShowInlinePlayerView(
                                     isPortraitFullscreen = isPortraitFullscreen,
                                     forceCoverDuringReturnAnimation = forceCoverDuringReturnAnimation,
                                     shouldKeepCoverForManualStart = keepCoverForManualStart
@@ -3154,7 +3038,7 @@ fun VideoPlayerSection(
                     },
                     update = { playerView ->
                         playerViewRef = playerView
-                        playerView.player = if (shouldBindDirectPlayerView) playerState.player else null
+                        playerView.player = if (shouldBindInlinePlayerView) playerState.player else null
                         playerView.setKeepContentOnPlayerReset(
                             shouldKeepInlinePlayerContentOnReset(
                                 isPortraitFullscreen = isPortraitFullscreen,
@@ -3168,7 +3052,7 @@ fun VideoPlayerSection(
                             forceRelayout = false,
                         )
                         playerView.keepScreenOn = keepVideoPlaybackAwake
-                        playerView.visibility = if (!anime4kFrameVisible && shouldShowInlinePlayerView(
+                        playerView.visibility = if (shouldShowInlinePlayerView(
                                 isPortraitFullscreen = isPortraitFullscreen,
                                 forceCoverDuringReturnAnimation = forceCoverDuringReturnAnimation,
                                 shouldKeepCoverForManualStart = keepCoverForManualStart
@@ -3202,83 +3086,14 @@ fun VideoPlayerSection(
                     }
                 )
 
-                if (shouldUseAnime4kPipeline) {
-                    AndroidView(
-                        factory = { ctx ->
-                            Anime4KGLSurfaceView(ctx, initialConfig = anime4kConfig).apply {
-                                anime4kSurfaceViewRef = this
-                                onInputSurfaceChanged = { surface ->
-                                    anime4kInputSurface = surface
-                                    if (surface == null) anime4kDisplayedFirstFrame = false
-                                }
-                                onFirstFrameRendered = {
-                                    anime4kDisplayedFirstFrame = true
-                                }
-                                onPipelineError = { error ->
-                                    Logger.e("VideoPlayerSection", "Anime4K 管线不可用，已回退原始视频输出", error)
-                                    anime4kPipelineFailed = true
-                                    anime4kInputSurface = null
-                                }
-                                updateConfig(anime4kConfig)
-                                updateInputSize(videoSizeState.first, videoSizeState.second)
-                                updateFlip(isFlippedHorizontal, isFlippedVertical)
-                                updateDisplayScaleMode(viewportAspectRatio.toAnime4KDisplayScaleMode())
-                                visibility = View.VISIBLE
-                            }
-                        },
-                        update = { surfaceView ->
-                            anime4kSurfaceViewRef = surfaceView
-                            surfaceView.onInputSurfaceChanged = { surface ->
-                                anime4kInputSurface = surface
-                                if (surface == null) anime4kDisplayedFirstFrame = false
-                            }
-                            surfaceView.onFirstFrameRendered = {
-                                anime4kDisplayedFirstFrame = true
-                            }
-                            surfaceView.onPipelineError = { error ->
-                                Logger.e("VideoPlayerSection", "Anime4K 管线不可用，已回退原始视频输出", error)
-                                anime4kPipelineFailed = true
-                                anime4kInputSurface = null
-                            }
-                            surfaceView.updateConfig(anime4kConfig)
-                            surfaceView.updateInputSize(videoSizeState.first, videoSizeState.second)
-                            surfaceView.updateFlip(isFlippedHorizontal, isFlippedVertical)
-                            surfaceView.updateDisplayScaleMode(viewportAspectRatio.toAnime4KDisplayScaleMode())
-                            surfaceView.visibility = View.VISIBLE
-                        },
-                        modifier = with(density) {
-                            Modifier
-                                .size(
-                                    width = viewportLayout.width.toDp(),
-                                    height = viewportLayout.height.toDp()
-                                )
-                                .alpha(playerSurfaceAlpha)
-                                .graphicsLayer {
-                                    val revealAwareScale = scale * playerSurfaceScale
-                                    scaleX = revealAwareScale
-                                    scaleY = revealAwareScale
-                                    translationX = panX
-                                    translationY = panY
-                                }
-                        }
-                    )
-                }
             }
         }
 
-        LaunchedEffect(anime4kSurfaceReady, anime4kDisplayedFirstFrame) {
-            if (anime4kSurfaceReady && anime4kDisplayedFirstFrame) {
-                isFirstFrameRendered = true
-            }
-        }
-        
         DisposableEffect(playerState.player) {
             val listener = object : Player.Listener {
                 override fun onRenderedFirstFrame() {
                 android.util.Log.d("VideoPlayerCover", "🎬 onRenderedFirstFrame triggered")
-                if (!latestAnime4kPipelineRequested || latestAnime4kDisplayedFirstFrame) {
-                    isFirstFrameRendered = true
-                }
+                isFirstFrameRendered = true
                 if (!hasRenderedFirstFrameSinceForegroundRecovery) {
                     hasRenderedFirstFrameSinceForegroundRecovery = true
                     val costMs = (android.os.SystemClock.elapsedRealtime() - foregroundRecoveryStartedAtMs)
@@ -3294,9 +3109,7 @@ fun VideoPlayerSection(
             override fun onEvents(player: Player, events: Player.Events) {
                 if (events.contains(Player.EVENT_RENDERED_FIRST_FRAME)) {
                     android.util.Log.d("VideoPlayerCover", "🎬 EVENT_RENDERED_FIRST_FRAME triggered")
-                    if (!latestAnime4kPipelineRequested || latestAnime4kDisplayedFirstFrame) {
-                        isFirstFrameRendered = true
-                    }
+                    isFirstFrameRendered = true
                     if (!hasRenderedFirstFrameSinceForegroundRecovery) {
                         hasRenderedFirstFrameSinceForegroundRecovery = true
                         val costMs = (android.os.SystemClock.elapsedRealtime() - foregroundRecoveryStartedAtMs)
@@ -5174,31 +4987,6 @@ fun VideoPlayerSection(
                 selectedAudioQuality = uiState.selectedAudioQuality,
                 availableAudioQualities = uiState.availableAudioQualities,
                 onAudioQualityChange = onAudioQualityChange,
-                anime4kEnabled = videoEnhancementEnabled,
-                anime4kAvailable = anime4kGlesAvailable,
-                anime4kBypassReason = anime4kBypassReason,
-                videoEnhancementAlgorithm = anime4kConfig.algorithm,
-                anime4kPreset = anime4kConfig.preset,
-                fsrSharpness = anime4kConfig.fsrSharpness,
-                onAnime4kToggle = { enabled ->
-                    anime4kPipelineFailed = false
-                    videoEnhancementSessionOverride = enabled
-                    settingsScope.launch {
-                        if (enabled && anime4kPluginInfo?.enabled != true) {
-                            PluginManager.setEnabled(Anime4KPlugin.PLUGIN_ID, true)
-                        }
-                        Anime4KPlugin.getInstance()?.rememberCurrentVideoEnabled(enabled)
-                    }
-                },
-                onVideoEnhancementAlgorithmChange = { algorithm ->
-                    anime4kPlugin?.setAlgorithm(algorithm)
-                },
-                onAnime4kPresetChange = { preset ->
-                    anime4kPlugin?.setPreset(preset)
-                },
-                onFsrSharpnessChange = { sharpness ->
-                    anime4kPlugin?.setFsrSharpness(sharpness)
-                },
                 // [New] AI Audio
                 aiAudioInfo = uiState.aiAudio,
                 currentAudioLang = uiState.currentAudioLang,
@@ -5311,13 +5099,9 @@ fun VideoPlayerSection(
 
 
 
-    // [新增] 返回时的触感反馈
-    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
-    val hapticScope = rememberCoroutineScope()
-
     // 拦截系统返回事件 (仅在全屏时拦截以处理退出全屏，否则交给系统处理预测性返回)
     BackHandler(enabled = !isScreenLocked && isFullscreen) {
         onToggleFullscreen()
     }
-    }
+}
 }

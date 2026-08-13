@@ -70,11 +70,6 @@ import com.android.purebilibili.feature.video.subtitle.SubtitleTrackOption
 import com.android.purebilibili.feature.video.subtitle.resolveSubtitleDisplayOptions
 import com.android.purebilibili.feature.video.playback.policy.resolveDisplayedPlaybackTransitionPosition
 import com.android.purebilibili.core.store.PlayerProgressPlacement
-import com.android.purebilibili.feature.anime4k.Anime4KPreset
-import com.android.purebilibili.feature.anime4k.DEFAULT_FSR_SHARPNESS
-import com.android.purebilibili.feature.anime4k.FSR_SHARPNESS_SLIDER_STEPS
-import com.android.purebilibili.feature.anime4k.VideoEnhancementAlgorithm
-import com.android.purebilibili.feature.anime4k.resolveAnime4KPresetLabel
 import kotlin.math.roundToInt
 import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.ContainerLevel
@@ -279,16 +274,14 @@ internal fun shouldShowMoreActionsButtonInControlBar(
     showNextEpisodeButton: Boolean,
     showPlaybackOrderLabel: Boolean,
     showAspectRatioButton: Boolean,
-    showPortraitSwitchButton: Boolean,
-    showAnime4KToggle: Boolean = false
+    showPortraitSwitchButton: Boolean
 ): Boolean {
     return isFullscreen && (
         showEpisodeInMoreActions ||
             showNextEpisodeButton ||
             showPlaybackOrderLabel ||
             showAspectRatioButton ||
-            showPortraitSwitchButton ||
-            showAnime4KToggle
+            showPortraitSwitchButton
         )
 }
 
@@ -403,15 +396,6 @@ fun BottomControlBar(
     isLoggedIn: Boolean = true,
     subtitleControlState: SubtitleControlUiState = SubtitleControlUiState(),
     subtitleControlCallbacks: SubtitleControlCallbacks = SubtitleControlCallbacks(),
-    anime4kEnabled: Boolean = false,
-    anime4kAvailable: Boolean = false,
-    videoEnhancementAlgorithm: VideoEnhancementAlgorithm = VideoEnhancementAlgorithm.ANIME4K,
-    anime4kPreset: Anime4KPreset = Anime4KPreset.FAST,
-    fsrSharpness: Float = DEFAULT_FSR_SHARPNESS,
-    onAnime4kToggle: (Boolean) -> Unit = {},
-    onVideoEnhancementAlgorithmChange: (VideoEnhancementAlgorithm) -> Unit = {},
-    onAnime4kPresetChange: (Anime4KPreset) -> Unit = {},
-    onFsrSharpnessChange: (Float) -> Unit = {},
     
     // Quality
     currentAudioQualityLabel: String = "音质",
@@ -497,12 +481,6 @@ fun BottomControlBar(
             gapDp = 20
         )
     }
-    val videoEnhancementPanelMaxHeightDp = remember(
-        configuration.screenHeightDp,
-        floatingPanelBottomOffsetDp
-    ) {
-        (configuration.screenHeightDp - floatingPanelBottomOffsetDp - 48).coerceAtLeast(120)
-    }
     val progressLayoutPolicy = remember(configuration.screenWidthDp) {
         resolveVideoProgressBarLayoutPolicy(
             widthDp = configuration.screenWidthDp
@@ -551,8 +529,7 @@ fun BottomControlBar(
     }
     var showMoreActionsPanel by remember { mutableStateOf(false) }
     var showSubtitlePanel by remember { mutableStateOf(false) }
-    var showVideoEnhancementPanel by remember { mutableStateOf(false) }
-    val floatingPanelVisible = showMoreActionsPanel || showSubtitlePanel || showVideoEnhancementPanel
+    val floatingPanelVisible = showMoreActionsPanel || showSubtitlePanel
     val currentFloatingPanelVisibilityCallback = rememberUpdatedState(onFloatingPanelVisibilityChange)
     LaunchedEffect(floatingPanelVisible) {
         currentFloatingPanelVisibilityCallback.value(floatingPanelVisible)
@@ -566,7 +543,6 @@ fun BottomControlBar(
         if (!isFullscreen) {
             showMoreActionsPanel = false
             showSubtitlePanel = false
-            showVideoEnhancementPanel = false
         }
     }
     val showPlaybackOrderLabel = remember(isFullscreen, playbackOrderLabel) {
@@ -603,8 +579,7 @@ fun BottomControlBar(
         showNextEpisodeButton,
         showPlaybackOrderLabel,
         showAspectRatioButton,
-        showPortraitSwitchButton,
-        anime4kAvailable
+        showPortraitSwitchButton
     ) {
         shouldShowMoreActionsButtonInControlBar(
             isFullscreen = isFullscreen,
@@ -612,8 +587,7 @@ fun BottomControlBar(
             showNextEpisodeButton = showNextEpisodeButton,
             showPlaybackOrderLabel = showPlaybackOrderLabel,
             showAspectRatioButton = showAspectRatioButton,
-            showPortraitSwitchButton = showPortraitSwitchButton,
-            showAnime4KToggle = anime4kAvailable
+            showPortraitSwitchButton = showPortraitSwitchButton
         )
     }
     val shouldConsumeFloatingPanelBackground = remember(showSubtitlePanel, showMoreActionsPanel) {
@@ -904,7 +878,6 @@ fun BottomControlBar(
                             showSubtitlePanel = nextShowSubtitlePanel
                             if (nextShowSubtitlePanel) {
                                 showMoreActionsPanel = false
-                                showVideoEnhancementPanel = false
                             }
                         }
                     ) {
@@ -933,7 +906,6 @@ fun BottomControlBar(
                                 showMoreActionsPanel = !showMoreActionsPanel
                                 if (showMoreActionsPanel) {
                                     showSubtitlePanel = false
-                                    showVideoEnhancementPanel = false
                                 }
                             }
                             .padding(
@@ -1152,17 +1124,6 @@ fun BottomControlBar(
                             }
                         )
                     }
-                    if (anime4kAvailable) {
-                        MoreActionTextButton(
-                            label = "画质增强",
-                            highlighted = anime4kEnabled,
-                            minWidthDp = moreActionItemMinWidthDp,
-                            onClick = {
-                                showMoreActionsPanel = false
-                                showVideoEnhancementPanel = true
-                            }
-                        )
-                    }
                     if (
                         com.android.purebilibili.feature.video.ui.components.shouldShowDanmakuSendInMoreActions(
                             isFullscreen = isFullscreen,
@@ -1180,30 +1141,6 @@ fun BottomControlBar(
                     }
                 }
             }
-        }
-    }
-
-    if (showVideoEnhancementPanel && anime4kAvailable) {
-        FloatingControlPanelDialog(
-            onDismissRequest = { showVideoEnhancementPanel = false },
-            panelModifier = Modifier
-                .padding(
-                    end = moreActionsPanelEndPaddingDp.dp,
-                    bottom = floatingPanelBottomOffsetDp.dp
-                )
-        ) {
-            VideoEnhancementSettingsPanel(
-                enabled = anime4kEnabled,
-                algorithm = videoEnhancementAlgorithm,
-                preset = anime4kPreset,
-                fsrSharpness = fsrSharpness,
-                minWidthDp = maxOf(220, floatingPanelMinWidthDp),
-                maxHeightDp = videoEnhancementPanelMaxHeightDp,
-                onCheckedChange = onAnime4kToggle,
-                onAlgorithmChange = onVideoEnhancementAlgorithmChange,
-                onPresetChange = onAnime4kPresetChange,
-                onFsrSharpnessChange = onFsrSharpnessChange
-            )
         }
     }
 }
@@ -1294,183 +1231,6 @@ private fun MoreActionTextButton(
             .clickable(onClick = onClick)
             .padding(horizontal = 10.dp, vertical = 8.dp)
     )
-}
-
-@Composable
-private fun VideoEnhancementSettingsPanel(
-    enabled: Boolean,
-    algorithm: VideoEnhancementAlgorithm,
-    preset: Anime4KPreset,
-    fsrSharpness: Float,
-    minWidthDp: Int,
-    maxHeightDp: Int,
-    onCheckedChange: (Boolean) -> Unit,
-    onAlgorithmChange: (VideoEnhancementAlgorithm) -> Unit,
-    onPresetChange: (Anime4KPreset) -> Unit,
-    onFsrSharpnessChange: (Float) -> Unit
-) {
-    AppSurface(
-        color = Color.Black.copy(alpha = 0.82f),
-        shape = AppShapes.container(ContainerLevel.Card),
-        border = androidx.compose.foundation.BorderStroke(
-            width = 1.dp,
-            color = Color.White.copy(alpha = 0.2f)
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .width(minWidthDp.dp)
-                .heightIn(max = maxHeightDp.dp)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 48.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    AppText(
-                        text = "画质增强",
-                        color = Color.White,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                    AppText(
-                        text = if (enabled) "当前视频已开启" else "当前视频已关闭",
-                        color = Color.White.copy(alpha = 0.68f),
-                        fontSize = 11.sp
-                    )
-                }
-                AppSwitch(
-                    checked = enabled,
-                    onCheckedChange = onCheckedChange
-                )
-            }
-
-            AppHorizontalDivider(color = Color.White.copy(alpha = 0.10f))
-            AppText(
-                text = "增强算法",
-                color = Color.White.copy(alpha = 0.72f),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                VideoEnhancementAlgorithm.entries.forEach { option ->
-                    VideoEnhancementChoice(
-                        label = when (option) {
-                            VideoEnhancementAlgorithm.ANIME4K -> "Anime4K\n动漫"
-                            VideoEnhancementAlgorithm.FSR_1_0 -> "FSR 1.0\n通用"
-                        },
-                        selected = algorithm == option,
-                        modifier = Modifier.weight(1f),
-                        onClick = { onAlgorithmChange(option) }
-                    )
-                }
-            }
-
-            if (algorithm == VideoEnhancementAlgorithm.ANIME4K) {
-                AppHorizontalDivider(color = Color.White.copy(alpha = 0.10f))
-                AppText(
-                    text = "Anime4K 模型",
-                    color = Color.White.copy(alpha = 0.72f),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    listOf(Anime4KPreset.FAST, Anime4KPreset.QUALITY).forEach { option ->
-                        VideoEnhancementChoice(
-                            label = resolveAnime4KPresetLabel(option),
-                            selected = preset == option,
-                            modifier = Modifier.weight(1f),
-                            onClick = { onPresetChange(option) }
-                        )
-                    }
-                }
-            } else {
-                AppHorizontalDivider(color = Color.White.copy(alpha = 0.10f))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 6.dp, vertical = 2.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    AppText(
-                        text = "FSR 锐化",
-                        color = Color.White.copy(alpha = 0.72f),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                    AppText(
-                        text = "${(fsrSharpness.coerceIn(0f, 1f) * 100).roundToInt()}%",
-                        color = Color.White,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-                AppSlider(
-                    value = fsrSharpness.coerceIn(0f, 1f),
-                    onValueChange = onFsrSharpnessChange,
-                    valueRange = 0f..1f,
-                    steps = FSR_SHARPNESS_SLIDER_STEPS,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            AppText(
-                text = "算法与模型会沿用上次选择",
-                color = Color.White.copy(alpha = 0.56f),
-                fontSize = 11.sp,
-                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-            )
-        }
-    }
-}
-
-@Composable
-private fun VideoEnhancementChoice(
-    label: String,
-    selected: Boolean,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = modifier
-            .heightIn(min = 48.dp)
-            .clip(AppShapes.container(ContainerLevel.Field))
-            .background(
-                if (selected) {
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)
-                } else {
-                    Color.White.copy(alpha = 0.06f)
-                }
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 6.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        AppText(
-            text = label,
-            color = if (selected) MaterialTheme.colorScheme.primary else Color.White,
-            textAlign = TextAlign.Center,
-            fontSize = 12.sp,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
 }
 
 /**

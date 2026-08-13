@@ -7,8 +7,6 @@ import com.android.purebilibili.core.ui.components.AppHorizontalDivider
 import android.app.Activity
 import android.content.Context
 import android.media.AudioManager
-import android.view.Surface
-import android.view.View
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -46,21 +44,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.currentStateAsState
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.media3.common.Format
 import androidx.media3.common.Player
-import androidx.media3.common.VideoSize
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.ui.PlayerView
-import com.android.purebilibili.core.plugin.PluginManager
 import com.android.purebilibili.data.model.response.Page
 import com.android.purebilibili.core.util.FormatUtils
 import com.android.purebilibili.core.util.Logger
-import com.android.purebilibili.feature.anime4k.Anime4KConfig
-import com.android.purebilibili.feature.anime4k.gl.Anime4KGLSurfaceView
-import com.android.purebilibili.feature.anime4k.isAnime4KGles3Available
-import com.android.purebilibili.feature.anime4k.resolveInitialVideoEnhancementEnabled
-import com.android.purebilibili.feature.anime4k.resolveAnime4KOutputDecision
 import com.android.purebilibili.feature.video.danmaku.DanmakuManager
 import com.android.purebilibili.core.ui.rememberAppPlayerChromeProfile
 import com.android.purebilibili.core.ui.components.AppSurface
@@ -68,7 +57,6 @@ import com.android.purebilibili.feature.video.ui.components.AnimatedGesturePerce
 import com.android.purebilibili.feature.video.ui.components.SponsorSkipButton
 import com.android.purebilibili.feature.video.ui.components.VideoAspectRatio
 import com.android.purebilibili.feature.video.ui.components.resolveVideoViewportLayout
-import com.android.purebilibili.feature.video.ui.components.toAnime4KDisplayScaleMode
 import com.android.purebilibili.feature.video.ui.gesture.GestureLevelOverlayContent
 import com.android.purebilibili.feature.video.ui.gesture.resolveGestureLevelKind
 import com.android.purebilibili.feature.video.ui.gesture.resolveGestureLevelOverlaySpec
@@ -81,7 +69,6 @@ import com.android.purebilibili.feature.video.ui.section.VideoGestureMode
 import com.android.purebilibili.feature.video.ui.section.resolveSystemStreamVolumeFromGesture
 import com.android.purebilibili.feature.video.util.captureAndSaveVideoScreenshot
 import com.android.purebilibili.data.model.response.SponsorSegment
-import com.android.purebilibili.feature.plugin.Anime4KPlugin
 import com.android.purebilibili.feature.bangumi.resolveBangumiDanmakuTopInsetDp
 import com.android.purebilibili.feature.bangumi.resolveBangumiPlayerTopControlsPaddingTopDp
 import com.android.purebilibili.core.store.DEFAULT_LONG_PRESS_SPEED
@@ -189,109 +176,19 @@ fun BangumiPlayerView(
     val lifecycleOwner = LocalLifecycleOwner.current
     val lifecycleState by lifecycleOwner.lifecycle.currentStateAsState()
     val hostLifecycleStarted = lifecycleState.isAtLeast(Lifecycle.State.STARTED)
-    val registeredPlugins by PluginManager.pluginsFlow.collectAsStateWithLifecycle()
-    val anime4kPluginInfo = registeredPlugins.firstOrNull { it.plugin.id == Anime4KPlugin.PLUGIN_ID }
-    val anime4kPlugin = anime4kPluginInfo?.plugin as? Anime4KPlugin
-    val anime4kConfig = if (anime4kPlugin == null) {
-        Anime4KConfig()
-    } else {
-        anime4kPlugin.configState.collectAsStateWithLifecycle().value
-    }
-    val anime4kGlesAvailable = remember(context) { isAnime4KGles3Available(context) }
-    var anime4kPipelineFailed by remember(exoPlayer) { mutableStateOf(false) }
-    var anime4kInputSurface by remember(exoPlayer) { mutableStateOf<Surface?>(null) }
-    var anime4kDisplayedFirstFrame by remember(currentVideoUrl, exoPlayer) { mutableStateOf(false) }
-    var anime4kSurfaceViewRef by remember(exoPlayer) { mutableStateOf<Anime4KGLSurfaceView?>(null) }
-    var videoEnhancementSessionOverride by remember(currentVideoUrl, exoPlayer) {
-        mutableStateOf<Boolean?>(null)
-    }
-    val videoEnhancementSessionRequested = videoEnhancementSessionOverride
-        ?: resolveInitialVideoEnhancementEnabled(
-            pluginEnabled = anime4kPluginInfo?.enabled == true,
-            config = anime4kConfig
-        )
-    val videoEnhancementEnabled = anime4kPluginInfo?.enabled == true &&
-        videoEnhancementSessionRequested
-    LaunchedEffect(anime4kConfig.algorithm) {
-        anime4kPipelineFailed = false
-    }
-    var videoInputFormat by remember(exoPlayer) { mutableStateOf<Format?>(null) }
-    var videoSizeState by remember(exoPlayer) {
-        mutableStateOf(exoPlayer.videoSize.let { it.width to it.height })
-    }
-    val anime4kOutputDecision = remember(
-        videoEnhancementEnabled,
-        anime4kGlesAvailable,
-        anime4kPipelineFailed,
-        videoInputFormat,
-        lifecycleState
-    ) {
-        resolveAnime4KOutputDecision(
-            pluginEnabled = videoEnhancementEnabled,
-            glAvailable = anime4kGlesAvailable && !anime4kPipelineFailed,
-            colorTransfer = videoInputFormat?.colorInfo?.colorTransfer ?: 0,
-            sampleMimeType = videoInputFormat?.sampleMimeType,
-            isInPipMode = false,
-            isAudioOnly = false,
-            hostLifecycleStarted = hostLifecycleStarted
-        )
-    }
-    val shouldUseAnime4kPipeline = anime4kOutputDecision.shouldUsePipeline
-    val shouldRenderAnime4kPipeline = shouldUseAnime4kPipeline &&
-        videoSizeState.first > 0 &&
-        videoSizeState.second > 0
-    val anime4kBypassReason = anime4kOutputDecision.bypassReason
-    val anime4kSurfaceReady = shouldRenderAnime4kPipeline && anime4kInputSurface != null
-    val anime4kFrameVisible = anime4kSurfaceReady && anime4kDisplayedFirstFrame
     val videoOutputRouter = remember(exoPlayer) { VideoOutputRouter(exoPlayer) }
-
-    DisposableEffect(exoPlayer) {
-        val analyticsListener = object : AnalyticsListener {
-            override fun onVideoInputFormatChanged(
-                eventTime: AnalyticsListener.EventTime,
-                format: Format,
-                decoderReuseEvaluation: androidx.media3.exoplayer.DecoderReuseEvaluation?
-            ) {
-                videoInputFormat = format
-            }
-        }
-        val playerListener = object : Player.Listener {
-            override fun onVideoSizeChanged(videoSize: VideoSize) {
-                videoSizeState = videoSize.width to videoSize.height
-            }
-        }
-        exoPlayer.addAnalyticsListener(analyticsListener)
-        exoPlayer.addListener(playerListener)
-        onDispose {
-            exoPlayer.removeAnalyticsListener(analyticsListener)
-            exoPlayer.removeListener(playerListener)
-        }
-    }
 
     DisposableEffect(videoOutputRouter) {
         onDispose { videoOutputRouter.release() }
     }
 
-    LaunchedEffect(hostLifecycleStarted, shouldRenderAnime4kPipeline, anime4kSurfaceViewRef) {
-        val surfaceView = anime4kSurfaceViewRef ?: return@LaunchedEffect
-        if (shouldRenderAnime4kPipeline && hostLifecycleStarted) {
-            surfaceView.onResume()
-        } else {
-            surfaceView.onPause()
-        }
-    }
-
     LaunchedEffect(
         playerViewRef,
-        anime4kInputSurface,
-        shouldRenderAnime4kPipeline,
         hostLifecycleStarted
     ) {
         videoOutputRouter.update(
             playerView = playerViewRef,
-            inputSurface = anime4kInputSurface,
-            shouldBindDirectPlayerView = hostLifecycleStarted,
-            shouldUseAnime4K = shouldRenderAnime4kPipeline
+            shouldBindDirectPlayerView = hostLifecycleStarted
         )
     }
     
@@ -478,14 +375,13 @@ fun BangumiPlayerView(
                     )
                 }
             }
-            // 视频输出统一交给路由，避免 PlayerView 与 Anime4K 同时争抢 Surface。
+            // 视频输出统一交给路由，保持直出 PlayerView 绑定。
             AndroidView(
                 factory = { ctx ->
                     android.util.Log.w("BangumiPlayer", "🎬 PlayerView FACTORY: creating new view, player=${exoPlayer.hashCode()}, isFullscreen=$isFullscreen")
                     PlayerView(ctx).apply {
                         playerViewRef = this
-                        // 普通直出必须显式绑定 player，否则未启用 Anime4K 时无视频输出
-                        //（只有音频）。Anime4K 启用后由 VideoOutputRouter 主动解除本绑定并接管 surface。
+                        // 直出必须显式绑定 player，否则无视频输出（只有音频）。
                         player = exoPlayer
                         useController = false
                         keepScreenOn = true
@@ -497,10 +393,8 @@ fun BangumiPlayerView(
                 update = { view ->
                     playerViewRef = view
                     view.resizeMode = currentAspectRatio.playerResizeMode
-                    view.visibility = if (anime4kFrameVisible) View.INVISIBLE else View.VISIBLE
-                    // MediaSource/Player 变化后确保直出绑定仍与播放器同步；
-                    // Anime4K 接管期间不抢回绑定，避免与路由争抢 Surface。
-                    if (view.player !== exoPlayer && !shouldRenderAnime4kPipeline) {
+                    // MediaSource/Player 变化后确保直出绑定仍与播放器同步。
+                    if (view.player !== exoPlayer) {
                         view.player = exoPlayer
                     }
                 },
@@ -511,57 +405,6 @@ fun BangumiPlayerView(
                     )
                 }
             )
-
-            if (shouldRenderAnime4kPipeline) {
-                AndroidView(
-                    factory = { ctx ->
-                        Anime4KGLSurfaceView(ctx, initialConfig = anime4kConfig).apply {
-                            anime4kSurfaceViewRef = this
-                            onInputSurfaceChanged = { surface ->
-                                anime4kInputSurface = surface
-                                if (surface == null) anime4kDisplayedFirstFrame = false
-                            }
-                            onFirstFrameRendered = {
-                                anime4kDisplayedFirstFrame = true
-                            }
-                            onPipelineError = { error ->
-                                Logger.e("BangumiPlayer", "Anime4K 管线不可用，已回退原始视频输出", error)
-                                anime4kPipelineFailed = true
-                                anime4kInputSurface = null
-                            }
-                            updateConfig(anime4kConfig)
-                            updateInputSize(videoSizeState.first, videoSizeState.second)
-                            updateDisplayScaleMode(currentAspectRatio.toAnime4KDisplayScaleMode())
-                            visibility = View.VISIBLE
-                        }
-                    },
-                    update = { surfaceView ->
-                        anime4kSurfaceViewRef = surfaceView
-                        surfaceView.onInputSurfaceChanged = { surface ->
-                            anime4kInputSurface = surface
-                            if (surface == null) anime4kDisplayedFirstFrame = false
-                        }
-                        surfaceView.onFirstFrameRendered = {
-                            anime4kDisplayedFirstFrame = true
-                        }
-                        surfaceView.onPipelineError = { error ->
-                            Logger.e("BangumiPlayer", "Anime4K 管线不可用，已回退原始视频输出", error)
-                            anime4kPipelineFailed = true
-                            anime4kInputSurface = null
-                        }
-                        surfaceView.updateConfig(anime4kConfig)
-                        surfaceView.updateInputSize(videoSizeState.first, videoSizeState.second)
-                        surfaceView.updateDisplayScaleMode(currentAspectRatio.toAnime4KDisplayScaleMode())
-                        surfaceView.visibility = View.VISIBLE
-                    },
-                    modifier = with(density) {
-                        Modifier.requiredSize(
-                            width = playerFrameViewport.width.toDp(),
-                            height = playerFrameViewport.height.toDp()
-                        )
-                    }
-                )
-            }
         }
         
         // 弹幕层 - 使用 DanmakuRenderEngine
@@ -687,31 +530,6 @@ fun BangumiPlayerView(
                 }
             },
             onReloadVideo = onReloadVideo,
-            anime4kEnabled = videoEnhancementEnabled,
-            anime4kAvailable = anime4kGlesAvailable,
-            anime4kBypassReason = anime4kBypassReason,
-            videoEnhancementAlgorithm = anime4kConfig.algorithm,
-            anime4kPreset = anime4kConfig.preset,
-            fsrSharpness = anime4kConfig.fsrSharpness,
-            onAnime4kToggle = { enabled ->
-                anime4kPipelineFailed = false
-                videoEnhancementSessionOverride = enabled
-                scope.launch {
-                    if (enabled && anime4kPluginInfo?.enabled != true) {
-                        PluginManager.setEnabled(Anime4KPlugin.PLUGIN_ID, true)
-                    }
-                    Anime4KPlugin.getInstance()?.rememberCurrentVideoEnabled(enabled)
-                }
-            },
-            onVideoEnhancementAlgorithmChange = { algorithm ->
-                anime4kPlugin?.setAlgorithm(algorithm)
-            },
-            onAnime4kPresetChange = { preset ->
-                anime4kPlugin?.setPreset(preset)
-            },
-            onFsrSharpnessChange = { sharpness ->
-                anime4kPlugin?.setFsrSharpness(sharpness)
-            },
             onShowMessage = onShowMessage
         )
         

@@ -76,7 +76,6 @@ import com.android.purebilibili.feature.video.playback.audio.AudioQualityOption
 import com.android.purebilibili.feature.video.playback.audio.resolveAudioQualityControlPresentation
 import com.android.purebilibili.feature.common.resolveIndexedVideoLazyKey
 import com.android.purebilibili.feature.video.progress.PbpRidgeSample
-import com.android.purebilibili.feature.anime4k.VideoEnhancementAlgorithm
 import com.android.purebilibili.core.ui.AdaptiveLoadingIndicator
 import com.android.purebilibili.core.ui.components.AppButton
 import com.android.purebilibili.core.ui.components.AppIconButton
@@ -103,9 +102,6 @@ import com.android.purebilibili.core.util.ShareUtils
 import com.android.purebilibili.core.util.WindowWidthSizeClass
 import com.android.purebilibili.core.util.Logger
 import com.android.purebilibili.core.util.NetworkUtils
-import com.android.purebilibili.feature.anime4k.Anime4KBypassReason
-import com.android.purebilibili.feature.anime4k.Anime4KPreset
-import com.android.purebilibili.feature.anime4k.DEFAULT_FSR_SHARPNESS
 
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -615,16 +611,6 @@ fun VideoPlayerOverlay(
     selectedAudioQuality: Int = -1,
     availableAudioQualities: List<AudioQualityOption> = emptyList(),
     onAudioQualityChange: (Int) -> Unit = {},
-    anime4kEnabled: Boolean = false,
-    anime4kAvailable: Boolean = false,
-    anime4kBypassReason: Anime4KBypassReason = Anime4KBypassReason.DISABLED,
-    videoEnhancementAlgorithm: VideoEnhancementAlgorithm = VideoEnhancementAlgorithm.ANIME4K,
-    anime4kPreset: Anime4KPreset = Anime4KPreset.FAST,
-    fsrSharpness: Float = DEFAULT_FSR_SHARPNESS,
-    onAnime4kToggle: (Boolean) -> Unit = {},
-    onVideoEnhancementAlgorithmChange: (VideoEnhancementAlgorithm) -> Unit = {},
-    onAnime4kPresetChange: (Anime4KPreset) -> Unit = {},
-    onFsrSharpnessChange: (Float) -> Unit = {},
     // [New] AI Audio Translation
     aiAudioInfo: com.android.purebilibili.data.model.response.AiAudioInfo? = null,
     currentAudioLang: String? = null,
@@ -1553,15 +1539,6 @@ fun VideoPlayerOverlay(
                     isLoggedIn = isLoggedIn,
                     subtitleControlState = subtitleControlState,
                     subtitleControlCallbacks = subtitleControlCallbacks,
-                    anime4kEnabled = anime4kEnabled,
-                    anime4kAvailable = anime4kAvailable,
-                    videoEnhancementAlgorithm = videoEnhancementAlgorithm,
-                    anime4kPreset = anime4kPreset,
-                    fsrSharpness = fsrSharpness,
-                    onAnime4kToggle = onAnime4kToggle,
-                    onVideoEnhancementAlgorithmChange = onVideoEnhancementAlgorithmChange,
-                    onAnime4kPresetChange = onAnime4kPresetChange,
-                    onFsrSharpnessChange = onFsrSharpnessChange,
                     currentAudioQualityLabel = audioQualityPresentation.label,
                     isHiResAudioSelected = audioQualityPresentation.showHiResBadge,
                     isDolbyAudioSelected = audioQualityPresentation.showDolbyBadge,
@@ -2152,16 +2129,6 @@ fun VideoPlayerOverlay(
                     onAudioQualityChange(quality)
                     showVideoSettings = false
                 },
-                anime4kEnabled = anime4kEnabled,
-                anime4kAvailable = anime4kAvailable,
-                anime4kBypassReason = anime4kBypassReason,
-                videoEnhancementAlgorithm = videoEnhancementAlgorithm,
-                anime4kPreset = anime4kPreset,
-                fsrSharpness = fsrSharpness,
-                onAnime4kToggle = onAnime4kToggle,
-                onVideoEnhancementAlgorithmChange = onVideoEnhancementAlgorithmChange,
-                onAnime4kPresetChange = onAnime4kPresetChange,
-                onFsrSharpnessChange = onFsrSharpnessChange,
                 // [New] AI Audio
                 aiAudioInfo = aiAudioInfo,
                 currentAudioLang = currentAudioLang,
