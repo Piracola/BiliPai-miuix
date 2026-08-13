@@ -4291,13 +4291,7 @@ class VideoPlaybackViewModel : ViewModel() {
                     }
                     onResult?.invoke(liked)
                     if (liked) _likeBurstVisible.value = true
-                    //  彩蛋：使用趣味消息（如果设置开启）
-                    val message = if (liked && appContext?.let { ctx -> com.android.purebilibili.core.store.SettingsManager.isEasterEggEnabledSync(ctx) } == true) {
-                        com.android.purebilibili.core.util.EasterEggs.getLikeMessage()
-                    } else {
-                        if (liked) "已点赞" else "已取消点赞"
-                    }
-                    toast(message)
+                    toast(if (liked) "已点赞" else "已取消点赞")
                 }
                 .onFailure { toast(it.message ?: "操作失败") }
         }
@@ -6618,13 +6612,7 @@ class VideoPlaybackViewModel : ViewModel() {
                     var newState = current.copy(coinCount = minOf(current.coinCount + count, 2))
                     if (alsoLike && !current.isLiked) newState = newState.copy(isLiked = true)
                     _uiState.value = newState
-                    //  彩蛋：使用趣味消息（如果设置开启）
-                    val message = if (appContext?.let { ctx -> com.android.purebilibili.core.store.SettingsManager.isEasterEggEnabledSync(ctx) } == true) {
-                        com.android.purebilibili.core.util.EasterEggs.getCoinMessage()
-                    } else {
-                        "投币成功"
-                    }
-                    toast(message)
+                    toast("投币成功")
                 }
                 .onFailure { toast(it.message ?: "\u6295\u5e01\u5931\u8d25") }
         }

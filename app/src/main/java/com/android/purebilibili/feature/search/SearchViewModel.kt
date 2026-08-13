@@ -78,8 +78,6 @@ data class SearchUiState(
     val upOrderSort: SearchOrderSort = SearchOrderSort.DESC,
     val upUserType: SearchUserType = SearchUserType.ALL,
     val liveOrder: SearchLiveOrder = SearchLiveOrder.ONLINE,
-    //  搜索彩蛋消息
-    val easterEggMessage: String? = null,
     //  [新增] 分页状态
     val currentPage: Int = 1,
     val totalPages: Int = 1,
@@ -496,10 +494,6 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
         ensureBlockedUpObserver()
 
         val context = getApplication<android.app.Application>()
-        val easterEggEnabled = com.android.purebilibili.core.store.SettingsManager.isEasterEggEnabledSync(context)
-        val easterEggMessage = if (easterEggEnabled) {
-            com.android.purebilibili.core.util.EasterEggs.checkSearchEasterEgg(normalizedKeyword)
-        } else null
         val searchType = _uiState.value.searchType
         val shouldClearCachedPages = !_uiState.value.showResults ||
             _uiState.value.query.trim() != normalizedKeyword
@@ -517,7 +511,6 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                 suggestions = emptyList(),
                 error = null,
                 loadMoreError = null,
-                easterEggMessage = easterEggMessage,
                 currentPage = 1,
                 hasMoreResults = false,
                 isLoadingMore = false,

@@ -56,7 +56,6 @@ import com.android.purebilibili.core.ui.AppSemanticAccentRole
 import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.ui.ContainerLevel
 import com.android.purebilibili.core.theme.*
-import com.android.purebilibili.core.util.EasterEggs
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
@@ -233,7 +232,6 @@ internal data class SettingsRootCategoryActions(
     val onPrivacyContentAuthenticationChange: (Boolean) -> Unit,
     val onCrashTrackingChange: (Boolean) -> Unit,
     val onAnalyticsChange: (Boolean) -> Unit,
-    val onEasterEggChange: (Boolean) -> Unit,
     val onAutoCheckUpdateChange: (Boolean) -> Unit,
     val onAppUpdateChannelChange: (com.android.purebilibili.core.store.SettingsManager.AppUpdateChannel) -> Unit,
     val onFeedApiTypeChange: (com.android.purebilibili.core.store.SettingsManager.FeedApiType) -> Unit,
@@ -257,7 +255,6 @@ internal data class SettingsRootCategoryState(
     val cacheSize: String,
     val versionName: String,
     val appIcon: String,
-    val easterEggEnabled: Boolean,
     val updateStatusText: String,
     val isCheckingUpdate: Boolean,
     val autoCheckUpdateEnabled: Boolean,
@@ -269,8 +266,6 @@ internal data class SettingsRootCategoryState(
     val buildFingerprintValue: String,
     val buildFingerprintCopyValue: String,
     val buildFingerprintSubtitle: String,
-    val versionClickCount: Int,
-    val versionClickThreshold: Int,
     val feedApiType: com.android.purebilibili.core.store.SettingsManager.FeedApiType,
     val incrementalTimelineRefreshEnabled: Boolean,
     val dynamicImagePreviewTextVisible: Boolean,
@@ -1047,7 +1042,6 @@ internal fun SettingsRootCategoryContent(
                         AboutSection(
                             versionName = state.versionName,
                             appIconKey = state.appIcon,
-                            easterEggEnabled = state.easterEggEnabled,
                             onLicenseClick = actions.onLicenseClick,
                             onGithubClick = actions.onGithubClick,
                             onVerificationClick = actions.onVerificationClick,
@@ -1061,7 +1055,6 @@ internal fun SettingsRootCategoryContent(
                             onAppUpdateChannelChange = actions.onAppUpdateChannelChange,
                             onVersionClick = actions.onVersionClick,
                             onReplayOnboardingClick = actions.onReplayOnboardingClick,
-                            onEasterEggChange = actions.onEasterEggChange,
                             updateStatusText = state.updateStatusText,
                             isCheckingUpdate = state.isCheckingUpdate,
                             verificationLabel = state.verificationLabel,
@@ -1070,9 +1063,7 @@ internal fun SettingsRootCategoryContent(
                             buildSourceSubtitle = state.buildSourceSubtitle,
                             buildFingerprintValue = state.buildFingerprintValue,
                             buildFingerprintCopyValue = state.buildFingerprintCopyValue,
-                            buildFingerprintSubtitle = state.buildFingerprintSubtitle,
-                            versionClickCount = state.versionClickCount,
-                            versionClickThreshold = state.versionClickThreshold
+                            buildFingerprintSubtitle = state.buildFingerprintSubtitle
                         )
                     }
                 }
@@ -1828,7 +1819,6 @@ fun DeveloperSection(
 fun AboutSection(
     versionName: String,
     appIconKey: String,
-    easterEggEnabled: Boolean,
     onLicenseClick: () -> Unit,
     onGithubClick: () -> Unit,
     onVerificationClick: () -> Unit,
@@ -1842,7 +1832,6 @@ fun AboutSection(
     onAppUpdateChannelChange: (SettingsManager.AppUpdateChannel) -> Unit,
     onVersionClick: () -> Unit,
     onReplayOnboardingClick: () -> Unit,
-    onEasterEggChange: (Boolean) -> Unit,
     updateStatusText: String = "点击检查",
     isCheckingUpdate: Boolean = false,
     verificationLabel: String = "未验证",
@@ -1852,8 +1841,6 @@ fun AboutSection(
     buildFingerprintValue: String = "未读取",
     buildFingerprintCopyValue: String = "未读取",
     buildFingerprintSubtitle: String = "暂未读取到当前安装包 SHA-256",
-    versionClickCount: Int = 0,
-    versionClickThreshold: Int = EasterEggs.VERSION_EASTER_EGG_THRESHOLD
 ) {
     val context = LocalContext.current
     val appIconAppearance by SettingsManager.getAppIconAppearance(context)
@@ -1864,7 +1851,6 @@ fun AboutSection(
         resolveIconOptionPreviewRes(appIconKey, appIconAppearance)
     }
     var detailDialogContent by remember { mutableStateOf<AppBuildInfoDialogContent?>(null) }
-    val easterEggTint = rememberSettingsEntryTint(AppSemanticAccentRole.TERTIARY, iOSYellow)
     val updateSiblingTints = remember { resolveSettingsSiblingIconTints(5, paletteOffset = 3) }
     val licensesVisual = rememberSettingsEntryVisual(SettingsSearchTarget.OPEN_SOURCE_LICENSES)
     val openSourceHomeVisual = rememberSettingsEntryVisual(SettingsSearchTarget.OPEN_SOURCE_HOME)
@@ -1873,36 +1859,11 @@ fun AboutSection(
     val replayOnboardingVisual = rememberSettingsEntryVisual(SettingsSearchTarget.REPLAY_ONBOARDING)
     val notificationIcon = rememberSettingsSemanticIcon(SettingsIconRole.AUTO_CHECK_UPDATE)
     val infoIcon = rememberSettingsSemanticIcon(SettingsIconRole.APP_VERSION)
-    val sparklesIcon = rememberSettingsSemanticIcon(SettingsIconRole.EASTER_EGG)
     val verificationIcon = rememberSettingsSemanticIcon(SettingsIconRole.BUILD_VERIFICATION)
     val buildSourceIcon = rememberSettingsSemanticIcon(SettingsIconRole.BUILD_SOURCE)
     val buildFingerprintIcon = rememberSettingsSemanticIcon(SettingsIconRole.BUILD_FINGERPRINT)
 
-    val safeThreshold = versionClickThreshold.coerceAtLeast(1)
-    val normalizedClickCount = versionClickCount.coerceAtLeast(0)
-    val versionProgress = normalizedClickCount.coerceAtMost(safeThreshold).toFloat() / safeThreshold
-    val versionIconTint = animateColorAsState(
-        targetValue = when {
-            normalizedClickCount >= safeThreshold -> iOSGreen
-            versionProgress >= 0.85f -> iOSOrange
-            versionProgress >= 0.5f -> iOSYellow
-            normalizedClickCount > 0 -> iOSBlue
-            else -> iOSTeal
-        },
-        label = "versionIconTint"
-    ).value
-    val versionHint = when {
-        normalizedClickCount <= 0 -> null
-        normalizedClickCount >= safeThreshold -> "彩蛋已解锁"
-        else -> "还差 ${safeThreshold - normalizedClickCount} 次"
-    }
-    val versionValue = buildString {
-        append("v$versionName")
-        versionHint?.let {
-            append(" · ")
-            append(it)
-        }
-    }
+    val versionValue = "v$versionName"
 
     detailDialogContent?.let { dialogContent ->
         val dialogScrollState = rememberScrollState()
@@ -2086,7 +2047,7 @@ fun AboutSection(
             title = "版本",
             value = versionValue,
             onClick = onVersionClick,
-            iconTint = versionIconTint,
+            iconTint = updateSiblingTints[0],
             enableCopy = true,
             onCopyRequest = rememberClipboardCopyHandler(),
         )
@@ -2098,15 +2059,6 @@ fun AboutSection(
             value = "开源约定与官方渠道",
             onClick = onReplayOnboardingClick,
             iconTint = replayOnboardingVisual.iconTint
-        )
-        SettingsAdaptiveDivider()
-        SettingSwitchItem(
-            icon = sparklesIcon,
-            title = "趣味彩蛋",
-            subtitle = "刷新、点赞、投币、搜索时显示趣味提示",
-            checked = easterEggEnabled,
-            onCheckedChange = onEasterEggChange,
-            iconTint = easterEggTint
         )
     }
 }

@@ -541,7 +541,6 @@ data class HomeSettings(
     val showHomeUpBadges: Boolean = false, // 首页和相关推荐 UP 主标识显示(默认关闭,设置后全局生效)
     val showHomeUpAvatars: Boolean = false, // 首页视频卡片 UP 主头像显示(默认关闭,设置后全局生效)
     val homeDurationStyle: HomeDurationStyle = HomeDurationStyle.OUTSIDE_COVER,
-    val easterEggEnabled: Boolean = false, // 下拉刷新趣味提示开关
     //  [修复] 默认值改为 true，避免在 Flow 加载实际值之前错误触发弹窗
     // 当 Flow 加载完成后，如果实际值是 false，LaunchedEffect 会再次触发并显示弹窗
     val crashTrackingConsentShown: Boolean = true
@@ -1505,7 +1504,6 @@ object SettingsManager {
                 } else {
                     HomeDurationStyle.HIDDEN
                 },
-            easterEggEnabled = preferences[KEY_EASTER_EGG_ENABLED] ?: false,
             // 保持现有运行时行为：首次未配置时按 false 返回
             crashTrackingConsentShown = preferences[KEY_CRASH_TRACKING_CONSENT_SHOWN] ?: false
         )
@@ -5738,27 +5736,6 @@ object SettingsManager {
             colorMap[normalizedItemId] = colorIndex
             prefs[KEY_BOTTOM_BAR_ITEM_COLORS] = colorMap.entries.joinToString(",") { "${it.key}:${it.value}" }
         }
-    }
-    
-    // ==========  彩蛋设置 ==========
-    
-    private val KEY_EASTER_EGG_ENABLED = booleanPreferencesKey("easter_egg_enabled")
-    
-    // --- 彩蛋功能开关（控制下拉刷新趣味提示等）---
-    fun getEasterEggEnabled(context: Context): Flow<Boolean> = context.settingsDataStore.data
-        .map { preferences -> preferences[KEY_EASTER_EGG_ENABLED] ?: false }  // 默认关闭
-
-    suspend fun setEasterEggEnabled(context: Context, value: Boolean) {
-        context.settingsDataStore.edit { preferences -> preferences[KEY_EASTER_EGG_ENABLED] = value }
-        //  同步到 SharedPreferences，供同步读取使用
-        context.getSharedPreferences("easter_egg", Context.MODE_PRIVATE)
-            .edit().putBoolean("enabled", value).apply()
-    }
-    
-    //  同步读取彩蛋开关（用于 ViewModel）
-    fun isEasterEggEnabledSync(context: Context): Boolean {
-        return context.getSharedPreferences("easter_egg", Context.MODE_PRIVATE)
-            .getBoolean("enabled", false)  // 默认关闭
     }
     
     // ==========  播放器设置 ==========

@@ -67,7 +67,6 @@ class HomeSettingsMappingPolicyTest {
         assertFalse(result.lowQualityHomeCoverInDataSaver)
         assertTrue(result.showHomeUpBadges)
         assertTrue(result.showHomeUpAvatars)
-        assertFalse(result.easterEggEnabled)
         assertFalse(result.crashTrackingConsentShown)
     }
 
@@ -157,7 +156,6 @@ class HomeSettingsMappingPolicyTest {
         assertTrue(result.lowQualityHomeCoverInDataSaver)
         assertFalse(result.showHomeUpBadges)
         assertFalse(result.showHomeUpAvatars)
-        assertTrue(result.easterEggEnabled)
         assertTrue(result.crashTrackingConsentShown)
     }
 

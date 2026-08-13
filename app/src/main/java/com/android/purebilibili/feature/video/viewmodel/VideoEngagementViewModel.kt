@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.store.TokenManager
-import com.android.purebilibili.core.util.EasterEggs
 import com.android.purebilibili.core.network.NetworkModule
 import com.android.purebilibili.feature.video.ui.feedback.resolveTripleActionFeedbackMessage
 import com.android.purebilibili.feature.video.ui.feedback.resolveTripleActionVisualState
@@ -254,10 +253,8 @@ class VideoEngagementViewModel(
                         )
                     }
                     onResult?.invoke(liked)
-                    val easterEggEnabled = appContext?.let(SettingsManager::isEasterEggEnabledSync) == true
                     emitMessage(
-                        if (liked && easterEggEnabled) EasterEggs.getLikeMessage()
-                        else if (liked) "已点赞" else "已取消点赞"
+                        if (liked) "已点赞" else "已取消点赞"
                     )
                 }
                 .onFailure { emitMessage(it.message ?: "操作失败") }
@@ -326,8 +323,7 @@ class VideoEngagementViewModel(
                             isLiked = current.isLiked || alsoLike
                         )
                     }
-                    val easterEggEnabled = appContext?.let(SettingsManager::isEasterEggEnabledSync) == true
-                    emitMessage(if (easterEggEnabled) EasterEggs.getCoinMessage() else "投币成功")
+                    emitMessage("投币成功")
                 }
                 .onFailure { emitMessage(it.message ?: "投币失败") }
         }

@@ -906,44 +906,6 @@ fun SearchScreen(
                         .fillMaxSize()
                     ) {
                             Spacer(modifier = Modifier.height(contentTopPadding + 8.dp))
-                            //  搜索彩蛋消息横幅
-                            val easterEggMsg = state.easterEggMessage
-                            if (easterEggMsg != null) {
-                                val easterEggColors = resolveAccessibleContainerColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
-                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    backgroundColor = MaterialTheme.colorScheme.surface,
-                                    fallbackContentColors = listOf(
-                                        MaterialTheme.colorScheme.onSurface,
-                                        MaterialTheme.colorScheme.onBackground,
-                                    ),
-                                )
-                                AppSurface(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                                    color = easterEggColors.containerColor,
-                                    shape = AppShapes.container(ContainerLevel.Card)
-                                ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                                        horizontalArrangement = Arrangement.Center,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        AppText(
-                                            text = easterEggMsg,
-                                            color = easterEggColors.contentColor,
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis,
-                                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                        )
-                                    }
-                                }
-                            }
                             SearchResultTypeTabRow(
                                 tabs = searchTabs,
                                 pagerState = searchPagerState,

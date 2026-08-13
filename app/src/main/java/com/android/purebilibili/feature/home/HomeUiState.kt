@@ -173,8 +173,6 @@ data class HomeUiState(
     val messageUnreadCount: Int = 0,
     //  [新增] 标签页显示索引（独立于内容分类，用于特殊分类导航后保持标签位置）
     val displayedTabIndex: Int = 0,
-    //  [彩蛋] 刷新成功后的趣味消息
-    val refreshMessage: String? = null,
     //  [新增] 增量刷新新增条数（null 表示不展示）
     val refreshNewItemsCount: Int? = null,
     //  [新增] 新增条数提示触发键（用于一次性 UI 动效）

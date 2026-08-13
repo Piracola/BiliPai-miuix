@@ -261,7 +261,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     val user = homeStateFlow { it.user }
     val messageUnreadCount = homeStateFlow { it.messageUnreadCount }
     val refreshKey = homeStateFlow { it.refreshKey }
-    val refreshMessage = homeStateFlow { it.refreshMessage }
     val refreshNewItemsCount = homeStateFlow { it.refreshNewItemsCount }
     val refreshNewItemsKey = homeStateFlow { it.refreshNewItemsKey }
     val refreshNewItemsHandledKey = homeStateFlow { it.refreshNewItemsHandledKey }
@@ -1053,8 +1052,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             )
             
             //  数据加载完成后再更新 refreshKey，避免闪烁
-            //  刷新成功后显示趣味提示
-            val refreshMessage = com.android.purebilibili.core.util.EasterEggs.getRefreshMessage()
             val oldBoundary = _uiState.value.recommendOldContentStartIndex
             val newBoundary = if (refreshingCategory == HomeCategory.RECOMMEND) {
                 if ((newItemsCount ?: 0) > 0) newItemsCount else null
@@ -1073,7 +1070,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             )
             _uiState.value = _uiState.value.copy(
                 refreshKey = System.currentTimeMillis(),
-                refreshMessage = refreshMessage,
                 refreshNewItemsCount = newItemsCount,
                 refreshNewItemsKey = if (newItemsCount != null) System.currentTimeMillis() else _uiState.value.refreshNewItemsKey,
                 recommendOldContentAnchorBvid = newAnchor,

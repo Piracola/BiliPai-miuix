@@ -244,7 +244,6 @@ fun HomeScreen(
     val user by viewModel.user.collectAsStateWithLifecycle()
     val messageUnreadCount by viewModel.messageUnreadCount.collectAsStateWithLifecycle()
     val refreshKey by viewModel.refreshKey.collectAsStateWithLifecycle()
-    val refreshMessage by viewModel.refreshMessage.collectAsStateWithLifecycle()
     val refreshNewItemsCount by viewModel.refreshNewItemsCount.collectAsStateWithLifecycle()
     val refreshNewItemsKey by viewModel.refreshNewItemsKey.collectAsStateWithLifecycle()
     val refreshNewItemsHandledKey by viewModel.refreshNewItemsHandledKey.collectAsStateWithLifecycle()
@@ -716,24 +715,8 @@ fun HomeScreen(
     val pullRefreshIndicatorStyle = pullRefreshProfile.indicatorStyle
 
     
-    var showEasterEggDialog by remember { mutableStateOf(false) }
     var refreshDeltaTipText by remember { mutableStateOf<String?>(null) }
     
-    //  [彩蛋] 下拉刷新成功后显示趣味提示（仅在开关开启时）
-    LaunchedEffect(refreshKey, homeSettings.easterEggEnabled) {
-        val message = refreshMessage
-        if (message != null && refreshKey > 0 && homeSettings.easterEggEnabled) {
-            val result = snackbarHostState.showSnackbar(
-                message = message,
-                actionLabel = "关闭彩蛋",
-                duration = SnackbarDuration.Short
-            )
-            if (result == SnackbarResult.ActionPerformed) {
-                showEasterEggDialog = true
-            }
-        }
-    }
-
     LaunchedEffect(refreshNewItemsKey, isRefreshing, currentCategory) {
         val refreshKey = refreshNewItemsKey
         if (!shouldHandleRefreshNewItemsEvent(refreshKey, refreshNewItemsHandledKey)) {
@@ -793,41 +776,6 @@ fun HomeScreen(
                 }.first { it }
                 viewModel.markRecommendOldContentDividerRevealed(targetKey)
             }
-    }
-    
-    //  [彩蛋] 关闭确认对话框
-    if (showEasterEggDialog) {
-        AppAlertDialog(
-            onDismissRequest = { showEasterEggDialog = false },
-            title = { 
-                AppText(
-                    "关闭趣味提示？", 
-                    color = MaterialTheme.colorScheme.onSurface
-                ) 
-            },
-            text = { 
-                AppText(
-                    "关闭后下拉刷新将不再显示趣味消息。\n\n你可以在「设置」中随时重新开启。",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                ) 
-            },
-            confirmButton = {
-                AppTextButton(
-                    onClick = {
-                        coroutineScope.launch {
-                            SettingsManager.setEasterEggEnabled(context, false)
-                        }
-                        showEasterEggDialog = false
-                    }
-                ) { AppText("关闭彩蛋", color = MaterialTheme.colorScheme.error) }
-            },
-            dismissButton = {
-                AppTextButton(
-                    onClick = { showEasterEggDialog = false }
-                ) { AppText("保留彩蛋", color = MaterialTheme.colorScheme.primary) }
-            },
-            containerColor = AppSurfaceTokens.cardContainer()
-        )
     }
     
     //  [修复] 确保首页显示时 WindowInsets 配置正确，防止从视频页返回时布局跳动

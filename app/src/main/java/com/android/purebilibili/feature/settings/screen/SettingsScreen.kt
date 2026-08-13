@@ -54,7 +54,6 @@ import com.android.purebilibili.core.store.AppNavigationSettings
 import com.android.purebilibili.core.util.AnalyticsHelper
 import com.android.purebilibili.core.util.CacheUtils
 import com.android.purebilibili.core.util.CrashReporter
-import com.android.purebilibili.core.util.EasterEggs
 import com.android.purebilibili.core.util.LocalWindowSizeClass
 import com.android.purebilibili.core.util.LogCollector
 import com.android.purebilibili.core.ui.AdaptiveScaffold
@@ -109,7 +108,6 @@ fun SettingsScreen(
     val uriHandler = LocalUriHandler.current
     val scope = rememberCoroutineScope()
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
-    val versionClickThreshold = EasterEggs.VERSION_EASTER_EGG_THRESHOLD
     
     // State Collection
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -121,7 +119,6 @@ fun SettingsScreen(
         .collectAsStateWithLifecycle(initialValue = DEFAULT_CRASH_TRACKING_ENABLED)
     val analyticsEnabled by SettingsManager.getAnalyticsEnabled(context)
         .collectAsStateWithLifecycle(initialValue = DEFAULT_ANALYTICS_ENABLED)
-    val easterEggEnabled by SettingsManager.getEasterEggEnabled(context).collectAsStateWithLifecycle(initialValue = true)
     val customDownloadPath by SettingsManager.getDownloadPath(context).collectAsStateWithLifecycle(initialValue = null)
     val downloadExportTreeUri by SettingsManager.getDownloadExportTreeUri(context).collectAsStateWithLifecycle(initialValue = null)
     val imageSaveTreeUri by SettingsManager.getImageSaveTreeUri(context).collectAsStateWithLifecycle(initialValue = null)
@@ -166,8 +163,6 @@ fun SettingsScreen(
             selectedTargets = selectedCacheClearTargets
         )
     }
-    var versionClickCount by remember { mutableIntStateOf(0) }
-    var showEasterEggDialog by remember { mutableStateOf(false) }
     var showPathDialog by remember { mutableStateOf(false) }
     var showImageSavePathDialog by remember { mutableStateOf(false) }
     // [新增] 打赏对话框
@@ -310,9 +305,6 @@ fun SettingsScreen(
             AnalyticsHelper.setEnabled(enabled)
         }
     }
-    val onEasterEggChange: (Boolean) -> Unit = { enabled ->
-        scope.launch { SettingsManager.setEasterEggEnabled(context, enabled) }
-    }
     val onAutoCheckUpdateChange: (Boolean) -> Unit = { enabled ->
         scope.launch { SettingsManager.setAutoCheckAppUpdate(context, enabled) }
     }
@@ -320,27 +312,7 @@ fun SettingsScreen(
         scope.launch { SettingsManager.setAppUpdateChannel(context, channel) }
     }
     
-    val onVersionClickAction: () -> Unit = {
-        versionClickCount++
-        val message = EasterEggs.getVersionClickMessage(
-            clickCount = versionClickCount,
-            threshold = versionClickThreshold
-        )
-        val remainingClicks = (versionClickThreshold - versionClickCount).coerceAtLeast(0)
-        val hapticType = if (remainingClicks <= 1) {
-            HapticFeedbackType.LongPress
-        } else {
-            HapticFeedbackType.TextHandleMove
-        }
-        hapticFeedback.performHapticFeedback(hapticType)
-
-        if (EasterEggs.isVersionEasterEggTriggered(versionClickCount, versionClickThreshold)) {
-            showEasterEggDialog = true
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-        } else if (versionClickCount >= 2 || remainingClicks <= 3) {
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-        }
-    }
+    val onVersionClickAction: () -> Unit = {}
     
     val onExportLogsAction: () -> Unit = { LogCollector.exportAndShare(context) }
     val onTelegramClick: () -> Unit = { uriHandler.openUri(OFFICIAL_TELEGRAM_CHANNEL_URL) }
@@ -606,15 +578,6 @@ fun SettingsScreen(
         )
     }
     
-    if (showEasterEggDialog) {
-        com.android.purebilibili.core.ui.AppAlertDialog(
-            onDismissRequest = { showEasterEggDialog = false; versionClickCount = 0 },
-            title = { AppText(" 你发现了彩蛋！", fontWeight = FontWeight.Bold) },
-            text = { AppText("感谢你使用 BiliPai！这是一个用爱发电的开源项目。") },
-            confirmButton = { com.android.purebilibili.core.ui.AppDialogAction(onClick = { showEasterEggDialog = false; versionClickCount = 0 }) { AppText("我知道了！") } }
-        )
-    }
-
     if (showDonateDialog) {
         DonateDialog(onDismiss = { showDonateDialog = false })
     }
@@ -924,7 +887,6 @@ fun SettingsScreen(
         showCacheDialog = showCacheDialog,
         showPathDialog = showPathDialog,
         showImageSavePathDialog = showImageSavePathDialog,
-        showEasterEggDialog = showEasterEggDialog,
         showDonateDialog = showDonateDialog,
         showReleaseDisclaimerDialog = showReleaseDisclaimerDialog,
         showUpdateResult = updateCheckResult != null,
@@ -941,10 +903,6 @@ fun SettingsScreen(
             SettingsBackTarget.CACHE_DIALOG -> showCacheDialog = false
             SettingsBackTarget.PATH_DIALOG -> showPathDialog = false
             SettingsBackTarget.IMAGE_SAVE_PATH_DIALOG -> showImageSavePathDialog = false
-            SettingsBackTarget.EASTER_EGG_DIALOG -> {
-                showEasterEggDialog = false
-                versionClickCount = 0
-            }
             SettingsBackTarget.DONATE_DIALOG -> showDonateDialog = false
             SettingsBackTarget.RELEASE_DISCLAIMER_DIALOG -> showReleaseDisclaimerDialog = false
             SettingsBackTarget.UPDATE_RESULT -> updateCheckResult = null
@@ -1008,7 +966,6 @@ fun SettingsScreen(
                     onPrivacyContentAuthenticationChange = onPrivacyContentAuthenticationChange,
                     onCrashTrackingChange = onCrashTrackingChange,
                     onAnalyticsChange = onAnalyticsChange,
-                    onEasterEggChange = onEasterEggChange,
                     onAutoCheckUpdateChange = onAutoCheckUpdateChange,
                     onAppUpdateChannelChange = onAppUpdateChannelChange,
                     privacyModeEnabled = privacyModeEnabled,
@@ -1020,9 +977,6 @@ fun SettingsScreen(
                     pluginCount = PluginManager.getEnabledCount(),
                     versionName = com.android.purebilibili.BuildConfig.VERSION_NAME,
                     appIcon = state.appIcon,
-                    versionClickCount = versionClickCount,
-                    versionClickThreshold = versionClickThreshold,
-                    easterEggEnabled = easterEggEnabled,
                     updateStatusText = updateStatusText,
                     isCheckingUpdate = isCheckingUpdate,
                     autoCheckUpdateEnabled = autoCheckUpdateEnabled,
@@ -1159,7 +1113,6 @@ private fun MobileSettingsNavLayout(
     onPrivacyContentAuthenticationChange: (Boolean) -> Unit,
     onCrashTrackingChange: (Boolean) -> Unit,
     onAnalyticsChange: (Boolean) -> Unit,
-    onEasterEggChange: (Boolean) -> Unit,
     onAutoCheckUpdateChange: (Boolean) -> Unit,
     onAppUpdateChannelChange: (SettingsManager.AppUpdateChannel) -> Unit,
     privacyModeEnabled: Boolean,
@@ -1172,9 +1125,6 @@ private fun MobileSettingsNavLayout(
     pluginCount: Int,
     versionName: String,
     appIcon: String,
-    versionClickCount: Int,
-    versionClickThreshold: Int,
-    easterEggEnabled: Boolean,
     updateStatusText: String,
     isCheckingUpdate: Boolean,
     autoCheckUpdateEnabled: Boolean,
@@ -1253,7 +1203,6 @@ private fun MobileSettingsNavLayout(
         onPrivacyContentAuthenticationChange = onPrivacyContentAuthenticationChange,
         onCrashTrackingChange = onCrashTrackingChange,
         onAnalyticsChange = onAnalyticsChange,
-        onEasterEggChange = onEasterEggChange,
         onAutoCheckUpdateChange = onAutoCheckUpdateChange,
         onAppUpdateChannelChange = onAppUpdateChannelChange,
         onFeedApiTypeChange = onFeedApiTypeChange,
@@ -1276,7 +1225,6 @@ private fun MobileSettingsNavLayout(
         cacheSize = cacheSize,
         versionName = versionName,
         appIcon = appIcon,
-        easterEggEnabled = easterEggEnabled,
         updateStatusText = updateStatusText,
         isCheckingUpdate = isCheckingUpdate,
         autoCheckUpdateEnabled = autoCheckUpdateEnabled,
@@ -1288,8 +1236,6 @@ private fun MobileSettingsNavLayout(
         buildFingerprintValue = buildFingerprintValue,
         buildFingerprintCopyValue = buildFingerprintCopyValue,
         buildFingerprintSubtitle = buildFingerprintSubtitle,
-        versionClickCount = versionClickCount,
-        versionClickThreshold = versionClickThreshold,
         feedApiType = feedApiType,
         incrementalTimelineRefreshEnabled = incrementalTimelineRefreshEnabled,
         dynamicImagePreviewTextVisible = dynamicImagePreviewTextVisible,

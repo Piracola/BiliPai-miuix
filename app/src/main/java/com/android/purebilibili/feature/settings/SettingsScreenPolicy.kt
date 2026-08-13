@@ -10,7 +10,6 @@ internal enum class SettingsBackTarget {
     CACHE_DIALOG,
     PATH_DIALOG,
     IMAGE_SAVE_PATH_DIALOG,
-    EASTER_EGG_DIALOG,
     DONATE_DIALOG,
     RELEASE_DISCLAIMER_DIALOG,
     UPDATE_RESULT,
@@ -86,7 +85,6 @@ internal fun resolveSettingsBackTarget(
     showCacheDialog: Boolean = false,
     showPathDialog: Boolean = false,
     showImageSavePathDialog: Boolean = false,
-    showEasterEggDialog: Boolean = false,
     showDonateDialog: Boolean = false,
     showReleaseDisclaimerDialog: Boolean = false,
     showUpdateResult: Boolean = false,
@@ -98,7 +96,6 @@ internal fun resolveSettingsBackTarget(
     showUpdateResult -> SettingsBackTarget.UPDATE_RESULT
     showReleaseDisclaimerDialog -> SettingsBackTarget.RELEASE_DISCLAIMER_DIALOG
     showDonateDialog -> SettingsBackTarget.DONATE_DIALOG
-    showEasterEggDialog -> SettingsBackTarget.EASTER_EGG_DIALOG
     showImageSavePathDialog -> SettingsBackTarget.IMAGE_SAVE_PATH_DIALOG
     showPathDialog -> SettingsBackTarget.PATH_DIALOG
     showCacheDialog && !showCacheAnimation -> SettingsBackTarget.CACHE_DIALOG
