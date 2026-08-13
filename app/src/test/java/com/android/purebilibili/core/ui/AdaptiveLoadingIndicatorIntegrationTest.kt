@@ -56,11 +56,8 @@ class AdaptiveLoadingIndicatorIntegrationTest {
             "app/src/main/java/com/android/purebilibili/core/ui/LottieComponents.kt"
         )
 
-        assertTrue(
-            source.contains(
-                "const val EMPTY = \"https://raw.githubusercontent.com/DrKLO/Telegram/master/TMessagesProj/src/main/res/raw/utyan_empty2.json\""
-            )
-        )
+        // 极简版：空状态/错误状态不再加载远程 Lottie 动画，纯静态文案。
+        assertFalse(source.contains("lottie"))
         assertFalse(source.contains("lf20_wnqlfojb.json"))
     }
 

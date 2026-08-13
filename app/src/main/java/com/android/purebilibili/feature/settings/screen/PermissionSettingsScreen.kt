@@ -35,8 +35,6 @@ import androidx.core.content.ContextCompat
 import com.android.purebilibili.R
 import com.android.purebilibili.core.ui.components.*
 import com.android.purebilibili.core.ui.adaptiveSquircleBackground
-import com.android.purebilibili.core.ui.animation.EntranceGroup
-import com.android.purebilibili.core.ui.animation.entrance
 import com.android.purebilibili.feature.settings.ui.SettingsPageScaffold
 import com.android.purebilibili.core.theme.iOSPink  // 存储权限图标色
 import com.android.purebilibili.core.theme.iOSBlue
@@ -61,7 +59,6 @@ fun PermissionSettingsScreen(
     val screenTitle = stringResource(R.string.permission_management_title)
     val backLabel = stringResource(R.string.common_back)
     val bottomPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    EntranceGroup {
         SettingsPageScaffold(
             title = screenTitle,
             onBack = onBack,
@@ -71,7 +68,6 @@ fun PermissionSettingsScreen(
         ) {
             PermissionSettingsContent()
         }
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -195,7 +191,7 @@ fun PermissionSettingsContent(
             .fillMaxWidth()
             .verticalScroll(rememberScrollState()),
     ) {
-            Box(modifier = Modifier.entrance()) {
+            Box(modifier = Modifier) {
                 AppText(
                     text = "以下是应用所需的权限及其用途说明。普通权限在安装时自动授予，无需手动操作。",
                     style = MaterialTheme.typography.bodySmall,
@@ -204,10 +200,10 @@ fun PermissionSettingsContent(
                 )
             }
 
-            Box(modifier = Modifier.entrance()) {
+            Box(modifier = Modifier) {
                 AppPreferenceSectionTitle("需要授权的权限")
             }
-            Box(modifier = Modifier.entrance()) {
+            Box(modifier = Modifier) {
                 AppPreferenceGroup {
                     permissions.filter { !it.isNormal }.forEachIndexed { index, info ->
                         if (index > 0) AppHorizontalDivider()
@@ -220,10 +216,10 @@ fun PermissionSettingsContent(
                 }
             }
 
-            Box(modifier = Modifier.entrance()) {
+            Box(modifier = Modifier) {
                 AppPreferenceSectionTitle("自动授予的权限")
             }
-            Box(modifier = Modifier.entrance()) {
+            Box(modifier = Modifier) {
                 AppPreferenceGroup {
                     permissions.filter { it.isNormal }.forEachIndexed { index, info ->
                         if (index > 0) AppHorizontalDivider()
@@ -236,7 +232,7 @@ fun PermissionSettingsContent(
                 }
             }
 
-            Box(modifier = Modifier.entrance()) {
+            Box(modifier = Modifier) {
                 Column {
                     Spacer(modifier = Modifier.height(16.dp))
                     AppText(

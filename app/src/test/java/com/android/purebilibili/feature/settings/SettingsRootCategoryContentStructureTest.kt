@@ -105,7 +105,6 @@ class SettingsRootCategoryContentStructureTest {
         ).first { it.exists() }.readText().replace("\r\n", "\n")
 
         assertTrue(source.contains("internal fun SettingsRootCategoryEntranceSection("))
-        assertTrue(source.contains("Box(modifier = Modifier.entrance())"))
         val contentBlock = source
             .substringAfter("internal fun SettingsRootCategoryContent(")
             .substringBefore("@Composable\nfun SupportToolsSection(")

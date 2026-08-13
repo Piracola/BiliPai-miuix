@@ -123,22 +123,17 @@ class VideoActivity : ComponentActivity() {
             val hapticFeedbackEnabled by SettingsManager
                 .getHapticFeedbackEnabled(this@VideoActivity)
                 .collectAsStateWithLifecycle(initialValue = true)
-            val uiEntranceAnimationEnabled by SettingsManager
-                .getUiEntranceAnimationEnabled(this@VideoActivity)
-                .collectAsStateWithLifecycle(initialValue = true)
             val runtimeVisualGuardEnabled by SettingsManager
                 .getRuntimeVisualGuardEnabled(this@VideoActivity)
                 .collectAsStateWithLifecycle(initialValue = true)
             val appThemeConfig = remember(
                 blurIntensity,
                 hapticFeedbackEnabled,
-                uiEntranceAnimationEnabled,
                 runtimeVisualGuardEnabled,
             ) {
                 AppThemeConfig(
                     blurIntensity = blurIntensity,
                     hapticFeedbackEnabled = hapticFeedbackEnabled,
-                    uiEntranceAnimationEnabled = uiEntranceAnimationEnabled,
                     runtimeVisualGuardEnabled = runtimeVisualGuardEnabled,
                 )
             }

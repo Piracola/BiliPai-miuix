@@ -26,8 +26,6 @@ import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.ui.ContainerLevel
 import com.android.purebilibili.core.ui.resolveBottomSafeAreaPadding
-import com.android.purebilibili.core.ui.animation.EntranceGroup
-import com.android.purebilibili.core.ui.animation.entrance
 import com.android.purebilibili.core.ui.components.rememberAdaptivePreferenceIconContentColor
 import com.android.purebilibili.core.ui.components.rememberAdaptivePreferenceIconContainerColor
 import com.android.purebilibili.core.ui.components.rememberAdaptiveSemanticIconTint
@@ -143,7 +141,6 @@ fun TipsSettingsScreen(
         )
     }
 
-    EntranceGroup {
         SettingsPageScaffold(
             title = screenTitle,
             onBack = onBack,
@@ -151,40 +148,39 @@ fun TipsSettingsScreen(
             bottomContentPadding = contentBottomPadding,
             lazyListContent = {
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceSectionTitle("基础技巧")
                 }
             }
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     TipSection(items = basicTips)
                 }
             }
 
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceSectionTitle("隐藏技巧")
                 }
             }
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     TipSection(items = hiddenTips)
                 }
             }
 
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceSectionTitle("进阶玩法")
                 }
             }
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     TipSection(items = advancedTips)
                 }
             }
         },
         )
-    }
 }
 
 @Composable

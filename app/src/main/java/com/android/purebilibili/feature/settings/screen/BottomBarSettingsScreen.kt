@@ -65,8 +65,6 @@ import com.android.purebilibili.feature.settings.ui.SettingsPageScaffold
 import com.android.purebilibili.core.util.LocalWindowSizeClass
 import kotlinx.coroutines.launch
 import com.android.purebilibili.core.ui.components.*
-import com.android.purebilibili.core.ui.animation.EntranceGroup
-import com.android.purebilibili.core.ui.animation.entrance
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 /**
@@ -299,7 +297,6 @@ fun BottomBarSettingsContent(
         }
     }
 
-    EntranceGroup {
     LazyColumn(
         state = listState,
         modifier = modifier
@@ -309,7 +306,7 @@ fun BottomBarSettingsContent(
     ) {
             // 说明文字
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppText(
                         text = "集中管理底部导航、首页顶部标签和平板侧边栏。底栏项目最少 2 个，最多 5 个。",
                         style = MaterialTheme.typography.bodySmall,
@@ -319,12 +316,12 @@ fun BottomBarSettingsContent(
             }
 
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceSectionTitle("导航行为")
                 }
             }
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceGroup {
                         AppSwitchPreference(
                             icon = rememberSettingsSemanticIcon(SettingsIconRole.FLOATING_BOTTOM_BAR),
@@ -381,13 +378,13 @@ fun BottomBarSettingsContent(
             
             // 底部导航
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceSectionTitle("底部导航")
                 }
             }
 
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceGroup {
                         val visibilityMode by SettingsManager.getBottomBarVisibilityMode(context).collectAsStateWithLifecycle(initialValue = SettingsManager.BottomBarVisibilityMode.ALWAYS_VISIBLE)
                         val labelMode by SettingsManager.getBottomBarLabelMode(context).collectAsStateWithLifecycle(initialValue = 0)
@@ -425,13 +422,13 @@ fun BottomBarSettingsContent(
 
             // 顶部标签
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceSectionTitle("顶部标签")
                 }
             }
 
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceGroup {
                             SettingsSingleChoicePreference(
                                 icon = Icons.Outlined.ViewList,
@@ -650,13 +647,13 @@ fun BottomBarSettingsContent(
 
             // 平板导航
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceSectionTitle("平板导航")
                 }
             }
 
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceGroup {
                         AppSwitchPreference(
                             icon = Icons.Outlined.ViewSidebar,
@@ -692,13 +689,13 @@ fun BottomBarSettingsContent(
 
             // 当前底栏预览
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceSectionTitle("当前底栏")
                 }
             }
             
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     BottomBarPreview(
                         tabs = localOrder.filter { it in localVisibleTabs }
                             .mapNotNull { id -> allBottomBarTabs.find { it.id == id } },
@@ -710,7 +707,7 @@ fun BottomBarSettingsContent(
             
             // 可用项目列表
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     Column {
                         Spacer(modifier = Modifier.height(8.dp))
                         AppPreferenceSectionTitle("可用项目")
@@ -719,7 +716,7 @@ fun BottomBarSettingsContent(
             }
             
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceGroup {
                         allBottomBarTabs.forEachIndexed { index, tab ->
                             if (index > 0) {
@@ -759,7 +756,7 @@ fun BottomBarSettingsContent(
             
             // 顺序调整说明
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     Column {
                         Spacer(modifier = Modifier.height(8.dp))
                         AppText(
@@ -773,7 +770,7 @@ fun BottomBarSettingsContent(
             
             // 重置按钮
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     Column {
                         Spacer(modifier = Modifier.height(16.dp))
                         AppOutlinedButton(
@@ -803,7 +800,6 @@ fun BottomBarSettingsContent(
                 }
             }
         }
-    }
     }
 
 

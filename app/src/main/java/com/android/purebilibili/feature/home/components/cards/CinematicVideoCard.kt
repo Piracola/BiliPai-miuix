@@ -76,7 +76,6 @@ import com.android.purebilibili.core.ui.transition.videoCardShellSharedBoundsOrE
 import com.android.purebilibili.core.util.CardPositionManager
 import com.android.purebilibili.core.util.FormatUtils
 import com.android.purebilibili.core.util.HapticType
-import com.android.purebilibili.core.util.animateEnter
 import com.android.purebilibili.core.util.rememberHapticFeedback
 import com.android.purebilibili.data.model.response.VideoItem
 import androidx.compose.material.icons.Icons
@@ -94,7 +93,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.material.icons.filled.PlayCircle
-import com.android.purebilibili.feature.home.resolveHomeCardEnterAnimationEnabledAtMount
 import kotlin.math.roundToInt
 
 /**
@@ -230,29 +228,11 @@ fun CinematicVideoCard(
         isSharedReturnTarget = isSharedReturnTarget,
     )
     val cardShellShape = remember(cardCornerRadius) { RoundedCornerShape(cardCornerRadius) }
-    val enterAnimationEnabledAtMount = remember(video.bvid) {
-        resolveHomeCardEnterAnimationEnabledAtMount(
-            baseAnimationEnabled = animationEnabled,
-            isReturningFromDetail = isReturningFromVideoDetail,
-            isSwitchingCategory = CardPositionManager.isSwitchingCategory,
-            isScrollInProgress = scrollLiteModeEnabled
-        )
-    }
-    val coordinateEnterWithTransition = remember(animationEnabled, transitionEnabled) {
-        animationEnabled && transitionEnabled
-    }
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = AppSpacingTokens.ExtraLarge, start = AppSpacingTokens.Large, end = AppSpacingTokens.Large) // 增加间距
-            .animateEnter(
-                index = index,
-                key = Unit,
-                animationEnabled = enterAnimationEnabledAtMount,
-                motionTier = motionTier,
-                coordinateWithSharedTransition = coordinateEnterWithTransition
-            )
             .onGloballyPositioned { coordinates ->
                 cardBoundsRef.value = coordinates.boundsInRoot()
             }

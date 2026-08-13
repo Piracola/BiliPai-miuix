@@ -1345,9 +1345,6 @@ object SettingsManager {
         intPreferencesKey("video_shared_transition_speed")
     private val KEY_VIDEO_SHARED_TRANSITION_CUSTOM_DURATION_MILLIS =
         intPreferencesKey("video_shared_transition_custom_duration_millis")
-    //  [新增] 界面入场动画 master 开关(全 App 统一入场动效),默认开启
-    private val KEY_UI_ENTRANCE_ANIMATION_ENABLED =
-        booleanPreferencesKey("ui_entrance_animation_enabled")
     // [New] 运行时视觉降级守卫开关
     private val KEY_SMART_VISUAL_GUARD_ENABLED = booleanPreferencesKey("smart_visual_guard_enabled")
     // 新 key：旧 key 的 false 是「已下线」的产物，不应被迁移成「用户主动关闭」。
@@ -2814,14 +2811,6 @@ object SettingsManager {
             preferences[KEY_VIDEO_SHARED_TRANSITION_CUSTOM_DURATION_MILLIS] =
                 normalizeVideoSharedTransitionCustomDurationMillis(durationMillis)
         }
-    }
-
-    //  [新增] --- 界面入场动画 master 开关(全 App 统一入场动效) ---
-    fun getUiEntranceAnimationEnabled(context: Context): Flow<Boolean> = context.settingsDataStore.data
-        .map { preferences -> preferences[KEY_UI_ENTRANCE_ANIMATION_ENABLED] ?: true }  // 默认开启
-
-    suspend fun setUiEntranceAnimationEnabled(context: Context, value: Boolean) {
-        context.settingsDataStore.edit { preferences -> preferences[KEY_UI_ENTRANCE_ANIMATION_ENABLED] = value }
     }
 
     fun getSmartVisualGuardEnabled(context: Context): Flow<Boolean> = context.settingsDataStore.data
@@ -6692,7 +6681,6 @@ object SettingsManager {
             BooleanShareablePreferenceDefinition(KEY_HOME_HERO_CAROUSEL_ENABLED, SettingsShareSection.APPEARANCE),
             BooleanShareablePreferenceDefinition(KEY_HOME_HERO_CAROUSEL_AUTOPLAY_ENABLED, SettingsShareSection.APPEARANCE),
             BooleanShareablePreferenceDefinition(KEY_CARD_ANIMATION_ENABLED, SettingsShareSection.APPEARANCE),
-            BooleanShareablePreferenceDefinition(KEY_UI_ENTRANCE_ANIMATION_ENABLED, SettingsShareSection.APPEARANCE),
             BooleanShareablePreferenceDefinition(KEY_CARD_TRANSITION_ENABLED, SettingsShareSection.APPEARANCE),
             BooleanShareablePreferenceDefinition(
                 KEY_LIVE_SURFACE_CARD_TRANSITION_ENABLED,

@@ -50,7 +50,6 @@ import com.android.purebilibili.core.ui.rememberAppSparklesIcon
 import com.android.purebilibili.core.ui.rememberAppVisibilityOffIcon
 import com.android.purebilibili.core.ui.rememberAppWarningIcon
 import com.android.purebilibili.core.ui.rememberAppAnalyticsIcon
-import com.android.purebilibili.core.ui.animation.entrance
 import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.adaptiveSquircleBackground
 import com.android.purebilibili.core.ui.AppSemanticAccentRole
@@ -99,7 +98,6 @@ import kotlin.math.roundToInt
 // ═══════════════════════════════════════════════════
 
 // Delegated to core/ui/components/iOSListComponents.kt
-import com.android.purebilibili.core.ui.animation.entrance
 import com.android.purebilibili.core.ui.components.AppPreferenceSectionTitle as SettingsSectionTitle
 import com.android.purebilibili.core.ui.components.AppPreferenceGroup as SettingsGroup
 import com.android.purebilibili.core.ui.components.AppSwitchPreference as SettingSwitchItem
@@ -621,7 +619,7 @@ internal fun SettingsDetailEntrySection(
 internal fun SettingsRootCategoryEntranceSection(
     content: @Composable () -> Unit
 ) {
-    Box(modifier = Modifier.entrance()) {
+    Box(modifier = Modifier) {
         content()
     }
 }

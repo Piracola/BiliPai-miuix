@@ -1192,22 +1192,17 @@ open class MainActivity : AppCompatActivity() {
                 .collectAsStateWithLifecycle(initialValue = BlurIntensity.THIN)
             val hapticFeedbackEnabled by SettingsManager.getHapticFeedbackEnabled(context)
                 .collectAsStateWithLifecycle(initialValue = true)
-            val uiEntranceAnimationEnabled by SettingsManager
-                .getUiEntranceAnimationEnabled(context)
-                .collectAsStateWithLifecycle(initialValue = true)
             val runtimeVisualGuardEnabled by SettingsManager
                 .getRuntimeVisualGuardEnabled(context)
                 .collectAsStateWithLifecycle(initialValue = true)
             val appThemeConfig = remember(
                 blurIntensity,
                 hapticFeedbackEnabled,
-                uiEntranceAnimationEnabled,
                 runtimeVisualGuardEnabled,
             ) {
                 AppThemeConfig(
                     blurIntensity = blurIntensity,
                     hapticFeedbackEnabled = hapticFeedbackEnabled,
-                    uiEntranceAnimationEnabled = uiEntranceAnimationEnabled,
                     runtimeVisualGuardEnabled = runtimeVisualGuardEnabled,
                 )
             }

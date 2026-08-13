@@ -48,9 +48,6 @@ import com.android.purebilibili.navigation3.predictiveback.BiliPaiPredictiveBack
 import com.android.purebilibili.navigation3.predictiveback.BiliPaiPredictiveBackExitDirection
 import androidx.compose.material.icons.outlined.*
 import com.android.purebilibili.core.ui.components.*
-import com.android.purebilibili.core.ui.animation.EntranceGroup
-import com.android.purebilibili.core.ui.animation.entrance
-import com.android.purebilibili.core.ui.animation.rememberEffectiveEntranceMotionSpec
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import android.os.Build
@@ -127,8 +124,6 @@ fun AnimationSettingsContent(
     }
     val isLiquidGlassAvailable = shouldAllowHomeChromeLiquidGlass(Build.VERSION.SDK_INT)
     val bottomBarLiquidGlassEnabled = state.bottomBarLiquidGlassEnabled
-    val uiEntranceAnimationEnabled by SettingsManager.getUiEntranceAnimationEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = true)
     val appNavigationSettings by SettingsManager.getAppNavigationSettings(context)
         .collectAsStateWithLifecycle(initialValue = AppNavigationSettings())
     val videoTransitionRealtimeBlurEnabled by SettingsManager
@@ -140,9 +135,6 @@ fun AnimationSettingsContent(
     val fullScreenSwipeBackEnabled by SettingsManager
         .getFullScreenSwipeBackEnabled(context)
         .collectAsStateWithLifecycle(initialValue = false)
-    val effectiveEntranceSpec = rememberEffectiveEntranceMotionSpec()
-    // 开关开着、但有效参数被降级为不动画 → 系统减弱动效在生效。
-    val entranceDowngradedBySystem = uiEntranceAnimationEnabled && !effectiveEntranceSpec.animate
     val sharedTransitionSpeedOptions = remember {
         listOf(
             AppSegmentOption(VideoSharedTransitionSpeed.FAST, "快速"),
@@ -198,7 +190,6 @@ fun AnimationSettingsContent(
         SettingsSearchFocusController.clear(request.token)
     }
 
-    EntranceGroup {
     LazyColumn(
         state = listState,
         modifier = modifier.fillMaxSize(),
@@ -207,26 +198,13 @@ fun AnimationSettingsContent(
 
             //  界面动效（全 App 入场）
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceSectionTitle("界面动效")
                 }
             }
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceGroup {
-                        AppSwitchPreference(
-                            icon = rememberSettingsSemanticIcon(SettingsIconRole.UI_ENTRANCE_ANIMATION),
-                            title = "界面入场动画",
-                            subtitle = "进入设置等页面时，让内容依次淡入；关闭后页面会直接显示",
-                            checked = uiEntranceAnimationEnabled,
-                            onCheckedChange = { value ->
-                                scope.launch {
-                                    SettingsManager.setUiEntranceAnimationEnabled(context, value)
-                                }
-                            },
-                            iconTint = iOSGreen
-                        )
-                        AppPreferenceDivider()
                         AppSwitchPreference(
                             icon = rememberSettingsSemanticIcon(SettingsIconRole.FULLSCREEN_GESTURE),
                             title = "触感反馈",
@@ -235,32 +213,18 @@ fun AnimationSettingsContent(
                             onCheckedChange = viewModel::toggleHapticFeedback,
                             iconTint = iOSBlue,
                         )
-                        if (entranceDowngradedBySystem) {
-                            AppPreferenceDivider()
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                            ) {
-                                AppText(
-                                    text = "系统已开启「减弱动效」，入场动画已自动关闭。",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
                     }
                 }
             }
 
             //  卡片动画
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceSectionTitle("卡片动画")
                 }
             }
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceGroup {
 	                        AppSwitchPreference(
 	                            icon = rememberSettingsSemanticIcon(SettingsIconRole.CARD_ENTRANCE_ANIMATION),
@@ -439,12 +403,12 @@ fun AnimationSettingsContent(
 
             // ✨ 视觉效果
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceSectionTitle("玻璃效果")
                 }
             }
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceGroup {
                         if (isLiquidGlassAvailable) {
                             AppSwitchPreference(
@@ -529,7 +493,7 @@ fun AnimationSettingsContent(
             
             //  提示
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppSurface(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -560,5 +524,4 @@ fun AnimationSettingsContent(
             
             item { Spacer(modifier = Modifier.height(32.dp)) }
         }
-    }
 }

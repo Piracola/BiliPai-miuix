@@ -80,7 +80,6 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.android.purebilibili.core.ui.LoadingAnimation
-import com.android.purebilibili.core.ui.SuccessAnimation
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import com.android.purebilibili.core.ui.AppShapes
@@ -566,7 +565,12 @@ fun QrCodeLoginContent(
                             }
                         }
                     }
-                    is LoginState.Success -> SuccessAnimation(size = 62.dp)
+                    is LoginState.Success -> AppIcon(
+                        imageVector = Icons.Filled.Check,
+                        contentDescription = null,
+                        tint = palette.success,
+                        modifier = Modifier.size(34.dp)
+                    )
                     else -> LoadingAnimation(size = 46.dp)
                 }
             }

@@ -55,7 +55,6 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.android.purebilibili.core.util.FormatUtils
 import com.android.purebilibili.core.util.rememberHapticFeedback
-import com.android.purebilibili.core.util.animateEnter
 import com.android.purebilibili.core.util.CardPositionManager
 import com.android.purebilibili.core.util.HomeCoverReturnPrefetchEntry
 import com.android.purebilibili.core.util.HomeCoverReturnPrefetchRegistry
@@ -110,7 +109,6 @@ import com.android.purebilibili.core.ui.transition.shouldEnableVideoCoverSharedT
 import com.android.purebilibili.core.ui.transition.videoCardShellSharedBoundsOrEmpty
 import com.android.purebilibili.core.ui.transition.videoCoverSharedElementKey
 import com.android.purebilibili.core.ui.transition.videoSharedElementBoundsTransformSpec
-import com.android.purebilibili.feature.home.resolveHomeCardEnterAnimationEnabledAtMount
 import com.android.purebilibili.feature.home.resolveHomeCardInfoSurfaceAppearance
 import com.android.purebilibili.feature.home.HomeGlassPillStyle
 import com.android.purebilibili.feature.home.HomeGlassResolvedColors
@@ -787,28 +785,9 @@ internal fun ElegantVideoCard(
         }
         onClick(video.bvid, video.cid)
     }
-    val enterAnimationEnabledAtMount = remember(video.bvid) {
-        resolveHomeCardEnterAnimationEnabledAtMount(
-            baseAnimationEnabled = animationEnabled,
-            isReturningFromDetail = isReturningFromVideoDetail,
-            isSwitchingCategory = CardPositionManager.isSwitchingCategory,
-            isScrollInProgress = scrollLiteModeEnabled
-        )
-    }
-    val coordinateEnterWithTransition = remember(animationEnabled, transitionEnabled) {
-        animationEnabled && transitionEnabled
-    }
     Box(
         modifier = modifier
             .fillMaxWidth()
-            // 进场动画：挂载门控已含滚动/返回/切分类；与过渡并存时仅淡入不改几何
-            .animateEnter(
-                index = index,
-                key = Unit,
-                animationEnabled = enterAnimationEnabledAtMount,
-                motionTier = motionTier,
-                coordinateWithSharedTransition = coordinateEnterWithTransition
-            )
             //  [新增] 记录卡片位置（仅存引用，boundsInRoot() 在交互时惰性计算）
             .onGloballyPositioned { coordinates ->
                 cardCoordsRef.value = coordinates

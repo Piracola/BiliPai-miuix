@@ -408,10 +408,7 @@ dependencies {
     implementation("com.materialkolor:material-kolor:4.1.1")
     implementation("com.github.skydoves:colorpicker-compose:1.1.4")
     
-    // --- 3.2 Lottie (动画效果) ---
-    implementation("com.airbnb.android:lottie-compose:6.7.1")
-    
-    // --- 3.3 Haze 2 (毛玻璃：core + blur + materials) ---
+    // --- 3.2 Haze 2 (毛玻璃：core + blur + materials) ---
     implementation("dev.chrisbanes.haze:haze:$hazeVersion")
     implementation("dev.chrisbanes.haze:haze-blur:$hazeVersion")
     implementation("dev.chrisbanes.haze:haze-blur-materials:$hazeVersion")

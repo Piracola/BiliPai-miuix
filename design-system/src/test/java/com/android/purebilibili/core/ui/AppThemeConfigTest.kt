@@ -13,7 +13,6 @@ class AppThemeConfigTest {
 
         assertEquals(BlurIntensity.THIN, config.blurIntensity)
         assertTrue(config.hapticFeedbackEnabled)
-        assertTrue(config.uiEntranceAnimationEnabled)
         assertTrue(config.runtimeVisualGuardEnabled)
     }
 }

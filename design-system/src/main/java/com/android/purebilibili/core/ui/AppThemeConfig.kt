@@ -13,7 +13,6 @@ import com.android.purebilibili.core.ui.blur.BlurIntensity
 data class AppThemeConfig(
     val blurIntensity: BlurIntensity = BlurIntensity.THIN,
     val hapticFeedbackEnabled: Boolean = true,
-    val uiEntranceAnimationEnabled: Boolean = true,
     val runtimeVisualGuardEnabled: Boolean = true,
 )
 

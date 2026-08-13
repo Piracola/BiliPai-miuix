@@ -72,8 +72,6 @@ import com.android.purebilibili.feature.video.subtitle.isSubtitleFeatureEnabledF
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import com.android.purebilibili.core.ui.components.*
-import com.android.purebilibili.core.ui.animation.EntranceGroup
-import com.android.purebilibili.core.ui.animation.entrance
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.ContainerLevel
@@ -255,7 +253,6 @@ fun PlaybackSettingsContent(
         )
     }
 
-    EntranceGroup {
     LazyColumn(
         state = listState,
         modifier = modifier.fillMaxSize(),
@@ -265,12 +262,12 @@ fun PlaybackSettingsContent(
             //  解码设置
             //  解码设置
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceSectionTitle("视频解码")
                 }
             }
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     val scope = rememberCoroutineScope()
                     val codecOptions = listOf(
                         AppSegmentOption("avc1", "AVC"),
@@ -327,12 +324,12 @@ fun PlaybackSettingsContent(
             }
 
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceSectionTitle("播放速度")
                 }
             }
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     val scope = rememberCoroutineScope()
                     AppPreferenceGroup {
 	                        AppSwitchPreference(
@@ -494,12 +491,12 @@ fun PlaybackSettingsContent(
 
             //  小窗播放
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceSectionTitle("小窗与后台")
                 }
             }
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     val scope = rememberCoroutineScope()
                     val pipNoDanmakuEnabled by com.android.purebilibili.core.store.SettingsManager
                         .getPipNoDanmakuEnabled(context)
@@ -691,12 +688,12 @@ fun PlaybackSettingsContent(
 
             //  手势设置
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceSectionTitle("手势控制")
                 }
             }
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceGroup {
                         AppSliderDialogPreference(
                             title = "手势灵敏度",
@@ -715,12 +712,12 @@ fun PlaybackSettingsContent(
 
             //  调试选项
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceSectionTitle("诊断")
                 }
             }
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     val scope = rememberCoroutineScope()
                     AppPreferenceGroup {
 	                        SettingsSingleChoicePreference(
@@ -810,12 +807,12 @@ fun PlaybackSettingsContent(
 
             //  网络与画质
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceSectionTitle("网络与画质")
                 }
             }
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     val scope = rememberCoroutineScope()
                     val wifiQuality by com.android.purebilibili.core.store.SettingsManager
                         .getWifiQuality(context).collectAsStateWithLifecycle(initialValue = 80)
@@ -994,12 +991,12 @@ fun PlaybackSettingsContent(
 
             // 📉 省流量模式
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceSectionTitle("省流量")
                 }
             }
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     val scope = rememberCoroutineScope()
                     val dataSaverMode by com.android.purebilibili.core.store.SettingsManager
                         .getDataSaverMode(context).collectAsStateWithLifecycle(initialValue = com.android.purebilibili.core.store.SettingsManager.DataSaverMode.MOBILE_ONLY
@@ -1075,12 +1072,12 @@ fun PlaybackSettingsContent(
 
             //  交互设置
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceSectionTitle("互动与评论")
                 }
             }
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     PlaybackInteractionSettingsSection(
                         context = context,
                         state = state,
@@ -1089,18 +1086,17 @@ fun PlaybackSettingsContent(
                 }
             }
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceSectionTitle("全屏与手势")
                 }
             }
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     PlaybackFullscreenGestureSettingsSection(context = context)
                 }
             }
 
             item { Spacer(modifier = Modifier.height(32.dp)) }
-}
 }
 }
 

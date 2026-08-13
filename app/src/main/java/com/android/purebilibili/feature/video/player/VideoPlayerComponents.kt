@@ -31,7 +31,6 @@ import coil.request.ImageRequest
 import com.android.purebilibili.core.theme.BiliPink
 import com.android.purebilibili.core.theme.resolveAdaptivePrimaryAccentColors
 import com.android.purebilibili.core.util.FormatUtils
-import com.android.purebilibili.core.util.bouncyClickable
 import com.android.purebilibili.data.model.response.RelatedVideo
 import com.android.purebilibili.data.model.response.ViewInfo
 import androidx.compose.foundation.isSystemInDarkTheme

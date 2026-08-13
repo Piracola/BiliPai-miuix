@@ -46,10 +46,7 @@ import com.android.purebilibili.core.ui.blur.unifiedBlur
 import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-//  Lottie 动画
-import com.airbnb.lottie.compose.*
 import com.android.purebilibili.core.util.responsiveContentWidth
-import com.android.purebilibili.core.ui.LottieUrls
 import com.android.purebilibili.core.ui.rememberAppBottomSheetMotion
 import com.android.purebilibili.core.ui.components.AppButton
 import com.android.purebilibili.core.ui.components.AppOutlinedButton
@@ -321,15 +318,7 @@ private fun WelcomePage(hazeState: HazeState) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        //  Lottie 欢迎动画 - 动画项 0
-        val welcomeComposition by rememberLottieComposition(
-            LottieCompositionSpec.Url("https://assets9.lottiefiles.com/packages/lf20_touohxv0.json") // 欢迎/庆祝动画
-        )
-        val welcomeProgress by animateLottieCompositionAsState(
-            composition = welcomeComposition,
-            iterations = LottieConstants.IterateForever
-        )
-        
+        //  欢迎图标 - 动画项 0
         Box(
             modifier = Modifier
                 .size(120.dp)
@@ -347,12 +336,6 @@ private fun WelcomePage(hazeState: HazeState) {
                 modifier = Modifier
                     .size(80.dp)
                     .clip(AppShapes.container(ContainerLevel.Floating))
-            )
-            //  Lottie 装饰动画 (环绕效果)
-            LottieAnimation(
-                composition = welcomeComposition,
-                progress = { welcomeProgress },
-                modifier = Modifier.size(120.dp)
             )
         }
         
@@ -475,15 +458,7 @@ private fun AppearanceSettingsPage(hazeState: HazeState) {
         label = "iconScale"
     )
     
-    //  Lottie 外观主题动画 - 彩虹渐变
-    val themeComposition by rememberLottieComposition(
-        LottieCompositionSpec.Url(LottieUrls.THEME_COLORS)
-    )
-    val themeProgress by animateLottieCompositionAsState(
-        composition = themeComposition,
-        iterations = LottieConstants.IterateForever
-    )
-    
+    //  外观主题图标
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -493,7 +468,7 @@ private fun AppearanceSettingsPage(hazeState: HazeState) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        //  Lottie 动画 - 动画项 0
+        // 外观主题图标 - 动画项 0
         Box(
             modifier = Modifier
                 .size(100.dp)
@@ -504,11 +479,7 @@ private fun AppearanceSettingsPage(hazeState: HazeState) {
                 },
             contentAlignment = Alignment.Center
         ) {
-            LottieAnimation(
-                composition = themeComposition,
-                progress = { themeProgress },
-                modifier = Modifier.size(100.dp)
-            )
+            AppText("🎨", fontSize = 56.sp)
         }
         
         Spacer(modifier = Modifier.height(24.dp))
@@ -613,15 +584,7 @@ private fun PlaybackSettingsPage(hazeState: HazeState) {
         label = "iconScale"
     )
     
-    //  Lottie 播放动画 - 视频播放按钮
-    val playComposition by rememberLottieComposition(
-        LottieCompositionSpec.Url(LottieUrls.VIDEO_PLAY)
-    )
-    val playProgress by animateLottieCompositionAsState(
-        composition = playComposition,
-        iterations = LottieConstants.IterateForever
-    )
-    
+    //  播放体验图标
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -631,7 +594,7 @@ private fun PlaybackSettingsPage(hazeState: HazeState) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        //  Lottie 动画 - 动画项 0
+        // 播放体验图标 - 动画项 0
         Box(
             modifier = Modifier
                 .size(100.dp)
@@ -642,11 +605,7 @@ private fun PlaybackSettingsPage(hazeState: HazeState) {
                 },
             contentAlignment = Alignment.Center
         ) {
-            LottieAnimation(
-                composition = playComposition,
-                progress = { playProgress },
-                modifier = Modifier.size(100.dp)
-            )
+            AppText("▶️", fontSize = 56.sp)
         }
         
         Spacer(modifier = Modifier.height(24.dp))

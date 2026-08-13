@@ -21,7 +21,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.purebilibili.R
 import com.android.purebilibili.core.ui.LocalBottomBarVisible
 import com.android.purebilibili.core.ui.LocalAnimatedVisibilityScope
-import com.android.purebilibili.core.ui.animation.EntranceGroup
 import com.android.purebilibili.core.util.LocalWindowSizeClass
 import com.android.purebilibili.feature.settings.SettingsPageScrollHost
 import com.android.purebilibili.feature.settings.SettingsRootCategory
@@ -35,7 +34,6 @@ import com.android.purebilibili.feature.settings.isSceneSettingsSearchTarget
 import com.android.purebilibili.feature.settings.resolveSettingsContentBottomPadding
 import com.android.purebilibili.feature.settings.resolveSettingsRootCategoryForSearchTarget
 import com.android.purebilibili.feature.settings.resolveSettingsSearchResults
-import com.android.purebilibili.feature.settings.shouldStartSettingsEntrance
 import com.android.purebilibili.feature.settings.ui.SettingsPageScaffold
 import dev.chrisbanes.haze.HazeState
 
@@ -53,12 +51,6 @@ fun SettingsSearchScreen(
     }
     val windowSizeClass = LocalWindowSizeClass.current
     val bottomBarVisible = LocalBottomBarVisible.current
-    val navigationTransitionRunning =
-        LocalAnimatedVisibilityScope.current?.transition?.isRunning == true
-    val rootEntranceStartWhen = shouldStartSettingsEntrance(
-        entranceEnabled = true,
-        navigationTransitionRunning = navigationTransitionRunning,
-    )
     val bottomInset = resolveSettingsContentBottomPadding(
         navigationBarsBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding(),
         bottomBarVisible = bottomBarVisible,
@@ -85,21 +77,19 @@ fun SettingsSearchScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
         ) {
-            EntranceGroup(startWhen = rootEntranceStartWhen) {
-                SettingsRootCategoryEntranceSection {
-                    SettingsSearchResultsSection(
-                        results = searchResults,
-                        onResultClick = { result ->
-                            val category = resolveSettingsRootCategoryForSearchTarget(result.target)
-                            if (isSceneSettingsSearchTarget(result.target) && category != null) {
-                                onCategoryClick(category)
-                            } else {
-                                SettingsSearchFocusController.submit(result.target, result.focusId)
-                                onSearchResultClick(result)
-                            }
-                        },
-                    )
-                }
+            SettingsRootCategoryEntranceSection {
+                SettingsSearchResultsSection(
+                    results = searchResults,
+                    onResultClick = { result ->
+                        val category = resolveSettingsRootCategoryForSearchTarget(result.target)
+                        if (isSceneSettingsSearchTarget(result.target) && category != null) {
+                            onCategoryClick(category)
+                        } else {
+                            SettingsSearchFocusController.submit(result.target, result.focusId)
+                            onSearchResultClick(result)
+                        }
+                    },
+                )
             }
             Spacer(modifier = Modifier.height(16.dp))
         }

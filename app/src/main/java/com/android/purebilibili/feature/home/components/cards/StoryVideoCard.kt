@@ -39,7 +39,6 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.android.purebilibili.core.util.FormatUtils
 import com.android.purebilibili.core.util.iOSCardTapEffect
-import com.android.purebilibili.core.util.animateEnter
 import com.android.purebilibili.core.util.CardPositionManager
 import com.android.purebilibili.data.model.response.VideoItem
 import com.android.purebilibili.core.util.rememberHapticFeedback
@@ -71,7 +70,6 @@ import com.android.purebilibili.core.ui.transition.shouldEnableVideoCoverSharedT
 import com.android.purebilibili.core.ui.transition.shouldUseVideoCardShellSharedBounds
 import com.android.purebilibili.core.ui.transition.videoCardShellSharedBoundsOrEmpty
 import com.android.purebilibili.feature.home.HomeCoverRequestSpec
-import com.android.purebilibili.feature.home.resolveHomeCardEnterAnimationEnabledAtMount
 import com.android.purebilibili.feature.video.ui.section.resolveCompactPublishTimeRowText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
@@ -270,17 +268,6 @@ internal fun StoryVideoCard(
     }
     
     val cardShellShape = remember(cardCornerRadius) { RoundedCornerShape(cardCornerRadius) }
-    val enterAnimationEnabledAtMount = remember(video.bvid) {
-        resolveHomeCardEnterAnimationEnabledAtMount(
-            baseAnimationEnabled = animationEnabled,
-            isReturningFromDetail = isReturningFromVideoDetail,
-            isSwitchingCategory = CardPositionManager.isSwitchingCategory,
-            isScrollInProgress = scrollLiteModeEnabled
-        )
-    }
-    val coordinateEnterWithTransition = remember(animationEnabled, transitionEnabled) {
-        animationEnabled && transitionEnabled
-    }
 
     Column(
         modifier = Modifier
@@ -295,13 +282,6 @@ internal fun StoryVideoCard(
                 clipShape = cardShellShape
             )
             .padding(horizontal = cardHorizontalPadding, vertical = AppSpacingTokens.Small)
-            .animateEnter(
-                index = index,
-                key = Unit,
-                animationEnabled = enterAnimationEnabledAtMount,
-                motionTier = motionTier,
-                coordinateWithSharedTransition = coordinateEnterWithTransition
-            )
             //  [新增] 记录卡片位置
             .onGloballyPositioned { coordinates ->
                 cardBounds = coordinates.boundsInRoot()

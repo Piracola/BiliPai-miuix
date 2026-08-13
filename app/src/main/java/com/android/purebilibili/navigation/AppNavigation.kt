@@ -2501,7 +2501,6 @@ fun AppNavigation(
                                     onSearchOpen = { pushNavigation3Key(BiliPaiNavKey.SettingsSearch) },
                                     mainHazeState = mainHazeState,
                                     forceSinglePaneContent = true,
-                                    rootEntranceEnabled = !isBottomPagerHosted,
                                 )
                             }
                         BiliPaiNavEntryContentRole.SETTINGS_CATEGORY -> {

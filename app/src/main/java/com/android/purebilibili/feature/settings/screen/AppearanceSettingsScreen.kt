@@ -76,8 +76,6 @@ import com.android.purebilibili.core.util.LocalWindowSizeClass
 import com.android.purebilibili.core.util.rememberHapticFeedback
 import kotlinx.coroutines.launch
 import com.android.purebilibili.core.ui.components.*
-import com.android.purebilibili.core.ui.animation.EntranceGroup
-import com.android.purebilibili.core.ui.animation.entrance
 import com.github.skydoves.colorpicker.compose.BrightnessSlider
 import com.github.skydoves.colorpicker.compose.HsvColorPicker
 import com.github.skydoves.colorpicker.compose.HueSlider
@@ -498,7 +496,6 @@ fun AppearanceSettingsContent(
             }
     }
 
-    EntranceGroup {
     LazyColumn(
         state = listState,
         modifier = modifier
@@ -510,12 +507,12 @@ fun AppearanceSettingsContent(
 
         //  主题与颜色
         item { 
-            Box(modifier = Modifier.entrance()) {
+            Box(modifier = Modifier) {
                 AppPreferenceSectionTitle("显示模式")
             }
         }
         item {
-            Box(modifier = Modifier.entrance()) {
+            Box(modifier = Modifier) {
                 AppPreferenceGroup {
                     // 主题模式选择 (横向卡片)
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -884,12 +881,12 @@ fun AppearanceSettingsContent(
         }
 
         item {
-            Box(modifier = Modifier.entrance()) {
+            Box(modifier = Modifier) {
                 AppPreferenceSectionTitle("字体与密度")
             }
         }
         item {
-            Box(modifier = Modifier.entrance()) {
+            Box(modifier = Modifier) {
                 AppPreferenceGroup {
                     Column(modifier = Modifier.padding(16.dp)) {
                         SettingsSingleChoicePreference(
@@ -1007,12 +1004,12 @@ fun AppearanceSettingsContent(
         
         //  启动画面
         item { 
-            Box(modifier = Modifier.entrance()) {
+            Box(modifier = Modifier) {
                 AppPreferenceSectionTitle("启动画面")
             }
         }
         item {
-            Box(modifier = Modifier.entrance()) {
+            Box(modifier = Modifier) {
                 AppPreferenceGroup {
                     val isSplashEnabled by com.android.purebilibili.core.store.SettingsManager.isSplashEnabled(context).collectAsStateWithLifecycle(initialValue = false)
                     val splashRandomEnabled by com.android.purebilibili.core.store.SettingsManager.getSplashRandomEnabled(context).collectAsStateWithLifecycle(initialValue = false)
@@ -1206,12 +1203,12 @@ fun AppearanceSettingsContent(
         
         //  个性化
         item { 
-            Box(modifier = Modifier.entrance()) {
+            Box(modifier = Modifier) {
                 AppPreferenceSectionTitle("开屏与图标")
             }
         }
         item {
-            Box(modifier = Modifier.entrance()) {
+            Box(modifier = Modifier) {
                 AppPreferenceGroup {
                     // 图标设置
 	                    AppPreference(
@@ -1246,12 +1243,12 @@ fun AppearanceSettingsContent(
         if (contentMode == AppearanceSettingsContentMode.HOME) {
             //  首页与列表
             item { 
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceSectionTitle("首页与列表")
                 }
             }
             item {
-                Box(modifier = Modifier.entrance()) {
+                Box(modifier = Modifier) {
                     AppPreferenceGroup {
                         val displayMode = state.displayMode
                         val currentDisplayMode = DisplayMode.entries
@@ -1595,7 +1592,6 @@ fun AppearanceSettingsContent(
             }
         }
 
-    }
     }
 
     if (showMd3ColorPickerDialog) {
