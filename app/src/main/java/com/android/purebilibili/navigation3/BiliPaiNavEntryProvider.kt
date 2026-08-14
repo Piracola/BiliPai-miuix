@@ -55,7 +55,6 @@ internal fun NavEntryBuilder.biliPaiNavEntries(
     entry<BiliPaiNavKey.SystemNotice>(swipeDismiss = swipeBackDirection, content = content)
     entry<BiliPaiNavKey.Chat>(swipeDismiss = swipeBackDirection, content = content)
     entry<BiliPaiNavKey.Partition>(swipeDismiss = NavSwipeDirection.None, content = content)
-    entry<BiliPaiNavKey.Story>(swipeDismiss = NavSwipeDirection.None, content = content)
     entry<BiliPaiNavKey.AudioMode>(swipeDismiss = NavSwipeDirection.None, content = content)
     entry<BiliPaiNavKey.SeasonSeriesDetail>(swipeDismiss = NavSwipeDirection.None, content = content)
     entry<BiliPaiNavKey.Bangumi>(swipeDismiss = NavSwipeDirection.None, content = content)

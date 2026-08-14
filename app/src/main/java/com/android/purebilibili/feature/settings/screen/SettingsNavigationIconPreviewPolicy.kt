@@ -13,7 +13,6 @@ import top.yukonga.miuix.kmp.icon.extended.*
 private enum class SettingsNavigationIconRole {
     HOME,
     DYNAMIC,
-    STORY,
     HISTORY,
     LISTEN_VIDEO,
     PROFILE,
@@ -40,7 +39,6 @@ internal fun resolveSettingsNavigationPreviewIcon(
     val role = when (tabId.trim().uppercase()) {
         "HOME", "RECOMMEND" -> SettingsNavigationIconRole.HOME
         "DYNAMIC" -> SettingsNavigationIconRole.DYNAMIC
-        "STORY" -> SettingsNavigationIconRole.STORY
         "HISTORY" -> SettingsNavigationIconRole.HISTORY
         "LISTEN_VIDEO" -> SettingsNavigationIconRole.LISTEN_VIDEO
         "PROFILE" -> SettingsNavigationIconRole.PROFILE
@@ -63,7 +61,6 @@ internal fun resolveSettingsNavigationPreviewIcon(
         AppSemanticIconFamily.MIUIX -> when (role) {
             SettingsNavigationIconRole.HOME -> if (selected) MiuixIcons.Medium.Th1 else MiuixIcons.Th1
             SettingsNavigationIconRole.DYNAMIC -> if (selected) MiuixIcons.Medium.Messages else MiuixIcons.Messages
-            SettingsNavigationIconRole.STORY -> if (selected) MiuixIcons.Medium.Recording else MiuixIcons.Recording
             SettingsNavigationIconRole.HISTORY -> if (selected) MiuixIcons.Medium.Recent else MiuixIcons.Recent
             SettingsNavigationIconRole.LISTEN_VIDEO -> if (selected) MiuixIcons.Medium.Music else MiuixIcons.Music
             SettingsNavigationIconRole.PROFILE -> MiuixIcons.ContactsCircle
@@ -83,7 +80,6 @@ internal fun resolveSettingsNavigationPreviewIcon(
         AppSemanticIconFamily.MATERIAL -> when (role) {
             SettingsNavigationIconRole.HOME -> if (selected) Icons.Filled.Home else Icons.Outlined.Home
             SettingsNavigationIconRole.DYNAMIC -> if (selected) Icons.Filled.Notifications else Icons.Outlined.NotificationsNone
-            SettingsNavigationIconRole.STORY -> if (selected) Icons.Filled.PlayCircle else Icons.Outlined.PlayCircleOutline
             SettingsNavigationIconRole.HISTORY -> if (selected) Icons.Filled.History else Icons.Outlined.History
             SettingsNavigationIconRole.LISTEN_VIDEO -> if (selected) Icons.Filled.LibraryMusic else Icons.Outlined.LibraryMusic
             SettingsNavigationIconRole.PROFILE -> if (selected) Icons.Filled.Person else Icons.Outlined.Person

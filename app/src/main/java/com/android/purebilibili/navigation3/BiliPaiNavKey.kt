@@ -274,19 +274,6 @@ internal sealed interface BiliPaiNavKey : NavKey {
     }
 
     @Serializable
-    data class Story(
-        val seedBvid: String = "",
-        val seedCid: Long = 0L,
-        val seedCover: String = "",
-        val seedTitle: String = "",
-        val sourceRoute: String? = null,
-        /** 每次从卡片直达时刷新，避免 SaveableState 复用坏掉的播放器会话。 */
-        val openId: Long = 0L
-    ) : BiliPaiNavKey {
-        override val routeBase: String = "story"
-    }
-
-    @Serializable
     data class AudioMode(
         val sourceBvid: String = "",
         val sourceCid: Long = 0L,

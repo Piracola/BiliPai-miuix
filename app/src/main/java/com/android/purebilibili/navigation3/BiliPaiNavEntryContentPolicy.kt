@@ -46,7 +46,6 @@ internal enum class BiliPaiNavEntryContentRole {
     CHAT,
     AUDIO_MODE,
     LOGIN,
-    STORY,
     PARTITION,
     CATEGORY,
     SEASON_SERIES_DETAIL,
@@ -112,7 +111,6 @@ internal fun resolveBiliPaiNavEntryContentRole(key: BiliPaiNavKey): BiliPaiNavEn
         is BiliPaiNavKey.Chat -> BiliPaiNavEntryContentRole.CHAT
         is BiliPaiNavKey.AudioMode -> BiliPaiNavEntryContentRole.AUDIO_MODE
         BiliPaiNavKey.Login -> BiliPaiNavEntryContentRole.LOGIN
-        is BiliPaiNavKey.Story -> BiliPaiNavEntryContentRole.STORY
         BiliPaiNavKey.Partition -> BiliPaiNavEntryContentRole.PARTITION
         is BiliPaiNavKey.Category -> BiliPaiNavEntryContentRole.CATEGORY
         is BiliPaiNavKey.SeasonSeriesDetail -> BiliPaiNavEntryContentRole.SEASON_SERIES_DETAIL

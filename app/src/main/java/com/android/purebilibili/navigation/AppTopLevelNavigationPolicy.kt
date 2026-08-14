@@ -130,8 +130,7 @@ internal fun shouldShowBottomBarForNavigation(
     shouldHideBottomBarOnTablet: Boolean,
     shouldDeferReveal: Boolean
 ): Boolean {
-    return !activeRoute.orEmpty().startsWith("story") &&
-        activeRoute in visibleBottomBarRoutes &&
+    return activeRoute in visibleBottomBarRoutes &&
         !useSideNavigation &&
         !shouldHideBottomBarOnTablet &&
         !shouldDeferReveal

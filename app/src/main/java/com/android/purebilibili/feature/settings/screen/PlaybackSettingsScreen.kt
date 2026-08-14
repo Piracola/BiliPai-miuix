@@ -1455,10 +1455,6 @@ private fun PlaybackFullscreenGestureSettingsSection(
         .collectAsStateWithLifecycle(initialValue = PortraitPlayerCollapseMode.INTRO_ONLY)
     val portraitSwipeToFullscreenEnabled by com.android.purebilibili.core.store.SettingsManager
         .getPortraitSwipeToFullscreenEnabled(context).collectAsStateWithLifecycle(initialValue = true)
-    val directPortraitStoryEntry by com.android.purebilibili.core.store.SettingsManager
-        .getAutoPortraitFullscreen(context).collectAsStateWithLifecycle(initialValue = false)
-    val launchToPortraitFeedOnStartup by com.android.purebilibili.core.store.SettingsManager
-        .getLaunchToPortraitFeedOnStartup(context).collectAsStateWithLifecycle(initialValue = false)
     val centerSwipeToFullscreenEnabled by com.android.purebilibili.core.store.SettingsManager
         .getCenterSwipeToFullscreenEnabled(context).collectAsStateWithLifecycle(initialValue = true)
     val slideVolumeBrightnessEnabled by com.android.purebilibili.core.store.SettingsManager
@@ -1748,45 +1744,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
 
         AppPreferenceDivider()
         AppSwitchPreference(
-            icon = rememberSettingsSemanticIcon(SettingsIconRole.PORTRAIT_STORY_ENTRY),
-            title = "竖屏视频直达刷视频模式",
-            subtitle = if (directPortraitStoryEntry) {
-                "开启：任意入口点竖屏视频直接进竖滑全屏（可经卡片放大动画）；默认关闭时先进详情内联竖屏"
-            } else {
-                "关闭（默认）：竖屏视频先进详情页内联播放，可再点「竖屏」进刷视频"
-            },
-            checked = directPortraitStoryEntry,
-            onCheckedChange = {
-                scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setAutoPortraitFullscreen(context, it)
-                }
-            },
-            iconTint = iOSTeal
-        )
-
-        AppPreferenceDivider()
-        AppSwitchPreference(
-            icon = rememberSettingsSemanticIcon(SettingsIconRole.STARTUP_PORTRAIT_FEED),
-            title = "启动时进入竖屏视频流",
-            subtitle = if (launchToPortraitFeedOnStartup) {
-                "打开应用后直接进入竖屏刷视频流（独立于「直达」开关）"
-            } else {
-                "关闭后仍从首页进入应用"
-            },
-            checked = launchToPortraitFeedOnStartup,
-            onCheckedChange = {
-                scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setLaunchToPortraitFeedOnStartup(context, it)
-                }
-            },
-            iconTint = iOSTeal
-        )
-
-        AppPreferenceDivider()
-	        AppSwitchPreference(
-	            icon = rememberSettingsSemanticIcon(SettingsIconRole.CENTER_SWIPE_FULLSCREEN),
+            icon = rememberSettingsSemanticIcon(SettingsIconRole.CENTER_SWIPE_FULLSCREEN),
             title = "中部滑动切换全屏",
             subtitle = if (centerSwipeToFullscreenEnabled) {
                 "开启后：播放器中部纵向滑动可切换进入/退出全屏（受手势反向影响）"

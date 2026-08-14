@@ -35,7 +35,7 @@ internal data class BiliPaiNavSourceMetadata(
  *
  * Visibility is intentionally not required: when card morph is disabled we still need a
  * reliable left/right exit direction even if the card sits under the top chrome.
- * Single-column (story) cards stay undirected so they keep vertical motion semantics.
+ * Single-column cards stay undirected so they keep vertical motion semantics.
  *
  * [cardFullyVisible] remains in the signature for call-site compatibility with shared-element
  * gates; direction itself only needs a recorded dual-column center X.

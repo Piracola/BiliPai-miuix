@@ -98,7 +98,7 @@ class AppNavigationSettingsMappingPolicyTest {
 
     @Test
     fun listenVideoMigration_preservesExistingFiveItemCustomization() {
-        val original = listOf("HOME", "STORY", "FAVORITE", "LIVE", "PROFILE")
+        val original = listOf("HOME", "FAVORITE", "LIVE", "WATCHLATER", "PROFILE")
 
         val result = resolveListenVideoBottomTabMigration(
             order = original,

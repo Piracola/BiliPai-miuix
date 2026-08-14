@@ -88,7 +88,6 @@ class VideoCardScrollLiteVisualPolicyTest {
     fun `home video card variants do not attach shadow modifiers`() {
         listOf(
             "VideoCard.kt",
-            "StoryVideoCard.kt",
             "GlassVideoCard.kt",
             "CinematicVideoCard.kt"
         ).forEach { fileName ->

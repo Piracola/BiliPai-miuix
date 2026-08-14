@@ -146,7 +146,6 @@ class BottomBarUiSkinDecorationTest {
             "/tmp/tail_icon_selected_channel.png",
             decoration?.iconPathFor(BottomNavItem.SETTINGS, selected = true)
         )
-        assertNull(decoration?.iconPathFor(BottomNavItem.STORY))
         assertNull(decoration?.iconPathFor(BottomNavItem.LIVE))
     }
 

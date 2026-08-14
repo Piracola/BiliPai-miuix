@@ -313,6 +313,12 @@ data class ReplyVipInfo(
 )
 
 @Serializable
+data class OfficialVerify(
+    val type: Int = -1,  // 0=个人认证, 1=机构认证, -1=无
+    val desc: String = ""
+)
+
+@Serializable
 data class ReplyFansDetail(
     @Serializable(with = FlexibleLongSerializer::class)
     val uid: Long = 0,

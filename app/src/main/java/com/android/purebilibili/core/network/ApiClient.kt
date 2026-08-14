@@ -839,19 +839,6 @@ interface BilibiliApi {
         @Query("high_quality") highQuality: Int = 1
     ): PlayUrlResponse
     
-    //  [新增] 通过 aid 获取播放地址 - 用于 Story 模式
-    @GET("x/player/playurl")
-    suspend fun getPlayUrlByAid(
-        @Query("avid") aid: Long,
-        @Query("cid") cid: Long,
-        @Query("qn") qn: Int = 80,
-        @Query("fnval") fnval: Int = 16,  // MP4 格式
-        @Query("fnver") fnver: Int = 0,
-        @Query("fourk") fourk: Int = 1,
-        @Query("platform") platform: String = "html5",
-        @Query("high_quality") highQuality: Int = 1
-    ): PlayUrlResponse
-    
     //  [新增] APP playurl API - 使用 access_token 获取高画质视频流 (4K/HDR/1080P60)
     @GET("https://api.bilibili.com/x/player/playurl")
     suspend fun getPlayUrlApp(@QueryMap params: Map<String, String>): PlayUrlResponse
@@ -1530,22 +1517,6 @@ interface ArticleApi {
     suspend fun getArticleView(
         @QueryMap params: Map<String, String>
     ): com.android.purebilibili.data.model.response.ArticleDetailResponse
-}
-
-//  [新增] 故事模式 (竖屏短视频) API
-interface StoryApi {
-    // 获取故事流 (竖屏短视频列表)
-    @GET("x/v2/feed/index/story")
-    suspend fun getStoryFeed(
-        @Query("fnval") fnval: Int = 4048,         // 视频格式参数
-        @Query("fnver") fnver: Int = 0,
-        @Query("force_host") forceHost: Int = 0,
-        @Query("fourk") fourk: Int = 1,
-        @Query("qn") qn: Int = 32,                  // 画质
-        @Query("ps") ps: Int = 20,                  // 每页数量
-        @Query("aid") aid: Long = 0,                // 可选，从此视频开始
-        @Query("bvid") bvid: String = ""            // 可选，从此视频开始
-    ): StoryResponse
 }
 
 //  动态 API
@@ -2932,13 +2903,6 @@ object NetworkModule {
         Retrofit.Builder().baseUrl("https://api.bilibili.com/").client(okHttpClient)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType())).build()
             .create(BangumiApi::class.java)
-    }
-    
-    //  [新增] 故事模式 (竖屏短视频) API - 使用 app.bilibili.com
-    val storyApi: StoryApi by lazy {
-        Retrofit.Builder().baseUrl("https://app.bilibili.com/").client(okHttpClient)
-            .addConverterFactory(json.asConverterFactory("application/json".toMediaType())).build()
-            .create(StoryApi::class.java)
     }
     
     //  [新增] 开屏/壁纸 API

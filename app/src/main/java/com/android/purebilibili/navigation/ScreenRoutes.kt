@@ -73,22 +73,6 @@ sealed class ScreenRoutes(val route: String) {
         }
     }
     
-    //  [新增] 竖屏短视频 (故事模式)
-    object Story : ScreenRoutes("story?bvid={bvid}&cid={cid}&cover={cover}&title={title}") {
-        const val baseRoute: String = "story"
-
-        fun createRoute(
-            bvid: String = "",
-            cid: Long = 0L,
-            cover: String = "",
-            title: String = ""
-        ): String {
-            val encodedCover = android.net.Uri.encode(cover)
-            val encodedTitle = android.net.Uri.encode(title)
-            return "story?bvid=${android.net.Uri.encode(bvid)}&cid=$cid&cover=$encodedCover&title=$encodedTitle"
-        }
-    }
-
     //  开源许可证页面
     object OpenSourceLicenses : ScreenRoutes("open_source_licenses")
     

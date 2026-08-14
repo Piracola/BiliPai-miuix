@@ -26,7 +26,6 @@ class HomeNavigationIconPolicyTest {
     @Test
     fun `uses user supplied SVG vectors for missing navigation symbols`() {
         assertEquals(HomeNavigationIconSource.LOCAL_DYNAMIC, resolveMiuixPreferredHomeNavigationIconSource("DYNAMIC"))
-        assertEquals(HomeNavigationIconSource.LOCAL_STORY, resolveMiuixPreferredHomeNavigationIconSource("STORY"))
         assertEquals(HomeNavigationIconSource.LOCAL_LIVE, resolveMiuixPreferredHomeNavigationIconSource("LIVE"))
         assertEquals(HomeNavigationIconSource.LOCAL_GAME, resolveMiuixPreferredHomeNavigationIconSource("GAME"))
     }

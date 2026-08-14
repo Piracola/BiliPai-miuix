@@ -49,7 +49,6 @@ import com.android.purebilibili.feature.home.components.HomeHeroCarousel
 import com.android.purebilibili.feature.home.components.HomeUiSkinDecoration
 import com.android.purebilibili.feature.home.components.cards.ElegantVideoCard
 import com.android.purebilibili.feature.home.components.cards.LiveRoomCard
-import com.android.purebilibili.feature.home.components.cards.StoryVideoCard
 
 import androidx.compose.ui.Alignment
 import coil.compose.AsyncImage
@@ -408,99 +407,53 @@ internal fun HomeCategoryPageContent(
                                 )
                                 .then(if (index == 0) firstGridItemModifier else Modifier)
                         ) {
-                            when (displayMode) {
-                                1 -> {
-                                    StoryVideoCard(
-                                        video = video,
-                                        index = index,
-                                        animationEnabled = cardAnimationEnabled,
-                                        motionTier = cardMotionTier,
-                                        transitionEnabled = cardTransitionEnabled,
-                                        isReturningFromVideoDetail = isReturningFromVideoDetail,
-                                        isQuickReturningFromVideoDetail = isQuickReturningFromVideoDetail,
-                                        scrollLiteModeEnabled = mountedDuringScroll,
-                                        isDataSaverActive = isDataSaverActive,
-                                        preferLowQualityCover = preferLowQualityCover,
-                                        coverRequestSpec = coverRequestSpec,
-                                        showCoverGlassBadges = showCoverGlassBadges,
-                                        showInfoGlassBadges = showInfoGlassBadges,
-                                        showUpBadge = showUpBadges,
-                                        showUpAvatar = showUpAvatars,
-                                        homeDurationStyle = homeDurationStyle,
-                                        coverAspectRatio = cardLayout.coverAspectRatio,
-                                        cardHorizontalPadding = cardLayout.storyCardHorizontalPaddingDp.dp,
-                                        compactMetadata = cardLayout.compactMetadata,
-                                        showOnlineCount = showOnlineCount,
-                                        onUpClick = onUpClick,
-                                        showPublishTime = true,
-                                        onDismiss = { onDismissVideo(video) },
-                                        onLongClick = if (isDynamicDetailCard) null else ({ longPressCallback(video) }),
-                                        onClick = { bvid, cid ->
-                                            onVideoClick(
-                                                HomeVideoClickRequest(
-                                                    bvid = bvid,
-                                                    dynamicId = video.dynamicId,
-                                                    cid = cid,
-                                                    coverUrl = video.pic,
-                                                    isVerticalVideo = video.isVertical,
-                                                    source = HomeVideoClickSource.GRID,
-                                                    sourceRoute = sourceRoute
-                                                )
-                                            )
-                                        }
+                            ElegantVideoCard(
+                                video = video,
+                                index = index,
+                                isFollowing = video.owner.mid in followingMids && category != HomeCategory.FOLLOW,
+                                animationEnabled = cardAnimationEnabled,
+                                motionTier = cardMotionTier,
+                                transitionEnabled = cardTransitionEnabled,
+                                isReturningFromVideoDetail = isReturningFromVideoDetail,
+                                isQuickReturningFromVideoDetail = isQuickReturningFromVideoDetail,
+                                scrollLiteModeEnabled = mountedDuringScroll,
+                                showPublishTime = true,
+                                isDataSaverActive = isDataSaverActive,
+                                preferLowQualityCover = preferLowQualityCover,
+                                coverRequestSpec = coverRequestSpec,
+                                compactStatsOnCover = compactStatsOnCover,
+                                showCoverGlassBadges = showCoverGlassBadges,
+                                showInfoGlassBadges = showInfoGlassBadges,
+                                badgeEffectMode = badgeEffectMode,
+                                infoGlassMode = infoGlassMode,
+                                wallpaperTintEnabled = wallpaperTintEnabled,
+                                wallpaperEffectMode = wallpaperEffectMode,
+                                showUpBadge = showUpBadges,
+                                showUpAvatar = showUpAvatars,
+                                homeDurationStyle = homeDurationStyle,
+                                coverAspectRatio = cardLayout.coverAspectRatio,
+                                compactMetadata = cardLayout.compactMetadata,
+                                showOnlineCount = showOnlineCount,
+                                onUpClick = onUpClick,
+                                onDismiss = { onDismissVideo(video) },
+                                onWatchLater = if (isDynamicDetailCard) null else ({
+                                    onWatchLater(video.bvid, resolveWatchLaterAid(video))
+                                }),
+                                onLongClick = if (isDynamicDetailCard) null else ({ longPressCallback(video) }),
+                                onClick = { bvid, cid ->
+                                    onVideoClick(
+                                        HomeVideoClickRequest(
+                                            bvid = bvid,
+                                            dynamicId = video.dynamicId,
+                                            cid = cid,
+                                            coverUrl = video.pic,
+                                            isVerticalVideo = video.isVertical,
+                                            source = HomeVideoClickSource.GRID,
+                                            sourceRoute = sourceRoute
+                                        )
                                     )
                                 }
-
-                                else -> {
-                                    ElegantVideoCard(
-                                        video = video,
-                                        index = index,
-                                        isFollowing = video.owner.mid in followingMids && category != HomeCategory.FOLLOW,
-                                        animationEnabled = cardAnimationEnabled,
-                                        motionTier = cardMotionTier,
-                                        transitionEnabled = cardTransitionEnabled,
-                                        isReturningFromVideoDetail = isReturningFromVideoDetail,
-                                        isQuickReturningFromVideoDetail = isQuickReturningFromVideoDetail,
-                                        scrollLiteModeEnabled = mountedDuringScroll,
-                                        showPublishTime = true,
-                                        isDataSaverActive = isDataSaverActive,
-                                        preferLowQualityCover = preferLowQualityCover,
-                                        coverRequestSpec = coverRequestSpec,
-                                        compactStatsOnCover = compactStatsOnCover,
-                                        showCoverGlassBadges = showCoverGlassBadges,
-                                        showInfoGlassBadges = showInfoGlassBadges,
-                                        badgeEffectMode = badgeEffectMode,
-                                        infoGlassMode = infoGlassMode,
-                                        wallpaperTintEnabled = wallpaperTintEnabled,
-                                        wallpaperEffectMode = wallpaperEffectMode,
-                                        showUpBadge = showUpBadges,
-                                        showUpAvatar = showUpAvatars,
-                                        homeDurationStyle = homeDurationStyle,
-                                        coverAspectRatio = cardLayout.coverAspectRatio,
-                                        compactMetadata = cardLayout.compactMetadata,
-                                        showOnlineCount = showOnlineCount,
-                                        onUpClick = onUpClick,
-                                        onDismiss = { onDismissVideo(video) },
-                                        onWatchLater = if (isDynamicDetailCard) null else ({
-                                            onWatchLater(video.bvid, resolveWatchLaterAid(video))
-                                        }),
-                                        onLongClick = if (isDynamicDetailCard) null else ({ longPressCallback(video) }),
-                                        onClick = { bvid, cid ->
-                                            onVideoClick(
-                                                HomeVideoClickRequest(
-                                                    bvid = bvid,
-                                                    dynamicId = video.dynamicId,
-                                                    cid = cid,
-                                                    coverUrl = video.pic,
-                                                    isVerticalVideo = video.isVertical,
-                                                    source = HomeVideoClickSource.GRID,
-                                                    sourceRoute = sourceRoute
-                                                )
-                                            )
-                                        }
-                                    )
-                                }
-                            }
+                            )
                         }
                     }
                 }

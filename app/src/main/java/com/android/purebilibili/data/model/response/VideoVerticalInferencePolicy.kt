@@ -32,21 +32,3 @@ internal fun resolveFavoriteVideoVertical(
         verticalRatioThreshold = verticalRatioThreshold
     )
 }
-
-internal fun shouldResolveVerticalVideoForPortraitEntry(
-    directPortraitStoryEntry: Boolean,
-    startAudio: Boolean,
-    bvid: String,
-    isVerticalVideo: Boolean,
-    coverUrl: String,
-    verticalRatioThreshold: Float = 1.0f
-): Boolean {
-    return directPortraitStoryEntry &&
-        !startAudio &&
-        bvid.trim().isNotEmpty() &&
-        !resolveKnownVerticalVideo(
-            isVerticalVideo = isVerticalVideo,
-            coverUrl = coverUrl,
-            verticalRatioThreshold = verticalRatioThreshold
-        )
-}

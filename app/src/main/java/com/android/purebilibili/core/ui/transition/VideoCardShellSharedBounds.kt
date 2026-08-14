@@ -190,7 +190,7 @@ internal fun Modifier.videoCardShellSharedBoundsOrEmpty(
     role: VideoCardShellSharedBoundsRole = VideoCardShellSharedBoundsRole.SourceCard,
     /**
      * 详情页顶部播放器：FillWidth + TopCenter。
-     * 竖屏直达 Story 全屏：FillBounds + Center，卡片从列表位整卡展开。
+     * 竖屏直达全屏：FillBounds + Center，卡片从列表位整卡展开。
      */
     fillFullscreenShell: Boolean = false,
     /**

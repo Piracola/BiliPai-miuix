@@ -31,7 +31,6 @@ import com.android.purebilibili.data.model.response.VideoItem
 import com.android.purebilibili.data.repository.VideoRepository
 import com.android.purebilibili.feature.common.resolveIndexedVideoLazyKey
 import com.android.purebilibili.feature.home.components.cards.ElegantVideoCard
-import com.android.purebilibili.feature.home.components.cards.StoryVideoCard
 import com.android.purebilibili.feature.home.resolveHomeFeedCardLayout
 import com.android.purebilibili.core.ui.skeleton.ContentVideoGridSkeletonFixedColumns
 import com.android.purebilibili.core.util.LocalWindowSizeClass
@@ -267,45 +266,22 @@ fun CategoryScreen(
                             }
                         ) { index, video ->
                             //  [修复] 根据首页设置选择卡片样式（与 HomeScreen 一致）
-                            when (displayMode) {
-                                1 -> {
-                                    //  故事卡片（影院海报风格）
-                                    StoryVideoCard(
-                                        video = video,
-                                        index = index,  //  动画索引
-                                        animationEnabled = homeSettings.cardAnimationEnabled,
-                                        motionTier = cardMotionTier,
-                                        transitionEnabled = homeSettings.cardTransitionEnabled,
-                                        coverAspectRatio = cardLayout.coverAspectRatio,
-                                        cardHorizontalPadding = cardLayout.storyCardHorizontalPaddingDp.dp,
-                                        compactMetadata = cardLayout.compactMetadata,
-                                        showOnlineCount = showOnlineCount,
-                                        isReturningFromVideoDetail = isReturningFromVideoDetail,
-                                        isQuickReturningFromVideoDetail = isQuickReturningFromVideoDetail,
-                                        onClick = { bvid, _ ->
-                                            onVideoClick(bvid, video.cid, video.pic, video.isVertical)
-                                        }
-                                    )
+                            //  默认网格卡片
+                            ElegantVideoCard(
+                                video = video,
+                                index = index,
+                                animationEnabled = homeSettings.cardAnimationEnabled,
+                                motionTier = cardMotionTier,
+                                transitionEnabled = homeSettings.cardTransitionEnabled,
+                                coverAspectRatio = cardLayout.coverAspectRatio,
+                                compactMetadata = cardLayout.compactMetadata,
+                                showOnlineCount = showOnlineCount,
+                                isReturningFromVideoDetail = isReturningFromVideoDetail,
+                                isQuickReturningFromVideoDetail = isQuickReturningFromVideoDetail,
+                                onClick = { bvid, _ ->
+                                    onVideoClick(bvid, video.cid, video.pic, video.isVertical)
                                 }
-                                else -> {
-                                    //  默认网格卡片
-                                    ElegantVideoCard(
-                                        video = video,
-                                        index = index,
-                                        animationEnabled = homeSettings.cardAnimationEnabled,
-                                        motionTier = cardMotionTier,
-                                        transitionEnabled = homeSettings.cardTransitionEnabled,
-                                        coverAspectRatio = cardLayout.coverAspectRatio,
-                                        compactMetadata = cardLayout.compactMetadata,
-                                        showOnlineCount = showOnlineCount,
-                                        isReturningFromVideoDetail = isReturningFromVideoDetail,
-                                        isQuickReturningFromVideoDetail = isQuickReturningFromVideoDetail,
-                                        onClick = { bvid, _ ->
-                                            onVideoClick(bvid, video.cid, video.pic, video.isVertical)
-                                        }
-                                    )
-                                }
-                            }
+                            )
                         }
                         
                         // 加载更多指示器

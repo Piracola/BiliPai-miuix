@@ -256,13 +256,6 @@ enum class BottomNavItem(
         emptyList(),
         ScreenRoutes.Dynamic.route
     ),
-    STORY(
-        "短视频",
-        R.string.bottom_nav_story,
-        R.string.bottom_nav_story,
-        emptyList(),
-        ScreenRoutes.Story.baseRoute
-    ),
     HISTORY(
         "历史",
         R.string.bottom_nav_history,
@@ -4003,7 +3996,6 @@ internal fun resolveMaterialBottomBarIcon(
 ): ImageVector = when (item) {
     BottomNavItem.HOME -> if (selected) Icons.Filled.Home else Icons.Outlined.Home
     BottomNavItem.DYNAMIC -> if (selected) Icons.Filled.Notifications else Icons.Outlined.NotificationsNone
-    BottomNavItem.STORY -> if (selected) Icons.Filled.PlayCircle else Icons.Outlined.PlayCircleOutline
     BottomNavItem.HISTORY -> if (selected) Icons.Filled.History else Icons.Outlined.History
     BottomNavItem.LISTEN_VIDEO -> if (selected) Icons.Filled.LibraryMusic else Icons.Outlined.LibraryMusic
     BottomNavItem.PROFILE -> if (selected) Icons.Filled.Person else Icons.Outlined.Person

@@ -126,7 +126,6 @@ import com.android.purebilibili.feature.home.policy.shouldUseInitialHomePagerSna
 //  从 cards 子包导入卡片组件
 import com.android.purebilibili.feature.home.components.cards.ElegantVideoCard
 import com.android.purebilibili.feature.home.components.cards.LiveRoomCard
-import com.android.purebilibili.feature.home.components.cards.StoryVideoCard   //  故事卡片
 import com.android.purebilibili.core.ui.LoadingAnimation
 import com.android.purebilibili.core.ui.ErrorState as ModernErrorState
 import com.android.purebilibili.core.ui.AppShapes
@@ -227,7 +226,6 @@ fun HomeScreen(
     onWatchLaterClick: () -> Unit = {},  // 稍后再看页面
     onDownloadClick: () -> Unit = {},  // 离线缓存页面
     onInboxClick: () -> Unit = {},  // 私信页面
-    onStoryClick: () -> Unit = {},  //  [新增] 竖屏短视频
     onPluginsClick: () -> Unit = {},
     onSpaceClick: (Long) -> Unit = {},
     globalHazeState: dev.chrisbanes.haze.HazeState? = null,  //  [新增] 全局底栏模糊状态
@@ -970,9 +968,6 @@ fun HomeScreen(
         windowSizeClass.widthDp
     }
     
-    // 是否为单列模式 (Story or Cinematic)
-    val isSingleColumnMode = displayMode == 1
-    
     val gridColumns = remember(
         contentWidth,
         displayMode,
@@ -1113,7 +1108,6 @@ fun HomeScreen(
             BottomNavItem.FAVORITE -> onFavoriteClick()
             BottomNavItem.LIVE -> onLiveListClick()
             BottomNavItem.WATCHLATER -> onWatchLaterClick()
-            BottomNavItem.STORY -> onStoryClick()
             BottomNavItem.SETTINGS -> onSettingsClick()
             BottomNavItem.PLUGINS -> onPluginsClick()
         }

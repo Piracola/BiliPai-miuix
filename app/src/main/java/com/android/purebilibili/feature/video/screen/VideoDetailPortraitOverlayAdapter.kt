@@ -26,8 +26,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.media3.exoplayer.ExoPlayer
 import coil.compose.AsyncImage
 import com.android.purebilibili.core.ui.motion.AppMotionEasing
-import com.android.purebilibili.data.repository.StoryRepository
-import com.android.purebilibili.feature.story.storyItemToRelatedVideo
 import com.android.purebilibili.feature.video.ui.pager.PortraitVideoPager
 import com.android.purebilibili.feature.video.viewmodel.VideoEngagementViewModel
 import com.android.purebilibili.feature.video.viewmodel.VideoPlaybackUiState
@@ -131,25 +129,8 @@ internal fun VideoDetailPortraitOverlayAdapter(
     ) {
         success?.let { playableState ->
             val info = playableState.info
-            // 竖屏流推荐:优先用 Story 短视频流(按当前视频请求,内容多样化),
-            // 避免此前直接使用同主题相关推荐导致首屏全是相似视频/同一 UP 主;
-            // Story 流不可用时才回退相关推荐。
-            var portraitRecommendations by remember(info.bvid) {
-                mutableStateOf(playableState.related)
-            }
-            LaunchedEffect(showPortraitFullscreen, info.bvid) {
-                if (!showPortraitFullscreen) return@LaunchedEffect
-                val storyItems = StoryRepository.getStoryFeed(
-                    aid = info.aid,
-                    bvid = info.bvid,
-                ).getOrNull().orEmpty()
-                val storyRecommendations = storyItems
-                    .mapNotNull(::storyItemToRelatedVideo)
-                    .filter { it.bvid.isNotBlank() && it.bvid != info.bvid }
-                if (storyRecommendations.isNotEmpty()) {
-                    portraitRecommendations = storyRecommendations
-                }
-            }
+            // 竖屏流推荐:直接使用相关推荐。
+            val portraitRecommendations = playableState.related
             PortraitVideoPager(
                 initialBvid = initialBvidOverride ?: info.bvid,
                 initialInfo = info,

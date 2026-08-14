@@ -180,11 +180,6 @@ internal fun resolveBiliPaiNavDisplayPopRouteTransition(
             return BiliPaiNavRouteTransition.NO_OP_SHARED_ELEMENT
         }
 
-        // Story 直达返回：没有 sharedBounds 对端，必须走普通过渡，否则黑底悬浮卡。
-        if (fromKey is BiliPaiNavKey.Story) {
-            return BiliPaiNavRouteTransition.FALLBACK
-        }
-
         val morphSourceRoute = resolveCardMorphDestinationSourceRoute(fromKey)
         val normalizedMorphRoute = morphSourceRoute?.substringBefore("?")
         // VideoDetail.sourceRoute 在 push 时写入 key，完整观看后仍可靠。

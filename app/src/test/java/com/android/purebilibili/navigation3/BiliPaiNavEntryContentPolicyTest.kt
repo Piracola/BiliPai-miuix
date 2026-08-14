@@ -20,7 +20,6 @@ class BiliPaiNavEntryContentPolicyTest {
         assertEquals(BiliPaiNavEntryContentRole.FAVORITE, resolveBiliPaiNavEntryContentRole(BiliPaiNavKey.FavoriteSearch("猫")))
         assertEquals(BiliPaiNavEntryContentRole.WATCH_LATER, resolveBiliPaiNavEntryContentRole(BiliPaiNavKey.WatchLaterSearch("猫")))
         assertEquals(BiliPaiNavEntryContentRole.LOGIN, resolveBiliPaiNavEntryContentRole(BiliPaiNavKey.Login))
-        assertEquals(BiliPaiNavEntryContentRole.STORY, resolveBiliPaiNavEntryContentRole(BiliPaiNavKey.Story()))
         assertEquals(BiliPaiNavEntryContentRole.PARTITION, resolveBiliPaiNavEntryContentRole(BiliPaiNavKey.Partition))
         assertEquals(BiliPaiNavEntryContentRole.SPACE, resolveBiliPaiNavEntryContentRole(BiliPaiNavKey.Space(1L)))
         assertEquals(BiliPaiNavEntryContentRole.WEB, resolveBiliPaiNavEntryContentRole(BiliPaiNavKey.Web("https://example.com")))

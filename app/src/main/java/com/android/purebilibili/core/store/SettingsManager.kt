@@ -937,13 +937,11 @@ data class PlayerInteractionSettings(
     val longPressSpeedHintScale: Float = 1.0f,
     val longPressSpeedHintAlpha: Float = 0.5f,
     val subtitleVerticalOffsetFraction: Float = 0.0f,
-    /** Vertical offset for portrait immersive / story subtitles (independent of landscape). */
+    /** Vertical offset for portrait immersive subtitles (independent of landscape). */
     val subtitlePortraitVerticalOffsetFraction: Float = 0.0f,
     val twoFingerVerticalSpeedEnabled: Boolean = false,
     val twoFingerHorizontalSpeedEnabled: Boolean = false,
     val hiResLongPressCompatHintShown: Boolean = false,
-    val directPortraitStoryEntry: Boolean = false,
-    val launchToPortraitFeedOnStartup: Boolean = false
 )
 
 private sealed interface ShareablePreferenceDefinition {
@@ -1317,7 +1315,7 @@ object SettingsManager {
 
     //  [新增] 模糊强度 (ULTRA_THIN, THIN, THICK)
     private val KEY_BLUR_INTENSITY = stringPreferencesKey("blur_intensity")
-    //  [合并] 首页展示模式 (0=Grid, 1=Story, 2=Glass)
+    //  [合并] 首页展示模式 (0=Grid, 1=SingleColumn, 2=Glass)
     private val KEY_DISPLAY_MODE = intPreferencesKey("display_mode")
     //  [新增] 网格列数 (0=Auto)
     private val KEY_GRID_COLUMN_COUNT = intPreferencesKey("grid_column_count")
@@ -1602,8 +1600,6 @@ object SettingsManager {
             twoFingerVerticalSpeedEnabled = preferences[KEY_TWO_FINGER_VERTICAL_SPEED_ENABLED] ?: false,
             twoFingerHorizontalSpeedEnabled = preferences[KEY_TWO_FINGER_HORIZONTAL_SPEED_ENABLED] ?: false,
             hiResLongPressCompatHintShown = preferences[KEY_HI_RES_LONG_PRESS_COMPAT_HINT_SHOWN] ?: false,
-            directPortraitStoryEntry = preferences[KEY_AUTO_PORTRAIT_FULLSCREEN] ?: false,
-            launchToPortraitFeedOnStartup = preferences[KEY_LAUNCH_TO_PORTRAIT_FEED_ON_STARTUP] ?: false
         )
     }
 
@@ -3600,7 +3596,7 @@ object SettingsManager {
             val itemsString = preferences[KEY_BOTTOM_BAR_VISIBLE_TABS]
             if (itemsString.isNullOrEmpty()) {
                 // 默认可见项
-                setOf("HOME", "DYNAMIC", "STORY", "HISTORY", "PROFILE") 
+                setOf("HOME", "DYNAMIC", "HISTORY", "PROFILE") 
             } else {
                 itemsString.split(",").toSet()
             }
@@ -3612,7 +3608,6 @@ object SettingsManager {
         return when (id.lowercase()) {
             "home" -> "HOME"
             "dynamic" -> "DYNAMIC"
-            "story", "shortvideo", "short_video" -> "STORY"
             "history" -> "HISTORY"
             "profile", "mine", "my" -> "PROFILE"
             "favorite", "favourite" -> "FAVORITE"
@@ -4820,10 +4815,6 @@ object SettingsManager {
     // ========== 📱 竖屏全屏设置 ==========
     
     private val KEY_PORTRAIT_FULLSCREEN_ENABLED = booleanPreferencesKey("portrait_fullscreen_enabled")
-    private val KEY_AUTO_PORTRAIT_FULLSCREEN = booleanPreferencesKey("auto_portrait_fullscreen")
-    private val KEY_LAUNCH_TO_PORTRAIT_FEED_ON_STARTUP = booleanPreferencesKey("launch_to_portrait_feed_on_startup")
-    private const val PORTRAIT_STARTUP_CACHE_PREFS = "portrait_startup_cache"
-    private const val CACHE_KEY_LAUNCH_TO_PORTRAIT_FEED = "enabled"
     private val KEY_VERTICAL_VIDEO_RATIO = floatPreferencesKey("vertical_video_ratio")
     
     // --- 竖屏全屏功能开关 (默认开启) ---
@@ -4842,47 +4833,6 @@ object SettingsManager {
 
     suspend fun setPortraitFullscreenEnabled(context: Context, value: Boolean) {
         context.settingsDataStore.edit { preferences -> preferences[KEY_PORTRAIT_FULLSCREEN_ENABLED] = value }
-    }
-    
-    // --- 竖屏视频自动进入全屏 (默认关闭) ---
-    fun getAutoPortraitFullscreen(context: Context): Flow<Boolean> = context.settingsDataStore.data
-        .map { preferences -> preferences[KEY_AUTO_PORTRAIT_FULLSCREEN] ?: false }
-
-    suspend fun setAutoPortraitFullscreen(context: Context, value: Boolean) {
-        context.settingsDataStore.edit { preferences -> preferences[KEY_AUTO_PORTRAIT_FULLSCREEN] = value }
-    }
-
-    fun getLaunchToPortraitFeedOnStartup(context: Context): Flow<Boolean> = context.settingsDataStore.data
-        .map { preferences -> preferences[KEY_LAUNCH_TO_PORTRAIT_FEED_ON_STARTUP] ?: false }
-
-    suspend fun setLaunchToPortraitFeedOnStartup(context: Context, value: Boolean) {
-        editSettingsAndCommitPrefs(
-            context = context,
-            name = PORTRAIT_STARTUP_CACHE_PREFS,
-            editSettings = { this[KEY_LAUNCH_TO_PORTRAIT_FEED_ON_STARTUP] = value },
-            editPrefs = { putBoolean(CACHE_KEY_LAUNCH_TO_PORTRAIT_FEED, value) },
-        )
-    }
-
-    /**
-     * 冷启动快速路径。返回 null 表示缓存缺失，调用方必须挂起读取 DataStore 后再决定
-     * 初始导航，不能把 null 当成默认 false；自动备份只恢复 DataStore、不恢复这个缓存。
-     */
-    fun getCachedLaunchToPortraitFeedOnStartup(context: Context): Boolean? {
-        val prefs = context.getSharedPreferences(PORTRAIT_STARTUP_CACHE_PREFS, Context.MODE_PRIVATE)
-        return if (prefs.contains(CACHE_KEY_LAUNCH_TO_PORTRAIT_FEED)) {
-            prefs.getBoolean(CACHE_KEY_LAUNCH_TO_PORTRAIT_FEED, false)
-        } else null
-    }
-
-    suspend fun resolveLaunchToPortraitFeedOnStartup(context: Context): Boolean {
-        getCachedLaunchToPortraitFeedOnStartup(context)?.let { return it }
-        return withContext(Dispatchers.IO) {
-            val value = context.settingsDataStore.data.first()[KEY_LAUNCH_TO_PORTRAIT_FEED_ON_STARTUP] ?: false
-            context.getSharedPreferences(PORTRAIT_STARTUP_CACHE_PREFS, Context.MODE_PRIVATE)
-                .edit().putBoolean(CACHE_KEY_LAUNCH_TO_PORTRAIT_FEED, value).apply()
-            value
-        }
     }
     
     // --- 竖屏视频判断比例 (高度/宽度 > ratio 视为竖屏，默认 1.0) ---
@@ -6692,7 +6642,6 @@ object SettingsManager {
             BooleanShareablePreferenceDefinition(KEY_SPONSOR_BLOCK_AUTO_SKIP, SettingsShareSection.PLAYBACK),
             IntShareablePreferenceDefinition(KEY_DATA_SAVER_MODE, SettingsShareSection.PLAYBACK),
             BooleanShareablePreferenceDefinition(KEY_PORTRAIT_FULLSCREEN_ENABLED, SettingsShareSection.PLAYBACK),
-            BooleanShareablePreferenceDefinition(KEY_AUTO_PORTRAIT_FULLSCREEN, SettingsShareSection.PLAYBACK),
             FloatShareablePreferenceDefinition(KEY_VERTICAL_VIDEO_RATIO, SettingsShareSection.PLAYBACK),
             IntShareablePreferenceDefinition(KEY_FULLSCREEN_MODE, SettingsShareSection.PLAYBACK),
             IntShareablePreferenceDefinition(KEY_FULLSCREEN_ASPECT_RATIO, SettingsShareSection.PLAYBACK),

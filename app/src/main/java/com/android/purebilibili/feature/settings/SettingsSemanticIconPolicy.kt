@@ -126,7 +126,6 @@ internal enum class SettingsIconRole {
     DIRECTED_TRAFFIC,
     AUTO_HIGHEST_QUALITY,
     AUTO_PLAY_ON_OPEN,
-    STARTUP_PORTRAIT_FEED,
     HOME_HERO_AUTOPLAY,
     AUTO_PLAY_NEXT,
     VIDEO_NOTE_COLLAPSE,
@@ -138,7 +137,6 @@ internal enum class SettingsIconRole {
     HOME_CARD_STATS_COMPACT,
     HOME_HERO_CAROUSEL,
     HOME_ONLINE_COUNT,
-    PORTRAIT_STORY_ENTRY,
     DISPLAY_SCALE,
     UI_ENTRANCE_ANIMATION,
     FULLSCREEN_SWIPE_BACK,
@@ -337,7 +335,6 @@ private fun resolveMiuixSettingsSemanticIcon(role: SettingsIconRole): ImageVecto
     SettingsIconRole.DIRECTED_TRAFFIC -> MiuixIcons.SearchDevice
     SettingsIconRole.AUTO_HIGHEST_QUALITY -> MiuixIcons.TopDownloads
     SettingsIconRole.AUTO_PLAY_ON_OPEN -> MiuixIcons.Play
-    SettingsIconRole.STARTUP_PORTRAIT_FEED -> MiuixIcons.Forward
     SettingsIconRole.HOME_HERO_AUTOPLAY -> MiuixIcons.Recording
     SettingsIconRole.AUTO_PLAY_NEXT -> MiuixIcons.Playlist
     SettingsIconRole.VIDEO_NOTE_COLLAPSE -> MiuixIcons.ExpandLess
@@ -349,7 +346,6 @@ private fun resolveMiuixSettingsSemanticIcon(role: SettingsIconRole): ImageVecto
     SettingsIconRole.HOME_CARD_STATS_COMPACT -> MiuixIcons.Th29
     SettingsIconRole.HOME_HERO_CAROUSEL -> MiuixIcons.MapAlbum
     SettingsIconRole.HOME_ONLINE_COUNT -> MiuixIcons.Contacts
-    SettingsIconRole.PORTRAIT_STORY_ENTRY -> MiuixIcons.RecordingTape
     SettingsIconRole.DISPLAY_SCALE -> MiuixIcons.ZoomOut
     SettingsIconRole.UI_ENTRANCE_ANIMATION -> MiuixIcons.Forward
     SettingsIconRole.FULLSCREEN_SWIPE_BACK -> MiuixIcons.Back
@@ -489,7 +485,6 @@ private fun resolveMd3SettingsSemanticIcon(role: SettingsIconRole): ImageVector 
     SettingsIconRole.DIRECTED_TRAFFIC -> Icons.Outlined.NetworkLocked
     SettingsIconRole.AUTO_HIGHEST_QUALITY -> Icons.Outlined.SettingsSuggest
     SettingsIconRole.AUTO_PLAY_ON_OPEN -> Icons.Outlined.PlayArrow
-    SettingsIconRole.STARTUP_PORTRAIT_FEED -> Icons.Outlined.VerticalAlignTop
     SettingsIconRole.HOME_HERO_AUTOPLAY -> Icons.Outlined.SmartDisplay
     SettingsIconRole.AUTO_PLAY_NEXT -> Icons.AutoMirrored.Outlined.PlaylistPlay
     SettingsIconRole.VIDEO_NOTE_COLLAPSE -> Icons.AutoMirrored.Outlined.ShortText
@@ -501,7 +496,6 @@ private fun resolveMd3SettingsSemanticIcon(role: SettingsIconRole): ImageVector 
     SettingsIconRole.HOME_CARD_STATS_COMPACT -> Icons.Outlined.StackedBarChart
     SettingsIconRole.HOME_HERO_CAROUSEL -> Icons.Outlined.ViewDay
     SettingsIconRole.HOME_ONLINE_COUNT -> Icons.Outlined.Groups
-    SettingsIconRole.PORTRAIT_STORY_ENTRY -> Icons.Outlined.StayCurrentPortrait
     SettingsIconRole.DISPLAY_SCALE -> Icons.Outlined.ZoomOutMap
     SettingsIconRole.UI_ENTRANCE_ANIMATION -> Icons.Outlined.MotionPhotosOn
     SettingsIconRole.FULLSCREEN_SWIPE_BACK -> Icons.Outlined.SwipeRight

@@ -484,15 +484,6 @@ class AppTopLevelNavigationPolicyTest {
         )
         assertFalse(
             shouldShowBottomBarForNavigation(
-                activeRoute = ScreenRoutes.Story.createRoute(bvid = "BV1test", cid = 1L),
-                visibleBottomBarRoutes = defaultRoutes + ScreenRoutes.Story.baseRoute,
-                useSideNavigation = false,
-                shouldHideBottomBarOnTablet = false,
-                shouldDeferReveal = false
-            )
-        )
-        assertFalse(
-            shouldShowBottomBarForNavigation(
                 activeRoute = ScreenRoutes.Settings.route,
                 visibleBottomBarRoutes = defaultRoutes + ScreenRoutes.Settings.route,
                 useSideNavigation = false,
@@ -707,44 +698,6 @@ class AppTopLevelNavigationPolicyTest {
         assertFalse(settled.isTransitionRunning)
         assertFalse(settled.forceLowBlurBudget)
         assertFalse(settled.deferProfileImmersiveBackground)
-    }
-
-    @Test
-    fun storyBottomPagerPage_staysComposedAfterContentReadyLikeBiliPai() {
-        // BiliPai mounts every page after contentReady; active work still uses settledPage.
-        assertTrue(
-            shouldComposeBottomPagerPage(
-                item = BottomNavItem.STORY,
-                page = 3,
-                currentPage = 0,
-                selectedPage = 1,
-                isNavigating = false,
-                navigationStartPage = 0,
-                contentReady = true
-            )
-        )
-        assertTrue(
-            shouldComposeBottomPagerPage(
-                item = BottomNavItem.STORY,
-                page = 3,
-                currentPage = 3,
-                selectedPage = 1,
-                isNavigating = false,
-                navigationStartPage = 3,
-                contentReady = false
-            )
-        )
-        assertFalse(
-            shouldComposeBottomPagerPage(
-                item = BottomNavItem.STORY,
-                page = 3,
-                currentPage = 0,
-                selectedPage = 1,
-                isNavigating = false,
-                navigationStartPage = 0,
-                contentReady = false
-            )
-        )
     }
 
     @Test

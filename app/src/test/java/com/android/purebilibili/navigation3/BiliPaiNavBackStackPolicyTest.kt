@@ -32,18 +32,6 @@ class BiliPaiNavBackStackPolicyTest {
     }
 
     @Test
-    fun initialBackStack_opensPortraitFeedOnStartupWhenEnabled() {
-        assertEquals(
-            listOf(BiliPaiNavKey.MainHost, BiliPaiNavKey.Story()),
-            resolveInitialBiliPaiBackStack(
-                firstRoute = ScreenRoutes.Home.route,
-                onboardingRequired = false,
-                openPortraitFeedOnStartup = true
-            )
-        )
-    }
-
-    @Test
     fun push_skipsDuplicateTopEntry() {
         val stack = listOf(BiliPaiNavKey.MainHost)
 

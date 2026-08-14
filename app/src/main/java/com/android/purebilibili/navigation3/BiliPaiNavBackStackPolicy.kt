@@ -4,14 +4,10 @@ import com.android.purebilibili.feature.settings.isSettingsSubtreeRoute
 
 internal fun resolveInitialBiliPaiBackStack(
     firstRoute: String?,
-    onboardingRequired: Boolean,
-    openPortraitFeedOnStartup: Boolean = false
+    onboardingRequired: Boolean
 ): List<BiliPaiNavKey> {
     if (onboardingRequired) {
         return listOf(BiliPaiNavKey.Onboarding)
-    }
-    if (openPortraitFeedOnStartup) {
-        return listOf(BiliPaiNavKey.MainHost, BiliPaiNavKey.Story())
     }
     return listOf(BiliPaiNavKey.MainHost)
 }

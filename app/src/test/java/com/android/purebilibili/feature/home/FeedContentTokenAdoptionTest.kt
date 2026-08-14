@@ -9,7 +9,6 @@ class FeedContentTokenAdoptionTest {
         "CinematicVideoCard.kt",
         "GlassVideoCard.kt",
         "HomeStyleSingleColumnVideoCard.kt",
-        "StoryVideoCard.kt",
         "VideoCard.kt",
     )
 
@@ -45,16 +44,12 @@ class FeedContentTokenAdoptionTest {
         val cinematic = locate(
             "src/main/java/com/android/purebilibili/feature/home/components/cards/CinematicVideoCard.kt",
         ).readText()
-        val story = locate(
-            "src/main/java/com/android/purebilibili/feature/home/components/cards/StoryVideoCard.kt",
-        ).readText()
 
         assertTrue(tokens.contains("enum class FeedTitleHierarchy"))
         assertTrue(tokens.contains("MaterialTheme.typography.bodySmall"))
         assertTrue(tokens.contains("MaterialTheme.typography.titleMedium"))
         assertTrue(!tokens.contains("MaterialTheme.typography.titleLarge"))
         assertTrue(cinematic.contains("feedContentTypography(FeedTitleHierarchy.Prominent)"))
-        assertTrue(story.contains("FeedTitleHierarchy.Standard"))
     }
 
     private fun locate(path: String): File = listOf(File(path), File("app/$path"))

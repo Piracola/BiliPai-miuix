@@ -383,7 +383,6 @@ class AppNavigationNavigation3BridgeStructureTest {
         assertTrue(source.contains("BiliPaiNavEntryContentRole.WATCH_LATER ->"))
         assertTrue(source.contains("BiliPaiNavEntryContentRole.FAVORITE ->"))
         assertTrue(source.contains("BiliPaiNavEntryContentRole.LOGIN ->"))
-        assertTrue(source.contains("BiliPaiNavEntryContentRole.STORY ->"))
         assertTrue(source.contains("BiliPaiNavEntryContentRole.PARTITION ->"))
         assertTrue(source.contains("BiliPaiNavEntryContentRole.CATEGORY ->"))
         assertTrue(source.contains("BiliPaiNavEntryContentRole.SPACE ->"))

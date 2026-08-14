@@ -24,7 +24,6 @@ import top.yukonga.miuix.kmp.icon.extended.WorldClock
 private enum class HomeNavigationIconRole {
     HOME,
     DYNAMIC,
-    STORY,
     HISTORY,
     LISTEN_VIDEO,
     PROFILE,
@@ -48,7 +47,6 @@ private enum class HomeNavigationIconRole {
 internal enum class HomeNavigationIconSource {
     MIUIX,
     LOCAL_DYNAMIC,
-    LOCAL_STORY,
     LOCAL_LIVE,
     LOCAL_GAME,
 }
@@ -56,7 +54,6 @@ internal enum class HomeNavigationIconSource {
 private fun resolveHomeNavigationIconRole(tabId: String): HomeNavigationIconRole = when (tabId.trim().uppercase()) {
     "HOME", "RECOMMEND" -> HomeNavigationIconRole.HOME
     "DYNAMIC" -> HomeNavigationIconRole.DYNAMIC
-    "STORY" -> HomeNavigationIconRole.STORY
     "HISTORY" -> HomeNavigationIconRole.HISTORY
     "LISTEN_VIDEO" -> HomeNavigationIconRole.LISTEN_VIDEO
     "PROFILE" -> HomeNavigationIconRole.PROFILE
@@ -79,7 +76,6 @@ internal fun resolveMiuixPreferredHomeNavigationIconSource(
     tabId: String,
 ): HomeNavigationIconSource = when (resolveHomeNavigationIconRole(tabId)) {
     HomeNavigationIconRole.DYNAMIC -> HomeNavigationIconSource.LOCAL_DYNAMIC
-    HomeNavigationIconRole.STORY -> HomeNavigationIconSource.LOCAL_STORY
     HomeNavigationIconRole.LIVE -> HomeNavigationIconSource.LOCAL_LIVE
     HomeNavigationIconRole.GAME -> HomeNavigationIconSource.LOCAL_GAME
     HomeNavigationIconRole.PROFILE,
@@ -112,9 +108,6 @@ internal fun resolveMiuixPreferredHomeNavigationIcon(
         HomeNavigationIconSource.LOCAL_DYNAMIC -> ImageVector.vectorResource(
             if (selected) R.drawable.ic_home_nav_dynamic_filled else R.drawable.ic_home_nav_dynamic
         )
-        HomeNavigationIconSource.LOCAL_STORY -> ImageVector.vectorResource(
-            if (selected) R.drawable.ic_home_nav_story_filled else R.drawable.ic_home_nav_story
-        )
         HomeNavigationIconSource.LOCAL_LIVE -> ImageVector.vectorResource(
             if (selected) R.drawable.ic_home_nav_live_filled else R.drawable.ic_home_nav_live
         )
@@ -143,7 +136,6 @@ private fun resolveMiuixHomeNavigationIcon(
     HomeNavigationIconRole.KNOWLEDGE -> MiuixIcons.Notes
     HomeNavigationIconRole.TECH -> MiuixIcons.Theme
     HomeNavigationIconRole.DYNAMIC,
-    HomeNavigationIconRole.STORY,
     HomeNavigationIconRole.LIVE,
     HomeNavigationIconRole.GAME -> error("Local icon requested through the Miuix branch: $role")
 }
