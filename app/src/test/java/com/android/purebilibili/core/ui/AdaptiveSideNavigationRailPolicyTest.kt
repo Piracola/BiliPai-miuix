@@ -28,6 +28,5 @@ class AdaptiveSideNavigationRailIntegrationTest {
         assertFalse(legacySource.exists())
         assertTrue(sharedSource.contains("resolveAdaptiveSideNavigationRailRenderer("))
         assertTrue(sharedSource.contains("AdaptiveSideNavigationRailRenderer.MIUIX"))
-        assertTrue(sharedSource.contains("AdaptiveSideNavigationRailRenderer.MATERIAL3"))
     }
 }

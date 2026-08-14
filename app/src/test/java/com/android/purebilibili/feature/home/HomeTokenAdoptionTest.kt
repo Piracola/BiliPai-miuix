@@ -27,13 +27,11 @@ class HomeTokenAdoptionTest {
         "src/main/java/com/android/purebilibili/feature/home/components/SideBar.kt",
         "src/main/java/com/android/purebilibili/feature/home/components/TopBar.kt",
         "src/main/java/com/android/purebilibili/feature/home/components/VideoPreviewDialog.kt",
-        "src/main/java/com/android/purebilibili/feature/home/components/cards/StoryVideoCard.kt",
         "src/main/java/com/android/purebilibili/feature/home/components/cards/VideoCard.kt"
     )
 
     private val migratedHomeMotionFiles = listOf(
-        "src/main/java/com/android/purebilibili/feature/home/components/HomeHeader.kt",
-        "src/main/java/com/android/purebilibili/feature/home/components/LiquidIndicator.kt"
+        "src/main/java/com/android/purebilibili/feature/home/components/HomeHeader.kt"
     )
 
     @Test
@@ -134,8 +132,8 @@ class HomeTokenAdoptionTest {
         )?.readText() ?: error("BottomBarLiquidSegmentedControl source not found")
 
         assertTrue(
-            source.contains("AppShapes.container(ContainerLevel.Pill)"),
-            "底栏分段控件外层容器圆角应走 AppShapes Pill token"
+            source.contains("resolveSharedBottomBarCapsuleShape()"),
+            "底栏分段控件外层容器圆角应走共享胶囊 token"
         )
         assertFalse(
             source.contains("RoundedCornerShape(height / 2)"),

@@ -11,10 +11,6 @@ class VideoDetailShapeStructureTest {
     fun `detail shapes use theme semantics instead of hardcoded corner radii`() {
         val source = loadMainSource("feature/video/ui/VideoDetailShapes.kt")
 
-        listOf("shapes.small", "shapes.medium", "shapes.large", "shapes.extraLarge")
-            .forEach { token -> assertTrue(source.contains(token), "Missing MD3 token: $token") }
-        assertTrue(source.contains("AppUiStyle.MATERIAL3"))
-        assertTrue(source.contains("AppUiStyle.MIUIX"))
         assertTrue(source.contains("AppShapes.container"))
         assertFalse(source.contains("RoundedCornerShape"))
         assertFalse(source.contains(".dp"))

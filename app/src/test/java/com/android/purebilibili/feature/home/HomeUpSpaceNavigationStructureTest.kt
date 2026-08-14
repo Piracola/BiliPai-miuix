@@ -15,7 +15,6 @@ class HomeUpSpaceNavigationStructureTest {
         assertTrue(screenSource.contains("onUpClick = onHomeFeedUpClick"))
         assertTrue(pageSource.contains("onUpClick: (Long) -> Unit = {}"))
         assertTrue(pageSource.contains("ElegantVideoCard("))
-        assertTrue(pageSource.contains("StoryVideoCard("))
         assertTrue(pageSource.contains("onUpClick = onUpClick"))
     }
 

@@ -187,10 +187,6 @@ class SettingsSharePolicyTest {
 
         val normalized = normalizeThemeSelectionForImport(sections)
 
-        assertEquals(
-            JsonPrimitive("MIUIX"),
-            normalized.appearance["theme_selection_v1"]
-        )
         assertFalse(normalized.appearance.containsKey("ui_preset"))
         assertFalse(normalized.appearance.containsKey("android_native_variant_v1"))
         assertEquals(JsonPrimitive(1), normalized.appearance["theme_mode_v2"])
@@ -208,8 +204,9 @@ class SettingsSharePolicyTest {
 
         val normalized = normalizeThemeSelectionForImport(sections)
 
-        // iOS 按迁移表落入 MIUIX，与 AppUiStyle.fromLegacyValues 一致
-        assertEquals(JsonPrimitive("MIUIX"), normalized.appearance["theme_selection_v1"])
+        // iOS 旧键同样在导入时清理；运行时主题恒为 MIUIX，不落新键。
+        assertFalse(normalized.appearance.containsKey("ui_preset"))
+        assertFalse(normalized.appearance.containsKey("android_native_variant_v1"))
     }
 
     @Test
@@ -241,19 +238,15 @@ class SettingsSharePolicyTest {
     }
 
     @Test
-    fun debugThemeValues_prefersNewKey() {
+    fun debugThemeValues_alwaysMapsToMiuix() {
         assertEquals(
             1 to 1,
             resolveDebugThemeValues(mapOf("theme_selection_v1" to JsonPrimitive("MIUIX")))
         )
         assertEquals(
-            1 to 0,
+            1 to 1,
             resolveDebugThemeValues(mapOf("theme_selection_v1" to JsonPrimitive("MATERIAL3")))
         )
-    }
-
-    @Test
-    fun debugThemeValues_fallsBackToLegacyKeysWhenNewKeyMissing() {
         assertEquals(
             1 to 1,
             resolveDebugThemeValues(
@@ -263,6 +256,6 @@ class SettingsSharePolicyTest {
                 )
             )
         )
-        assertEquals(0 to 0, resolveDebugThemeValues(emptyMap()))
+        assertEquals(1 to 1, resolveDebugThemeValues(emptyMap()))
     }
 }

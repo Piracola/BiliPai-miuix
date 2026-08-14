@@ -283,8 +283,12 @@ class SettingsRootCategoryContentStructureTest {
             .substringAfter("fun AboutSection(")
             .substringBefore("@Composable\nprivate fun AboutProjectOverviewCard(")
 
-        assertTrue(aboutSectionBlock.contains("AboutProjectOverviewCard(versionName = versionName)"))
-        assertTrue(aboutSectionBlock.indexOf("AboutProjectOverviewCard(") < aboutSectionBlock.indexOf("SettingsCardGroup {"))
+        assertTrue(aboutSectionBlock.contains("AboutProjectOverviewCard("))
+        assertTrue(aboutSectionBlock.contains("versionName = versionName,"))
+        assertTrue(
+            aboutSectionBlock.indexOf("AboutProjectOverviewCard(") <
+                aboutSectionBlock.indexOf("SettingsCardGroup {")
+        )
         assertTrue(source.contains("internal val AboutContributors = listOf("))
         assertTrue(source.contains("AboutContributor(\"jay3-yy\", \"jay3-yy\", R.drawable.avatar_jay3_yy)"))
         assertTrue(source.contains("name = \"Piracola\""))
@@ -364,7 +368,7 @@ class SettingsRootCategoryContentStructureTest {
         assertTrue(settingsSections.contains("SettingsDetailGroup(title = \"隐私与安全\")"))
         assertTrue(appearance.contains("AppPreferenceSectionTitle(\"显示模式\")"))
         assertTrue(appearance.contains("AppPreferenceSectionTitle(\"字体与密度\")"))
-        assertTrue(appearance.contains("AppPreferenceSectionTitle(\"开屏与图标\")"))
+        assertTrue(appearance.contains("AppPreferenceSectionTitle(\"启动画面\")"))
         assertTrue(playback.contains("AppPreferenceSectionTitle(\"小窗与后台\")"))
         assertTrue(playback.contains("AppPreferenceSectionTitle(\"诊断\")"))
         assertTrue(
@@ -372,7 +376,7 @@ class SettingsRootCategoryContentStructureTest {
                 playback.indexOf("AppPreferenceSectionTitle(\"互动与评论\")")
         )
         assertTrue(animation.contains("AppPreferenceSectionTitle(\"玻璃效果\")"))
-        assertTrue(animation.contains("title = \"触感反馈\""))
+        assertTrue(animation.contains("AppPreferenceSectionTitle(\"界面动效\")"))
         assertFalse(animation.contains("AppPreferenceSectionTitle(\"底栏入口\")"))
     }
 
@@ -387,8 +391,8 @@ class SettingsRootCategoryContentStructureTest {
             .substringAfter("private fun AboutProjectOverviewCard(")
             .substringBefore("@Composable\nprivate fun ContributorAvatarRow(")
 
-        assertFalse(overviewBlock.contains("R.mipmap.ic_launcher_bilipai)"))
-        assertTrue(overviewBlock.contains("R.mipmap.ic_launcher_bilipai_foreground"))
+        assertTrue(source.contains("R.mipmap.ic_launcher_blue_snow_maid_round"))
+        assertFalse(source.contains("R.mipmap.ic_launcher_bilipai_foreground"))
     }
 
     @Test

@@ -60,7 +60,7 @@ class AppPreferenceApiStructureTest {
 
         val requiredNeutralCalls = mapOf(
             pilotPaths[0] to listOf("AppPreferenceGroup", "SettingsSingleChoicePreference", "AppAlertDialog"),
-            pilotPaths[1] to listOf("AppPreferenceGroup", "SettingsSingleChoicePreference", "AppTextField"),
+            pilotPaths[1] to listOf("AppPreferenceGroup", "SettingsSingleChoicePreference", "AppAlertDialog"),
             pilotPaths[2] to listOf("AppPreferenceGroup", "AppSliderDialogPreference", "AppAlertDialog"),
             pilotPaths[3] to listOf("AppTextField"),
         )

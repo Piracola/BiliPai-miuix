@@ -22,7 +22,6 @@ class VideoCardDurationBadgeVisualPolicyTest {
         ).first { it.exists() }
         val sources = listOf(
             "VideoCard.kt",
-            "StoryVideoCard.kt",
             "GlassVideoCard.kt",
             "CinematicVideoCard.kt"
         ).joinToString(separator = "\n") { fileName ->

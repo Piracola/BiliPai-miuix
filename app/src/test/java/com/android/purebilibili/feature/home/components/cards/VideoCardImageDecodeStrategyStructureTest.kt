@@ -12,7 +12,6 @@ class VideoCardImageDecodeStrategyStructureTest {
         val sourceRoot = File("src/main/java/com/android/purebilibili/feature/home/components/cards")
         val cardSources = listOf(
             "VideoCard.kt",
-            "StoryVideoCard.kt",
             "GlassVideoCard.kt",
             "CinematicVideoCard.kt"
         ).associateWith { fileName -> sourceRoot.resolve(fileName).readText() }

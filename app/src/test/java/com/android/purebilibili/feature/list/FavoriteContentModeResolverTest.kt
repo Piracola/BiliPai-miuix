@@ -62,14 +62,6 @@ class FavoriteContentModeResolverTest {
             "Shared segmented control should expose tap refraction control to callers"
         )
         assertTrue(
-            segmentedSource.contains("forceLiquidChrome = forceLiquidIndicator"),
-            "Shared iOS segmented control should forward the override into the bottom-bar liquid implementation"
-        )
-        assertTrue(
-            segmentedSource.contains("tapPressRefractionEnabled = tapPressRefractionEnabled"),
-            "Shared iOS segmented control should forward tap refraction control into the bottom-bar liquid implementation"
-        )
-        assertTrue(
             segmentedSource.contains("dragSelectionEnabled = dragSelectionEnabled"),
             "Shared segmented control should forward drag-selection policy to its liquid implementation"
         )
@@ -77,10 +69,7 @@ class FavoriteContentModeResolverTest {
             bottomBarSource.contains("forceLiquidChrome: Boolean = false"),
             "BottomBarLiquidSegmentedControl should allow parents with settled settings to bypass the async default fallback"
         )
-        assertTrue(
-            bottomBarSource.contains("forceLiquidChrome || homeSettings.androidNativeLiquidGlassEnabled"),
-            "BottomBarLiquidSegmentedControl should treat forced liquid chrome the same as the global Android native glass setting"
-        )
+
     }
 
     private fun loadSource(path: String): String {

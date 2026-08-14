@@ -359,11 +359,14 @@ internal fun resolveMainActivityLinkNavigation(
             pendingNavigationRoute = ScreenRoutes.ArticleDetail.createRoute(target.articleId)
         )
 
-        is BilibiliNavigationTarget.Music -> MainActivityLinkNavigation(
-            pendingNavigationRoute = ScreenRoutes.Web.createRoute(
-                url = "https://www.bilibili.com/audio/au${target.musicId.removePrefix("au").removePrefix("AU")}"
+        is BilibiliNavigationTarget.Music -> {
+            val auSid = target.musicId.removePrefix("au").removePrefix("AU").toLongOrNull() ?: return null
+            MainActivityLinkNavigation(
+                pendingNavigationRoute = ScreenRoutes.Web.createRoute(
+                    url = "https://www.bilibili.com/audio/au$auSid"
+                )
             )
-        )
+        }
     }
 }
 

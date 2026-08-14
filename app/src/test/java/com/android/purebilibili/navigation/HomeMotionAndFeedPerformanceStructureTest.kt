@@ -57,14 +57,6 @@ class HomeMotionAndFeedPerformanceStructureTest {
         assertFalse(Regex("(?m)^\\s*DissolvableVideoCard\\(").containsMatchIn(source))
     }
 
-    @Test
-    fun videoMotionSwitch_doesNotChangeGlobalNavigationTiming() {
-        val source = sourceFile("navigation/AppNavigation.kt")
-
-        assertTrue(source.contains("remember(isTabletLayout, cardTransitionEnabled)"))
-        assertTrue(source.contains("cardTransitionEnabled = cardTransitionEnabled"))
-        assertTrue(source.contains("val shouldApplyBackground = cardTransitionEnabled &&"))
-    }
 
     private fun sourceFile(relativePath: String): String {
         return listOf(

@@ -23,17 +23,15 @@ class MiuixV2MigrationStructureTest {
     }
 
     @Test
-    fun iosSectionTitle_usesMiuixSmallTitleOnMiuixBranch() {
+    fun iosSectionTitle_usesMiuixSmallTitle() {
         val source = loadSource("design-system/src/main/java/com/android/purebilibili/core/ui/components/AdaptivePreferenceComponents.kt")
         assertTrue(source.contains("SmallTitle("))
-        assertTrue(source.contains("if (uiStyle == AppUiStyle.MIUIX) {"))
     }
 
     @Test
-    fun appAlertDialog_routesMiuixStyleToWindowDialog() {
-        // 2B 迁移：MIUIX 经两值模型路由到窗口级 LOCAL_DIALOG，不再按旧 variant 分支。
+    fun appAlertDialog_routesToWindowDialog() {
+        // 单主题迁移：对话框统一路由到窗口级 LOCAL_DIALOG。
         val source = loadSource("design-system/src/main/java/com/android/purebilibili/core/ui/AdaptiveDialogComponents.kt")
-        assertTrue(source.contains("AppUiStyle.MIUIX ->"))
         assertTrue(source.contains("AppAlertDialogRenderer.LOCAL_DIALOG"))
         assertTrue(source.contains("Dialog("))
     }
@@ -96,25 +94,19 @@ class MiuixV2MigrationStructureTest {
     }
 
     @Test
-    fun md3SegmentedControl_routesMiuixVariantToTabRow() {
+    fun md3SegmentedControl_routesToMiuixTabRow() {
         val source = loadSource("design-system/src/main/java/com/android/purebilibili/core/ui/renderer/miuix/AppMiuixSegmentedControl.kt")
         val componentSource = loadSource("design-system/src/main/java/com/android/purebilibili/core/ui/components/AppSegmentedControl.kt")
-        val policySource = loadSource("design-system/src/main/java/com/android/purebilibili/core/ui/AppSegmentedControlPolicy.kt")
-        // 双值 AppUiStyle 政策：MIUIX 用原生 TabRow，MATERIAL3 用 Material fallback。
-        assertTrue(policySource.contains("AppUiStyle.MIUIX"))
-        assertTrue(policySource.contains("usesNativeTabRow = true"))
-        assertTrue(policySource.contains("usesNativeTabRow = false"))
-        assertTrue(componentSource.contains("resolveAppSegmentedRenderer(policy.usesNativeTabRow)"))
+        // 单主题政策：分段控件统一走 Miuix TabRow。
+        assertTrue(componentSource.contains("resolveAppSegmentedRenderer()"))
         assertTrue(componentSource.contains("AppMiuixSegmentedControl("))
         assertTrue(source.contains("TabRow("))
     }
 
     @Test
-    fun adaptivePullToRefreshBox_routesMiuixVariantToMiuixPullToRefresh() {
+    fun adaptivePullToRefreshBox_routesToMiuixPullToRefresh() {
         val source = loadSource("design-system/src/main/java/com/android/purebilibili/core/ui/AdaptivePullToRefreshBox.kt")
         assertTrue(source.contains("MiuixPullToRefresh("))
-        assertTrue(source.contains("PresetPrimitiveRenderer.MIUIX_BRIDGED"))
-        assertTrue(source.contains("ComfortablePullToRefreshBox("))
         assertTrue(source.contains("indicatorTopInset"))
         assertTrue(source.contains("mergedContentPadding"))
     }
@@ -149,7 +141,6 @@ class MiuixV2MigrationStructureTest {
         val source = loadSource("app/src/main/java/com/android/purebilibili/core/theme/Theme.kt")
         assertTrue(source.contains("ThemeController("))
         assertTrue(source.contains("customPrimaryColor,"))
-        assertTrue(source.contains("themeRoleOverrides,"))
         assertTrue(source.contains("amoledDarkTheme,"))
         assertTrue(source.contains("resolveMiuixColorsFromMaterialBridge("))
     }
@@ -181,7 +172,6 @@ class MiuixV2MigrationStructureTest {
     @Test
     fun adaptiveScaffold_miuixPathMountsPopupHostForOverlayDialogs() {
         val source = loadSource("design-system/src/main/java/com/android/purebilibili/core/ui/AdaptiveChrome.kt")
-        assertTrue(source.contains("resolveAdaptiveScaffoldRenderer("))
         assertTrue(source.contains("MiuixPopupUtils.MiuixPopupHost()"))
         assertTrue(source.contains("popupHost ="))
     }

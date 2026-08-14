@@ -284,7 +284,6 @@ class VideoContentTabBarPolicyTest {
             pagerBlock.contains("layerBackdrop"),
             "Pager must not capture backdrop; segmented controls inside would self-sample and overflow RenderThread stack on MIUI"
         )
-        assertTrue(source.contains("forceLiquidChrome = homeSettings.androidNativeLiquidGlassEnabled"))
         assertTrue(source.contains("liquidGlassEffectsEnabled = liquidChromeSpec.liquidGlassEffectsEnabled"))
     }
 

@@ -18,22 +18,16 @@ class BottomBarMatchedLiquidChromeStructureTest {
         assertTrue(source.contains("internal fun BottomBarMatchedLiquidDock("))
         assertTrue(source.contains("internal fun BoxScope.BottomBarMatchedLiquidIndicator("))
         assertTrue(source.contains("internal enum class BottomBarLiquidOrientation"))
-        assertTrue(source.contains("BottomBarLiquidOrientation.VERTICAL"))
-        assertTrue(source.contains("swapMotionAxes = orientation == BottomBarLiquidOrientation.VERTICAL"))
+        assertTrue(source.contains("BottomBarLiquidOrientation.HORIZONTAL"))
         assertTrue(source.contains("internal fun BottomBarMatchedDockVisibility("))
         assertTrue(source.contains("internal enum class BottomBarMatchedDockEdge"))
         assertTrue(source.contains("    TOP,"))
         assertTrue(source.contains("    BOTTOM"))
-        assertTrue(source.contains("resolveBottomBarMaterialScrollAnimationDurationMillis(isScrolling)"))
-        assertTrue(source.contains("BiliPaiMiuixBottomBarIndicatorLayer("))
+        assertTrue(source.contains("biliPaiMiuixFloatingDockSurface("))
         // Kyant legacy indicator path removed — chrome is Miuix-only.
         assertFalse(source.contains("BiliPaiBottomBarIndicatorLayer("))
         assertFalse(source.contains("legacyBackdrop"))
         assertFalse(source.contains("legacyContentBackdrop"))
-        assertFalse(source.contains("biliPaiFloatingDockSurface("))
-        assertTrue(source.contains("rememberCombinedBackdrop(localBackdrop, backdrop)"))
-        assertTrue(source.contains("bottomBarMatchedCaptureOverflow(captureSafeInset)"))
-        assertTrue(source.contains("biliPaiMiuixFloatingDockSurface("))
     }
 
     @Test
@@ -47,27 +41,18 @@ class BottomBarMatchedLiquidChromeStructureTest {
         val segmented = loadSource(
             "app/src/main/java/com/android/purebilibili/feature/home/components/BottomBarLiquidSegmentedControl.kt"
         )
-        val sharedChrome = loadSource(
-            "app/src/main/java/com/android/purebilibili/feature/home/components/BottomBarMatchedLiquidChrome.kt"
-        )
 
-        listOf(bottomBar, topBar, segmented).forEach { source ->
-            assertTrue(source.contains("rememberBottomBarMatchedLiquidChromeState("))
-            assertTrue(source.contains("BottomBarMatchedLiquidIndicator("))
-        }
-        assertTrue(bottomBar.contains("BottomBarMatchedLiquidDock("))
+        assertTrue(bottomBar.contains("BiliPaiMiuixBottomBarIndicatorLayer("))
         assertTrue(topBar.contains(".bottomBarMatchedLiquidDockSurface("))
+        assertTrue(segmented.contains("BottomBarMatchedLiquidIndicator("))
         assertFalse(topBar.contains(".biliPaiFloatingDockSurface("))
         assertFalse(topBar.contains(".biliPaiMiuixFloatingDockSurface("))
+        assertTrue(segmented.contains("rememberBottomBarMatchedLiquidChromeState("))
         assertTrue(segmented.contains("BottomBarMatchedLiquidDock("))
-        assertTrue(segmented.contains("drawShellLens = false"))
-        assertTrue(sharedChrome.contains("drawShellLens = drawShellLens"))
         assertFalse(segmented.contains(".biliPaiFloatingDockSurface("))
         assertFalse(segmented.contains(".biliPaiMiuixFloatingDockSurface("))
         assertFalse(segmented.contains("BiliPaiBottomBarIndicatorLayer("))
         assertFalse(segmented.contains("BiliPaiMiuixBottomBarIndicatorLayer("))
-        assertTrue(segmented.contains("rememberMiuixCombinedBackdrop("))
-        assertTrue(segmented.contains(".miuixLayerBackdrop(localPageMiuixBackdrop)"))
     }
 
     @Test

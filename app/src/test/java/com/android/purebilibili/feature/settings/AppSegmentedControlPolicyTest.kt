@@ -54,8 +54,6 @@ class AppSegmentedControlPolicyTest {
         assertTrue(source.contains("height = resolvedHeight"))
         assertTrue(source.contains("indicatorHeight = resolvedIndicatorHeight"))
         assertTrue(source.contains("labelFontSize = resolvedLabelFontSize"))
-        assertTrue(source.contains("liquidGlassEffectsEnabled = spec.liquidGlassEffectsEnabled"))
-        assertTrue(source.contains("tapPressRefractionEnabled = resolvedTapPressRefractionEnabled"))
         assertTrue(source.contains("indicatorIdleSurfaceColorOverride = indicatorIdleSurfaceColorOverride"))
         assertTrue(source.contains("containerColorOverride = containerColorOverride"))
     }

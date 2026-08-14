@@ -12,7 +12,8 @@ class BottomBarMiuixPolicyTest {
 
     @Test
     fun `runtime low blur budget disables expensive liquid glass effects`() {
-        assertTrue(
+        // Liquid glass is retired: the gate always returns false.
+        assertFalse(
             shouldRenderBottomBarLiquidGlassEffects(
                 glassEnabled = true,
                 forceLowBlurBudget = false,

@@ -10,14 +10,13 @@ class AdaptiveTextFieldStructureTest {
     @Test
     fun miuixTextFieldUsesTheTextInputPrimitiveInsteadOfSearchInput() {
         val source = loadSource()
-        val miuixBranch = source
+        val textFieldBlock = source
             .substringAfter("fun AdaptiveTextFieldRenderer(")
-            .substringAfter("if (shouldUseNativeMiuixSearchBar(uiStyle)) {")
-            .substringBefore("    OutlinedTextField(")
+            .substringBefore("private fun MiuixAdaptiveSearchBar(")
 
-        assertTrue(miuixBranch.contains("MiuixTextField("))
-        assertTrue(miuixBranch.contains("useLabelAsPlaceholder = label == null"))
-        assertFalse(miuixBranch.contains("InputField("))
+        assertTrue(textFieldBlock.contains("MiuixTextField("))
+        assertTrue(textFieldBlock.contains("useLabelAsPlaceholder = label == null"))
+        assertFalse(textFieldBlock.contains("InputField("))
     }
 
     private fun loadSource(): String {

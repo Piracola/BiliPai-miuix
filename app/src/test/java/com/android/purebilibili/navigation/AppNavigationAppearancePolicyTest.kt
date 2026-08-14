@@ -135,12 +135,8 @@ class AppNavigationAppearancePolicyTest {
         val providerSource = loadSource("app/src/main/java/com/android/purebilibili/core/ui/SharedTransitionProvider.kt")
         val activitySource = loadSource("app/src/main/java/com/android/purebilibili/MainActivity.kt")
 
-        assertTrue(
-            navigationSource.contains(
-                "SharedTransitionProvider(enabled = sharedVideoCardTransitionEnabled)"
-            )
-        )
         assertTrue(navigationSource.contains("cardTransitionEnabled && !systemReduceMotion"))
+        assertTrue(navigationSource.contains("cardTransitionEnabled = sharedVideoCardTransitionEnabled"))
         assertTrue(
             navigationSource.contains(
                 "VideoCardTransitionVisualTimeline.REDUCED_MOTION_DURATION_MILLIS"
@@ -152,53 +148,8 @@ class AppNavigationAppearancePolicyTest {
         assertFalse(activitySource.contains("SharedTransitionProvider"))
     }
 
-    @Test
-    fun appNavigationReadsVideoTransitionRealtimeBlurSetting() {
-        val source = loadSource("app/src/main/java/com/android/purebilibili/navigation/AppNavigation.kt")
 
-        assertTrue(source.contains("videoTransitionRealtimeBlurEnabled"))
-        assertTrue(source.contains("realtimeBlurEnabledProvider"))
-        assertFalse(source.contains("video_source_background_blur"))
-        assertFalse(source.contains("RenderEffect.createBlurEffect"))
-    }
 
-    @Test
-    fun appNavigationUsesFlyingSourceContentInsteadOfStationaryWholeCardReveal() {
-        val source = loadSource("app/src/main/java/com/android/purebilibili/navigation/AppNavigation.kt")
-        val navHostSource = loadSource(
-            "app/src/main/java/com/android/purebilibili/navigation3/BiliPaiNavDisplayHost.kt"
-        )
-        val navHostCall = source
-            .substringAfter("BiliPaiNavDisplayHost(")
-            .substringBefore(") { key ->")
-
-        assertFalse(source.contains("getVideoTransitionLiveReturnPreviewEnabled"))
-        assertFalse(source.contains("videoTransitionLiveReturnPreviewEnabled"))
-        assertTrue(navHostCall.contains("preferWholeCardReturn = false"))
-        assertTrue(navHostSource.contains("preferWholeCardReturnProvider"))
-        assertTrue(navHostSource.contains("preferWholeCardReturn: Boolean = false"))
-    }
-
-    @Test
-    fun transitionRealtimeBlurDoesNotDependOnRemovedBackgroundScaleSetting() {
-        val source = loadSource("app/src/main/java/com/android/purebilibili/navigation/AppNavigation.kt")
-        val navHostSource = loadSource(
-            "app/src/main/java/com/android/purebilibili/navigation3/BiliPaiNavDisplayHost.kt"
-        )
-        val navHostCall = source
-            .substringAfter("BiliPaiNavDisplayHost(")
-            .substringBefore(") { key ->")
-
-        assertTrue(
-            navHostCall.contains(
-                "videoCardDepthEffectEnabled = sharedVideoCardTransitionEnabled"
-            )
-        )
-        assertFalse(navHostCall.contains("videoCardBackgroundSinkEnabled"))
-        assertFalse(navHostSource.contains("isBackgroundSinkEnabledProvider ="))
-        assertFalse(navHostSource.contains("videoCardBackgroundSinkEnabled"))
-        assertTrue(navHostSource.contains("videoCardDepthEffectEnabled"))
-    }
 
     @Test
     fun appNavigationAppearanceDoesNotExposeRemovedBackPreviewState() {

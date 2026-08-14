@@ -45,7 +45,6 @@ class CommentSortFilterBarPolicyTest {
             "app/src/main/java/com/android/purebilibili/feature/video/ui/components/CommentSortFilterBar.kt"
         )
 
-        assertTrue(source.contains("tapPressRefractionEnabled = false"))
         assertFalse(source.contains("tapPressRefractionEnabled = true"))
     }
 
@@ -58,8 +57,6 @@ class CommentSortFilterBarPolicyTest {
         assertTrue(source.contains("backdrop: Backdrop? = null"))
         assertTrue(source.contains("backdrop = backdrop"))
         assertTrue(source.contains("miuixBackdrop = miuixBackdrop"))
-        assertTrue(source.contains("forceLiquidChrome = homeSettings.androidNativeLiquidGlassEnabled"))
-        assertTrue(source.contains("liquidGlassEffectsEnabled = backdrop != null"))
         assertTrue(source.contains("MiuixBackdrop"))
     }
 

@@ -35,14 +35,9 @@ class AnimationSettingsPolicyTest {
         val animationSource = loadSource(
             "app/src/main/java/com/android/purebilibili/feature/settings/screen/AnimationSettingsScreen.kt"
         )
-        val policySource = loadSource(
-            "app/src/main/java/com/android/purebilibili/feature/settings/AnimationSettingsPolicy.kt"
-        )
 
         assertFalse(animationSource.contains("预测性返回动画"))
         assertFalse(animationSource.contains("Predictive" + "BackAnimationDialog"))
-        assertFalse(policySource.contains("Predictive" + "BackToggleUiState"))
-        assertFalse(policySource.contains("resolvePredictive" + "BackToggleUiState"))
     }
 
     private fun loadSource(path: String): String {

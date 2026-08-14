@@ -1682,16 +1682,15 @@ class VideoPlayerSectionPolicyTest {
     fun directPlayback_bindsPlayerViewSynchronouslyLikeKnownGoodVersion() {
         val playerViewBlock = loadVideoPlayerSectionSource()
             .substringAfter("// 1. PlayerView (底层)")
-            .substringBefore("if (shouldUseAnime4kPipeline)")
 
         assertTrue(
             playerViewBlock.contains(
-                "player = if (shouldBindDirectPlayerView) playerState.player else null"
+                "player = if (shouldBindInlinePlayerView) playerState.player else null"
             )
         )
         assertTrue(
             playerViewBlock.contains(
-                "playerView.player = if (shouldBindDirectPlayerView) playerState.player else null"
+                "playerView.player = if (shouldBindInlinePlayerView) playerState.player else null"
             )
         )
     }

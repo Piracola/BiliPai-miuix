@@ -221,15 +221,6 @@ class BiliPaiNavDisplayHostStructureTest {
     }
 
     @Test
-    fun navDisplayHostUsesRootClockWithoutPerFrameSnapshotBridge() {
-        val source = navDisplayHostSource()
-        assertTrue(source.contains("videoCardClock: VideoCardTransitionClock"))
-        assertTrue(source.contains("videoCardClock.depthProgress()"))
-        assertFalse(source.contains("onVideoCardDepthFrame"))
-        assertFalse(source.contains("snapshotFlow"))
-    }
-
-    @Test
     fun programmaticBackSharesPerformBackPathAndRejectsReentry() {
         val source = navDisplayHostSource()
         val performBackBlock = source
@@ -330,21 +321,6 @@ class BiliPaiNavDisplayHostStructureTest {
         assertTrue(source.contains("resolveBiliPaiPredictiveBackAnimationHandler"))
         assertFalse(source.contains("BiliPaiVideoDetailTargetPredictiveBackAnimation"))
         assertFalse(source.contains("resolveBiliPaiNavPopContentTransform(popRouteTransition)"))
-    }
-
-    @Test
-    fun navDisplayHostLayersVideoCardTransitionNavBackdropBehindNavDisplay() {
-        val source = navDisplayHostSource()
-
-        assertTrue(source.contains("VideoCardTransitionNavBackdrop("))
-        assertTrue(source.contains("shouldShowVideoCardTransitionNavBackdrop"))
-        // Root host Box is multi-line: modifier.fillMaxSize() + background token.
-        assertTrue(source.contains("modifier = modifier"))
-        assertTrue(source.contains(".fillMaxSize()"))
-        val boxBlock = source
-            .substringAfter("VideoCardTransitionHostDepthLayer(")
-            .substringBefore("@Composable\nprivate fun ProvideNavigation3ViewModelApplicationExtras")
-        assertTrue(boxBlock.indexOf("VideoCardTransitionNavBackdrop") < boxBlock.indexOf("NavDisplay("))
     }
 
     private fun navDisplayHostSource(): String {

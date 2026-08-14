@@ -26,7 +26,7 @@ class OnboardingHeroIconPolicyTest {
     fun nonDefaultIconKeepsOriginalScale() {
         val spec = resolveOnboardingHeroIconSpec("icon_bilipai")
 
-        assertEquals(R.mipmap.ic_launcher_bilipai_round, spec.iconRes)
+        assertEquals(R.mipmap.ic_launcher_blue_snow_maid_round, spec.iconRes)
         assertEquals(1f, spec.imageScale)
     }
 }

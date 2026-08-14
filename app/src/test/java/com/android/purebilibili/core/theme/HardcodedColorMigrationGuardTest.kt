@@ -14,7 +14,6 @@ class HardcodedColorMigrationGuardTest {
             "src/main/java/com/android/purebilibili/feature/home/components/BottomBar.kt",
             "src/main/java/com/android/purebilibili/feature/settings/SettingsEntryVisualPolicy.kt",
             "src/main/java/com/android/purebilibili/feature/settings/ui/CacheClearAnimation.kt",
-            "src/main/java/com/android/purebilibili/feature/home/components/LiquidIndicator.kt",
             "src/main/java/com/android/purebilibili/feature/home/components/cards/LiveRoomCard.kt",
             "src/main/java/com/android/purebilibili/feature/profile/ProfileScreen.kt",
             "src/main/java/com/android/purebilibili/feature/download/DownloadListScreen.kt",

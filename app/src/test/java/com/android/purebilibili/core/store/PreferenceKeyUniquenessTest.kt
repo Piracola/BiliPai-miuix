@@ -101,18 +101,14 @@ class PreferenceKeyUniquenessTest {
         /**
          * 冻结于 SettingsManager 拆分进行中的实测值：SettingsManager 与
          * PlayerSettingsStore / NavigationSettingsStore 之间的重叠。只能调小。
-         * sidebar_account_switcher_enabled 为上一快照后既有新增项，本次一并纳入快照。
+         * 液态玻璃 / 预测返回 / 底栏顺序 key 已随功能删除收敛，快照同步更新。
          */
         const val MAX_DUPLICATED_KEYS = 10
 
         val EXPECTED_DUPLICATED_KEY_OWNERS = mapOf(
-            "bottom_bar_order" to setOf("NavigationSettingsStore.kt", "SettingsManager.kt"),
-            "bottom_bar_visible_tabs" to setOf("NavigationSettingsStore.kt", "SettingsManager.kt"),
             "default_playback_speed" to setOf("PlayerSettingsStore.kt", "SettingsManager.kt"),
             "last_playback_speed" to setOf("PlayerSettingsStore.kt", "SettingsManager.kt"),
-            "predictive_back_animation_style" to setOf("NavigationSettingsStore.kt", "SettingsManager.kt"),
             "predictive_back_enabled" to setOf("NavigationSettingsStore.kt", "SettingsManager.kt"),
-            "predictive_back_exit_direction" to setOf("NavigationSettingsStore.kt", "SettingsManager.kt"),
             "remember_last_playback_speed" to setOf("PlayerSettingsStore.kt", "SettingsManager.kt"),
             "sidebar_account_switcher_enabled" to setOf("NavigationSettingsStore.kt", "SettingsManager.kt"),
             "tablet_use_sidebar" to setOf("NavigationSettingsStore.kt", "SettingsManager.kt"),
@@ -120,7 +116,6 @@ class PreferenceKeyUniquenessTest {
 
         val CRITICAL_KEYS = listOf(
             "theme_mode_v2",
-            "ui_preset",
             "card_transition_enabled",
             "default_playback_speed",
             "bottom_bar_order",
