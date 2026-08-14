@@ -217,7 +217,6 @@ private val SETTINGS_SEARCH_INDEX: List<SettingsSearchEntry> = listOf(
             "离开播放页后停止",
             "停止播放",
             "音频焦点",
-            "听视频",
             "画中画",
             "pip",
             "小窗",

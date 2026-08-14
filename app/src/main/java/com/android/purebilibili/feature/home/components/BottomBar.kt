@@ -263,13 +263,6 @@ enum class BottomNavItem(
         listOf("历史记录"),
         ScreenRoutes.History.route
     ),
-    LISTEN_VIDEO(
-        "听视频",
-        R.string.bottom_nav_listen_video,
-        R.string.bottom_nav_listen_video_desc,
-        listOf("音乐"),
-        ScreenRoutes.ListenVideo.route
-    ),
     PROFILE(
         "我的",
         R.string.bottom_nav_profile,
@@ -2033,7 +2026,6 @@ fun FrostedBottomBar(
         BottomNavItem.HOME,
         BottomNavItem.DYNAMIC,
         BottomNavItem.HISTORY,
-        BottomNavItem.LISTEN_VIDEO,
         BottomNavItem.PROFILE
     ),
     itemColorIndices: Map<String, Int> = emptyMap(),
@@ -3997,7 +3989,6 @@ internal fun resolveMaterialBottomBarIcon(
     BottomNavItem.HOME -> if (selected) Icons.Filled.Home else Icons.Outlined.Home
     BottomNavItem.DYNAMIC -> if (selected) Icons.Filled.Notifications else Icons.Outlined.NotificationsNone
     BottomNavItem.HISTORY -> if (selected) Icons.Filled.History else Icons.Outlined.History
-    BottomNavItem.LISTEN_VIDEO -> if (selected) Icons.Filled.LibraryMusic else Icons.Outlined.LibraryMusic
     BottomNavItem.PROFILE -> if (selected) Icons.Filled.Person else Icons.Outlined.Person
     BottomNavItem.FAVORITE -> if (selected) Icons.Filled.CollectionsBookmark else Icons.Outlined.CollectionsBookmark
     BottomNavItem.LIVE -> if (selected) Icons.Filled.LiveTv else Icons.Outlined.LiveTv

@@ -3,7 +3,6 @@ package com.android.purebilibili.navigation3
 internal enum class BiliPaiNavEntryContentRole {
     MAIN_HOST,
     HOME,
-    LISTEN_VIDEO,
     DYNAMIC,
     SEARCH,
     SEARCH_TRENDING,
@@ -44,15 +43,12 @@ internal enum class BiliPaiNavEntryContentRole {
     LIKE_ME,
     SYSTEM_NOTICE,
     CHAT,
-    AUDIO_MODE,
     LOGIN,
     PARTITION,
     CATEGORY,
     SEASON_SERIES_DETAIL,
     BANGUMI,
     BANGUMI_PLAYER,
-    MUSIC_DETAIL,
-    NATIVE_MUSIC,
     SPACE,
     WEB,
     DYNAMIC_DETAIL,
@@ -65,7 +61,6 @@ internal fun resolveBiliPaiNavEntryContentRole(key: BiliPaiNavKey): BiliPaiNavEn
     return when (key) {
         BiliPaiNavKey.MainHost -> BiliPaiNavEntryContentRole.MAIN_HOST
         BiliPaiNavKey.Home -> BiliPaiNavEntryContentRole.HOME
-        BiliPaiNavKey.ListenVideo -> BiliPaiNavEntryContentRole.LISTEN_VIDEO
         BiliPaiNavKey.Dynamic -> BiliPaiNavEntryContentRole.DYNAMIC
         BiliPaiNavKey.Search -> BiliPaiNavEntryContentRole.SEARCH
         BiliPaiNavKey.SearchTrending -> BiliPaiNavEntryContentRole.SEARCH_TRENDING
@@ -109,15 +104,12 @@ internal fun resolveBiliPaiNavEntryContentRole(key: BiliPaiNavKey): BiliPaiNavEn
         BiliPaiNavKey.LikeMe -> BiliPaiNavEntryContentRole.LIKE_ME
         BiliPaiNavKey.SystemNotice -> BiliPaiNavEntryContentRole.SYSTEM_NOTICE
         is BiliPaiNavKey.Chat -> BiliPaiNavEntryContentRole.CHAT
-        is BiliPaiNavKey.AudioMode -> BiliPaiNavEntryContentRole.AUDIO_MODE
         BiliPaiNavKey.Login -> BiliPaiNavEntryContentRole.LOGIN
         BiliPaiNavKey.Partition -> BiliPaiNavEntryContentRole.PARTITION
         is BiliPaiNavKey.Category -> BiliPaiNavEntryContentRole.CATEGORY
         is BiliPaiNavKey.SeasonSeriesDetail -> BiliPaiNavEntryContentRole.SEASON_SERIES_DETAIL
         is BiliPaiNavKey.Bangumi -> BiliPaiNavEntryContentRole.BANGUMI
         is BiliPaiNavKey.BangumiPlayer -> BiliPaiNavEntryContentRole.BANGUMI_PLAYER
-        is BiliPaiNavKey.MusicDetail -> BiliPaiNavEntryContentRole.MUSIC_DETAIL
-        is BiliPaiNavKey.NativeMusic -> BiliPaiNavEntryContentRole.NATIVE_MUSIC
         is BiliPaiNavKey.Space -> BiliPaiNavEntryContentRole.SPACE
         is BiliPaiNavKey.Web -> BiliPaiNavEntryContentRole.WEB
         is BiliPaiNavKey.DynamicDetail -> BiliPaiNavEntryContentRole.DYNAMIC_DETAIL

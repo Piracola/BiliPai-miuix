@@ -60,7 +60,6 @@ class BottomBarSettingsScreenIconPolicyTest {
             "HOME",
             "DYNAMIC",
             "HISTORY",
-            "LISTEN_VIDEO",
             "PROFILE",
             "FAVORITE",
             "LIVE",

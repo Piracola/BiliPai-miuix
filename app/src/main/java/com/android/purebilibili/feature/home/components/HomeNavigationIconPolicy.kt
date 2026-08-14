@@ -13,7 +13,6 @@ import top.yukonga.miuix.kmp.icon.extended.Folder
 import top.yukonga.miuix.kmp.icon.extended.FolderFill
 import top.yukonga.miuix.kmp.icon.extended.GridView
 import top.yukonga.miuix.kmp.icon.extended.Home
-import top.yukonga.miuix.kmp.icon.extended.Music
 import top.yukonga.miuix.kmp.icon.extended.Notes
 import top.yukonga.miuix.kmp.icon.extended.Play
 import top.yukonga.miuix.kmp.icon.extended.Settings
@@ -25,7 +24,6 @@ private enum class HomeNavigationIconRole {
     HOME,
     DYNAMIC,
     HISTORY,
-    LISTEN_VIDEO,
     PROFILE,
     FAVORITE,
     LIVE,
@@ -55,7 +53,6 @@ private fun resolveHomeNavigationIconRole(tabId: String): HomeNavigationIconRole
     "HOME", "RECOMMEND" -> HomeNavigationIconRole.HOME
     "DYNAMIC" -> HomeNavigationIconRole.DYNAMIC
     "HISTORY" -> HomeNavigationIconRole.HISTORY
-    "LISTEN_VIDEO" -> HomeNavigationIconRole.LISTEN_VIDEO
     "PROFILE" -> HomeNavigationIconRole.PROFILE
     "FAVORITE" -> HomeNavigationIconRole.FAVORITE
     "LIVE" -> HomeNavigationIconRole.LIVE
@@ -87,7 +84,6 @@ internal fun resolveMiuixPreferredHomeNavigationIconSource(
     HomeNavigationIconRole.TECH,
     HomeNavigationIconRole.HOME,
     HomeNavigationIconRole.HISTORY,
-    HomeNavigationIconRole.LISTEN_VIDEO,
     HomeNavigationIconRole.FAVORITE,
     HomeNavigationIconRole.WATCH_LATER,
     HomeNavigationIconRole.SETTINGS,
@@ -124,7 +120,6 @@ private fun resolveMiuixHomeNavigationIcon(
     HomeNavigationIconRole.HOME -> if (selected) MiuixIcons.Medium.Home else MiuixIcons.Home
     HomeNavigationIconRole.HISTORY,
     HomeNavigationIconRole.WATCH_LATER -> if (selected) MiuixIcons.Medium.WorldClock else MiuixIcons.WorldClock
-    HomeNavigationIconRole.LISTEN_VIDEO -> if (selected) MiuixIcons.Medium.Music else MiuixIcons.Music
     HomeNavigationIconRole.FAVORITE -> if (selected) MiuixIcons.FavoritesFill else MiuixIcons.Favorites
     HomeNavigationIconRole.SETTINGS -> if (selected) MiuixIcons.Medium.Settings else MiuixIcons.Settings
     HomeNavigationIconRole.PARTITION -> if (selected) MiuixIcons.Medium.GridView else MiuixIcons.GridView

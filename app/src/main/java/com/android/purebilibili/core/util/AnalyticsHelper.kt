@@ -755,25 +755,6 @@ object AnalyticsHelper {
     }
     
     /**
-     * 记录音频模式使用
-     * @param videoId 视频 ID
-     * @param enabled 是否开启
-     */
-    fun logAudioMode(videoId: String, enabled: Boolean) {
-        if (!isEnabled) return
-        if (shouldDropByRateLimit("audio_mode", "$videoId:$enabled", minIntervalMs = 900L)) return
-        try {
-            logAnalyticsEvent("audio_mode") {
-                maybeLogAnalyticsParam("video_id") { param("video_id", videoId) }
-                param("enabled", if (enabled) "true" else "false")
-            }
-            Logger.d(TAG, "🎵 Audio mode: ${if (enabled) "enabled" else "disabled"}")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to log audio mode", e)
-        }
-    }
-    
-    /**
      * 记录直播画质切换
      * @param roomId 直播间 ID
      * @param fromQuality 原画质

@@ -101,7 +101,6 @@ internal fun TabletVideoLayout(
     coverUrl: String = "",
     onBack: () -> Unit,
     onUpClick: (Long) -> Unit,
-    onNavigateToAudioMode: () -> Unit,
     onToggleFullscreen: () -> Unit,  // 📺 全屏切换回调
     isInPipMode: Boolean,
     onPipClick: () -> Unit,
@@ -233,11 +232,6 @@ internal fun TabletVideoLayout(
                             onSwitchCdn = playbackActions.switchCdn,
                             onSwitchCdnTo = playbackActions.switchCdnTo,
                             onProbeCdnCandidates = playbackActions.probeCdnCandidates,
-                            isAudioOnly = false,
-                            onAudioOnlyToggle = {
-                                playbackActions.setAudioMode(true)
-                                onNavigateToAudioMode()
-                            },
                             sleepTimerMinutes = sleepTimerMinutes,
                             onSleepTimerChange = playbackActions.setSleepTimer,
                             videoshotData = (uiState as? VideoPlaybackUiState.Success)?.videoshotData,

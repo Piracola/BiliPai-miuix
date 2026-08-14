@@ -54,7 +54,7 @@ class VideoRoutePolicyTest {
     }
 
     @Test
-    fun standardVideoRoute_keepsAudioModeWithoutAutoPortrait() {
+    fun standardVideoRoute_keepsStartAudioWithoutAutoPortrait() {
         assertEquals(
             "video/BV1audio?cid=9&cover=&startAudio=true&autoPortrait=false&fullscreen=false&resumePositionMs=0&commentRootRpid=0&commentTargetRpid=0",
             resolveStandardVideoRoute(

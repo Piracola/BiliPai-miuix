@@ -7,23 +7,6 @@ import kotlin.test.assertTrue
 class ReusableLiquidGlassBackdropStructureTest {
 
     @Test
-    fun `audio library keeps pager outside segmented control and synchronizes indicator`() {
-        val source = loadSource(
-            "app/src/main/java/com/android/purebilibili/feature/audio/screen/ListenVideoScreen.kt"
-        )
-
-        val segmentedControlSource = source
-            .substringAfter("BottomBarLiquidSegmentedControl(")
-            .substringBefore("HorizontalPager(")
-
-        assertTrue(segmentedControlSource.contains("indicatorPositionProvider = {"))
-        assertTrue(segmentedControlSource.contains("pagerState.currentPage + pagerState.currentPageOffsetFraction"))
-        assertTrue(segmentedControlSource.contains("preferInlineContentStyle = false"))
-        assertTrue(source.contains("HorizontalPager("))
-        assertTrue(source.indexOf("HorizontalPager(") > source.indexOf("BottomBarLiquidSegmentedControl("))
-    }
-
-    @Test
     fun `bangumi tabs sample pager content from a sibling layer`() {
         val source = loadSource(
             "app/src/main/java/com/android/purebilibili/feature/bangumi/ui/player/BangumiPlayerContent.kt"
@@ -47,17 +30,6 @@ class ReusableLiquidGlassBackdropStructureTest {
         assertTrue(areaSource.contains(".layerBackdrop(selectionBackdrop)"))
         assertTrue(playerSource.contains("backdrop = selectionBackdrop"))
         assertTrue(playerSource.contains(".layerBackdrop(selectionBackdrop)"))
-    }
-
-    @Test
-    fun `music page switcher samples the pager without recording itself`() {
-        val source = loadSource(
-            "app/src/main/java/com/android/purebilibili/feature/audio/screen/MusicPlayerContent.kt"
-        )
-
-        assertTrue(source.contains("val musicBackdrop = rememberMiuixLayerBackdrop()"))
-        assertTrue(source.contains("miuixBackdrop = musicBackdrop"))
-        assertTrue(source.contains(".miuixLayerBackdrop(musicBackdrop)"))
     }
 
     private fun loadSource(path: String): String {

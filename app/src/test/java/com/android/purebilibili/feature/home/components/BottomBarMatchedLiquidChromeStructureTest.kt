@@ -87,9 +87,6 @@ class BottomBarMatchedLiquidChromeStructureTest {
         val partition = loadSource(
             "app/src/main/java/com/android/purebilibili/feature/partition/PartitionScreen.kt"
         )
-        val musicPlayer = loadSource(
-            "app/src/main/java/com/android/purebilibili/feature/audio/screen/MusicPlayerContent.kt"
-        )
 
         assertTrue(dynamicTopBar.contains("BottomBarLiquidSegmentedControl("))
         assertTrue(dynamicTopBar.contains("indicatorPositionProvider = indicatorPositionProvider"))
@@ -107,9 +104,6 @@ class BottomBarMatchedLiquidChromeStructureTest {
         assertTrue(partition.contains("BottomBarMatchedLiquidIndicator("))
         assertTrue(partition.contains("orientation = BottomBarLiquidOrientation.VERTICAL"))
         assertFalse(partition.contains("BiliPaiBottomBarIndicatorLayer("))
-        assertTrue(musicPlayer.contains("BottomBarMatchedReusableLiquidDock("))
-        assertFalse(musicPlayer.contains("bottomBarMatchedLiquidDockSurface("))
-        assertFalse(musicPlayer.contains("biliPaiMiuixFloatingDockSurface("))
     }
 
     private fun loadSource(path: String): String {

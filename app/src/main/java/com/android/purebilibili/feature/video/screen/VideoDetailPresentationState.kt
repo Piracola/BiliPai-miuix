@@ -28,7 +28,6 @@ internal class VideoDetailPresentationState private constructor(
     internal val portraitFullscreenState = mutableStateOf(initialPortraitFullscreen)
     internal val pipModeState = mutableStateOf(initialPipMode)
     internal val navigatingToVideoState = mutableStateOf(false)
-    internal val navigatingToAudioModeState = mutableStateOf(false)
     internal val navigatingToMiniModeState = mutableStateOf(false)
 
     var returnPhase = mutableStateOf(VideoDetailReturnPhase.Idle)
@@ -58,10 +57,6 @@ internal class VideoDetailPresentationState private constructor(
 
     fun clearNavigatingToVideo() {
         navigatingToVideoState.value = false
-    }
-
-    fun markNavigatingToAudioMode() {
-        navigatingToAudioModeState.value = true
     }
 
     fun markNavigatingToMiniMode() {

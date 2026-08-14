@@ -13,7 +13,6 @@ internal data class VideoDetailPlaybackActions(
     val switchCdn: () -> Unit,
     val switchCdnTo: (Int) -> Unit,
     val probeCdnCandidates: () -> Unit,
-    val setAudioMode: (Boolean) -> Unit,
     val setSleepTimer: (Int?) -> Unit,
     val switchPage: (Int) -> Unit,
     val openDownloadDialog: () -> Unit,
@@ -89,6 +88,5 @@ internal data class VideoDetailNavigationActions(
     val home: () -> Unit,
     val toggleFullscreen: () -> Unit,
     val enterPortraitFullscreen: () -> Unit,
-    val enterPip: () -> Unit,
-    val navigateToAudioMode: () -> Unit
+    val enterPip: () -> Unit
 )

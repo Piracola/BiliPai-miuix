@@ -169,7 +169,6 @@ internal fun TabletCinemaLayout(
     onBack: () -> Unit,
     onUpClick: (Long) -> Unit,
     onBgmClick: (BgmInfo) -> Unit = {},
-    onNavigateToAudioMode: () -> Unit,
     onToggleFullscreen: () -> Unit,
     isInPipMode: Boolean,
     onPipClick: () -> Unit,
@@ -274,7 +273,6 @@ internal fun TabletCinemaLayout(
                     onHomeClick = onHomeClick,
                     bvid = bvid,
                     coverUrl = coverUrl,
-                    onNavigateToAudioMode = onNavigateToAudioMode,
                     onToggleFullscreen = onToggleFullscreen,
                     isInPipMode = isInPipMode,
                     onPipClick = onPipClick,
@@ -402,7 +400,6 @@ private fun CinemaStagePlayer(
     onHomeClick: () -> Unit,
     bvid: String,
     coverUrl: String,
-    onNavigateToAudioMode: () -> Unit,
     onToggleFullscreen: () -> Unit,
     isInPipMode: Boolean,
     onPipClick: () -> Unit,
@@ -504,11 +501,6 @@ private fun CinemaStagePlayer(
                 onSwitchCdn = playbackActions.switchCdn,
                 onSwitchCdnTo = playbackActions.switchCdnTo,
                 onProbeCdnCandidates = playbackActions.probeCdnCandidates,
-                isAudioOnly = false,
-                onAudioOnlyToggle = {
-                    playbackActions.setAudioMode(true)
-                    onNavigateToAudioMode()
-                },
                 sleepTimerMinutes = sleepTimerMinutes,
                 onSleepTimerChange = playbackActions.setSleepTimer,
                 videoshotData = success?.videoshotData,

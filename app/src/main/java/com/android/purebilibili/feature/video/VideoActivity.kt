@@ -148,9 +148,6 @@ class VideoActivity : ComponentActivity() {
                     bvid = bvid,
                     coverUrl = "", // Will be updated when video info loads
                     onBack = { onBackPressedDispatcher.onBackPressed() },
-                    onNavigateToAudioMode = {
-                        viewModel.setAudioMode(true)
-                    },
                     onVideoClick = { vid, options ->
                         VideoActivity.start(this, vid, options)
                     }

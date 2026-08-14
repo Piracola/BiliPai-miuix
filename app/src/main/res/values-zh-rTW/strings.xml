@@ -70,8 +70,6 @@
     <string name="bottom_nav_story">短影片</string>
     <string name="bottom_nav_history">歷史</string>
     <string name="bottom_nav_history_desc">歷史記錄</string>
-    <string name="bottom_nav_listen_video">聽影片</string>
-    <string name="bottom_nav_listen_video_desc">聽影片音樂資料頁</string>
     <string name="bottom_nav_profile">我的</string>
     <string name="bottom_nav_profile_desc">個人中心</string>
     <string name="bottom_nav_favorite">收藏</string>

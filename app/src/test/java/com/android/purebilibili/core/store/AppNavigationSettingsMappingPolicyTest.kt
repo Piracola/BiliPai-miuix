@@ -8,7 +8,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-
 class AppNavigationSettingsMappingPolicyTest {
 
     @Test
@@ -22,7 +21,7 @@ class AppNavigationSettingsMappingPolicyTest {
             result.bottomBarVisibilityMode
         )
         assertEquals(
-            listOf("HOME", "DYNAMIC", "HISTORY", "LISTEN_VIDEO", "PROFILE"),
+            listOf("HOME", "DYNAMIC", "HISTORY", "PROFILE"),
             result.orderedVisibleTabIds
         )
         assertEquals(emptyMap(), result.bottomBarItemColors)
@@ -75,54 +74,5 @@ class AppNavigationSettingsMappingPolicyTest {
         val result = mapAppNavigationSettingsFromPreferences(prefs)
 
         assertEquals(listOf("HOME", "DYNAMIC", "HISTORY", "PROFILE"), result.orderedVisibleTabIds)
-    }
-
-    @Test
-    fun listenVideoMigration_insertsBeforeProfileWhenCapacityRemains() {
-        val result = resolveListenVideoBottomTabMigration(
-            order = listOf("HOME", "DYNAMIC", "HISTORY", "PROFILE"),
-            visible = setOf("HOME", "DYNAMIC", "HISTORY", "PROFILE"),
-            migrationComplete = false
-        )
-
-        assertEquals(
-            listOf("HOME", "DYNAMIC", "HISTORY", "LISTEN_VIDEO", "PROFILE"),
-            result.order
-        )
-        assertEquals(
-            setOf("HOME", "DYNAMIC", "HISTORY", "LISTEN_VIDEO", "PROFILE"),
-            result.visible
-        )
-        assertTrue(result.markComplete)
-    }
-
-    @Test
-    fun listenVideoMigration_preservesExistingFiveItemCustomization() {
-        val original = listOf("HOME", "FAVORITE", "LIVE", "WATCHLATER", "PROFILE")
-
-        val result = resolveListenVideoBottomTabMigration(
-            order = original,
-            visible = original.toSet(),
-            migrationComplete = false
-        )
-
-        assertEquals(original, result.order)
-        assertEquals(original.toSet(), result.visible)
-        assertTrue(result.markComplete)
-    }
-
-    @Test
-    fun listenVideoMigration_doesNotReinsertAfterUserHidesIt() {
-        val original = listOf("HOME", "DYNAMIC", "HISTORY", "PROFILE", "LISTEN_VIDEO")
-
-        val result = resolveListenVideoBottomTabMigration(
-            order = original,
-            visible = setOf("HOME", "DYNAMIC", "HISTORY", "PROFILE"),
-            migrationComplete = true
-        )
-
-        assertEquals(original, result.order)
-        assertEquals(setOf("HOME", "DYNAMIC", "HISTORY", "PROFILE"), result.visible)
-        assertFalse(result.markComplete)
     }
 }

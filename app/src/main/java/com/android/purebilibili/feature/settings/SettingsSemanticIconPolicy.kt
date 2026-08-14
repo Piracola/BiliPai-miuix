@@ -98,7 +98,6 @@ internal enum class SettingsIconRole {
     SLIDE_VOLUME_BRIGHTNESS,
     PIP_DANMAKU,
     DANMAKU_CLOUD_SYNC,
-    AUDIO_MODE_PIP,
     PLAYER_DIAGNOSTICS,
     QUALITY_WARNING,
     SUBTITLE,
@@ -307,7 +306,6 @@ private fun resolveMiuixSettingsSemanticIcon(role: SettingsIconRole): ImageVecto
     SettingsIconRole.SLIDE_VOLUME_BRIGHTNESS -> MiuixIcons.VerticalSplit
     SettingsIconRole.PIP_DANMAKU -> MiuixIcons.Messages
     SettingsIconRole.DANMAKU_CLOUD_SYNC -> MiuixIcons.CloudFill
-    SettingsIconRole.AUDIO_MODE_PIP -> MiuixIcons.ScreenMirroring
     SettingsIconRole.PLAYER_DIAGNOSTICS -> MiuixIcons.AppRecording
     SettingsIconRole.QUALITY_WARNING -> MiuixIcons.Report
     SettingsIconRole.SUBTITLE -> MiuixIcons.Notes
@@ -456,7 +454,6 @@ private fun resolveMd3SettingsSemanticIcon(role: SettingsIconRole): ImageVector 
     SettingsIconRole.SLIDE_VOLUME_BRIGHTNESS -> Icons.Outlined.SwapVert
     SettingsIconRole.PIP_DANMAKU -> Icons.Outlined.Textsms
     SettingsIconRole.DANMAKU_CLOUD_SYNC -> Icons.Outlined.CloudSync
-    SettingsIconRole.AUDIO_MODE_PIP -> Icons.Outlined.PictureInPicture
     SettingsIconRole.PLAYER_DIAGNOSTICS -> Icons.Outlined.QueryStats
     SettingsIconRole.QUALITY_WARNING -> Icons.Outlined.ReportProblem
     SettingsIconRole.SUBTITLE -> Icons.Outlined.Subtitles

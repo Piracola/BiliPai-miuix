@@ -827,40 +827,12 @@ data class DanmakuSettings(
 
 data class AppNavigationSettings(
     val bottomBarVisibilityMode: SettingsManager.BottomBarVisibilityMode = SettingsManager.BottomBarVisibilityMode.ALWAYS_VISIBLE,
-    val orderedVisibleTabIds: List<String> = listOf("HOME", "DYNAMIC", "HISTORY", "LISTEN_VIDEO", "PROFILE"),
+    val orderedVisibleTabIds: List<String> = listOf("HOME", "DYNAMIC", "HISTORY", "PROFILE"),
     val bottomBarItemColors: Map<String, Int> = emptyMap(),
     val tabletUseSidebar: Boolean = false,
     val sidebarAccountSwitcherEnabled: Boolean = true,
     val predictiveBackEnabled: Boolean = true,
 )
-
-internal data class BottomTabMigrationResult(
-    val order: List<String>,
-    val visible: Set<String>,
-    val markComplete: Boolean
-)
-
-internal fun resolveListenVideoBottomTabMigration(
-    order: List<String>,
-    visible: Set<String>,
-    migrationComplete: Boolean
-): BottomTabMigrationResult {
-    if (migrationComplete) {
-        return BottomTabMigrationResult(order, visible, markComplete = false)
-    }
-    if ("LISTEN_VIDEO" in order || "LISTEN_VIDEO" in visible || visible.size >= 5) {
-        return BottomTabMigrationResult(order, visible, markComplete = true)
-    }
-    val insertionIndex = order.indexOf("PROFILE").takeIf { it >= 0 } ?: order.size
-    val migratedOrder = order.toMutableList().apply {
-        add(insertionIndex, "LISTEN_VIDEO")
-    }
-    return BottomTabMigrationResult(
-        order = migratedOrder,
-        visible = visible + "LISTEN_VIDEO",
-        markComplete = true
-    )
-}
 
 data class HomeTopTabSettings(
     val orderIds: List<String> = listOf("RECOMMEND", "FOLLOW", "POPULAR", "LIVE", "GAME"),
@@ -1373,8 +1345,8 @@ object SettingsManager {
     private val KEY_BOTTOM_BAR_ORDER = stringPreferencesKey("bottom_bar_order")  // 逗号分隔的项目顺序
     private val KEY_BOTTOM_BAR_VISIBLE_TABS = stringPreferencesKey("bottom_bar_visible_tabs")  // 逗号分隔的可见项目
     private val KEY_BOTTOM_BAR_ITEM_COLORS = stringPreferencesKey("bottom_bar_item_colors")  //  格式: HOME:0,DYNAMIC:1,...
-    private const val DEFAULT_BOTTOM_BAR_ORDER = "HOME,DYNAMIC,HISTORY,LISTEN_VIDEO,PROFILE"
-    private const val DEFAULT_BOTTOM_BAR_VISIBLE_TABS = "HOME,DYNAMIC,HISTORY,LISTEN_VIDEO,PROFILE"
+    private const val DEFAULT_BOTTOM_BAR_ORDER = "HOME,DYNAMIC,HISTORY,PROFILE"
+    private const val DEFAULT_BOTTOM_BAR_VISIBLE_TABS = "HOME,DYNAMIC,HISTORY,PROFILE"
     // 评论默认排序（2=最新,3=最热）
     private val KEY_COMMENT_DEFAULT_SORT_MODE = intPreferencesKey("comment_default_sort_mode")
     private val KEY_COMMENT_FRAUD_DETECTION_ENABLED =
@@ -1387,7 +1359,6 @@ object SettingsManager {
     private val KEY_STOP_PLAYBACK_ON_EXIT = booleanPreferencesKey("stop_playback_on_exit")
     private val KEY_BACKGROUND_PLAYBACK_ENABLED = booleanPreferencesKey("background_playback_enabled")
     private val KEY_AUDIO_FOCUS_ENABLED = booleanPreferencesKey("audio_focus_enabled")
-    private val KEY_AUDIO_MODE_AUTO_PIP_ENABLED = booleanPreferencesKey("audio_mode_auto_pip_enabled")
     private val KEY_VIDEO_AI_SUMMARY_ENTRY_ENABLED = booleanPreferencesKey("video_ai_summary_entry_enabled")
     private val KEY_VIDEO_NOTE_ENABLED = booleanPreferencesKey("video_note_enabled")
     private val KEY_VIDEO_NOTE_DEFAULT_COLLAPSED = booleanPreferencesKey("video_note_default_collapsed")
@@ -5368,26 +5339,6 @@ object SettingsManager {
     fun getAudioFocusEnabledSync(context: Context): Boolean {
         return context.getSharedPreferences("mini_player", Context.MODE_PRIVATE)
             .getBoolean("audio_focus_enabled", true)
-    }
-
-    fun getAudioModeAutoPipEnabled(context: Context): Flow<Boolean> = context.settingsDataStore.data
-        .map { preferences -> preferences[KEY_AUDIO_MODE_AUTO_PIP_ENABLED] ?: false }
-
-    suspend fun setAudioModeAutoPipEnabled(context: Context, value: Boolean) {
-        context.settingsDataStore.edit { preferences ->
-            preferences[KEY_AUDIO_MODE_AUTO_PIP_ENABLED] = value
-        }
-        context.getSharedPreferences("mini_player", Context.MODE_PRIVATE)
-            .edit().putBoolean("audio_mode_auto_pip_enabled", value).apply()
-    }
-
-    fun getAudioModeAutoPipEnabledSync(context: Context): Boolean {
-        return context.getSharedPreferences("mini_player", Context.MODE_PRIVATE)
-            .getBoolean("audio_mode_auto_pip_enabled", false)
-    }
-
-    internal fun shouldEnableAudioModeAutoPipToggle(mode: MiniPlayerMode): Boolean {
-        return mode.supportsSystemPip
     }
 
     fun getVideoAiSummaryEntryEnabled(context: Context): Flow<Boolean> = context.settingsDataStore.data

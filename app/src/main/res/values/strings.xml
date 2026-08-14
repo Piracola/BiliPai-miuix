@@ -69,8 +69,6 @@
     <string name="bottom_nav_story">短视频</string>
     <string name="bottom_nav_history">历史</string>
     <string name="bottom_nav_history_desc">历史记录</string>
-    <string name="bottom_nav_listen_video">听视频</string>
-    <string name="bottom_nav_listen_video_desc">听视频音乐资料页</string>
     <string name="bottom_nav_profile">我的</string>
     <string name="bottom_nav_profile_desc">个人中心</string>
     <string name="bottom_nav_favorite">收藏</string>

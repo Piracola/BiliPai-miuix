@@ -271,11 +271,6 @@ internal fun buildSponsorBlockVideoSnapshot(currentState: VideoPlaybackUiState):
     )
 }
 
-internal data class AudioModePlaylist(
-    val items: List<PlaylistItem>,
-    val startIndex: Int
-)
-
 internal fun resolveUgcSeasonEpisodeIndex(
     episodes: List<UgcEpisode>,
     currentBvid: String,
@@ -291,79 +286,6 @@ internal fun resolveUgcSeasonEpisodeIndex(
     }
 
     return episodes.indexOfFirst { it.bvid == currentBvid }
-}
-
-internal fun buildAudioModeCollectionPlaylist(
-    episodes: List<UgcEpisode>,
-    currentBvid: String,
-    currentCid: Long
-): AudioModePlaylist? {
-    val playableEpisodes = episodes.filter { it.bvid.isNotBlank() }
-    val items = playableEpisodes
-        .map { episode ->
-            PlaylistItem(
-                bvid = episode.bvid,
-                cid = episode.cid,
-                title = episode.title.ifBlank {
-                    episode.arc?.title?.takeIf { title -> title.isNotBlank() } ?: episode.bvid
-                },
-                cover = episode.arc?.pic.orEmpty(),
-                owner = "",
-                duration = episode.arc?.duration?.toLong() ?: 0L
-            )
-        }
-    if (items.isEmpty()) return null
-
-    val exactIndex = playableEpisodes.indexOfFirst { episode ->
-        episode.bvid == currentBvid &&
-            currentCid > 0L &&
-            episode.cid == currentCid
-    }
-    val fallbackIndex = playableEpisodes.indexOfFirst { it.bvid == currentBvid }
-    val startIndex = when {
-        exactIndex >= 0 -> exactIndex
-        fallbackIndex >= 0 -> fallbackIndex
-        else -> 0
-    }.coerceIn(0, items.lastIndex)
-
-    return AudioModePlaylist(
-        items = items,
-        startIndex = startIndex
-    )
-}
-
-internal fun buildAudioModePagePlaylist(
-    pages: List<com.android.purebilibili.data.model.response.Page>,
-    currentBvid: String,
-    currentCid: Long,
-    videoTitle: String,
-    cover: String,
-    owner: String
-): AudioModePlaylist? {
-    if (pages.size <= 1 || currentBvid.isBlank()) return null
-
-    val items = pages.mapIndexed { index, page ->
-        PlaylistItem(
-            bvid = currentBvid,
-            cid = page.cid,
-            title = page.part.ifBlank { if (index == 0) videoTitle else "P${index + 1}" },
-            cover = cover,
-            owner = owner,
-            duration = page.duration
-        )
-    }
-    val startIndex = pages.indexOfFirst { it.cid == currentCid }
-        .takeIf { it >= 0 }
-        ?: 0
-    return AudioModePlaylist(items = items, startIndex = startIndex)
-}
-
-/** 听视频模式下，收藏夹/稍后再看等外部队列优先于视频自带合集队列。 */
-internal fun shouldApplyAudioModeCollectionPlaylist(
-    isInAudioMode: Boolean,
-    keepExternalPlaylist: Boolean
-): Boolean {
-    return isInAudioMode && !keepExternalPlaylist
 }
 
 internal data class PlaybackCdnFallbackState(
@@ -1705,26 +1627,6 @@ class VideoPlaybackViewModel : ViewModel() {
     val currentPlayer: Player?
         get() = exoPlayer
         
-    /**
-     *  UI 仅音频模式状态
-     * 
-     * 注意：这与 SettingsManager.MiniPlayerMode.BACKGROUND 是两个不同的概念：
-     * - isInAudioMode: UI 层的仅音频显示模式，用户主动切换，显示音频播放界面
-     * - MiniPlayerMode.BACKGROUND: 设置层的后台音频模式，应用退到后台时的行为
-     * 
-     * isInAudioMode 控制 UI 显示，MiniPlayerMode.BACKGROUND 控制后台行为
-     */
-    private val _isInAudioMode = MutableStateFlow(false)
-    val isInAudioMode = _isInAudioMode.asStateFlow()
-    
-    fun setAudioMode(enabled: Boolean) {
-        _isInAudioMode.value = enabled
-        if (enabled) {
-            val current = _uiState.value as? VideoPlaybackUiState.Success ?: return
-            updatePlaylist(current.info, current.related)
-        }
-    }
-
     fun setPortraitPlaybackSessionActive(active: Boolean) {
         isPortraitPlaybackSessionActive = active
     }
@@ -2208,14 +2110,6 @@ class VideoPlaybackViewModel : ViewModel() {
 
                 if (isPortraitPlaybackSessionActive) {
                     Logger.d("PlayerVM", "📱 STATE_ENDED in portrait session, handled by portrait pager")
-                    return
-                }
-
-                if (_isInAudioMode.value) {
-                    val didContinue = handleAudioModePlaybackEnded(ignoreSavedProgress = true)
-                    if (!didContinue) {
-                        _showPlaybackEndedDialog.value = false
-                    }
                     return
                 }
 
@@ -2774,53 +2668,6 @@ class VideoPlaybackViewModel : ViewModel() {
 
     fun playPreviousRecommended(ignoreSavedProgress: Boolean = false): Boolean {
         return playPreviousPageOrRecommended(ignoreSavedProgress = ignoreSavedProgress)
-    }
-
-    fun playNextAudioModeTrack(ignoreSavedProgress: Boolean = false): Boolean {
-        return playAudioModePlaylistItem(
-            item = PlaylistManager.playNext(),
-            emptyMessage = "播放列表结束",
-            ignoreSavedProgress = ignoreSavedProgress
-        )
-    }
-
-    fun playPreviousAudioModeTrack(ignoreSavedProgress: Boolean = false): Boolean {
-        return playAudioModePlaylistItem(
-            item = PlaylistManager.playPrevious(),
-            emptyMessage = "没有上一个视频",
-            ignoreSavedProgress = ignoreSavedProgress
-        )
-    }
-
-    private fun handleAudioModePlaybackEnded(ignoreSavedProgress: Boolean): Boolean {
-        if (PlaylistManager.playMode.value == PlayMode.REPEAT_ONE) {
-            exoPlayer?.seekTo(0)
-            exoPlayer?.playWhenReady = true
-            exoPlayer?.play()
-            return exoPlayer != null
-        }
-        return playNextAudioModeTrack(ignoreSavedProgress = ignoreSavedProgress)
-    }
-
-    private fun playAudioModePlaylistItem(
-        item: PlaylistItem?,
-        emptyMessage: String,
-        ignoreSavedProgress: Boolean
-    ): Boolean {
-        if (item == null) {
-            toast(emptyMessage)
-            return false
-        }
-        viewModelScope.launch {
-            toast("正在播放: ${item.title}")
-        }
-        loadVideo(
-            bvid = item.bvid,
-            cid = item.cid,
-            autoPlay = true,
-            ignoreSavedProgress = ignoreSavedProgress
-        )
-        return true
     }
 
     private fun playPreviousFromRecommendedQueue(ignoreSavedProgress: Boolean = false): Boolean {
@@ -3772,7 +3619,7 @@ class VideoPlaybackViewModel : ViewModel() {
             currentBvid = currentInfo.bvid
         )
 
-        // 🔒 外部队列（收藏夹、稍后再看等）始终优先，听视频模式也不应被合集/分P 队列覆盖。
+        // 🔒 外部队列（收藏夹、稍后再看等）始终优先，不被合集/分P 队列覆盖。
         if (externalDecision.keepExternalPlaylist) {
             val matchIndex = externalDecision.matchedIndex
             if (matchIndex in currentPlaylist.indices) {
@@ -3780,51 +3627,6 @@ class VideoPlaybackViewModel : ViewModel() {
                 Logger.d("PlayerVM", "🔒 外部播放列表模式: 更新索引到 $matchIndex/${currentPlaylist.size}")
             }
             return
-        }
-
-        if (shouldApplyAudioModeCollectionPlaylist(
-                isInAudioMode = _isInAudioMode.value,
-                keepExternalPlaylist = false
-            )
-        ) {
-            val audioPlaylist = if (currentInfo.pages.size > 1) {
-                buildAudioModePagePlaylist(
-                    pages = currentInfo.pages,
-                    currentBvid = currentInfo.bvid,
-                    currentCid = currentInfo.cid,
-                    videoTitle = currentInfo.title,
-                    cover = currentInfo.pic,
-                    owner = currentInfo.owner.name
-                )
-            } else {
-                currentInfo.ugc_season?.let { season ->
-                    buildAudioModeCollectionPlaylist(
-                        episodes = season.sections.flatMap { it.episodes },
-                        currentBvid = currentInfo.bvid,
-                        currentCid = currentInfo.cid
-                    )
-                }
-            }
-            if (audioPlaylist != null) {
-                PlaylistManager.setPlaylist(
-                    items = audioPlaylist.items,
-                    startIndex = audioPlaylist.startIndex
-                )
-                Logger.d(
-                    "PlayerVM",
-                    "🎵 听视频分集队列: ${audioPlaylist.items.size} 项, 当前=${audioPlaylist.startIndex}"
-                )
-                return
-            }
-
-            val currentQueuedItem = currentPlaylist.getOrNull(PlaylistManager.currentIndex.value)
-            if (
-                currentQueuedItem != null &&
-                currentQueuedItem.bvid == currentInfo.bvid &&
-                (currentQueuedItem.cid <= 0L || currentQueuedItem.cid == currentInfo.cid)
-            ) {
-                return
-            }
         }
 
         if (PlaylistManager.isExternalPlaylist.value) {

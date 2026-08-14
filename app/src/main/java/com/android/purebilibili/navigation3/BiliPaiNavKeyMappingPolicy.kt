@@ -21,7 +21,6 @@ internal fun BiliPaiNavKey.toLegacyRoute(): String {
     return when (this) {
         BiliPaiNavKey.MainHost -> "main_host"
         BiliPaiNavKey.Home -> ScreenRoutes.Home.route
-        BiliPaiNavKey.ListenVideo -> ScreenRoutes.ListenVideo.route
         BiliPaiNavKey.Dynamic -> ScreenRoutes.Dynamic.route
         BiliPaiNavKey.Search -> ScreenRoutes.Search.route
         BiliPaiNavKey.SearchTrending -> ScreenRoutes.SearchTrending.route
@@ -67,7 +66,6 @@ internal fun BiliPaiNavKey.toLegacyRoute(): String {
         BiliPaiNavKey.SystemNotice -> ScreenRoutes.SystemNotice.route
         is BiliPaiNavKey.Chat -> ScreenRoutes.Chat.createRoute(talkerId, sessionType, userName)
         BiliPaiNavKey.Partition -> ScreenRoutes.Partition.route
-        is BiliPaiNavKey.AudioMode -> ScreenRoutes.AudioMode.route
         is BiliPaiNavKey.SeasonSeriesDetail -> ScreenRoutes.SeasonSeriesDetail.createRoute(
             type = type,
             id = id,
@@ -77,8 +75,6 @@ internal fun BiliPaiNavKey.toLegacyRoute(): String {
         )
         is BiliPaiNavKey.Bangumi -> ScreenRoutes.Bangumi.createRoute(initialType)
         is BiliPaiNavKey.BangumiPlayer -> ScreenRoutes.BangumiPlayer.createRoute(seasonId, epId, resumePositionMs)
-        is BiliPaiNavKey.MusicDetail -> ScreenRoutes.MusicDetail.createRoute(sid)
-        is BiliPaiNavKey.NativeMusic -> ScreenRoutes.NativeMusic.createRoute(title, bvid, cid)
         is BiliPaiNavKey.VideoDetail -> VideoRoute.createRoute(
             bvid = bvid,
             cid = cid,
@@ -116,7 +112,6 @@ internal fun legacyRouteToBiliPaiNavKey(route: String?): BiliPaiNavKey {
     return when {
         normalized == "main_host" -> BiliPaiNavKey.MainHost
         normalized == ScreenRoutes.Home.route -> BiliPaiNavKey.Home
-        normalized == ScreenRoutes.ListenVideo.route -> BiliPaiNavKey.ListenVideo
         normalized == ScreenRoutes.Dynamic.route -> BiliPaiNavKey.Dynamic
         normalized == ScreenRoutes.Search.route -> BiliPaiNavKey.Search
         normalized == ScreenRoutes.SearchTrending.route -> BiliPaiNavKey.SearchTrending
@@ -192,7 +187,6 @@ internal fun legacyRouteToBiliPaiNavKey(route: String?): BiliPaiNavKey {
             )
         }
         normalized == ScreenRoutes.Partition.route -> BiliPaiNavKey.Partition
-        normalized == ScreenRoutes.AudioMode.route -> BiliPaiNavKey.AudioMode()
         segments.firstOrNull() == "season_series_detail" && segments.size >= 3 -> {
             BiliPaiNavKey.SeasonSeriesDetail(
                 type = decodeRouteValue(segments[1]),
@@ -211,16 +205,6 @@ internal fun legacyRouteToBiliPaiNavKey(route: String?): BiliPaiNavKey {
         }
         routeBase == "bangumi" -> {
             BiliPaiNavKey.Bangumi(initialType = query["type"]?.toIntOrNull() ?: 1)
-        }
-        segments.firstOrNull() == "music" && segments.size >= 2 -> {
-            BiliPaiNavKey.MusicDetail(sid = segments[1].toLongOrNull() ?: 0L)
-        }
-        routeBase == "native_music" -> {
-            BiliPaiNavKey.NativeMusic(
-                title = query["title"].orEmpty(),
-                bvid = query["bvid"].orEmpty(),
-                cid = query["cid"]?.toLongOrNull() ?: 0L
-            )
         }
         segments.firstOrNull() == VideoRoute.base && segments.size >= 2 -> {
             BiliPaiNavKey.VideoDetail(

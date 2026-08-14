@@ -568,8 +568,6 @@ fun VideoPlayerOverlay(
     isFlippedVertical: Boolean = false,
     onFlipHorizontal: () -> Unit = {},
     onFlipVertical: () -> Unit = {},
-    isAudioOnly: Boolean = false,
-    onAudioOnlyToggle: () -> Unit = {},
     //  [新增] 画质列表和回调
     onQualityChange: (Int) -> Unit = {},
     //  [新增] CDN 线路切换
@@ -1460,8 +1458,6 @@ fun VideoPlayerOverlay(
                                 ShareUtils.shareVideo(context, title, bvid)
                             }
                         },
-                        onAudioMode = onAudioOnlyToggle,
-                        isAudioOnly = isAudioOnly,
                         //  [新增] 投屏按钮
                         onCastClick = onCastClickAction,
                         showCastButton = playerControlVisibility.showCastButton,
@@ -2099,8 +2095,6 @@ fun VideoPlayerOverlay(
                 isFlippedVertical = isFlippedVertical,
                 onFlipHorizontal = onFlipHorizontal,
                 onFlipVertical = onFlipVertical,
-                isAudioOnly = isAudioOnly,
-                onAudioOnlyToggle = onAudioOnlyToggle,
                 //  CDN 线路切换
                 currentCdnIndex = currentCdnIndex,
                 cdnCount = cdnCount,
@@ -2373,8 +2367,6 @@ private fun PortraitTopBar(
     onHome: () -> Unit,
     onSettings: () -> Unit,
     onShare: () -> Unit,
-    onAudioMode: () -> Unit,
-    isAudioOnly: Boolean,
     // 📺 [新增] 投屏
     onCastClick: () -> Unit = {},
     showCastButton: Boolean = true,
@@ -2453,24 +2445,6 @@ private fun PortraitTopBar(
         Row(
             horizontalArrangement = Arrangement.spacedBy(layoutPolicy.rightSectionSpacingDp.dp)
         ) {
-            //  听视频模式按钮 - 激活时保留背景色
-            AppIconButton(
-                onClick = onAudioMode,
-                modifier = Modifier
-                    .size(layoutPolicy.buttonSizeDp.dp)
-                    .then(
-                        if (isAudioOnly) Modifier.background(MaterialTheme.colorScheme.primary, CircleShape)
-                        else Modifier
-                    )
-            ) {
-                AppIcon(
-                    imageVector = Icons.Outlined.Headphones,
-                    contentDescription = "听视频",
-                    tint = Color.White,
-                    modifier = Modifier.size(layoutPolicy.iconSizeDp.dp)
-                )
-            }
-
             if (showCastButton) {
                 AppIconButton(
                     onClick = onCastClick,

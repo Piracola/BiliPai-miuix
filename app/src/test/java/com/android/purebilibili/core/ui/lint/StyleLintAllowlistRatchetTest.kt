@@ -142,7 +142,7 @@ class StyleLintAllowlistRatchetTest {
         // 冻结于接入棘轮时的实测值，只能调小。
         //
         // 注意：接入时 HardcodedShape/Motion/SurfaceLintTest 三条本身是**红的**——
-        // audio/ListenVideoScreen.kt、video/ui/gesture/GestureLevelOverlay.kt、
+        // video/ui/gesture/GestureLevelOverlay.kt、
         // home/components/cards/HomeStyleSingleColumnVideoCard.kt 等文件在各自的
         // feature commit 里引入了新的硬编码，却没有同步更新白名单，而这些测试从来
         // 没有进过 CI，所以一直没人发现。
@@ -153,8 +153,8 @@ class StyleLintAllowlistRatchetTest {
         //   2. 确有像素级理由无法迁移，则加进白名单并把这里的上限一并调大。
         // 第 2 条会让上限变大，这正是设计意图——它必须是一个显眼、需要解释的动作。
         //
-        // 81 → 85：收纳 4 个接入棘轮前的存量字面圆角文件（MusicPlayerContent、
-        // DynamicCard、ProfileLoadingSkeleton、AudioQualitySelectionMenu）。
+        // 81 → 85：收纳 4 个接入棘轮前的存量字面圆角文件（DynamicCard、
+        // ProfileLoadingSkeleton、AudioQualitySelectionMenu）。
         // 它们带 preset 缩放（MD3 0.9x / MIUIX 1.15x），换 AppShapes 会改变实际渲染，
         // 且 8dp 无对应 ContainerLevel；迁移到命名 Spec 后调小。
         // 85 → 86：上游 SearchLandingUi（悬浮建议卡片）带入的存量字面圆角，

@@ -185,11 +185,6 @@ class BiliPaiNavKeyMappingPolicyTest {
             BiliPaiNavKey.BangumiPlayer(seasonId = 1L, epId = 2L, resumePositionMs = 3000L),
             legacyRouteToBiliPaiNavKey(ScreenRoutes.BangumiPlayer.createRoute(1L, 2L, 3000L))
         )
-        assertEquals(BiliPaiNavKey.MusicDetail(100L), legacyRouteToBiliPaiNavKey(ScreenRoutes.MusicDetail.createRoute(100L)))
-        assertEquals(
-            BiliPaiNavKey.NativeMusic(title = "背景音乐", bvid = "BV1", cid = 3L),
-            legacyRouteToBiliPaiNavKey("native_music?title=%E8%83%8C%E6%99%AF%E9%9F%B3%E4%B9%90&bvid=BV1&cid=3")
-        )
     }
 
     @Test

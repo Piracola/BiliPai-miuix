@@ -46,20 +46,6 @@ class VideoInteractionIconPolicyTest {
     }
 
     @Test
-    fun `audio mode delegates to the shared music player without legacy video action icons`() {
-        val audioModeSource = File("src/main/java/com/android/purebilibili/feature/video/screen/AudioModeScreen.kt")
-            .readText()
-        val playerSource = File("src/main/java/com/android/purebilibili/feature/video/screen/AudioModeMusicPlayer.kt")
-            .readText()
-
-        assertTrue(audioModeSource.contains("AudioModeMusicPlayer("))
-        assertTrue(playerSource.contains("MusicPlayerContent("))
-        assertFalse(audioModeSource.contains("AppIcons.BiliCoin"))
-        assertFalse(audioModeSource.contains("CupertinoIcons.Filled.HandThumbsup else CupertinoIcons.Default.HandThumbsup"))
-        assertFalse(audioModeSource.contains("CupertinoIcons.Filled.Bookmark else CupertinoIcons.Default.Bookmark"))
-    }
-
-    @Test
     fun `fullscreen overlay controls use app semantic interaction icons`() {
         val source = File("src/main/java/com/android/purebilibili/feature/video/ui/overlay/VideoPlayerOverlay.kt")
             .readText()

@@ -5,7 +5,6 @@ import java.nio.charset.StandardCharsets
 
 sealed class ScreenRoutes(val route: String) {
     object Home : ScreenRoutes("home")
-    object ListenVideo : ScreenRoutes("listen_video")
     object Search : ScreenRoutes("search")
     object SearchTrending : ScreenRoutes("search_trending")
     object TopicDetail : ScreenRoutes("topic/{topicId}") {
@@ -147,9 +146,6 @@ sealed class ScreenRoutes(val route: String) {
         }
     }
     
-    //  [新增] 音频模式页面
-    object AudioMode : ScreenRoutes("audio_mode")
-    
     //  [新增] 番剧/影视页面 - 支持初始类型参数
     object Bangumi : ScreenRoutes("bangumi?type={type}") {
         fun createRoute(initialType: Int = 1): String {
@@ -211,20 +207,6 @@ sealed class ScreenRoutes(val route: String) {
             val encodedUrl = android.net.Uri.encode(url)
             val encodedTitle = title?.let { android.net.Uri.encode(it) } ?: ""
             return "web?url=$encodedUrl&title=$encodedTitle"
-        }
-    }
-    
-    // [新增] Audio Player
-    object MusicDetail : ScreenRoutes("music/{sid}") {
-        fun createRoute(sid: Long): String {
-            return "music/$sid"
-        }
-    }
-    
-    // [新增] Native Music - 用于 MA 格式的原生音乐播放 (从视频 DASH 流提取音频)
-    object NativeMusic : ScreenRoutes("native_music?title={title}&bvid={bvid}&cid={cid}") {
-        fun createRoute(title: String, bvid: String, cid: Long): String {
-            return "native_music?title=${android.net.Uri.encode(title)}&bvid=${android.net.Uri.encode(bvid)}&cid=$cid"
         }
     }
 }

@@ -14,7 +14,6 @@ private enum class SettingsNavigationIconRole {
     HOME,
     DYNAMIC,
     HISTORY,
-    LISTEN_VIDEO,
     PROFILE,
     FAVORITE,
     LIVE,
@@ -40,7 +39,6 @@ internal fun resolveSettingsNavigationPreviewIcon(
         "HOME", "RECOMMEND" -> SettingsNavigationIconRole.HOME
         "DYNAMIC" -> SettingsNavigationIconRole.DYNAMIC
         "HISTORY" -> SettingsNavigationIconRole.HISTORY
-        "LISTEN_VIDEO" -> SettingsNavigationIconRole.LISTEN_VIDEO
         "PROFILE" -> SettingsNavigationIconRole.PROFILE
         "FAVORITE" -> SettingsNavigationIconRole.FAVORITE
         "LIVE" -> SettingsNavigationIconRole.LIVE
@@ -62,7 +60,6 @@ internal fun resolveSettingsNavigationPreviewIcon(
             SettingsNavigationIconRole.HOME -> if (selected) MiuixIcons.Medium.Th1 else MiuixIcons.Th1
             SettingsNavigationIconRole.DYNAMIC -> if (selected) MiuixIcons.Medium.Messages else MiuixIcons.Messages
             SettingsNavigationIconRole.HISTORY -> if (selected) MiuixIcons.Medium.Recent else MiuixIcons.Recent
-            SettingsNavigationIconRole.LISTEN_VIDEO -> if (selected) MiuixIcons.Medium.Music else MiuixIcons.Music
             SettingsNavigationIconRole.PROFILE -> MiuixIcons.ContactsCircle
             SettingsNavigationIconRole.FAVORITE -> if (selected) MiuixIcons.FavoritesFill else MiuixIcons.Favorites
             SettingsNavigationIconRole.LIVE -> if (selected) MiuixIcons.Medium.RecordingTape else MiuixIcons.RecordingTape
@@ -81,7 +78,6 @@ internal fun resolveSettingsNavigationPreviewIcon(
             SettingsNavigationIconRole.HOME -> if (selected) Icons.Filled.Home else Icons.Outlined.Home
             SettingsNavigationIconRole.DYNAMIC -> if (selected) Icons.Filled.Notifications else Icons.Outlined.NotificationsNone
             SettingsNavigationIconRole.HISTORY -> if (selected) Icons.Filled.History else Icons.Outlined.History
-            SettingsNavigationIconRole.LISTEN_VIDEO -> if (selected) Icons.Filled.LibraryMusic else Icons.Outlined.LibraryMusic
             SettingsNavigationIconRole.PROFILE -> if (selected) Icons.Filled.Person else Icons.Outlined.Person
             SettingsNavigationIconRole.FAVORITE -> if (selected) Icons.Filled.CollectionsBookmark else Icons.Outlined.CollectionsBookmark
             SettingsNavigationIconRole.LIVE -> if (selected) Icons.Filled.LiveTv else Icons.Outlined.LiveTv

@@ -286,7 +286,6 @@ internal fun VideoDetailScreenStateHolder(
     transitionEnterDurationMillis: Int = 320,
     onBack: () -> Unit,
     onHomeClick: () -> Unit = onBack,
-    onNavigateToAudioMode: () -> Unit = {},
     onNavigateToSearch: () -> Unit = {},
     onSearchKeywordClick: (String) -> Unit = {},
     onOpenBilibiliLink: ((String) -> Unit)? = null,
@@ -396,7 +395,6 @@ internal fun VideoDetailScreenStateHolder(
             switchCdn = viewModel::switchCdn,
             switchCdnTo = viewModel::switchCdnTo,
             probeCdnCandidates = viewModel::probeCurrentCdnCandidates,
-            setAudioMode = viewModel::setAudioMode,
             setSleepTimer = viewModel::setSleepTimer,
             switchPage = viewModel::switchPage,
             openDownloadDialog = viewModel::openDownloadDialog,
@@ -496,9 +494,7 @@ internal fun VideoDetailScreenStateHolder(
     // `isNavigatingToVideo` 仅覆盖共享元素动画，动画结束会提前复位；NavHost 旧 entry
     // 仍可能再存活几帧。弹幕主机离开态必须保持到旧 entry 真正销毁。
     var hasCommittedRelatedVideoNavigation by remember(bvid) { mutableStateOf(false) }
-    var isNavigatingToAudioMode by presentationState.navigatingToAudioModeState
     var isNavigatingToMiniMode by presentationState.navigatingToMiniModeState
-    var hasAutoEnteredAudioMode by rememberSaveable { mutableStateOf(false) }
     var hasAutoEnteredPortraitFromRoute by rememberSaveable(bvid) { mutableStateOf(false) }
     // 路由要求直达竖屏全屏时，立刻盖过可能被 saveable 复写的详情态。
     LaunchedEffect(
@@ -1123,20 +1119,6 @@ internal fun VideoDetailScreenStateHolder(
         }
     }
 
-    LaunchedEffect(startAudioFromRoute, hasAutoEnteredAudioMode, uiState) {
-        if (shouldAutoEnterAudioModeFromRoute(
-                startAudioFromRoute = startAudioFromRoute,
-                hasAutoEnteredAudioMode = hasAutoEnteredAudioMode,
-                isVideoLoadSuccess = uiState is VideoPlaybackUiState.Success
-            )
-        ) {
-            hasAutoEnteredAudioMode = true
-            presentationState.markNavigatingToAudioMode()
-            viewModel.setAudioMode(true)
-            onNavigateToAudioMode()
-        }
-    }
-
     //  从小窗展开时自动进入全屏
     LaunchedEffect(startInFullscreen, isOrientationDrivenFullscreen, isLandscape) {
         if (startInFullscreen) {
@@ -1489,7 +1471,6 @@ internal fun VideoDetailScreenStateHolder(
 
             // ⚡ [性能优化] Phase 1b: CardPositionManager 状态（影响首页卡片动画，必须同步）
             val shouldHandleAsNavigationExit = shouldHandleVideoDetailDisposeAsNavigationExit(
-                isNavigatingToAudioMode = isNavigatingToAudioMode,
                 isNavigatingToMiniMode = isNavigatingToMiniMode,
                 isMiniModeActive = miniPlayerManager?.isMiniMode == true,
                 isChangingConfigurations = activity?.isChangingConfigurations == true,
@@ -1958,10 +1939,9 @@ internal fun VideoDetailScreenStateHolder(
     DisposableEffect(playerState) {
         onDispose {
             // 标记页面正在退出
-            // 配置切换不标记离开；音频模式/小窗模式为主动保活场景，也不标记离开。
+            // 配置切换不标记离开；小窗模式为主动保活场景，也不标记离开。
             val isChangingConfigurations = activity?.isChangingConfigurations == true
             val shouldHandleAsNavigationExit = shouldHandleVideoDetailDisposeAsNavigationExit(
-                isNavigatingToAudioMode = isNavigatingToAudioMode,
                 isNavigatingToMiniMode = isNavigatingToMiniMode,
                 isMiniModeActive = miniPlayerManager?.isMiniMode == true,
                 isChangingConfigurations = isChangingConfigurations,
@@ -1979,7 +1959,7 @@ internal fun VideoDetailScreenStateHolder(
             } else {
                 com.android.purebilibili.core.util.Logger.d(
                     "VideoDetailScreen",
-                    "💤 Screen disposed without navigation-exit mark (audioMode=$isNavigatingToAudioMode, miniMode=$isNavigatingToMiniMode, changingConfig=$isChangingConfigurations)"
+                    "💤 Screen disposed without navigation-exit mark (miniMode=$isNavigatingToMiniMode, changingConfig=$isChangingConfigurations)"
                 )
             }
         }
@@ -2802,11 +2782,6 @@ internal fun VideoDetailScreenStateHolder(
             codecPreference = codecPreference,
             secondCodecPreference = secondCodecPreference,
             audioQualityPreference = audioQualityPreference,
-            onNavigateToAudioMode = {
-                viewModel.setAudioMode(true)
-                presentationState.markNavigatingToAudioMode()
-                onNavigateToAudioMode()
-            },
             forceCoverOnly = forceCoverOnlyForLiveSafeReturn ||
                 shouldForceBackPreviewPlayerCover(
                     keepLoadedContentForBackPreview = keepLoadedContentForBackPreview,
@@ -3051,14 +3026,6 @@ internal fun VideoDetailScreenStateHolder(
                     // [New] Audio Language
                     onAudioLangChange = { viewModel.changeAudioLanguage(it) },
 
-                    //  [新增] 音频模式
-                    isAudioOnly = false, // 全屏模式只有视频
-                    onAudioOnlyToggle = {
-                        viewModel.setAudioMode(true)
-                        presentationState.markNavigatingToAudioMode()
-                        onNavigateToAudioMode()
-                    },
-
                     //  [新增] 定时关闭
                     sleepTimerMinutes = sleepTimerMinutes,
                     onSleepTimerChange = { viewModel.setSleepTimer(it) },
@@ -3250,10 +3217,6 @@ internal fun VideoDetailScreenStateHolder(
                             },
                             onUpClick = navigateToUserSpaceFromVideo,
                             onBgmClick = onBgmClick,
-                            onNavigateToAudioMode = {
-                                presentationState.markNavigatingToAudioMode()
-                                onNavigateToAudioMode()
-                            },
                             onToggleFullscreen = { toggleFullscreen() },  // 📺 平板全屏切换
                             isInPipMode = isPipMode,
                             onPipClick = handlePipClick,
@@ -3968,11 +3931,6 @@ internal fun VideoDetailScreenStateHolder(
                                 codecPreference = codecPreference,
                                 secondCodecPreference = secondCodecPreference,
                                 audioQualityPreference = audioQualityPreference,
-                                onNavigateToAudioMode = {
-                                    viewModel.setAudioMode(true)
-                                    presentationState.markNavigatingToAudioMode()
-                                    onNavigateToAudioMode()
-                                },
                                 forceCoverOnly = forceCoverOnlyForLiveSafeReturn ||
                                     shouldForceBackPreviewPlayerCover(
                                         keepLoadedContentForBackPreview = keepLoadedContentForBackPreview,

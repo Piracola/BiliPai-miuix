@@ -35,13 +35,11 @@ class VideoDetailPresentationStateTest {
         state.setPortraitFullscreen(true)
         state.syncPipMode(true)
         state.markNavigatingToVideo()
-        state.markNavigatingToAudioMode()
         state.markNavigatingToMiniMode()
 
         assertTrue(state.portraitFullscreenState.value)
         assertTrue(state.pipModeState.value)
         assertTrue(state.navigatingToVideoState.value)
-        assertTrue(state.navigatingToAudioModeState.value)
         assertTrue(state.navigatingToMiniModeState.value)
     }
 

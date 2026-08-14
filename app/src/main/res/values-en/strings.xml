@@ -70,8 +70,6 @@
     <string name="bottom_nav_story">Shorts</string>
     <string name="bottom_nav_history">History</string>
     <string name="bottom_nav_history_desc">History</string>
-    <string name="bottom_nav_listen_video">Listen</string>
-    <string name="bottom_nav_listen_video_desc">Listen to video music library</string>
     <string name="bottom_nav_profile">Me</string>
     <string name="bottom_nav_profile_desc">Profile</string>
     <string name="bottom_nav_favorite">Favorites</string>

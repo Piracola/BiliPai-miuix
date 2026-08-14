@@ -37,7 +37,6 @@ import com.android.purebilibili.core.ui.rememberAppDownloadIcon
 import com.android.purebilibili.core.ui.rememberAppFlipHorizontalIcon
 import com.android.purebilibili.core.ui.rememberAppFlipVerticalIcon
 import com.android.purebilibili.core.ui.rememberAppGestureTapIcon
-import com.android.purebilibili.core.ui.rememberAppHeadphonesIcon
 import com.android.purebilibili.core.ui.rememberAppSettingsIcon
 import com.android.purebilibili.core.ui.rememberAppMusicIcon
 import com.android.purebilibili.core.ui.rememberAppPhotoIcon
@@ -174,10 +173,6 @@ fun VideoSettingsPanel(
     onFlipHorizontal: () -> Unit = {},
     onFlipVertical: () -> Unit = {},
     
-    // 音频模式
-    isAudioOnly: Boolean = false,
-    onAudioOnlyToggle: () -> Unit = {},
-    
     //  CDN 线路切换
     currentCdnIndex: Int = 0,
     cdnCount: Int = 1,
@@ -267,7 +262,6 @@ fun VideoSettingsPanel(
     val musicIcon = rememberAppMusicIcon()
     val flipHorizontalIcon = rememberAppFlipHorizontalIcon()
     val flipVerticalIcon = rememberAppFlipVerticalIcon()
-    val headphonesIcon = rememberAppHeadphonesIcon()
     val qualityIcon = rememberAppQualityIcon()
     val codecIcon = rememberAppCodecIcon()
     val wifiIcon = rememberAppWifiIcon()
@@ -427,18 +421,6 @@ fun VideoSettingsPanel(
                         isActive = isFlippedVertical,
                         onClick = {
                             onFlipVertical()
-                            onDismiss()
-                        },
-                        policy = actionPolicy
-                    )
-                    
-                    // 听视频（音频模式）
-                    FlipButton(
-                        icon = headphonesIcon,
-                        label = "听视频",
-                        isActive = isAudioOnly,
-                        onClick = {
-                            onAudioOnlyToggle()
                             onDismiss()
                         },
                         policy = actionPolicy

@@ -24,16 +24,6 @@ class AppNavigationPlaybackPolicyTest {
     }
 
     @Test
-    fun leavingVideoToAudioMode_shouldNotStopPlaybackEagerly() {
-        assertFalse(
-            shouldStopPlaybackEagerlyOnVideoRouteExit(
-                fromRoute = VideoRoute.route,
-                toRoute = ScreenRoutes.AudioMode.route
-            )
-        )
-    }
-
-    @Test
     fun leavingVideoToUpSpace_shouldEnterMiniPlayerInsteadOfStoppingEagerly() {
         assertFalse(
             shouldStopPlaybackEagerlyOnVideoRouteExit(
@@ -68,7 +58,6 @@ class AppNavigationPlaybackPolicyTest {
         listOf(
             "main_host",
             ScreenRoutes.Home.route,
-            ScreenRoutes.ListenVideo.route,
             ScreenRoutes.History.route,
             ScreenRoutes.Favorite.route,
             ScreenRoutes.WatchLater.route,

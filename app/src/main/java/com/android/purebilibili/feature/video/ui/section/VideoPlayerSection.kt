@@ -451,10 +451,6 @@ fun VideoPlayerSection(
     onSwitchCdnTo: (Int) -> Unit = {},
     onProbeCdnCandidates: () -> Unit = {},
     
-    //  [新增] 音频模式
-    isAudioOnly: Boolean = false,
-    onAudioOnlyToggle: () -> Unit = {},
-    
     //  [新增] 定时关闭
     sleepTimerMinutes: Int? = null,
     onSleepTimerChange: (Int?) -> Unit = {},
@@ -3992,7 +3988,7 @@ fun VideoPlayerSection(
                 com.android.purebilibili.feature.video.subtitle.shouldKeepSubtitleOverlayMounted(
                     overlayEnabled = subtitleOverlayEnabled,
                     isInPipMode = isInPipMode,
-                    isAudioOnly = isAudioOnly,
+                    isAudioOnly = false,
                     suppressOverlay = suppressSubtitleOverlay,
                 )
         if (keepSubtitleOverlayMounted) {
@@ -4867,9 +4863,6 @@ fun VideoPlayerSection(
                 onSwitchCdnTo = onSwitchCdnTo,
                 onProbeCdnCandidates = onProbeCdnCandidates,
                 
-                //  [新增] 音频模式
-                isAudioOnly = isAudioOnly,
-                onAudioOnlyToggle = onAudioOnlyToggle,
                 subtitleControlState = SubtitleControlUiState(
                     trackAvailable = subtitleControlAvailability.trackAvailable,
                     primaryAvailable = subtitleControlAvailability.primarySelectable,

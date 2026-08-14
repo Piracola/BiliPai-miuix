@@ -20,14 +20,12 @@ internal fun hasMeaningfulVideoPlayerBoundsChange(
 }
 
 internal fun shouldHandleVideoDetailDisposeAsNavigationExit(
-    isNavigatingToAudioMode: Boolean,
     isNavigatingToMiniMode: Boolean,
     isMiniModeActive: Boolean,
     isChangingConfigurations: Boolean,
     isNavigatingToVideo: Boolean
 ): Boolean {
-    return !isNavigatingToAudioMode &&
-        !isNavigatingToMiniMode &&
+    return !isNavigatingToMiniMode &&
         !isMiniModeActive &&
         !isChangingConfigurations &&
         !isNavigatingToVideo
@@ -193,14 +191,6 @@ internal fun shouldDismissCommentThreadDetailForPip(
     subReplyVisible: Boolean
 ): Boolean {
     return !wasInPipMode && isInPipMode && subReplyVisible
-}
-
-internal fun shouldAutoEnterAudioModeFromRoute(
-    startAudioFromRoute: Boolean,
-    hasAutoEnteredAudioMode: Boolean,
-    isVideoLoadSuccess: Boolean
-): Boolean {
-    return startAudioFromRoute && !hasAutoEnteredAudioMode && isVideoLoadSuccess
 }
 
 /**

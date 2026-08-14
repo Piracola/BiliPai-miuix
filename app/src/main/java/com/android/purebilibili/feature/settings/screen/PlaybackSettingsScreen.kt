@@ -157,8 +157,6 @@ fun PlaybackSettingsContent(
         .getBackgroundPlaybackEnabled(context).collectAsStateWithLifecycle(initialValue = true)
     val audioFocusEnabled by com.android.purebilibili.core.store.SettingsManager
         .getAudioFocusEnabled(context).collectAsStateWithLifecycle(initialValue = true)
-    val audioModeAutoPipEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getAudioModeAutoPipEnabled(context).collectAsStateWithLifecycle(initialValue = false)
     val playerDiagnosticLoggingEnabled by com.android.purebilibili.core.store.SettingsManager
         .getPlayerDiagnosticLoggingEnabled(context)
         .collectAsStateWithLifecycle(initialValue = DEFAULT_PLAYER_DIAGNOSTIC_LOGGING_ENABLED)
@@ -504,10 +502,6 @@ fun PlaybackSettingsContent(
                     val modeControlsEnabled = remember(stopPlaybackOnExit, backgroundPlaybackEnabled) {
                         !stopPlaybackOnExit && backgroundPlaybackEnabled
                     }
-                    val audioModeAutoPipToggleEnabled = remember(miniPlayerMode, backgroundPlaybackEnabled) {
-                        com.android.purebilibili.core.store.SettingsManager
-                            .shouldEnableAudioModeAutoPipToggle(miniPlayerMode) && backgroundPlaybackEnabled
-                    }
                     val pipDanmakuToggleEnabled = remember(miniPlayerMode, backgroundPlaybackEnabled) {
                         backgroundPlaybackEnabled &&
                             miniPlayerMode != com.android.purebilibili.core.store.SettingsManager.MiniPlayerMode.OFF
@@ -656,31 +650,6 @@ fun PlaybackSettingsContent(
                                 }
                             },
                             iconTint = com.android.purebilibili.core.theme.iOSPurple
-                        )
-                        AppPreferenceDivider()
-	                        AppSwitchPreference(
-	                            icon = rememberSettingsSemanticIcon(SettingsIconRole.AUDIO_MODE_PIP),
-                            title = "听视频离开时自动进入画中画",
-                            subtitle = if (audioModeAutoPipToggleEnabled) {
-                                if (audioModeAutoPipEnabled) {
-                                    "已开启：回到桌面或使用离开手势时会自动进入系统画中画"
-                                } else {
-                                    "关闭后仅保留听视频页内的画中画按钮"
-                                }
-                            } else {
-                                "仅支持系统画中画的模式下生效"
-                            },
-                            checked = audioModeAutoPipEnabled,
-                            onCheckedChange = {
-                                if (!audioModeAutoPipToggleEnabled) {
-                                    return@AppSwitchPreference
-                                }
-                                scope.launch {
-                                    com.android.purebilibili.core.store.SettingsManager
-                                        .setAudioModeAutoPipEnabled(context, it)
-                                }
-                            },
-                            iconTint = iOSTeal
                         )
                     }
                 }

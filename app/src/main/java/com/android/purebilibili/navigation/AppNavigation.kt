@@ -39,8 +39,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.purebilibili.feature.article.ArticleDetailScreen
 import com.android.purebilibili.feature.article.shouldUseArticleNoOpRouteTransition
-import com.android.purebilibili.feature.audio.library.resolveListenVideoPlaybackSelection
-import com.android.purebilibili.feature.audio.screen.ListenVideoRoute
 import com.android.purebilibili.feature.home.HomeVideoClickRequest
 import com.android.purebilibili.feature.home.HomeVideoClickSource
 import com.android.purebilibili.feature.home.HomeScreen
@@ -327,8 +325,6 @@ fun AppNavigation(
     onInitialSearchKeywordConsumed: (String) -> Unit = {},
     onVideoDetailEnter: () -> Unit = {},
     onVideoDetailExit: () -> Unit = {},
-    onAudioModeEnter: () -> Unit = {},
-    onAudioModeExit: () -> Unit = {},
     onPrivacyAuthenticationRequired: (
         PrivacyAuthenticationRequest,
         (PrivacyAuthenticationResult) -> Unit
@@ -524,9 +520,6 @@ fun AppNavigation(
             previousVideoBvidForStopPolicy = currentVideoBvidForStopPolicy
         }
 
-        LaunchedEffect(Unit) {
-            NavigationSettingsStore.ensureListenVideoBottomTabMigration(context)
-        }
         val appNavigationSettings by SettingsManager.getAppNavigationSettings(context).collectAsStateWithLifecycle(initialValue = AppNavigationSettings(),
             context = kotlin.coroutines.EmptyCoroutineContext
         )
@@ -1137,8 +1130,11 @@ fun AppNavigation(
                     pushNavigation3Key(BiliPaiNavKey.BangumiDetail(seasonId = 0L, epId = target.epId))
                 }
                 is BilibiliNavigationTarget.Music -> {
-                    val auSid = target.musicId.removePrefix("au").removePrefix("AU").toLongOrNull() ?: return false
-                    pushNavigation3Key(BiliPaiNavKey.MusicDetail(auSid))
+                    val auId = target.musicId.removePrefix("au").removePrefix("AU")
+                    if (auId.isEmpty()) return false
+                    pushNavigation3Key(
+                        BiliPaiNavKey.Web("https://www.bilibili.com/audio/au$auId")
+                    )
                 }
                 is BilibiliNavigationTarget.Article -> {
                     pushNavigation3Key(BiliPaiNavKey.ArticleDetail(target.articleId))
@@ -1221,9 +1217,7 @@ fun AppNavigation(
                     pushNavigation3Key(BiliPaiNavKey.BangumiDetail(seasonId = 0L, epId = action.epId))
                 }
                 is MessageLinkNavigationAction.Music -> {
-                    action.musicId.toLongOrNull()
-                        ?.let { pushNavigation3Key(BiliPaiNavKey.MusicDetail(it)) }
-                        ?: pushNavigation3Key(BiliPaiNavKey.Web(rawLink))
+                    pushNavigation3Key(BiliPaiNavKey.Web(rawLink))
                 }
                 is MessageLinkNavigationAction.Article -> {
                     pushNavigation3Key(BiliPaiNavKey.ArticleDetail(action.articleId))
@@ -1478,7 +1472,6 @@ fun AppNavigation(
                         BottomNavItem.HOME -> BiliPaiNavKey.Home
                         BottomNavItem.DYNAMIC -> BiliPaiNavKey.Dynamic
                         BottomNavItem.HISTORY -> BiliPaiNavKey.History
-                        BottomNavItem.LISTEN_VIDEO -> BiliPaiNavKey.ListenVideo
                         BottomNavItem.PROFILE -> BiliPaiNavKey.Profile
                         BottomNavItem.FAVORITE -> BiliPaiNavKey.Favorite
                         BottomNavItem.LIVE -> BiliPaiNavKey.LiveList
@@ -1647,45 +1640,6 @@ fun AppNavigation(
                                 onVideoDetailReturnAnimationConsumed = {
                                     navigation3ReturnSession = navigation3ReturnSession.clearReturning()
                                 }
-                            )
-                        BiliPaiNavEntryContentRole.LISTEN_VIDEO ->
-                            ListenVideoRoute(
-                                onNowPlayingClick = { bvid, coverUrl ->
-                                    pushNavigation3Key(
-                                        BiliPaiNavKey.VideoDetail(
-                                            bvid = bvid,
-                                            coverUrl = coverUrl,
-                                            startAudio = true,
-                                            sourceRoute = ScreenRoutes.ListenVideo.route
-                                        )
-                                    )
-                                },
-                                onPlayTracks = { tracks, clickedBvid ->
-                                    val selection = resolveListenVideoPlaybackSelection(
-                                        tracks = tracks,
-                                        clickedBvid = clickedBvid
-                                    )
-                                    if (selection.items.isNotEmpty() && selection.startIndex >= 0) {
-                                        PlaylistManager.setExternalPlaylist(
-                                            items = selection.items,
-                                            startIndex = selection.startIndex,
-                                            source = ExternalPlaylistSource.FAVORITE
-                                        )
-                                        val clickedTrack = tracks.firstOrNull {
-                                            it.bvid == clickedBvid
-                                        }
-                                        pushNavigation3Key(
-                                            BiliPaiNavKey.VideoDetail(
-                                                bvid = clickedBvid,
-                                                cid = clickedTrack?.cid ?: 0L,
-                                                coverUrl = clickedTrack?.coverUrl.orEmpty(),
-                                                startAudio = true,
-                                                sourceRoute = ScreenRoutes.ListenVideo.route
-                                            )
-                                        )
-                                    }
-                                },
-                                onLogin = { pushNavigation3Key(BiliPaiNavKey.Login) }
                             )
                         BiliPaiNavEntryContentRole.HISTORY -> {
                                 val historyViewModel: HistoryViewModel = viewModel()
@@ -1973,7 +1927,6 @@ fun AppNavigation(
                         BiliPaiNavEntryContentRole.VIDEO_DETAIL -> {
                             val videoKey = key as BiliPaiNavKey.VideoDetail
                             val activity = context as? android.app.Activity
-                            var isNavigatingToAudioMode by remember(videoKey.bvid) { mutableStateOf(false) }
                             val isImmediateVideoBackPreview =
                                 navigation3BackStack.getOrNull(
                                     navigation3BackStack.lastIndex - 1
@@ -2013,8 +1966,7 @@ fun AppNavigation(
 
                                     if (
                                         !stillInVideoRoute &&
-                                        activity?.isChangingConfigurations != true &&
-                                        !isNavigatingToAudioMode
+                                        activity?.isChangingConfigurations != true
                                     ) {
                                         prepareVideoPlaybackForNavigationExit(videoKey)
                                     }
@@ -2086,16 +2038,6 @@ fun AppNavigation(
                                         )
                                     }
                                 },
-                                onNavigateToAudioMode = {
-                                    isNavigatingToAudioMode = true
-                                    pushNavigation3Key(
-                                        BiliPaiNavKey.AudioMode(
-                                            sourceBvid = videoKey.bvid,
-                                            sourceCid = videoKey.cid,
-                                            sourceResumePositionMs = videoKey.resumePositionMs
-                                        )
-                                    )
-                                },
                                 onNavigateToSearch = { pushNavigation3Key(BiliPaiNavKey.Search) },
                                 onSearchKeywordClick = submitSearchKeywordInNavigation3,
                                 onOpenBilibiliLink = ::openBilibiliLinkInNavigation3,
@@ -2112,22 +2054,6 @@ fun AppNavigation(
                                         coverUrl = coverUrl,
                                         sourceRoute = "video/${videoKey.bvid}"
                                     )
-                                },
-                                onBgmClick = { bgm ->
-                                    if (bgm.jumpUrl.isNotEmpty()) {
-                                        pushNavigation3Route(ScreenRoutes.Web.createRoute(bgm.jumpUrl, "发现音乐"))
-                                        return@VideoDetailScreen
-                                    }
-
-                                    val auSid = bgm.musicId.removePrefix("au").toLongOrNull()
-                                    if (auSid != null) {
-                                        pushNavigation3Key(BiliPaiNavKey.MusicDetail(auSid))
-                                    } else if (bgm.musicId.startsWith("MA") && videoKey.cid > 0) {
-                                        val title = bgm.musicTitle.ifEmpty { "背景音乐" }
-                                        pushNavigation3Key(
-                                            BiliPaiNavKey.NativeMusic(title, videoKey.bvid, videoKey.cid)
-                                        )
-                                    }
                                 }
                             )
                         }
@@ -2624,35 +2550,6 @@ fun AppNavigation(
                                     homeViewModel.refresh()
                                 }
                             )
-                        BiliPaiNavEntryContentRole.AUDIO_MODE -> {
-                                val audioModeKey = key as BiliPaiNavKey.AudioMode
-                                val viewModel: com.android.purebilibili.feature.video.viewmodel.VideoPlaybackViewModel =
-                                    viewModel()
-                                DisposableEffect(Unit) {
-                                    onAudioModeEnter()
-                                    onDispose {
-                                        onAudioModeExit()
-                                    }
-                                }
-                                val initialLoadRequest = resolveAudioModeInitialLoadRequest(
-                                    key = audioModeKey,
-                                    hasDisplayState = false
-                                )
-                                com.android.purebilibili.feature.video.screen.AudioModeScreen(
-                                    viewModel = viewModel,
-                                    onBack = { performSystemBackAction() },
-                                    onVideoModeClick = { currentBvid, currentCid ->
-                                        replaceNavigation3BackStack(
-                                            popBiliPaiNavKey(navigation3BackStack)
-                                        )
-                                        navigateToVideoInNavigation3(currentBvid, currentCid, "")
-                                    },
-                                    isInPipMode = isInPipMode,
-                                    initialBvid = initialLoadRequest?.bvid.orEmpty(),
-                                    initialCid = initialLoadRequest?.cid ?: 0L,
-                                    initialResumePositionMs = initialLoadRequest?.resumePositionMs ?: 0L
-                                )
-                            }
                         BiliPaiNavEntryContentRole.PARTITION -> com.android.purebilibili.feature.partition.PartitionScreen(
                                 onBack = { performSystemBackAction() },
                                 onVideoClick = { bvid, cid, cover ->
@@ -2778,28 +2675,6 @@ fun AppNavigation(
                                     onNavigateToLogin = { pushNavigation3Key(BiliPaiNavKey.Login) }
                                 )
                             }
-                        BiliPaiNavEntryContentRole.MUSIC_DETAIL -> {
-                                val musicKey = key as BiliPaiNavKey.MusicDetail
-                                com.android.purebilibili.feature.audio.screen.MusicDetailScreen(
-                                    sid = musicKey.sid,
-                                    onBack = { performSystemBackAction() }
-                                )
-                            }
-                        BiliPaiNavEntryContentRole.NATIVE_MUSIC -> {
-                                val nativeMusicKey = key as BiliPaiNavKey.NativeMusic
-                                com.android.purebilibili.feature.audio.screen.MusicDetailScreen(
-                                    musicTitle = nativeMusicKey.title.ifEmpty { "背景音乐" },
-                                    bvid = nativeMusicKey.bvid,
-                                    cid = nativeMusicKey.cid,
-                                    onBack = { performSystemBackAction() },
-                                    onVideoModeClick = { currentBvid, currentCid ->
-                                        replaceNavigation3BackStack(
-                                            popBiliPaiNavKey(navigation3BackStack)
-                                        )
-                                        navigateToVideoInNavigation3(currentBvid, currentCid, "")
-                                    }
-                                )
-                            }
                         BiliPaiNavEntryContentRole.SPACE -> {
                                 val spaceKey = key as BiliPaiNavKey.Space
                                 com.android.purebilibili.feature.space.SpaceScreen(
@@ -2814,9 +2689,6 @@ fun AppNavigation(
                                             resumePositionMs = resumePositionMs,
                                             sourceRoute = spaceKey.toLegacyRoute()
                                         )
-                                    },
-                                    onAudioClick = { sid ->
-                                        pushNavigation3Key(BiliPaiNavKey.MusicDetail(sid))
                                     },
                                     onBangumiClick = { seasonId ->
                                         if (seasonId > 0L) {
@@ -2898,18 +2770,6 @@ fun AppNavigation(
                                         replaceNavigation3TopWithKey(
                                             BiliPaiNavKey.BangumiDetail(seasonId = seasonId, epId = epId)
                                         )
-                                    },
-                                    onMusicClick = { musicId ->
-                                        val auSid = musicId.removePrefix("au").removePrefix("AU").toLongOrNull()
-                                        if (auSid != null) {
-                                            replaceNavigation3TopWithKey(
-                                                BiliPaiNavKey.MusicDetail(auSid)
-                                            )
-                                        } else {
-                                            replaceNavigation3BackStack(
-                                                popBiliPaiNavKey(navigation3BackStack)
-                                            )
-                                        }
                                     }
                                 )
                             }

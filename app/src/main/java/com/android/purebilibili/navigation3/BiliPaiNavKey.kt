@@ -22,11 +22,6 @@ internal sealed interface BiliPaiNavKey : NavKey {
     }
 
     @Serializable
-    data object ListenVideo : BiliPaiNavKey {
-        override val routeBase: String = "listen_video"
-    }
-
-    @Serializable
     data object Dynamic : BiliPaiNavKey {
         override val routeBase: String = "dynamic"
     }
@@ -274,15 +269,6 @@ internal sealed interface BiliPaiNavKey : NavKey {
     }
 
     @Serializable
-    data class AudioMode(
-        val sourceBvid: String = "",
-        val sourceCid: Long = 0L,
-        val sourceResumePositionMs: Long = 0L
-    ) : BiliPaiNavKey {
-        override val routeBase: String = "audio_mode"
-    }
-
-    @Serializable
     data class SeasonSeriesDetail(
         val type: String,
         val id: Long,
@@ -308,22 +294,6 @@ internal sealed interface BiliPaiNavKey : NavKey {
         val resumePositionMs: Long = 0L
     ) : BiliPaiNavKey {
         override val routeBase: String = "bangumi/play"
-    }
-
-    @Serializable
-    data class MusicDetail(
-        val sid: Long
-    ) : BiliPaiNavKey {
-        override val routeBase: String = "music"
-    }
-
-    @Serializable
-    data class NativeMusic(
-        val title: String,
-        val bvid: String,
-        val cid: Long
-    ) : BiliPaiNavKey {
-        override val routeBase: String = "native_music"
     }
 
     @Serializable

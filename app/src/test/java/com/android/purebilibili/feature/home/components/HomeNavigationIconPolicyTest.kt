@@ -10,7 +10,6 @@ class HomeNavigationIconPolicyTest {
         listOf(
             "HOME",
             "HISTORY",
-            "LISTEN_VIDEO",
             "FAVORITE",
             "WATCHLATER",
             "SETTINGS",

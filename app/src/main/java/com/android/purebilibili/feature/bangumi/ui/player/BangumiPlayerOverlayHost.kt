@@ -160,9 +160,6 @@ internal fun BangumiPlayerOverlayHost(
         onQualityChange = onQualityChange,
         onPipClick = {},
         onCaptureScreenshot = onCaptureScreenshot,
-        onAudioOnlyToggle = {
-            onShowMessage("番剧暂不支持音频模式")
-        },
         onSaveCover = {
             onShowMessage("番剧暂不支持封面保存")
         },

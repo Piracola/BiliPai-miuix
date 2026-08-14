@@ -357,15 +357,14 @@ internal fun resolveMainActivityLinkNavigation(
             )
         )
 
-        is BilibiliNavigationTarget.Music -> {
-            val auSid = target.musicId.removePrefix("au").removePrefix("AU").toLongOrNull() ?: return null
-            MainActivityLinkNavigation(
-                pendingNavigationRoute = ScreenRoutes.MusicDetail.createRoute(auSid)
-            )
-        }
-
         is BilibiliNavigationTarget.Article -> MainActivityLinkNavigation(
             pendingNavigationRoute = ScreenRoutes.ArticleDetail.createRoute(target.articleId)
+        )
+
+        is BilibiliNavigationTarget.Music -> MainActivityLinkNavigation(
+            pendingNavigationRoute = ScreenRoutes.Web.createRoute(
+                url = "https://www.bilibili.com/audio/au${target.musicId.removePrefix("au").removePrefix("AU")}"
+            )
         )
     }
 }
@@ -390,21 +389,17 @@ internal fun shouldRestoreMutedPlaybackPlayerVolumeOnResume(
 ): Boolean = playerVolume <= 0f
 
 internal fun isPlaybackRouteActive(
-    isInVideoDetail: Boolean,
-    isInAudioMode: Boolean
-): Boolean = isInVideoDetail || isInAudioMode
+    isInVideoDetail: Boolean
+): Boolean = isInVideoDetail
 
 internal fun shouldTriggerPlaybackRoutePip(
     isInVideoDetail: Boolean,
-    isInAudioMode: Boolean,
     isInMiniMode: Boolean,
-    audioModeAutoPipEnabled: Boolean,
     shouldEnterPip: Boolean,
     isActuallyPlaying: Boolean
 ): Boolean {
     if (!shouldEnterPip || !isActuallyPlaying) return false
-    if (isInVideoDetail || isInMiniMode) return true
-    return isInAudioMode && audioModeAutoPipEnabled
+    return isInVideoDetail || isInMiniMode
 }
 
 internal data class MainActivityPlaybackOverlayState(
@@ -737,7 +732,6 @@ open class MainActivity : AppCompatActivity() {
     
     //  是否在视频页面 (用于决定是否进入 PiP)
     var isInVideoDetail by mutableStateOf(false)
-    var isInAudioModeRoute by mutableStateOf(false)
     
     //  小窗管理器
     private lateinit var miniPlayerManager: MiniPlayerManager
@@ -1385,14 +1379,6 @@ open class MainActivity : AppCompatActivity() {
                                     isInVideoDetail = false
                                     Logger.d(TAG, "🔙 退出视频详情页")
                                 },
-                                onAudioModeEnter = {
-                                    isInAudioModeRoute = true
-                                    Logger.d(TAG, "🎧 进入听视频页")
-                                },
-                                onAudioModeExit = {
-                                    isInAudioModeRoute = false
-                                    Logger.d(TAG, "🎧 退出听视频页")
-                                },
                                 onPrivacyAuthenticationRequired = ::authenticatePrivacyAccess,
                                 mainHazeState = mainHazeState //  传递全局 Haze 状态
                             )
@@ -1982,8 +1968,7 @@ open class MainActivity : AppCompatActivity() {
         if (
             shouldRestorePlaybackRouteStateOnResume(
                 isPlaybackRouteActive = isPlaybackRouteActive(
-                    isInVideoDetail = isInVideoDetail,
-                    isInAudioMode = isInAudioModeRoute
+                    isInVideoDetail = isInVideoDetail
                 )
             )
         ) {
@@ -2006,26 +1991,21 @@ open class MainActivity : AppCompatActivity() {
         
         Logger.d(
             TAG,
-            "👋 onUserLeaveHint 触发, isInVideoDetail=$isInVideoDetail, isInAudioModeRoute=$isInAudioModeRoute, isMiniMode=${miniPlayerManager.isMiniMode}"
+            "👋 onUserLeaveHint 触发, isInVideoDetail=$isInVideoDetail, isMiniMode=${miniPlayerManager.isMiniMode}"
         )
         miniPlayerManager.markUserLeaveHint()
         miniPlayerManager.refreshMediaSessionBinding()
         
-        val stopPlaybackOnExit = SettingsManager.getStopPlaybackOnExitSync(this)
-        val audioModeAutoPipEnabled = SettingsManager.getAudioModeAutoPipEnabledSync(this)
         //  [重构] 使用新的模式判断方法
         val shouldEnterPip = miniPlayerManager.shouldEnterPip()
         val currentMode = miniPlayerManager.getCurrentMode()
         val isActuallyPlaying = miniPlayerManager.isPlaying || (miniPlayerManager.player?.isPlaying == true)
         val isPlaybackRouteActive = isPlaybackRouteActive(
-            isInVideoDetail = isInVideoDetail,
-            isInAudioMode = isInAudioModeRoute
+            isInVideoDetail = isInVideoDetail
         )
         val shouldTriggerPip = shouldTriggerPlaybackRoutePip(
             isInVideoDetail = isInVideoDetail,
-            isInAudioMode = isInAudioModeRoute,
             isInMiniMode = miniPlayerManager.isMiniMode,
-            audioModeAutoPipEnabled = audioModeAutoPipEnabled,
             shouldEnterPip = shouldEnterPip,
             isActuallyPlaying = isActuallyPlaying
         )
@@ -2033,7 +2013,7 @@ open class MainActivity : AppCompatActivity() {
 
         Logger.d(
             TAG,
-            " miniPlayerMode=$currentMode, audioModeAutoPipEnabled=$audioModeAutoPipEnabled, shouldEnterPip=$shouldEnterPip, isPlaying=$isActuallyPlaying, shouldTriggerPip=$shouldTriggerPip, API=${Build.VERSION.SDK_INT}"
+            " miniPlayerMode=$currentMode, shouldEnterPip=$shouldEnterPip, isPlaying=$isActuallyPlaying, shouldTriggerPip=$shouldTriggerPip, API=${Build.VERSION.SDK_INT}"
         )
         
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && shouldTriggerPip) {

@@ -1103,7 +1103,6 @@ fun HomeScreen(
             }
             BottomNavItem.DYNAMIC -> onDynamicClick()
             BottomNavItem.HISTORY -> onHistoryClick()
-            BottomNavItem.LISTEN_VIDEO -> Unit
             BottomNavItem.PROFILE -> onProfileClick()
             BottomNavItem.FAVORITE -> onFavoriteClick()
             BottomNavItem.LIVE -> onLiveListClick()

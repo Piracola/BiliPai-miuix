@@ -30,20 +30,6 @@ class VideoDetailDisposePolicyTest {
     fun disposeHandledAsNavigationExitWhenNoKeepAliveConditionMatches() {
         assertTrue(
             shouldHandleVideoDetailDisposeAsNavigationExit(
-                isNavigatingToAudioMode = false,
-                isNavigatingToMiniMode = false,
-                isMiniModeActive = false,
-                isChangingConfigurations = false,
-                isNavigatingToVideo = false
-            )
-        )
-    }
-
-    @Test
-    fun disposeSkippedWhenNavigatingToAudioMode() {
-        assertFalse(
-            shouldHandleVideoDetailDisposeAsNavigationExit(
-                isNavigatingToAudioMode = true,
                 isNavigatingToMiniMode = false,
                 isMiniModeActive = false,
                 isChangingConfigurations = false,
@@ -56,7 +42,6 @@ class VideoDetailDisposePolicyTest {
     fun disposeSkippedWhenNavigatingToMiniMode() {
         assertFalse(
             shouldHandleVideoDetailDisposeAsNavigationExit(
-                isNavigatingToAudioMode = false,
                 isNavigatingToMiniMode = true,
                 isMiniModeActive = false,
                 isChangingConfigurations = false,
@@ -69,7 +54,6 @@ class VideoDetailDisposePolicyTest {
     fun disposeSkippedWhenMiniModeWasActivatedByNavigationLayer() {
         assertFalse(
             shouldHandleVideoDetailDisposeAsNavigationExit(
-                isNavigatingToAudioMode = false,
                 isNavigatingToMiniMode = false,
                 isMiniModeActive = true,
                 isChangingConfigurations = false,
@@ -82,7 +66,6 @@ class VideoDetailDisposePolicyTest {
     fun disposeSkippedWhenConfigurationChanges() {
         assertFalse(
             shouldHandleVideoDetailDisposeAsNavigationExit(
-                isNavigatingToAudioMode = false,
                 isNavigatingToMiniMode = false,
                 isMiniModeActive = false,
                 isChangingConfigurations = true,
@@ -95,7 +78,6 @@ class VideoDetailDisposePolicyTest {
     fun disposeSkippedWhenNavigatingToAnotherVideo() {
         assertFalse(
             shouldHandleVideoDetailDisposeAsNavigationExit(
-                isNavigatingToAudioMode = false,
                 isNavigatingToMiniMode = false,
                 isMiniModeActive = false,
                 isChangingConfigurations = false,

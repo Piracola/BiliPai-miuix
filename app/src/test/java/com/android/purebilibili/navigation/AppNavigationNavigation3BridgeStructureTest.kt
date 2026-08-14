@@ -91,7 +91,7 @@ class AppNavigationNavigation3BridgeStructureTest {
             .substringBefore("BiliPaiNavEntryContentRole.ARTICLE_DETAIL ->")
         val onHomeClickBlock = videoDetailBranch
             .substringAfter("onHomeClick = {")
-            .substringBefore("onNavigateToAudioMode")
+            .substringBefore("onNavigateToSearch")
 
         // 必须走 pop 路径才能触发 popTransitionSpec → 方向化横向过渡。
         assertTrue(onHomeClickBlock.contains("popBiliPaiNavKeyToRoot(navigation3BackStack)"))
@@ -402,7 +402,6 @@ class AppNavigationNavigation3BridgeStructureTest {
         assertTrue(source.contains("BiliPaiNavEntryContentRole.LIKE_ME ->"))
         assertTrue(source.contains("BiliPaiNavEntryContentRole.SYSTEM_NOTICE ->"))
         assertTrue(source.contains("BiliPaiNavEntryContentRole.CHAT ->"))
-        assertTrue(source.contains("BiliPaiNavEntryContentRole.AUDIO_MODE ->"))
         assertTrue(source.contains("BiliPaiNavEntryContentRole.ONBOARDING ->"))
         assertTrue(source.contains("BiliPaiNavEntryContentRole.FOLLOWING ->"))
         assertTrue(source.contains("BiliPaiNavEntryContentRole.DOWNLOAD_LIST ->"))
@@ -412,8 +411,6 @@ class AppNavigationNavigation3BridgeStructureTest {
         assertTrue(source.contains("BiliPaiNavEntryContentRole.SEASON_SERIES_DETAIL ->"))
         assertTrue(source.contains("BiliPaiNavEntryContentRole.BANGUMI ->"))
         assertTrue(source.contains("BiliPaiNavEntryContentRole.BANGUMI_PLAYER ->"))
-        assertTrue(source.contains("BiliPaiNavEntryContentRole.MUSIC_DETAIL ->"))
-        assertTrue(source.contains("BiliPaiNavEntryContentRole.NATIVE_MUSIC ->"))
         assertTrue(source.contains("BiliPaiNavEntryContentRole.OPEN_SOURCE_LICENSES ->"))
         assertTrue(source.contains("BiliPaiNavEntryContentRole.APPEARANCE_SETTINGS ->"))
         assertTrue(source.contains("BiliPaiNavEntryContentRole.ICON_SETTINGS ->"))

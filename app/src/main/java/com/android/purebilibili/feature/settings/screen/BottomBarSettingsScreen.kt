@@ -103,7 +103,6 @@ internal fun resolveAllBottomBarTabs(
     BottomBarTabConfig("HOME", "推荐", resolveBottomBarTabIcon("HOME", iconFamily), isDefault = true),
     BottomBarTabConfig("DYNAMIC", "动态", resolveBottomBarTabIcon("DYNAMIC", iconFamily), isDefault = true),
     BottomBarTabConfig("HISTORY", "历史", resolveBottomBarTabIcon("HISTORY", iconFamily), isDefault = true),
-    BottomBarTabConfig("LISTEN_VIDEO", "听视频", resolveBottomBarTabIcon("LISTEN_VIDEO", iconFamily), isDefault = true),
     BottomBarTabConfig("PROFILE", "我的", resolveBottomBarTabIcon("PROFILE", iconFamily), isDefault = true),
     BottomBarTabConfig("FAVORITE", "收藏", resolveBottomBarTabIcon("FAVORITE", iconFamily), isDefault = false),
     BottomBarTabConfig("LIVE", "直播", resolveBottomBarTabIcon("LIVE", iconFamily), isDefault = false),
@@ -183,8 +182,8 @@ fun BottomBarSettingsContent(
 
     
     // 读取当前配置
-    val order by SettingsManager.getBottomBarOrder(context).collectAsStateWithLifecycle(initialValue = listOf("HOME", "DYNAMIC", "HISTORY", "LISTEN_VIDEO", "PROFILE"))
-    val visibleTabs by SettingsManager.getBottomBarVisibleTabs(context).collectAsStateWithLifecycle(initialValue = setOf("HOME", "DYNAMIC", "HISTORY", "LISTEN_VIDEO", "PROFILE"))
+    val order by SettingsManager.getBottomBarOrder(context).collectAsStateWithLifecycle(initialValue = listOf("HOME", "DYNAMIC", "HISTORY", "PROFILE"))
+    val visibleTabs by SettingsManager.getBottomBarVisibleTabs(context).collectAsStateWithLifecycle(initialValue = setOf("HOME", "DYNAMIC", "HISTORY", "PROFILE"))
     val topTabOrder by SettingsManager.getTopTabOrder(context).collectAsStateWithLifecycle(initialValue = defaultTopTabIds)
     val topTabVisible by SettingsManager.getTopTabVisibleTabs(context).collectAsStateWithLifecycle(initialValue = defaultTopTabIds.toSet())
     val topTabLabelMode by SettingsManager.getTopTabLabelMode(context)
@@ -774,8 +773,8 @@ fun BottomBarSettingsContent(
                         Spacer(modifier = Modifier.height(16.dp))
                         AppOutlinedButton(
                             onClick = {
-                                localOrder = listOf("HOME", "DYNAMIC", "HISTORY", "LISTEN_VIDEO", "PROFILE")
-                                localVisibleTabs = setOf("HOME", "DYNAMIC", "HISTORY", "LISTEN_VIDEO", "PROFILE")
+                                localOrder = listOf("HOME", "DYNAMIC", "HISTORY", "PROFILE")
+                                localVisibleTabs = setOf("HOME", "DYNAMIC", "HISTORY", "PROFILE")
                                 localTopTabOrder = defaultTopTabIds
                                 localTopTabVisible = defaultTopTabIds.toSet()
                                 saveConfig()
