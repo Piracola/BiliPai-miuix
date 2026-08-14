@@ -8,7 +8,7 @@ import kotlin.test.assertTrue
 class AdaptiveGroupSurfaceShapeStructureTest {
 
     @Test
-    fun `group renderer branches on dual value ui style`() {
+    fun `group renderer uses single miuix native card`() {
         val source = loadSource("design-system/src/main/java/com/android/purebilibili/core/ui/components/AdaptivePreferenceComponents.kt")
         val iosGroupSource = source
             .substringAfter("fun AdaptivePreferenceGroupRenderer(")
@@ -16,12 +16,8 @@ class AdaptiveGroupSurfaceShapeStructureTest {
 
         assertFalse(iosGroupSource.contains(".clip(appliedShape)"))
         assertFalse(iosGroupSource.contains("resolveAdaptiveGroupSurfaceShape("))
-        assertFalse(iosGroupSource.contains("UiPreset"))
-        assertTrue(iosGroupSource.contains("LocalAppUiStyle.current"))
-        assertTrue(iosGroupSource.contains("if (uiStyle == AppUiStyle.MIUIX) {"))
         assertTrue(iosGroupSource.contains("MiuixCard("))
-        assertTrue(iosGroupSource.contains("Surface("))
-        assertTrue(iosGroupSource.contains("shape = appliedShape,"))
+        assertTrue(iosGroupSource.contains("resolveAdaptiveGroupContainerColor("))
     }
 
     @Test
@@ -56,29 +52,23 @@ class AdaptiveGroupSurfaceShapeStructureTest {
         assertTrue(switchItemSource.contains("Row("))
         assertTrue(switchItemSource.contains("Column(modifier = Modifier.weight(1f))"))
         assertTrue(switchItemSource.contains("Spacer(modifier = Modifier.width(rowSpec.trailingSpacingDp.dp))"))
-        assertTrue(!switchItemSource.contains("BasicComponent("))
     }
 
     @Test
-    fun `md3 clickable item uses measured wrapping text instead of basic component`() {
+    fun `clickable item uses native basic component with measured wrapping text`() {
         val source = loadSource("design-system/src/main/java/com/android/purebilibili/core/ui/components/AdaptivePreferenceComponents.kt")
         val clickableItemSource = source
             .substringAfter("fun AdaptivePreferenceContent(")
             .substringBefore("@Composable\nfun AdaptiveSearchFieldRenderer")
-        val md3Block = clickableItemSource
-            .substringAfter("if (clickableRenderer == AppClickableItemRenderer.MD3_BASIC)")
-            .substringBefore("if (clickableRenderer != AppClickableItemRenderer.MD3_BASIC)")
 
-        assertTrue(md3Block.contains("Column(modifier = Modifier.weight(1f))"))
-        assertTrue(md3Block.contains("text = title"))
-        assertTrue(md3Block.contains("text = subtitle"))
-        // Title stays single-line; trailing value may wrap within shared max width.
-        assertTrue(md3Block.contains("maxLines = 1"))
-        assertTrue(md3Block.contains("appPreferenceValueTextModifier()"))
-        assertTrue(md3Block.contains("APP_PREFERENCE_VALUE_MAX_LINES"))
-        assertTrue(md3Block.contains("softWrap = true"))
-        assertFalse(md3Block.contains("widthIn(max = 120.dp)"))
-        assertFalse(md3Block.contains("BasicComponent("))
+        assertTrue(clickableItemSource.contains("BasicComponent("))
+        assertTrue(clickableItemSource.contains("title = title"))
+        assertTrue(clickableItemSource.contains("summary = subtitle"))
+        // Trailing value wraps within shared max width.
+        assertTrue(clickableItemSource.contains("maxLines = APP_PREFERENCE_VALUE_MAX_LINES"))
+        assertTrue(clickableItemSource.contains("appPreferenceValueTextModifier()"))
+        assertTrue(clickableItemSource.contains("softWrap = true"))
+        assertFalse(clickableItemSource.contains("widthIn(max = 120.dp)"))
     }
 
     @Test
@@ -96,8 +86,8 @@ class AdaptiveGroupSurfaceShapeStructureTest {
         )
         val valueHelperUses = Regex("""\.appPreferenceValueTextModifier\(\)""").findAll(source).count()
         assertTrue(
-            valueHelperUses >= 4,
-            "Expected shared value modifier on MD3/Miuix/fallback paths, found $valueHelperUses",
+            valueHelperUses >= 2,
+            "Expected shared value modifier on renderer paths, found $valueHelperUses",
         )
     }
 

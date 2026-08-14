@@ -40,10 +40,9 @@ class AppSurfaceTokensTest {
     }
 
     @Test
-    fun resolveMiuixSemanticColor_prefersMiuixWhenEnabled() {
+    fun resolveMiuixSemanticColor_prefersMiuixColor() {
         val miuix = Color(0xFF112233)
         val material = Color(0xFF445566)
-        assertEquals(miuix, AppSurfaceTokens.resolveMiuixSemanticColor(true, miuix, material))
-        assertEquals(material, AppSurfaceTokens.resolveMiuixSemanticColor(false, miuix, material))
+        assertEquals(miuix, AppSurfaceTokens.resolveMiuixSemanticColor(miuix, material))
     }
 }

@@ -4,8 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.android.purebilibili.core.theme.AppUiStyle
-import com.android.purebilibili.core.theme.LocalAppUiStyle
 import kotlin.math.min
 
 /** Default item height for Miuix [AppNativeTabRow] (channel switchers, day chips, …). */
@@ -41,42 +39,27 @@ data class AppSegmentedControlPolicy(
     val segmentedItemHeight: Dp,
 )
 
-internal fun resolveAppSegmentedControlPolicy(
-    uiStyle: AppUiStyle,
-): AppSegmentedControlPolicy {
+internal fun resolveAppSegmentedControlPolicy(): AppSegmentedControlPolicy {
     // Prefer Card-level corners, never full Pill (22–28dp) which saturates 40–48dp bars.
     val preferred = AppShapes.resolveContainerCornerDp(
         level = ContainerLevel.Card,
-        uiStyle = uiStyle,
     )
     val tabHeight = AppNativeTabRowHeightDp.dp
     val segmentHeight = AppMiuixSegmentedItemHeightDp.dp
-    return when (uiStyle) {
-        AppUiStyle.MIUIX -> AppSegmentedControlPolicy(
-            usesEmphasizedTitle = true,
-            usesMaterialFallback = true,
-            usesNativeTabRow = true,
-            usesMaterialColorTokens = false,
-            pillCornerRadius = resolveHeightCappedCornerRadius(tabHeight, preferred),
-            nativeTabRowHeight = tabHeight,
-            segmentedItemHeight = segmentHeight,
-        )
-        AppUiStyle.MATERIAL3 -> AppSegmentedControlPolicy(
-            usesEmphasizedTitle = true,
-            usesMaterialFallback = true,
-            usesNativeTabRow = false,
-            usesMaterialColorTokens = true,
-            pillCornerRadius = resolveHeightCappedCornerRadius(tabHeight, preferred),
-            nativeTabRowHeight = tabHeight,
-            segmentedItemHeight = segmentHeight,
-        )
-    }
+    return AppSegmentedControlPolicy(
+        usesEmphasizedTitle = true,
+        usesMaterialFallback = true,
+        usesNativeTabRow = true,
+        usesMaterialColorTokens = false,
+        pillCornerRadius = resolveHeightCappedCornerRadius(tabHeight, preferred),
+        nativeTabRowHeight = tabHeight,
+        segmentedItemHeight = segmentHeight,
+    )
 }
 
 @Composable
 fun rememberAppSegmentedControlPolicy(): AppSegmentedControlPolicy {
-    val uiStyle = LocalAppUiStyle.current
-    return remember(uiStyle) {
-        resolveAppSegmentedControlPolicy(uiStyle)
+    return remember {
+        resolveAppSegmentedControlPolicy()
     }
 }

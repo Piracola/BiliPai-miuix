@@ -6,8 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.android.purebilibili.core.theme.AppUiStyle
-import com.android.purebilibili.core.theme.LocalAppUiStyle
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
@@ -132,10 +130,9 @@ object AppSurfaceTokens {
     )
 
     fun resolveMiuixSemanticColor(
-        isMiuix: Boolean,
         miuixColor: Color,
         materialFallback: Color
-    ): Color = if (isMiuix) miuixColor else materialFallback
+    ): Color = miuixColor
 
     @Composable
     @ReadOnlyComposable
@@ -143,9 +140,7 @@ object AppSurfaceTokens {
         miuixColor: Color,
         materialFallback: Color
     ): Color {
-        val isMiuix = LocalAppUiStyle.current == AppUiStyle.MIUIX
         return resolveMiuixSemanticColor(
-            isMiuix = isMiuix,
             miuixColor = miuixColor,
             materialFallback = materialFallback
         )

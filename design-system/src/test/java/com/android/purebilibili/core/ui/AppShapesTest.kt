@@ -2,7 +2,6 @@ package com.android.purebilibili.core.ui
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
-import com.android.purebilibili.core.theme.AppUiStyle
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -11,128 +10,82 @@ import kotlin.test.assertTrue
 class AppShapesTest {
 
     @Test
-    fun pillRadius_material3_is28Dp() {
+    fun pillRadius_singleMiuixTheme_is22Dp() {
         val dp = AppShapes.resolveContainerCornerDp(
             level = ContainerLevel.Pill,
-            uiStyle = AppUiStyle.MATERIAL3
-        )
-        assertEquals(28.dp, dp)
-    }
-
-    @Test
-    fun pillRadius_miuix_is22Dp() {
-        val dp = AppShapes.resolveContainerCornerDp(
-            level = ContainerLevel.Pill,
-            uiStyle = AppUiStyle.MIUIX
         )
         assertEquals(22.dp, dp)
     }
 
     @Test
-    fun cardRadius_scalesByStyle() {
-        val material3 = AppShapes.resolveContainerCornerDp(
+    fun cardRadius_usesMiuixScale() {
+        val radius = AppShapes.resolveContainerCornerDp(
             level = ContainerLevel.Card,
-            uiStyle = AppUiStyle.MATERIAL3
         )
-        val miuix = AppShapes.resolveContainerCornerDp(
+        assertTrue(radius.value in 13.79f..13.81f, "actual ${radius.value}")
+    }
+
+    @Test
+    fun dialogRadius_usesMiuixScale() {
+        val radius = AppShapes.resolveContainerCornerDp(
+            level = ContainerLevel.Dialog,
+        )
+        assertEquals(16.1.dp, radius)
+    }
+
+    @Test
+    fun fieldRadius_usesMiuixScale() {
+        val radius = AppShapes.resolveContainerCornerDp(
+            level = ContainerLevel.Field,
+        )
+        assertEquals(11.5.dp, radius)
+    }
+
+    @Test
+    fun tagRadius_usesMiuixScale() {
+        val radius = AppShapes.resolveContainerCornerDp(
+            level = ContainerLevel.Tag,
+        )
+        assertEquals(4.6.dp, radius)
+    }
+
+    @Test
+    fun chipRadius_usesMiuixScale() {
+        val radius = AppShapes.resolveContainerCornerDp(
+            level = ContainerLevel.Chip,
+        )
+        assertTrue(radius.value in 6.89f..6.91f, "actual ${radius.value}")
+    }
+
+    @Test
+    fun floatingRadius_usesMiuixScale() {
+        val radius = AppShapes.resolveContainerCornerDp(
+            level = ContainerLevel.Floating,
+        )
+        assertEquals(32.2.dp, radius)
+    }
+
+    @Test
+    fun containerShape_usesRoundedCornerShapeForSingleTheme() {
+        val shape = AppShapes.resolveContainerShape(
             level = ContainerLevel.Card,
-            uiStyle = AppUiStyle.MIUIX
         )
-        // MATERIAL3 = base * 0.90, Miuix = base * 1.15
-        assertTrue(miuix.value > material3.value, "Miuix card radius should be larger than MATERIAL3")
-    }
-
-    @Test
-    fun dialogRadius_scalesByStyle() {
-        val material3 = AppShapes.resolveContainerCornerDp(
-            level = ContainerLevel.Dialog,
-            uiStyle = AppUiStyle.MATERIAL3
-        )
-        val miuix = AppShapes.resolveContainerCornerDp(
-            level = ContainerLevel.Dialog,
-            uiStyle = AppUiStyle.MIUIX
-        )
-        assertTrue(miuix.value > material3.value)
-    }
-
-    @Test
-    fun fieldRadius_scalesByStyle() {
-        val material3 = AppShapes.resolveContainerCornerDp(
-            level = ContainerLevel.Field,
-            uiStyle = AppUiStyle.MATERIAL3
-        )
-        val miuix = AppShapes.resolveContainerCornerDp(
-            level = ContainerLevel.Field,
-            uiStyle = AppUiStyle.MIUIX
-        )
-        assertTrue(miuix.value > material3.value)
-    }
-
-    @Test
-    fun tagRadius_scalesByStyle() {
-        val material3 = AppShapes.resolveContainerCornerDp(
-            level = ContainerLevel.Tag,
-            uiStyle = AppUiStyle.MATERIAL3
-        )
-        val miuix = AppShapes.resolveContainerCornerDp(
-            level = ContainerLevel.Tag,
-            uiStyle = AppUiStyle.MIUIX
-        )
-        assertTrue(miuix.value > material3.value)
-    }
-
-    @Test
-    fun chipRadius_scalesByStyle() {
-        val material3 = AppShapes.resolveContainerCornerDp(
-            level = ContainerLevel.Chip,
-            uiStyle = AppUiStyle.MATERIAL3
-        )
-        val miuix = AppShapes.resolveContainerCornerDp(
-            level = ContainerLevel.Chip,
-            uiStyle = AppUiStyle.MIUIX
-        )
-        assertTrue(miuix.value > material3.value)
-    }
-
-    @Test
-    fun floatingRadius_scalesByStyle() {
-        val material3 = AppShapes.resolveContainerCornerDp(
-            level = ContainerLevel.Floating,
-            uiStyle = AppUiStyle.MATERIAL3
-        )
-        val miuix = AppShapes.resolveContainerCornerDp(
-            level = ContainerLevel.Floating,
-            uiStyle = AppUiStyle.MIUIX
-        )
-        assertTrue(miuix.value > material3.value, "Miuix floating radius should be larger")
-    }
-
-    @Test
-    fun containerShape_usesRoundedCornerShapeForBothStyles() {
-        listOf(AppUiStyle.MATERIAL3, AppUiStyle.MIUIX).forEach { style ->
-            val shape = AppShapes.resolveContainerShape(
-                level = ContainerLevel.Card,
-                uiStyle = style
-            )
-            assertIs<RoundedCornerShape>(shape)
-        }
+        assertIs<RoundedCornerShape>(shape)
     }
 
     @Test
     fun sheetContainerShape_isTopRounded() {
         val shape = AppShapes.resolveContainerShape(
             level = ContainerLevel.Sheet,
-            uiStyle = AppUiStyle.MATERIAL3
         ) as RoundedCornerShape
-        // MATERIAL3 Sheet = 20 * 0.90 = 18，仅顶部圆角。
-        assertEquals(RoundedCornerShape(18.dp, 18.dp, 0.dp, 0.dp), shape)
+        // Miuix Sheet = 20 * 1.15 = 23，仅顶部圆角。
+        assertEquals(RoundedCornerShape(23.dp, 23.dp, 0.dp, 0.dp), shape)
     }
 
     @Test
     fun borderedContainerShape_usesRoundedCornerShape() {
         val shape = AppShapes.resolveBorderedContainerShape(
             level = ContainerLevel.Dialog,
-            uiStyle = AppUiStyle.MIUIX
         )
         assertIs<RoundedCornerShape>(shape)
     }

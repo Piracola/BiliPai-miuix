@@ -14,26 +14,20 @@ data class AppDrawerVisualPolicy(
 )
 
 fun resolveAppDrawerVisualPolicy(
-    renderer: PresetPrimitiveRenderer,
     blurEnabled: Boolean,
-): AppDrawerVisualPolicy = when (renderer) {
-    PresetPrimitiveRenderer.MATERIAL3,
-    PresetPrimitiveRenderer.MIUIX_BRIDGED -> AppDrawerVisualPolicy(
-        containerTreatment = if (blurEnabled) {
-            AppDrawerContainerTreatment.TRANSLUCENT
-        } else {
-            AppDrawerContainerTreatment.OPAQUE
-        },
-        profileChevronSizeDp = 20,
-    )
-}
+): AppDrawerVisualPolicy = AppDrawerVisualPolicy(
+    containerTreatment = if (blurEnabled) {
+        AppDrawerContainerTreatment.TRANSLUCENT
+    } else {
+        AppDrawerContainerTreatment.OPAQUE
+    },
+    profileChevronSizeDp = 20,
+)
 
 @Composable
 fun rememberAppDrawerVisualPolicy(blurEnabled: Boolean): AppDrawerVisualPolicy {
-    val renderer = rememberPresetPrimitiveRenderer()
-    return remember(renderer, blurEnabled) {
+    return remember(blurEnabled) {
         resolveAppDrawerVisualPolicy(
-            renderer = renderer,
             blurEnabled = blurEnabled,
         )
     }

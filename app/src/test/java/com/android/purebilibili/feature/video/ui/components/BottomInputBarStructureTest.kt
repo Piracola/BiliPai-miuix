@@ -24,32 +24,8 @@ class BottomInputBarStructureTest {
     }
 
     @Test
-    fun bottomInputBar_reusesHomeFloatingLiquidDockWhenReuseEnabled() {
-        val source = File("src/main/java/com/android/purebilibili/feature/video/ui/components/BottomInputBar.kt")
-            .readText()
-
-        assertTrue(source.contains("shouldUseFloatingLiquidBottomInputBar("))
-        assertTrue(source.contains("resolveGlobalLiquidGlassReuseEnabled"))
-        assertTrue(source.contains("FloatingLiquidBottomInputBar("))
-        assertTrue(source.contains("FloatingLiquidBottomInputBarContentRow("))
-        assertTrue(source.contains("BottomBarMatchedReusableLiquidDock("))
-        // 外层整条保留液态玻璃；内层提示框实心半透明 + 横向 padding（禁止嵌套 liquid dock）。
-        assertTrue(source.contains("drawShellLens = true"))
-        assertTrue(source.contains(".padding(horizontal = 12.dp)"))
-        assertTrue(source.contains("评论 UP 主和大家"))
-        assertTrue(source.contains("onSurface.copy(alpha = 0.08f)"))
-        assertFalse(source.contains("BottomBarMatchedLiquidDock("))
-        assertTrue(!source.contains(".biliPaiFloatingDockSurface("))
-        assertTrue(source.contains("resolveSharedBottomBarCapsuleShape()"))
-        assertTrue(!source.contains("resolveAndroidNativeFloatingBottomBarContainerColor("))
-        assertTrue(!source.contains("commentFieldContainerColor"))
-        assertTrue(source.contains("backdrop: Backdrop? = null"))
-    }
-
-    @Test
-    fun floatingLiquidGate_followsGlobalReuseMasterOnly() {
-        assertTrue(shouldUseFloatingLiquidBottomInputBar(androidNativeLiquidGlassEnabled = true))
-        assertFalse(shouldUseFloatingLiquidBottomInputBar(androidNativeLiquidGlassEnabled = false))
+    fun floatingLiquidGate_isRetiredAfterLiquidGlassRemoval() {
+        assertFalse(shouldUseFloatingLiquidBottomInputBar())
     }
 
     @Test

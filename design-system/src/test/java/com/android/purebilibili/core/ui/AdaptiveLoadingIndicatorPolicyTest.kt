@@ -1,6 +1,5 @@
 package com.android.purebilibili.core.ui
 
-import com.android.purebilibili.core.theme.AppUiStyle
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -11,7 +10,6 @@ class AdaptiveLoadingIndicatorPolicyTest {
         assertEquals(
             AdaptiveLoadingVisual.MIUIX_INFINITE,
             resolveAdaptiveLoadingVisual(
-                uiStyle = AppUiStyle.MIUIX,
                 density = AdaptiveLoadingDensity.PAGE,
             ),
         )
@@ -22,29 +20,6 @@ class AdaptiveLoadingIndicatorPolicyTest {
         assertEquals(
             AdaptiveLoadingVisual.MIUIX_CIRCULAR,
             resolveAdaptiveLoadingVisual(
-                uiStyle = AppUiStyle.MIUIX,
-                density = AdaptiveLoadingDensity.COMPACT,
-            ),
-        )
-    }
-
-    @Test
-    fun `material3 page uses official loading indicator`() {
-        assertEquals(
-            AdaptiveLoadingVisual.MATERIAL3_LOADING_INDICATOR,
-            resolveAdaptiveLoadingVisual(
-                uiStyle = AppUiStyle.MATERIAL3,
-                density = AdaptiveLoadingDensity.PAGE,
-            ),
-        )
-    }
-
-    @Test
-    fun `material3 compact uses circular progress`() {
-        assertEquals(
-            AdaptiveLoadingVisual.MATERIAL3_CIRCULAR,
-            resolveAdaptiveLoadingVisual(
-                uiStyle = AppUiStyle.MATERIAL3,
                 density = AdaptiveLoadingDensity.COMPACT,
             ),
         )

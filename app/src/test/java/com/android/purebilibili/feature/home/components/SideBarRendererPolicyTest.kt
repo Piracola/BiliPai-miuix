@@ -1,6 +1,5 @@
 package com.android.purebilibili.feature.home.components
 
-import com.android.purebilibili.core.ui.PresetPrimitiveRenderer
 import com.android.purebilibili.core.ui.resolveAppNavigationCapabilities
 import java.io.File
 import kotlin.test.Test
@@ -11,18 +10,10 @@ import kotlin.test.assertTrue
 class SideBarRendererPolicyTest {
 
     @Test
-    fun miuixVariantRoutesToOfficialNavigationRail() {
+    fun singleMiuixRendererRoutesToOfficialNavigationRail() {
         assertEquals(
             true,
-            resolveAppNavigationCapabilities(PresetPrimitiveRenderer.MIUIX_BRIDGED).usePlatformSideRail
-        )
-    }
-
-    @Test
-    fun materialKeepsFrostedSideBar() {
-        assertEquals(
-            false,
-            resolveAppNavigationCapabilities(PresetPrimitiveRenderer.MATERIAL3).usePlatformSideRail
+            resolveAppNavigationCapabilities().usePlatformSideRail
         )
     }
 

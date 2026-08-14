@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.purebilibili.core.store.HomeSettings
 import com.android.purebilibili.core.store.SettingsManager
-import com.android.purebilibili.core.store.resolveGlobalLiquidGlassReuseEnabled
 import com.android.purebilibili.core.theme.calculateContrastRatio
 import com.android.purebilibili.core.ui.rememberAppBookmarkIcon
 import com.android.purebilibili.core.ui.rememberAppCoinIcon
@@ -72,12 +71,10 @@ internal fun resolveBottomInputBarPlaceholderTextColor(
 }
 
 /**
- * Floating liquid-glass chrome for the detail comment/action bar is gated only by the
- * global "安卓原生液态玻璃" reuse master switch (option 1).
+ * Floating liquid-glass chrome for the detail comment/action bar is retired:
+ * the detail bar always renders the docked solid surface.
  */
-internal fun shouldUseFloatingLiquidBottomInputBar(
-    androidNativeLiquidGlassEnabled: Boolean
-): Boolean = resolveGlobalLiquidGlassReuseEnabled(androidNativeLiquidGlassEnabled)
+internal fun shouldUseFloatingLiquidBottomInputBar(): Boolean = false
 
 /** The comment bar follows the bottom-bar blur preference when liquid glass is not active. */
 internal fun shouldUseFrostedBottomInputBar(
@@ -119,44 +116,26 @@ fun BottomInputBar(
     val homeSettings by SettingsManager
         .getHomeSettings(context)
         .collectAsStateWithLifecycle(initialValue = HomeSettings())
-    val floatingLiquidGlass = shouldUseFloatingLiquidBottomInputBar(
-        androidNativeLiquidGlassEnabled = homeSettings.androidNativeLiquidGlassEnabled
-    )
+    val floatingLiquidGlass = shouldUseFloatingLiquidBottomInputBar()
     val frostedBottomBar = shouldUseFrostedBottomInputBar(
         bottomBarBlurEnabled = homeSettings.isBottomBarBlurEnabled,
         floatingLiquidGlass = floatingLiquidGlass,
         hasHazeState = hazeState != null
     )
 
-    if (floatingLiquidGlass) {
-        FloatingLiquidBottomInputBar(
-            modifier = modifier,
-            backdrop = backdrop,
-            isLiked = isLiked,
-            isFavorited = isFavorited,
-            isCoined = isCoined,
-            onLikeClick = onLikeClick,
-            onFavoriteClick = onFavoriteClick,
-            onCoinClick = onCoinClick,
-            onShareClick = onShareClick,
-            onCommentClick = onCommentClick,
-            isScrollInProgressProvider = isScrollInProgressProvider
-        )
-    } else {
-        DockedSolidBottomInputBar(
-            modifier = modifier,
-            hazeState = hazeState,
-            frostedBottomBar = frostedBottomBar,
-            isLiked = isLiked,
-            isFavorited = isFavorited,
-            isCoined = isCoined,
-            onLikeClick = onLikeClick,
-            onFavoriteClick = onFavoriteClick,
-            onCoinClick = onCoinClick,
-            onShareClick = onShareClick,
-            onCommentClick = onCommentClick
-        )
-    }
+    DockedSolidBottomInputBar(
+        modifier = modifier,
+        hazeState = hazeState,
+        frostedBottomBar = frostedBottomBar,
+        isLiked = isLiked,
+        isFavorited = isFavorited,
+        isCoined = isCoined,
+        onLikeClick = onLikeClick,
+        onFavoriteClick = onFavoriteClick,
+        onCoinClick = onCoinClick,
+        onShareClick = onShareClick,
+        onCommentClick = onCommentClick
+    )
 }
 
 @Composable
@@ -253,7 +232,6 @@ private fun FloatingLiquidBottomInputBar(
         BottomBarMatchedReusableLiquidDock(
             shape = shellShape,
             modifier = Modifier.fillMaxWidth(),
-            backdrop = backdrop,
             // 外层整条保留液态玻璃（含 shell lens）；内层提示框不再嵌套 liquid dock。
             drawShellLens = true,
             isScrollInProgressProvider = isScrollInProgressProvider

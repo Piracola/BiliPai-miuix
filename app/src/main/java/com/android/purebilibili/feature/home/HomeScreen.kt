@@ -77,7 +77,6 @@ import com.android.purebilibili.core.theme.BiliPink
 import com.android.purebilibili.feature.settings.GITHUB_URL
 import com.android.purebilibili.core.store.SettingsManager //  引入 SettingsManager
 import com.android.purebilibili.core.store.AppNavigationSettings
-import com.android.purebilibili.core.store.resolveEffectiveHomeSettings
 
 import com.android.purebilibili.core.store.resolveHomeHeaderBlurEnabled
 import com.android.purebilibili.core.plugin.skin.rememberUiSkinState
@@ -785,11 +784,7 @@ fun HomeScreen(
     }
 
     // 解构设置值（避免每次访问都触发重组）
-    val effectiveHomeSettings = remember(homeSettings) {
-        resolveEffectiveHomeSettings(
-            homeSettings = homeSettings,
-        )
-    }
+    val effectiveHomeSettings = homeSettings
     val displayMode = homeSettings.displayMode
     val isBottomBarFloating = homeSettings.isBottomBarFloating
     val bottomBarLabelMode = homeSettings.bottomBarLabelMode
@@ -808,23 +803,13 @@ fun HomeScreen(
     val homePerformanceConfig = remember(
         baseIsHeaderBlurEnabled,
         baseIsBottomBarBlurEnabled,
-        homeSettings.isTopBarLiquidGlassEnabled,
-        homeSettings.isHomeSearchLiquidGlassEnabled,
-        homeSettings.isBottomBarLiquidGlassEnabled,
         baseCardAnimationEnabled,
         baseCardTransitionEnabled,
-        baseIsDataSaverActive,
-        homeSettings.androidNativeLiquidGlassEnabled,
-        semanticVisualPolicy.supportsIndependentLiquidGlass
+        baseIsDataSaverActive
     ) {
         resolveHomePerformanceConfig(
-            supportsIndependentLiquidGlass = semanticVisualPolicy.supportsIndependentLiquidGlass,
             headerBlurEnabled = baseIsHeaderBlurEnabled,
             bottomBarBlurEnabled = baseIsBottomBarBlurEnabled,
-            topBarLiquidGlassEnabled = homeSettings.isTopBarLiquidGlassEnabled,
-            homeSearchLiquidGlassEnabled = homeSettings.isHomeSearchLiquidGlassEnabled,
-            bottomBarLiquidGlassEnabled = homeSettings.isBottomBarLiquidGlassEnabled,
-            androidNativeLiquidGlassEnabled = homeSettings.androidNativeLiquidGlassEnabled,
             cardAnimationEnabled = baseCardAnimationEnabled,
             cardTransitionEnabled = baseCardTransitionEnabled,
             isDataSaverActive = baseIsDataSaverActive,
@@ -839,8 +824,6 @@ fun HomeScreen(
     val cardAnimationEnabled = homePerformanceConfig.cardAnimationEnabled && !systemReduceMotion
     // 过渡由用户设置控制；系统“减弱动效”开启时统一关闭。
     val cardTransitionEnabled = homePerformanceConfig.cardTransitionEnabled && !systemReduceMotion
-    val isBottomBarLiquidGlassEnabled = homePerformanceConfig.bottomBarLiquidGlassEnabled
-    val isLiquidGlassEnabled = homePerformanceConfig.isAnyLiquidGlassEnabled
     val isDataSaverActive = homePerformanceConfig.isDataSaverActive
     val preloadAheadCount = homePerformanceConfig.preloadAheadCount
     val configuredHomeWallpaperUri by SettingsManager.getHomeWallpaperUri(context).collectAsStateWithLifecycle(initialValue = ""
@@ -1245,22 +1228,18 @@ fun HomeScreen(
     val topTabStyle = remember(
         isBottomBarFloating,
         isHeaderBlurEnabled,
-        homePerformanceConfig.topBarLiquidGlassEnabled,
     ) {
         resolveTopTabStyle(
             isBottomBarFloating = isBottomBarFloating,
             isBottomBarBlurEnabled = isHeaderBlurEnabled,
-            isLiquidGlassEnabled = homePerformanceConfig.topBarLiquidGlassEnabled,
         )
     }
     val topChromeMaterialMode = remember(
         isHeaderBlurEnabled,
-        homePerformanceConfig.topBarLiquidGlassEnabled,
     ) {
         resolveHomeTopChromeMaterialMode(
             isHeaderBlurEnabled = isHeaderBlurEnabled,
             isBottomBarBlurEnabled = false,
-            isLiquidGlassEnabled = homePerformanceConfig.topBarLiquidGlassEnabled,
         )
     }
     val homeTopPresetStyle = remember(topChromePolicy, homeSettings.topTabLabelMode) {
@@ -1355,7 +1334,6 @@ fun HomeScreen(
         headerAutoCollapseDistancePx,
         isBottomBarAutoHideEnabled,
         useSideNavigation,
-        isLiquidGlassEnabled,
         canRevealHeader,
         collapseTabsOnScroll,
         homeSettings.commonListHeaderCollapseMode,
@@ -1376,7 +1354,6 @@ fun HomeScreen(
                     isHeaderCollapseEnabled = isAnyHeaderCollapseEnabled,
                     isBottomBarAutoHideEnabled = isBottomBarAutoHideEnabled,
                     useSideNavigation = useSideNavigation,
-                    liquidGlassEnabled = isLiquidGlassEnabled,
                     currentGlobalScrollOffset = globalScrollOffset.value
                 )
 
@@ -1852,11 +1829,10 @@ fun HomeScreen(
                                      isDataSaverActive = isDataSaverActive,
                                      preferLowQualityCover = homeSettings.lowQualityHomeCoverInDataSaver,
                                      compactStatsOnCover = homeSettings.compactVideoStatsOnCover,
-                                     showCoverGlassBadges = homeSettings.showHomeCoverGlassBadges,
+                                     showCoverGlassBadges = false,
                                      // 信息区标签保持轻量；贴封面统计由卡片复用封面标签样式渲染。
                                      showInfoGlassBadges = false,
                                      badgeEffectMode = homeSettings.homeCardBadgeEffectMode,
-                                     infoGlassMode = homeSettings.homeCardInfoGlassMode,
                                      wallpaperTintEnabled = homeWallpaperBackdropAppearance.visible,
                                      wallpaperEffectMode = homeSettings.homeWallpaperEffectMode,
                                      showUpBadges = homeSettings.showHomeUpBadges,
@@ -1976,17 +1952,17 @@ fun HomeScreen(
         )
         val forceLowBlurBudget = false
         val overlayChromeColors = rememberHomeGlassChromeColors(
-            glassEnabled = isLiquidGlassEnabled,
+            glassEnabled = false,
             blurEnabled = isHeaderBlurEnabled || isBottomBarBlurEnabled
         )
-        val refreshTipAppearance = remember(isLiquidGlassEnabled, isHeaderBlurEnabled, isBottomBarBlurEnabled) {
+        val refreshTipAppearance = remember(isHeaderBlurEnabled, isBottomBarBlurEnabled) {
             resolveHomeRefreshTipAppearance(
-                liquidGlassEnabled = isLiquidGlassEnabled,
+                liquidGlassEnabled = false,
                 blurEnabled = isHeaderBlurEnabled || isBottomBarBlurEnabled
             )
         }
         val overlayPillColors = rememberHomeGlassPillColors(
-            glassEnabled = isLiquidGlassEnabled,
+            glassEnabled = false,
             blurEnabled = isHeaderBlurEnabled || isBottomBarBlurEnabled,
             emphasized = true,
             baseColor = AppSurfaceTokens.cardContainer()

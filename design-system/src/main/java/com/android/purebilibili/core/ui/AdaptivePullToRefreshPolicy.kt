@@ -1,11 +1,7 @@
 package com.android.purebilibili.core.ui
 
-import com.android.purebilibili.core.theme.AppUiStyle
-
-fun resolveAdaptivePullToRefreshRenderer(
-    uiStyle: AppUiStyle
-): PresetPrimitiveRenderer {
-    return resolvePresetPrimitiveRenderer(uiStyle)
+fun resolveAdaptivePullToRefreshRenderer(): PresetPrimitiveRenderer {
+    return resolvePresetPrimitiveRenderer()
 }
 
 fun resolveMiuixPullToRefreshTexts(): List<String> = listOf(

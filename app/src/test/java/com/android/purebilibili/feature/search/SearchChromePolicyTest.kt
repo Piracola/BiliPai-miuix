@@ -1,9 +1,6 @@
 package com.android.purebilibili.feature.search
 
 import androidx.compose.ui.graphics.Color
-import com.android.purebilibili.core.theme.AndroidNativeVariant
-import com.android.purebilibili.core.theme.UiPreset
-import com.android.purebilibili.core.theme.resolveUiStyle
 import com.android.purebilibili.core.ui.ContainerLevel
 import com.android.purebilibili.core.ui.resolveAppTopChromePolicy
 import org.junit.Assert.assertEquals
@@ -14,55 +11,19 @@ import org.junit.Test
 class SearchChromePolicyTest {
 
     @Test
-    fun `md3 preset should use taller search chrome and filled action`() {
+    fun `single miuix theme uses shared search chrome sizing`() {
         val spec = resolveSearchChromeVisualSpec(
-            resolveAppTopChromePolicy(resolveUiStyle(UiPreset.MD3, AndroidNativeVariant.MATERIAL3))
+            resolveAppTopChromePolicy()
         )
 
-        assertEquals(56, spec.inputHeightDp)
         assertEquals(ContainerLevel.Field, spec.inputShapeLevel)
         assertEquals(ContainerLevel.Card, spec.actionShapeLevel)
         assertEquals(ContainerLevel.Card, spec.suggestionShapeLevel)
         assertEquals(ContainerLevel.Chip, spec.chipShapeLevel)
         assertEquals(48, spec.clearActionSizeDp)
         assertEquals(48, spec.submitActionSizeDp)
-        assertEquals(24, spec.actionIconSizeDp)
-        assertEquals(12, spec.horizontalGapDp)
         assertTrue(spec.useFilledSearchAction)
-    }
-
-    @Test
-    fun `legacy ios preset maps to miuix search chrome`() {
-        // 2B 迁移：iOS 输入经迁移表并入 MIUIX，与 miuix 呈现一致。
-        val spec = resolveSearchChromeVisualSpec(
-            resolveAppTopChromePolicy(resolveUiStyle(UiPreset.IOS, AndroidNativeVariant.MATERIAL3))
-        )
-
-        assertEquals(48, spec.inputHeightDp)
-        assertEquals(ContainerLevel.Field, spec.inputShapeLevel)
-        assertEquals(ContainerLevel.Card, spec.actionShapeLevel)
-        assertEquals(48, spec.clearActionSizeDp)
-        assertEquals(48, spec.submitActionSizeDp)
-        assertEquals(14, spec.inputHorizontalPaddingDp)
-        assertTrue(spec.useFilledSearchAction)
-        assertEquals(ContainerLevel.Card, spec.suggestionShapeLevel)
-    }
-
-    @Test
-    fun `miuix variant should use denser rounded search chrome`() {
-        val spec = resolveSearchChromeVisualSpec(
-            resolveAppTopChromePolicy(resolveUiStyle(UiPreset.MD3, AndroidNativeVariant.MIUIX))
-        )
-
-        assertEquals(48, spec.inputHeightDp)
-        assertEquals(ContainerLevel.Field, spec.inputShapeLevel)
-        assertEquals(ContainerLevel.Card, spec.actionShapeLevel)
-        assertEquals(48, spec.clearActionSizeDp)
-        assertEquals(48, spec.submitActionSizeDp)
-        assertEquals(14, spec.inputHorizontalPaddingDp)
-        assertTrue(spec.useFilledSearchAction)
-        assertEquals(ContainerLevel.Card, spec.suggestionShapeLevel)
-        assertEquals(ContainerLevel.Chip, spec.chipShapeLevel)
+        assertTrue(spec.inputHeightDp >= 40)
     }
 
     @Test

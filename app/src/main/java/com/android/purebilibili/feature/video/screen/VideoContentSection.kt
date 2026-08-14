@@ -1785,10 +1785,6 @@ private fun VideoContentTabBar(
     indicatorPositionProvider: (() -> Float)? = null,
     isScrollInProgressProvider: () -> Boolean = { false },
 ) {
-    val context = LocalContext.current
-    val homeSettings by SettingsManager
-        .getHomeSettings(context)
-        .collectAsStateWithLifecycle(initialValue = HomeSettings())
     val configuration = LocalConfiguration.current
     val layoutSpec = remember(configuration.screenWidthDp) {
         resolveVideoContentTabBarLayoutSpec(widthDp = configuration.screenWidthDp)
@@ -1796,14 +1792,10 @@ private fun VideoContentTabBar(
     val danmakuActionLayoutPolicy = remember(configuration.screenWidthDp) {
         resolveVideoContentTabBarDanmakuActionLayoutPolicy(widthDp = configuration.screenWidthDp)
     }
-    val liquidChromeSpec = remember(
-        homeSettings.androidNativeLiquidGlassEnabled,
-        backdrop,
-        layoutSpec
-    ) {
+    val liquidChromeSpec = remember(layoutSpec) {
         resolveVideoContentTabBarLiquidChromeSpec(
-            androidNativeLiquidGlassEnabled = homeSettings.androidNativeLiquidGlassEnabled,
-            hasBackdrop = backdrop != null,
+            androidNativeLiquidGlassEnabled = false,
+            hasBackdrop = false,
             layoutSpec = layoutSpec,
         )
     }
@@ -1840,7 +1832,6 @@ private fun VideoContentTabBar(
                 labelFontSize = liquidChromeSpec.labelFontSizeSp.sp,
                 backdrop = backdrop,
                 miuixBackdrop = miuixBackdrop,
-                forceLiquidChrome = homeSettings.androidNativeLiquidGlassEnabled,
                 liquidGlassEffectsEnabled = liquidChromeSpec.liquidGlassEffectsEnabled,
                 // Avoid extra press refraction in this compact in-content chrome.
                 tapPressRefractionEnabled = false,

@@ -3,8 +3,6 @@ package com.android.purebilibili.core.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.android.purebilibili.core.theme.AppUiStyle
-import com.android.purebilibili.core.theme.LocalAppUiStyle
 
 data class BottomBarContentPaddingSpec(
     val floatingBodyHeight: Dp,
@@ -16,14 +14,13 @@ data class BottomBarContentPaddingSpec(
 fun resolveBottomBarContentPaddingSpec(
     bottomBarLabelMode: Int,
     isTablet: Boolean,
-    uiStyle: AppUiStyle,
     hasUiSkinDecoration: Boolean,
 ): BottomBarContentPaddingSpec {
     // These are the actual shell extents used by the renderers. Label mode
     // changes item content, but it does not change the navigation shell's
     // occupied height.
     return resolveBottomBarContentPaddingSpec(
-        compactDockedBar = uiStyle == AppUiStyle.MIUIX,
+        compactDockedBar = true,
         hasUiSkinDecoration = hasUiSkinDecoration,
     )
 }
@@ -52,14 +49,12 @@ fun resolveBottomBarContentPadding(
     isBottomBarFloating: Boolean,
     bottomBarLabelMode: Int,
     isTablet: Boolean,
-    uiStyle: AppUiStyle,
     hasUiSkinDecoration: Boolean,
     extraContentPadding: Dp = AppSpacingTokens.Small,
 ): Dp {
     val spec = resolveBottomBarContentPaddingSpec(
         bottomBarLabelMode = bottomBarLabelMode,
         isTablet = isTablet,
-        uiStyle = uiStyle,
         hasUiSkinDecoration = hasUiSkinDecoration,
     )
     return calculateBottomBarContentPadding(
@@ -79,9 +74,8 @@ fun rememberAppBottomBarContentPadding(
     hasUiSkinDecoration: Boolean,
     extraContentPadding: Dp = AppSpacingTokens.Small,
 ): Dp {
-    val uiStyle = LocalAppUiStyle.current
     val spec = resolveBottomBarContentPaddingSpec(
-        compactDockedBar = uiStyle == AppUiStyle.MIUIX,
+        compactDockedBar = true,
         hasUiSkinDecoration = hasUiSkinDecoration,
     )
     return calculateBottomBarContentPadding(

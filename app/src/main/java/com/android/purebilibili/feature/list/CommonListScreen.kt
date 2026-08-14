@@ -115,7 +115,6 @@ import com.android.purebilibili.core.ui.rememberAppChevronUpIcon
 import com.android.purebilibili.core.ui.rememberAppChevronDownIcon
 import com.android.purebilibili.core.ui.resolveGlobalWallpaperChromeColor
 import com.android.purebilibili.core.theme.BiliPink
-import com.android.purebilibili.core.ui.rememberAppChromeLiquidGlassEnabled
 import com.android.purebilibili.core.ui.rememberAppTopChromePolicy
 import com.android.purebilibili.core.ui.components.AppSearchField
 import com.android.purebilibili.core.ui.animation.DissolveAnimationPreset
@@ -231,10 +230,7 @@ fun CommonListScreen(
         context = kotlin.coroutines.EmptyCoroutineContext
     )
     val topChromePolicy = rememberAppTopChromePolicy()
-    val liquidGlassEnabled = rememberAppChromeLiquidGlassEnabled(
-        individualEnabled = homeSettings.isLiquidGlassEnabled,
-        androidNativeEnabled = homeSettings.androidNativeLiquidGlassEnabled,
-    )
+    val liquidGlassEnabled = false
     val windowSizeClass = LocalWindowSizeClass.current
     val deviceUiProfile = remember(windowSizeClass.widthSizeClass) {
         resolveDeviceUiProfile(
@@ -1633,11 +1629,7 @@ fun CommonListScreen(
                                     height = historyFilterChrome.heightDp.dp,
                                     indicatorHeight = historyFilterChrome.indicatorHeightDp.dp,
                                     labelFontSize = historyFilterChrome.labelFontSizeSp.sp,
-                                    backdrop = commonListChromeBackdrop,
-                                    forceLiquidChrome = homeSettings.androidNativeLiquidGlassEnabled,
-                                    liquidGlassEffectsEnabled = true,
                                     dragSelectionEnabled = historyFilterChrome.dragSelectionEnabled,
-                                    tapPressRefractionEnabled = true,
                                     isScrollInProgressProvider = {
                                         primaryGridState.isScrollInProgress
                                     }

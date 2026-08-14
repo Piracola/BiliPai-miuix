@@ -203,7 +203,6 @@ internal fun resolveVideoDetailReturnInfoSurfaceSpec(
         isDarkTheme = isDarkTheme,
         isDataSaverActive = false,
         hasWallpaperHazeState = false,
-        hasLayerBackdrop = false,
         blurEnabled = true,
     )
     return VideoDetailReturnInfoSurfaceSpec(

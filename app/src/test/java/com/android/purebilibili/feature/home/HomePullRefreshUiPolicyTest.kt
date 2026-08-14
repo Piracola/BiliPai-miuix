@@ -2,7 +2,6 @@ package com.android.purebilibili.feature.home
 
 import com.android.purebilibili.core.ui.AppPullRefreshIndicatorStyle
 import com.android.purebilibili.core.ui.AppPullRefreshMotionStyle
-import com.android.purebilibili.core.ui.PresetPrimitiveRenderer
 import com.android.purebilibili.core.ui.resolveAppPullRefreshProfile
 import com.android.purebilibili.core.ui.resolvePullRefreshThresholdDp
 import java.io.File
@@ -14,30 +13,18 @@ import org.junit.Test
 class HomePullRefreshUiPolicyTest {
 
     @Test
-    fun `material md3 preset uses native refresh motion style`() {
+    fun `single miuix profile uses material pull motion`() {
         assertEquals(
             AppPullRefreshMotionStyle.PLATFORM,
-            resolveAppPullRefreshProfile(PresetPrimitiveRenderer.MATERIAL3).motionStyle
+            resolveAppPullRefreshProfile().motionStyle
         )
     }
 
     @Test
-    fun `miuix variant keeps material pull motion for previous md3 behavior`() {
-        assertEquals(
-            AppPullRefreshMotionStyle.PLATFORM,
-            resolveAppPullRefreshProfile(PresetPrimitiveRenderer.MIUIX_BRIDGED).motionStyle
-        )
-    }
-
-    @Test
-    fun `pull refresh indicator style routes native material and miuix separately`() {
-        assertEquals(
-            AppPullRefreshIndicatorStyle.MATERIAL_DEFAULT,
-            resolveAppPullRefreshProfile(PresetPrimitiveRenderer.MATERIAL3).indicatorStyle
-        )
+    fun `single miuix profile uses miuix native indicator`() {
         assertEquals(
             AppPullRefreshIndicatorStyle.MIUIX_NATIVE,
-            resolveAppPullRefreshProfile(PresetPrimitiveRenderer.MIUIX_BRIDGED).indicatorStyle
+            resolveAppPullRefreshProfile().indicatorStyle
         )
     }
 

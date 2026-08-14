@@ -1,6 +1,5 @@
 package com.android.purebilibili.core.ui
 
-import com.android.purebilibili.core.theme.AppUiStyle
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -16,22 +15,10 @@ class AppDialogComponentsPolicyTest {
     }
 
     @Test
-    fun miuixAlertDialogUsesWindowDialogWhenOutsideScaffoldHost() {
+    fun singleMiuixAlertDialogUsesWindowDialogWhenOutsideScaffoldHost() {
         assertEquals(
             AppAlertDialogRenderer.LOCAL_DIALOG,
-            resolveAppAlertDialogRenderer(
-                uiStyle = AppUiStyle.MIUIX
-            )
-        )
-    }
-
-    @Test
-    fun material3KeepsMaterialAlertDialogRenderer() {
-        assertEquals(
-            AppAlertDialogRenderer.MATERIAL_ALERT,
-            resolveAppAlertDialogRenderer(
-                uiStyle = AppUiStyle.MATERIAL3
-            )
+            resolveAppAlertDialogRenderer()
         )
     }
 

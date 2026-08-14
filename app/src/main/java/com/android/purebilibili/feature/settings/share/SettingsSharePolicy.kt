@@ -1,6 +1,5 @@
 package com.android.purebilibili.feature.settings.share
 
-import com.android.purebilibili.core.theme.AppUiStyle
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import java.time.Instant
@@ -12,18 +11,15 @@ import java.util.Locale
 private val SETTINGS_SHARE_FILE_TIME_FORMATTER: DateTimeFormatter =
     DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss", Locale.US)
 
-/** 分享格式中的主题新键（与 ThemeSelectionStore 的稳定字符串键一致）。 */
-internal const val SHARE_KEY_THEME_SELECTION = "theme_selection_v1"
-
 /** 旧格式文件携带的遗留主题键，仅用于旧文件导入兼容。 */
 internal const val SHARE_KEY_LEGACY_UI_PRESET = "ui_preset"
 internal const val SHARE_KEY_LEGACY_ANDROID_NATIVE_VARIANT = "android_native_variant_v1"
 
 /**
  * 旧文件导入兼容：把旧格式文件中的 ui_preset / android_native_variant_v1
- * 归一化为新键 theme_selection_v1（MIUIX / MATERIAL3 字符串）。
+ * 归一化为新键 theme_selection_v1（运行时仅保留 MIUIX 单值）。
  * - 新键已存在：新键优先，仅清理冗余旧键（避免旧键被误报为跳过）。
- * - 仅旧键：按迁移表经 [AppUiStyle.fromLegacyValues] 解析后写入新键。
+ * - 仅旧键：运行时主题恒为 MIUIX，直接写入新键。
  * - 无主题键：原样返回。
  */
 internal fun normalizeThemeSelectionForImport(
@@ -34,16 +30,8 @@ internal fun normalizeThemeSelectionForImport(
         appearance.containsKey(SHARE_KEY_LEGACY_ANDROID_NATIVE_VARIANT)
     if (!hasLegacyKeys) return sections
 
-    val hasNewKey = appearance.containsKey(SHARE_KEY_THEME_SELECTION)
     val newAppearance = buildMap {
         putAll(appearance)
-        if (!hasNewKey) {
-            val style = AppUiStyle.fromLegacyValues(
-                jsonElementAsInt(appearance[SHARE_KEY_LEGACY_UI_PRESET]),
-                jsonElementAsInt(appearance[SHARE_KEY_LEGACY_ANDROID_NATIVE_VARIANT])
-            )
-            put(SHARE_KEY_THEME_SELECTION, JsonPrimitive(style.name))
-        }
         remove(SHARE_KEY_LEGACY_UI_PRESET)
         remove(SHARE_KEY_LEGACY_ANDROID_NATIVE_VARIANT)
     }
@@ -52,20 +40,15 @@ internal fun normalizeThemeSelectionForImport(
 }
 
 /**
- * 设备调试块的主题值：优先按新键 theme_selection_v1 解析；
- * 仅当新键缺失时回退旧键（迁移前导出的快照兼容）。
- * 返回 (uiPresetValue, androidNativeVariantValue) 遗留编码。
+ * 设备调试块的主题值：运行时仅保留 MIUIX，返回遗留 (uiPresetValue, androidNativeVariantValue)
+ * 编码（MD3 + Miuix）。
  */
 internal fun resolveDebugThemeValues(
     rawSettings: Map<String, JsonElement>
 ): Pair<Int, Int> {
-    val styleName = (rawSettings[SHARE_KEY_THEME_SELECTION] as? JsonPrimitive)?.content
-    return when (styleName) {
-        AppUiStyle.MIUIX.name -> 1 to 1 // MD3 + Miuix
-        AppUiStyle.MATERIAL3.name -> 1 to 0 // MD3 + Material 3
-        else -> (jsonElementAsInt(rawSettings[SHARE_KEY_LEGACY_UI_PRESET]) ?: 0) to
-            (jsonElementAsInt(rawSettings[SHARE_KEY_LEGACY_ANDROID_NATIVE_VARIANT]) ?: 0)
-    }
+    @Suppress("UNUSED_PARAMETER")
+    val unusedRawSettings = rawSettings
+    return 1 to 1 // MD3 + Miuix
 }
 
 internal fun flattenSettingsShareSections(

@@ -49,13 +49,8 @@ internal fun resolveHomeCoverPreloadRange(
 }
 
 internal fun resolveHomePerformanceConfig(
-    supportsIndependentLiquidGlass: Boolean = true,
     headerBlurEnabled: Boolean,
     bottomBarBlurEnabled: Boolean,
-    topBarLiquidGlassEnabled: Boolean,
-    homeSearchLiquidGlassEnabled: Boolean = false,
-    bottomBarLiquidGlassEnabled: Boolean,
-    androidNativeLiquidGlassEnabled: Boolean = false,
     cardAnimationEnabled: Boolean,
     cardTransitionEnabled: Boolean,
     isDataSaverActive: Boolean,
@@ -65,12 +60,6 @@ internal fun resolveHomePerformanceConfig(
     // Feature retired: keep parameter for compatibility, but never apply runtime smoothness downgrade.
     val shouldPrioritizeSmoothness = false
     val effectiveDataSaver = isDataSaverActive
-    fun resolveLiquidGlass(individualEnabled: Boolean): Boolean =
-        androidNativeLiquidGlassEnabled ||
-            (supportsIndependentLiquidGlass && individualEnabled)
-    val effectiveTopBarLiquidGlass = resolveLiquidGlass(topBarLiquidGlassEnabled)
-    val effectiveHomeSearchLiquidGlass = resolveLiquidGlass(homeSearchLiquidGlassEnabled)
-    val effectiveBottomBarLiquidGlass = resolveLiquidGlass(bottomBarLiquidGlassEnabled)
     val effectivePreloadAheadCount = when {
         shouldPrioritizeSmoothness -> normalPreloadAheadCount.coerceAtLeast(0).coerceAtMost(2)
         else -> resolveHomePreloadAheadCount(
@@ -82,9 +71,9 @@ internal fun resolveHomePerformanceConfig(
     return HomePerformanceConfig(
         headerBlurEnabled = headerBlurEnabled,
         bottomBarBlurEnabled = bottomBarBlurEnabled,
-        topBarLiquidGlassEnabled = effectiveTopBarLiquidGlass,
-        homeSearchLiquidGlassEnabled = effectiveHomeSearchLiquidGlass,
-        bottomBarLiquidGlassEnabled = effectiveBottomBarLiquidGlass,
+        topBarLiquidGlassEnabled = false,
+        homeSearchLiquidGlassEnabled = false,
+        bottomBarLiquidGlassEnabled = false,
         cardAnimationEnabled = cardAnimationEnabled,
         cardTransitionEnabled = cardTransitionEnabled,
         isDataSaverActive = effectiveDataSaver,

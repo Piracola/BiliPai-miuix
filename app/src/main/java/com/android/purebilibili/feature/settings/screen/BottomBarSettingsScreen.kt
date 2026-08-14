@@ -54,9 +54,6 @@ import com.android.purebilibili.core.store.resolveHomeHeaderCollapseModeForTopTa
 import com.android.purebilibili.core.theme.BottomBarColors  //  统一底栏颜色配置
 import com.android.purebilibili.core.theme.BottomBarColorPalette  //  调色板
 import com.android.purebilibili.core.theme.BottomBarColorNames  //  颜色名称
-import com.android.purebilibili.core.theme.LocalSettingsLiquidGlassEnabled
-import com.android.purebilibili.core.theme.AppUiStyle
-import com.android.purebilibili.core.theme.LocalAppUiStyle
 import com.android.purebilibili.core.ui.AppSemanticIconFamily
 import com.android.purebilibili.core.ui.rememberAppSemanticVisualPolicy
 import com.android.purebilibili.core.ui.adaptive.resolveDeviceUiProfile
@@ -137,7 +134,6 @@ fun BottomBarSettingsScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
-    val settingsLiquidGlassEnabled by SettingsManager.getLiquidGlassEnabled(context).collectAsStateWithLifecycle(initialValue = true)
     val screenTitle = stringResource(R.string.bottom_bar_management_title)
     val backLabel = stringResource(R.string.common_back)
     val bottomContentPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
@@ -149,9 +145,7 @@ fun BottomBarSettingsScreen(
         bottomContentPadding = bottomContentPadding,
         scrollHost = SettingsPageScrollHost.External,
     ) {
-        CompositionLocalProvider(LocalSettingsLiquidGlassEnabled provides settingsLiquidGlassEnabled) {
-            BottomBarSettingsContent()
-        }
+        BottomBarSettingsContent()
     }
 }
 
@@ -934,20 +928,9 @@ private fun BottomBarTabItem(
     onToggle: (Boolean) -> Unit,
     onColorChange: (Int) -> Unit
 ) {
-    //  MD3(MATERIAL3)主题下可用项目图标跟随主题色,不再使用多彩色板;
-    //  颜色选择弹窗仅对保留多彩色的预设开放。
-    val uiStyle = LocalAppUiStyle.current
-    val isMaterial3 = uiStyle == AppUiStyle.MATERIAL3
-    val itemColor = if (isMaterial3) {
-        MaterialTheme.colorScheme.primary
-    } else {
-        BottomBarColors.getColorByIndex(colorIndex)
-    }
-    val itemContainerColor = if (isMaterial3) {
-        MaterialTheme.colorScheme.primaryContainer
-    } else {
-        itemColor
-    }
+    // 单值 Miuix 主题保留多彩色板，颜色选择弹窗对用户开放。
+    val itemColor = BottomBarColors.getColorByIndex(colorIndex)
+    val itemContainerColor = itemColor
     val iconContentColor = rememberAdaptivePreferenceIconContentColor(itemContainerColor)
     
     //  颜色选择弹窗状态
@@ -959,13 +942,13 @@ private fun BottomBarTabItem(
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 图标 -  点击可更换颜色(仅多彩色预设开放)
+        // 图标 -  点击可更换颜色
         Box(
             modifier = Modifier
                 .size(36.dp)
                 .clip(AppShapes.container(ContainerLevel.Field))
                 .background(itemContainerColor)
-                .clickable(enabled = !isMaterial3) { showColorPicker = true },
+                .clickable { showColorPicker = true },
             contentAlignment = Alignment.Center
         ) {
             AppIcon(

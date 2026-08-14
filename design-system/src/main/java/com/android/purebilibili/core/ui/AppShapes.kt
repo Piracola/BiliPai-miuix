@@ -5,8 +5,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.android.purebilibili.core.theme.AppUiStyle
-import com.android.purebilibili.core.theme.LocalAppUiStyle
 import com.android.purebilibili.core.theme.resolveAndroidNativeChromeTokens
 import com.android.purebilibili.core.theme.resolveCornerRadiusScale
 
@@ -33,9 +31,8 @@ enum class ContainerLevel {
 }
 
 /**
- * 两值主题的形状 tokens。使用 [AppShapes.container] 而非手写 `RoundedCornerShape(N.dp)`。
- * 基础值按主题风格缩放（MIUIX 更大、MATERIAL3 更紧凑）；Pill 级直接取 chrome tokens，
- * 使各风格保留原生胶囊曲率。
+ * 单值 Miuix 主题的形状 tokens。使用 [AppShapes.container] 而非手写 `RoundedCornerShape(N.dp)`。
+ * 基础值按 Miuix 主题风格缩放；Pill 级直接取 chrome tokens，使胶囊控件保留原生曲率。
  */
 object AppShapes {
 
@@ -52,21 +49,19 @@ object AppShapes {
     }
 
     fun resolveContainerCornerDp(
-        level: ContainerLevel,
-        uiStyle: AppUiStyle
+        level: ContainerLevel
     ): Dp {
         if (level == ContainerLevel.Pill) {
-            return resolveAndroidNativeChromeTokens(uiStyle).pillCornerRadiusDp.dp
+            return resolveAndroidNativeChromeTokens().pillCornerRadiusDp.dp
         }
-        val scale = resolveCornerRadiusScale(uiStyle)
+        val scale = resolveCornerRadiusScale()
         return (baseDp(level) * scale).dp
     }
 
     fun resolveContainerShape(
-        level: ContainerLevel,
-        uiStyle: AppUiStyle
+        level: ContainerLevel
     ): Shape {
-        val dp = resolveContainerCornerDp(level, uiStyle)
+        val dp = resolveContainerCornerDp(level)
         return if (level == ContainerLevel.Sheet) {
             topRounded(dp)
         } else {
@@ -80,10 +75,9 @@ object AppShapes {
      * reliably; iOS continuous corners render as chamfered edges.
      */
     fun resolveBorderedContainerShape(
-        level: ContainerLevel,
-        uiStyle: AppUiStyle
+        level: ContainerLevel
     ): Shape {
-        val dp = resolveContainerCornerDp(level, uiStyle)
+        val dp = resolveContainerCornerDp(level)
         return if (level == ContainerLevel.Sheet) {
             topRounded(dp)
         } else {
@@ -141,20 +135,17 @@ object AppShapes {
 
     @Composable
     fun container(level: ContainerLevel): Shape = resolveContainerShape(
-        level = level,
-        uiStyle = LocalAppUiStyle.current
+        level = level
     )
 
     @Composable
     fun borderedContainer(level: ContainerLevel): Shape = resolveBorderedContainerShape(
-        level = level,
-        uiStyle = LocalAppUiStyle.current
+        level = level
     )
 
     @Composable
     fun containerCornerDp(level: ContainerLevel): Dp = resolveContainerCornerDp(
-        level = level,
-        uiStyle = LocalAppUiStyle.current
+        level = level
     )
 
     /** Scale a semantic radius (e.g. long-press hint size multiplier). */

@@ -117,7 +117,6 @@ internal fun reduceHomePreScroll(
     isHeaderCollapseEnabled: Boolean,
     isBottomBarAutoHideEnabled: Boolean,
     useSideNavigation: Boolean,
-    liquidGlassEnabled: Boolean,
     currentGlobalScrollOffset: Float,
     bottomBarVisibilityThresholdPx: Float = 10f
 ): HomeScrollUpdate {
@@ -141,8 +140,7 @@ internal fun reduceHomePreScroll(
         bottomBarVisibilityIntent = nextBottomBarIntent,
         globalScrollOffset = resolveNextHomeGlobalScrollOffset(
             currentOffset = currentGlobalScrollOffset,
-            scrollDeltaY = deltaY,
-            liquidGlassEnabled = liquidGlassEnabled
+            scrollDeltaY = deltaY
         )
     )
 }

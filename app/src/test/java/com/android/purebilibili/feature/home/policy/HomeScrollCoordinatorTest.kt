@@ -156,7 +156,6 @@ class HomeScrollCoordinatorTest {
             isHeaderCollapseEnabled = true,
             isBottomBarAutoHideEnabled = false,
             useSideNavigation = false,
-            liquidGlassEnabled = false,
             currentGlobalScrollOffset = 10f
         )
 
@@ -176,7 +175,6 @@ class HomeScrollCoordinatorTest {
             isHeaderCollapseEnabled = true,
             isBottomBarAutoHideEnabled = false,
             useSideNavigation = false,
-            liquidGlassEnabled = false,
             currentGlobalScrollOffset = 0f,
         )
 
@@ -194,7 +192,6 @@ class HomeScrollCoordinatorTest {
             isHeaderCollapseEnabled = true,
             isBottomBarAutoHideEnabled = false,
             useSideNavigation = false,
-            liquidGlassEnabled = false,
             currentGlobalScrollOffset = 0f,
         )
 
@@ -211,7 +208,6 @@ class HomeScrollCoordinatorTest {
             isHeaderCollapseEnabled = false,
             isBottomBarAutoHideEnabled = false,
             useSideNavigation = false,
-            liquidGlassEnabled = false,
             currentGlobalScrollOffset = 40f
         )
 
@@ -228,7 +224,6 @@ class HomeScrollCoordinatorTest {
             isHeaderCollapseEnabled = true,
             isBottomBarAutoHideEnabled = false,
             useSideNavigation = false,
-            liquidGlassEnabled = false,
             currentGlobalScrollOffset = 10f
         )
 
@@ -245,7 +240,6 @@ class HomeScrollCoordinatorTest {
             isHeaderCollapseEnabled = true,
             isBottomBarAutoHideEnabled = true,
             useSideNavigation = false,
-            liquidGlassEnabled = false,
             currentGlobalScrollOffset = 10f,
             bottomBarVisibilityThresholdPx = 10f
         )
@@ -263,7 +257,6 @@ class HomeScrollCoordinatorTest {
             isHeaderCollapseEnabled = true,
             isBottomBarAutoHideEnabled = true,
             useSideNavigation = false,
-            liquidGlassEnabled = false,
             currentGlobalScrollOffset = 10f
         )
 
@@ -271,7 +264,7 @@ class HomeScrollCoordinatorTest {
     }
 
     @Test
-    fun liquidGlassEnabled_updatesGlobalOffset() {
+    fun retiredLiquidGlassCoupling_neverPublishesGlobalOffset() {
         val result = reduceHomePreScroll(
             currentHeaderOffsetPx = 0f,
             deltaY = -8f,
@@ -280,11 +273,10 @@ class HomeScrollCoordinatorTest {
             isHeaderCollapseEnabled = true,
             isBottomBarAutoHideEnabled = false,
             useSideNavigation = false,
-            liquidGlassEnabled = true,
             currentGlobalScrollOffset = 120f
         )
 
-        assertEquals(128f, result.globalScrollOffset)
+        assertNull(result.globalScrollOffset)
     }
 
     @Test
@@ -330,7 +322,6 @@ class HomeScrollCoordinatorTest {
             isHeaderCollapseEnabled = true,
             isBottomBarAutoHideEnabled = false,
             useSideNavigation = false,
-            liquidGlassEnabled = false,
             currentGlobalScrollOffset = 40f
         )
 
@@ -347,7 +338,6 @@ class HomeScrollCoordinatorTest {
             isHeaderCollapseEnabled = true,
             isBottomBarAutoHideEnabled = false,
             useSideNavigation = false,
-            liquidGlassEnabled = false,
             currentGlobalScrollOffset = 40f
         )
 
@@ -364,7 +354,6 @@ class HomeScrollCoordinatorTest {
             isHeaderCollapseEnabled = true,
             isBottomBarAutoHideEnabled = false,
             useSideNavigation = false,
-            liquidGlassEnabled = false,
             currentGlobalScrollOffset = 40f
         )
 

@@ -1,22 +1,14 @@
 package com.android.purebilibili.core.ui
 
-import com.android.purebilibili.core.theme.AppUiStyle
-
 /**
- * Visual recipe for indeterminate loading chrome across UI presets.
+ * Visual recipe for indeterminate loading chrome.
  *
- * - [MATERIAL3_LOADING_INDICATOR]: official M3 morphing [androidx.compose.material3.LoadingIndicator]
- *   with [ColorScheme.primary] (dynamic color when enabled).
- * - [MATERIAL3_CIRCULAR]: official M3 [androidx.compose.material3.CircularProgressIndicator]
- *   for compact / inline slots where the morphing indicator is too large.
  * - [MIUIX_INFINITE]: Miuix orbiting-dot [top.yukonga.miuix.kmp.basic.InfiniteProgressIndicator]
  *   for page-level loading.
  * - [MIUIX_CIRCULAR]: Miuix [top.yukonga.miuix.kmp.basic.CircularProgressIndicator]
  *   for compact / inline slots.
  */
 enum class AdaptiveLoadingVisual {
-    MATERIAL3_LOADING_INDICATOR,
-    MATERIAL3_CIRCULAR,
     MIUIX_INFINITE,
     MIUIX_CIRCULAR,
 }
@@ -33,25 +25,10 @@ enum class AdaptiveLoadingDensity {
 }
 
 fun resolveAdaptiveLoadingVisual(
-    uiStyle: AppUiStyle,
     density: AdaptiveLoadingDensity = AdaptiveLoadingDensity.PAGE,
-): AdaptiveLoadingVisual {
-    val renderer = resolvePresetPrimitiveRenderer(uiStyle)
-    return resolveAdaptiveLoadingVisual(renderer = renderer, density = density)
-}
-
-fun resolveAdaptiveLoadingVisual(
-    renderer: PresetPrimitiveRenderer,
-    density: AdaptiveLoadingDensity = AdaptiveLoadingDensity.PAGE,
-): AdaptiveLoadingVisual = when (renderer) {
-    PresetPrimitiveRenderer.MATERIAL3 -> when (density) {
-        AdaptiveLoadingDensity.PAGE -> AdaptiveLoadingVisual.MATERIAL3_LOADING_INDICATOR
-        AdaptiveLoadingDensity.COMPACT -> AdaptiveLoadingVisual.MATERIAL3_CIRCULAR
-    }
-    PresetPrimitiveRenderer.MIUIX_BRIDGED -> when (density) {
-        AdaptiveLoadingDensity.PAGE -> AdaptiveLoadingVisual.MIUIX_INFINITE
-        AdaptiveLoadingDensity.COMPACT -> AdaptiveLoadingVisual.MIUIX_CIRCULAR
-    }
+): AdaptiveLoadingVisual = when (density) {
+    AdaptiveLoadingDensity.PAGE -> AdaptiveLoadingVisual.MIUIX_INFINITE
+    AdaptiveLoadingDensity.COMPACT -> AdaptiveLoadingVisual.MIUIX_CIRCULAR
 }
 
 /**

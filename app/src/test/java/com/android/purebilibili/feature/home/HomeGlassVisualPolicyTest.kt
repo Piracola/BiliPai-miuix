@@ -2,7 +2,6 @@ package com.android.purebilibili.feature.home
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
-import com.android.purebilibili.core.store.HomeCardInfoGlassMode
 import com.android.purebilibili.core.store.HomeWallpaperEffectMode
 import com.android.purebilibili.core.store.HomeWallpaperEffectScope
 import com.android.purebilibili.core.ui.transition.VideoCardTransitionBackgroundPhase
@@ -426,104 +425,6 @@ class HomeGlassVisualPolicyTest {
         )
 
         assertTrue(strongBlur.containerAlpha > softBlur.containerAlpha)
-    }
-
-    @Test
-    fun cardInfoRealtimeBlurAndLiquidGlassAreIndependent() {
-        val blurOnly = resolveHomeCardInfoSurfaceAppearance(
-            wallpaperTintEnabled = true,
-            wallpaperEffectMode = HomeWallpaperEffectMode.SOFT_BLUR,
-            isDarkTheme = false,
-            isDataSaverActive = false,
-            infoGlassMode = HomeCardInfoGlassMode.REALTIME_BLUR,
-            hasWallpaperHazeState = true,
-            hasLayerBackdrop = true,
-            blurEnabled = true
-        )
-        val liquidOnly = resolveHomeCardInfoSurfaceAppearance(
-            wallpaperTintEnabled = true,
-            wallpaperEffectMode = HomeWallpaperEffectMode.SOFT_BLUR,
-            isDarkTheme = false,
-            isDataSaverActive = false,
-            infoGlassMode = HomeCardInfoGlassMode.REALTIME_LIQUID_GLASS,
-            hasWallpaperHazeState = true,
-            hasLayerBackdrop = true,
-            blurEnabled = true
-        )
-        val both = resolveHomeCardInfoSurfaceAppearance(
-            wallpaperTintEnabled = true,
-            wallpaperEffectMode = HomeWallpaperEffectMode.SOFT_BLUR,
-            isDarkTheme = false,
-            isDataSaverActive = false,
-            infoGlassMode = HomeCardInfoGlassMode.BLUR_AND_LIQUID,
-            hasWallpaperHazeState = true,
-            hasLayerBackdrop = true,
-            blurEnabled = true
-        )
-        assertTrue(blurOnly.useRealtimeHaze)
-        assertFalse(blurOnly.useRealtimeLiquidGlass)
-        assertFalse(liquidOnly.useRealtimeHaze)
-        assertTrue(liquidOnly.useRealtimeLiquidGlass)
-        assertTrue(both.useRealtimeHaze)
-        assertTrue(both.useRealtimeLiquidGlass)
-        // Keep fill light so frosted wallpaper is visible (was invisible before).
-        assertTrue(blurOnly.containerAlpha <= 0.14f)
-    }
-
-    @Test
-    fun cardInfoRealtimeBlurRequiresWallpaperHazeState() {
-        val appearance = resolveHomeCardInfoSurfaceAppearance(
-            wallpaperTintEnabled = true,
-            wallpaperEffectMode = HomeWallpaperEffectMode.SOFT_BLUR,
-            isDarkTheme = false,
-            isDataSaverActive = false,
-            infoGlassMode = HomeCardInfoGlassMode.REALTIME_BLUR,
-            hasWallpaperHazeState = false,
-            hasLayerBackdrop = true,
-            blurEnabled = true
-        )
-        assertFalse(appearance.useRealtimeHaze)
-        assertEquals(0.16f, appearance.containerAlpha)
-    }
-
-    @Test
-    fun cardInfoLiquidGlassRequiresLayerBackdrop() {
-        assertFalse(
-            shouldUseRealtimeHomeCardInfoLiquidGlass(
-                infoGlassMode = HomeCardInfoGlassMode.REALTIME_LIQUID_GLASS,
-                hasLayerBackdrop = false,
-                blurEnabled = true,
-                isDataSaverActive = false
-            )
-        )
-        assertTrue(
-            shouldUseRealtimeHomeCardInfoLiquidGlass(
-                infoGlassMode = HomeCardInfoGlassMode.REALTIME_LIQUID_GLASS,
-                hasLayerBackdrop = true,
-                blurEnabled = true,
-                isDataSaverActive = false
-            )
-        )
-    }
-
-    @Test
-    fun cardInfoRealtimeEffectsDisabledInDataSaver() {
-        assertFalse(
-            shouldUseRealtimeHomeCardInfoBlur(
-                infoGlassMode = HomeCardInfoGlassMode.BLUR_AND_LIQUID,
-                hasWallpaperHazeState = true,
-                blurEnabled = true,
-                isDataSaverActive = true
-            )
-        )
-        assertFalse(
-            shouldUseRealtimeHomeCardInfoLiquidGlass(
-                infoGlassMode = HomeCardInfoGlassMode.BLUR_AND_LIQUID,
-                hasLayerBackdrop = true,
-                blurEnabled = true,
-                isDataSaverActive = true
-            )
-        )
     }
 
     @Test

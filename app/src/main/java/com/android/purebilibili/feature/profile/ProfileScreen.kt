@@ -1665,68 +1665,28 @@ private fun ProfileSpaceTabs(
     val homeSettings by SettingsManager
         .getHomeSettings(context)
         .collectAsStateWithLifecycle(initialValue = HomeSettings())
-    val sharedLiquidGlassEnabled = rememberAppChromeLiquidGlassEnabled(
-        individualEnabled = homeSettings.isBottomBarLiquidGlassEnabled,
-        androidNativeEnabled = homeSettings.androidNativeLiquidGlassEnabled,
-    )
     val selectedIndex = tabs.indexOfFirst { it.tab == selectedTab }.coerceAtLeast(0)
     val tabModifier = Modifier
         .fillMaxWidth()
         .padding(horizontal = chromeSpec.rowHorizontalInsetDp.dp)
-    val useUnderlineTabs = embeddedInPanel || !sharedLiquidGlassEnabled
-    if (!useUnderlineTabs) {
-        BottomBarLiquidSegmentedControl(
-            items = tabs.map { it.title },
-            selectedIndex = selectedIndex,
-            onSelected = { index -> tabs.getOrNull(index)?.let { onTabSelected(it.tab) } },
-            modifier = tabModifier
-                .padding(vertical = 6.dp)
-                .background(contentChrome.cardContainerColor, rowContainerShape)
-                .padding(horizontal = chromeSpec.controlHorizontalInsetDp.dp, vertical = 8.dp),
-            height = 46.dp,
-            indicatorHeight = 40.dp,
-            labelFontSize = 16.sp,
-            forceLiquidChrome = homeSettings.androidNativeLiquidGlassEnabled,
-            dragSelectionEnabled = false,
-            containerColorOverride = contentChrome.surfaceColor,
-            selectedTextColorOverride = contentChrome.onSurfaceColor,
-            unselectedTextColorOverride = contentChrome.onSurfaceVariantColor,
-            indicatorIdleSurfaceColorOverride = contentChrome.primaryColor.copy(alpha = 0.14f)
-        )
-        return
-    }
-
-    Row(
+    BottomBarLiquidSegmentedControl(
+        items = tabs.map { it.title },
+        selectedIndex = selectedIndex,
+        onSelected = { index -> tabs.getOrNull(index)?.let { onTabSelected(it.tab) } },
         modifier = tabModifier
-            .height(layoutTokens.tabHeightDp.dp),
-        horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        tabs.forEach { item ->
-            val selected = item.tab == selectedTab
-            Column(
-                modifier = Modifier
-                    .clickable { onTabSelected(item.tab) },
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                AppText(
-                    text = item.title,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = if (selected) contentChrome.onSurfaceColor else contentChrome.onSurfaceVariantColor,
-                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Box(
-                    modifier = Modifier
-                        .width(24.dp)
-                        .height(3.dp)
-                        .clip(AppShapes.container(ContainerLevel.Pill))
-                        .background(if (selected) contentChrome.primaryColor else Color.Transparent)
-                )
-            }
-        }
-    }
+            .padding(vertical = 6.dp)
+            .background(contentChrome.cardContainerColor, rowContainerShape)
+            .padding(horizontal = chromeSpec.controlHorizontalInsetDp.dp, vertical = 8.dp),
+        height = 46.dp,
+        indicatorHeight = 40.dp,
+        labelFontSize = 16.sp,
+        dragSelectionEnabled = false,
+        containerColorOverride = contentChrome.surfaceColor,
+        selectedTextColorOverride = contentChrome.onSurfaceColor,
+        unselectedTextColorOverride = contentChrome.onSurfaceVariantColor,
+        indicatorIdleSurfaceColorOverride = contentChrome.primaryColor.copy(alpha = 0.14f)
+    )
+    return
 }
 
 @Composable

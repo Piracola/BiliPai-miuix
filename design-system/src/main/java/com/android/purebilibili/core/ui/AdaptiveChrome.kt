@@ -5,18 +5,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MediumTopAppBar
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScaffoldDefaults
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
@@ -28,23 +20,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
-import com.android.purebilibili.core.theme.AppUiStyle
-import com.android.purebilibili.core.theme.LocalAppUiStyle
 import com.android.purebilibili.core.theme.resolveAndroidNativeChromeTokens
 import top.yukonga.miuix.kmp.basic.Scaffold as MiuixScaffold
 import top.yukonga.miuix.kmp.basic.SmallTopAppBar as MiuixSmallTopAppBar
 import top.yukonga.miuix.kmp.basic.TopAppBar as MiuixTopAppBar
 import top.yukonga.miuix.kmp.utils.MiuixPopupUtils
 
-fun isNativeMiuixEnabled(
-    uiStyle: AppUiStyle
-): Boolean = uiStyle == AppUiStyle.MIUIX
+fun isNativeMiuixEnabled(): Boolean = true
 
 @Composable
 fun rememberIsNativeMiuixEnabled(): Boolean {
-    return isNativeMiuixEnabled(
-        uiStyle = LocalAppUiStyle.current
-    )
+    return isNativeMiuixEnabled()
 }
 
 enum class AdaptiveTopAppBarStyle {
@@ -71,10 +57,8 @@ fun resolveGlobalWallpaperProtectiveColor(
     return baseColor.copy(alpha = alpha.coerceIn(0f, 1f))
 }
 
-fun resolveAdaptiveTopAppBarChromeSpec(
-    uiStyle: AppUiStyle
-): AdaptiveTopAppBarChromeSpec {
-    val chromeTokens = resolveAndroidNativeChromeTokens(uiStyle)
+fun resolveAdaptiveTopAppBarChromeSpec(): AdaptiveTopAppBarChromeSpec {
+    val chromeTokens = resolveAndroidNativeChromeTokens()
     return AdaptiveTopAppBarChromeSpec(
         containerCornerRadiusDp = chromeTokens.containerCornerRadiusDp,
         scrolledContainerAlpha = 1f,
@@ -164,36 +148,17 @@ fun AdaptiveScaffold(
         defaultBackgroundColor = MaterialTheme.colorScheme.background,
         globalWallpaperVisible = LocalGlobalWallpaperBackdropVisible.current
     )
-    val scaffoldRenderer = resolveAdaptiveScaffoldRenderer(
-        uiStyle = LocalAppUiStyle.current
+    MiuixScaffold(
+        modifier = modifier,
+        topBar = topBar,
+        bottomBar = bottomBar,
+        floatingActionButton = floatingActionButton,
+        snackbarHost = snackbarHost,
+        popupHost = { MiuixPopupUtils.MiuixPopupHost() },
+        containerColor = effectiveContainerColor,
+        contentWindowInsets = contentWindowInsets,
+        content = content
     )
-    when (scaffoldRenderer) {
-        AdaptiveScaffoldRenderer.MIUIX_SCAFFOLD_WITH_POPUP_HOST -> {
-        MiuixScaffold(
-            modifier = modifier,
-            topBar = topBar,
-            bottomBar = bottomBar,
-            floatingActionButton = floatingActionButton,
-            snackbarHost = snackbarHost,
-            popupHost = { MiuixPopupUtils.MiuixPopupHost() },
-            containerColor = effectiveContainerColor,
-            contentWindowInsets = contentWindowInsets,
-            content = content
-        )
-        }
-        AdaptiveScaffoldRenderer.MATERIAL3_SCAFFOLD -> {
-        Scaffold(
-            modifier = modifier,
-            topBar = topBar,
-            bottomBar = bottomBar,
-            floatingActionButton = floatingActionButton,
-            snackbarHost = snackbarHost,
-            containerColor = effectiveContainerColor,
-            contentWindowInsets = contentWindowInsets,
-            content = content
-        )
-        }
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -209,9 +174,8 @@ fun AdaptiveTopAppBar(
     style: AdaptiveTopAppBarStyle = AdaptiveTopAppBarStyle.SMALL,
     scrollBehavior: TopAppBarScrollBehavior? = null
 ) {
-    val uiStyle = LocalAppUiStyle.current
     val globalWallpaperVisible = LocalGlobalWallpaperBackdropVisible.current
-    val chromeSpec = resolveAdaptiveTopAppBarChromeSpec(uiStyle)
+    val chromeSpec = resolveAdaptiveTopAppBarChromeSpec()
     val effectiveColors = if (globalWallpaperVisible) {
         colors.copy(
             containerColor = resolveGlobalWallpaperChromeColor(
@@ -232,91 +196,49 @@ fun AdaptiveTopAppBar(
     }
     val topAppBarColors = effectiveColors
 
-    if (rememberIsNativeMiuixEnabled()) {
-        val navigationContent =
-            @Composable {
-                CompositionLocalProvider(
-                    LocalContentColor provides topAppBarColors.navigationIconContentColor
-                ) {
-                    navigationIcon()
-                }
-            }
-        val actionsContent: @Composable RowScope.() -> Unit = {
+    val navigationContent =
+        @Composable {
             CompositionLocalProvider(
-                LocalContentColor provides topAppBarColors.actionIconContentColor
+                LocalContentColor provides topAppBarColors.navigationIconContentColor
             ) {
-                actions()
+                navigationIcon()
             }
         }
-        when (style) {
-            AdaptiveTopAppBarStyle.LARGE -> {
-                MiuixTopAppBar(
-                    title = title,
-                    largeTitle = largeTitle,
-                    modifier = modifier,
-                    color = topAppBarColors.containerColor,
-                    navigationIcon = navigationContent,
-                    actions = actionsContent,
-                    // Miuix 标题可用宽度 = (总宽 - 导航 - actions) × 0.9 - titlePadding×2；
-                    // 默认 26dp×2 + 多 actions 会把标题挤到省略号。压紧 padding 把空间还给标题。
-                    titlePadding = 0.dp,
-                    navigationIconPadding = 0.dp,
-                    actionIconPadding = 0.dp,
-                )
-            }
-
-            AdaptiveTopAppBarStyle.SMALL,
-            AdaptiveTopAppBarStyle.CENTERED -> {
-                MiuixSmallTopAppBar(
-                    title = title,
-                    modifier = modifier,
-                    color = topAppBarColors.containerColor,
-                    navigationIcon = navigationContent,
-                    actions = actionsContent,
-                    titlePadding = 0.dp,
-                    navigationIconPadding = 0.dp,
-                    actionIconPadding = 0.dp,
-                )
-            }
+    val actionsContent: @Composable RowScope.() -> Unit = {
+        CompositionLocalProvider(
+            LocalContentColor provides topAppBarColors.actionIconContentColor
+        ) {
+            actions()
         }
-        return
     }
-
-    val topBarWindowInsets = WindowInsets.statusBars
     when (style) {
-        AdaptiveTopAppBarStyle.SMALL -> {
-            TopAppBar(
-                modifier = modifier,
-                title = { Text(title) },
-                navigationIcon = navigationIcon,
-                actions = actions,
-                colors = topAppBarColors,
-                scrollBehavior = scrollBehavior,
-                windowInsets = topBarWindowInsets
-            )
-        }
-
-        AdaptiveTopAppBarStyle.CENTERED -> {
-            CenterAlignedTopAppBar(
-                modifier = modifier,
-                title = { Text(title) },
-                navigationIcon = navigationIcon,
-                actions = actions,
-                colors = topAppBarColors,
-                scrollBehavior = scrollBehavior,
-                windowInsets = topBarWindowInsets
-            )
-        }
-
         AdaptiveTopAppBarStyle.LARGE -> {
-            TopAppBar(
+            MiuixTopAppBar(
+                title = title,
+                largeTitle = largeTitle,
                 modifier = modifier,
-                title = { Text(largeTitle, style = MaterialTheme.typography.titleLarge) },
-                navigationIcon = navigationIcon,
-                actions = actions,
-                colors = topAppBarColors,
-                scrollBehavior = scrollBehavior,
-                windowInsets = topBarWindowInsets
+                color = topAppBarColors.containerColor,
+                navigationIcon = navigationContent,
+                actions = actionsContent,
+                // Miuix 标题可用宽度 = (总宽 - 导航 - actions) × 0.9 - titlePadding×2；
+                // 默认 26dp×2 + 多 actions 会把标题挤到省略号。压紧 padding 把空间还给标题。
+                titlePadding = 0.dp,
+                navigationIconPadding = 0.dp,
+                actionIconPadding = 0.dp,
+            )
+        }
+
+        AdaptiveTopAppBarStyle.SMALL,
+        AdaptiveTopAppBarStyle.CENTERED -> {
+            MiuixSmallTopAppBar(
+                title = title,
+                modifier = modifier,
+                color = topAppBarColors.containerColor,
+                navigationIcon = navigationContent,
+                actions = actionsContent,
+                titlePadding = 0.dp,
+                navigationIconPadding = 0.dp,
+                actionIconPadding = 0.dp,
             )
         }
     }
@@ -350,31 +272,21 @@ data class AppTopChromePolicy(
 }
 
 fun resolveAppTopChromePolicy(
-    uiStyle: AppUiStyle,
     iconStyle: AppIconStyle = AppIconStyle.AUTO,
-): AppTopChromePolicy = when (uiStyle) {
-    AppUiStyle.MIUIX -> AppTopChromePolicy(
-        // Miuix liquid glass uses the same moving dock indicator contract as the
-        // Material renderer. TONAL_CAPSULE is the retired per-item filled capsule.
-        tabPresentation = AppTopTabPresentation.MATERIAL_UNDERLINE,
-        iconFamily = AppSemanticIconFamily.MATERIAL,
-        iconStyle = iconStyle,
-        compactChromeSpec = resolveCompactCapsuleChromeSpec(uiStyle),
-    )
-    AppUiStyle.MATERIAL3 -> AppTopChromePolicy(
-        tabPresentation = AppTopTabPresentation.MATERIAL_UNDERLINE,
-        iconFamily = AppSemanticIconFamily.MATERIAL,
-        iconStyle = iconStyle,
-        compactChromeSpec = resolveCompactCapsuleChromeSpec(uiStyle),
-    )
-}
+): AppTopChromePolicy = AppTopChromePolicy(
+    // Miuix liquid glass uses the same moving dock indicator contract as the
+    // Material renderer. TONAL_CAPSULE is the retired per-item filled capsule.
+    tabPresentation = AppTopTabPresentation.MATERIAL_UNDERLINE,
+    iconFamily = AppSemanticIconFamily.MATERIAL,
+    iconStyle = iconStyle,
+    compactChromeSpec = resolveCompactCapsuleChromeSpec(),
+)
 
 @Composable
 fun rememberAppTopChromePolicy(): AppTopChromePolicy {
-    val uiStyle = LocalAppUiStyle.current
     val iconStyle = rememberResolvedAppIconStyle()
-    return remember(uiStyle, iconStyle) {
-        resolveAppTopChromePolicy(uiStyle, iconStyle)
+    return remember(iconStyle) {
+        resolveAppTopChromePolicy(iconStyle)
     }
 }
 

@@ -3,14 +3,12 @@ package com.android.purebilibili.core.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
-import com.android.purebilibili.core.theme.AppUiStyle
-import com.android.purebilibili.core.theme.LocalAppUiStyle
 
 /**
  * 列表条目呈现样式(用户可切换)。
- * - [AUTO]:跟随运行时主题 —— MATERIAL3→[CUSTOM],MIUIX→[NATIVE]。
- * - [CUSTOM]:项目自定义条目(圆角图标容器 + 自定义 Row),两个预设均可选用。
- * - [NATIVE]:各预设原生组件 —— MATERIAL3→M3 ListItem,MIUIX→Miuix 原生条目。
+ * - [AUTO]:跟随运行时主题 —— 当前仅 MIUIX 运行时,解析为 [NATIVE]。
+ * - [CUSTOM]:项目自定义条目(圆角图标容器 + 自定义 Row)。
+ * - [NATIVE]:Miuix 原生条目。
  */
 enum class AppListItemStyle {
     AUTO,
@@ -20,12 +18,8 @@ enum class AppListItemStyle {
 
 fun resolveAppListItemStyle(
     style: AppListItemStyle,
-    uiStyle: AppUiStyle,
 ): AppListItemStyle = when (style) {
-    AppListItemStyle.AUTO -> when (uiStyle) {
-        AppUiStyle.MATERIAL3 -> AppListItemStyle.CUSTOM
-        AppUiStyle.MIUIX -> AppListItemStyle.NATIVE
-    }
+    AppListItemStyle.AUTO -> AppListItemStyle.NATIVE
     else -> style
 }
 
@@ -45,8 +39,7 @@ val LocalAppListItemStyle = staticCompositionLocalOf {
 @Composable
 fun rememberResolvedAppListItemStyle(): AppListItemStyle {
     val style = LocalAppListItemStyle.current
-    val uiStyle = LocalAppUiStyle.current
-    return remember(style, uiStyle) {
-        resolveAppListItemStyle(style, uiStyle)
+    return remember(style) {
+        resolveAppListItemStyle(style)
     }
 }

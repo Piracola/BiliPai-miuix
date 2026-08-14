@@ -12,8 +12,7 @@ import com.android.purebilibili.core.ui.AppTopTabPresentation
 
 enum class TopTabMaterialMode {
     PLAIN,
-    BLUR,
-    LIQUID_GLASS
+    BLUR
 }
 
 enum class TopTabClickAction {
@@ -330,14 +329,9 @@ internal fun resolveTopTabClickAction(
 }
 
 internal fun resolveTopTabRenderMaterialMode(
-    liquidGlassEnabled: Boolean,
     hasHazeState: Boolean
 ): TopTabMaterialMode {
-    return when {
-        liquidGlassEnabled -> TopTabMaterialMode.LIQUID_GLASS
-        hasHazeState -> TopTabMaterialMode.BLUR
-        else -> TopTabMaterialMode.PLAIN
-    }
+    return if (hasHazeState) TopTabMaterialMode.BLUR else TopTabMaterialMode.PLAIN
 }
 
 enum class TopTabIndicatorStyle {
@@ -560,8 +554,7 @@ internal fun resolveTopTabIndicatorStyle(presentation: AppTopTabPresentation): T
 }
 
 internal fun shouldUseMd3TopTabMaterialIndicator(
-    presentation: AppTopTabPresentation,
-    liquidGlassEnabled: Boolean
+    presentation: AppTopTabPresentation
 ): Boolean {
     return resolveTopTabIndicatorStyle(presentation) == TopTabIndicatorStyle.MATERIAL
 }
@@ -619,14 +612,9 @@ fun resolveTopTabIconTextSpacingDp(labelMode: Int): Float {
 
 fun resolveTopTabStyle(
     isBottomBarFloating: Boolean,
-    isBottomBarBlurEnabled: Boolean,
-    isLiquidGlassEnabled: Boolean
+    isBottomBarBlurEnabled: Boolean
 ): TopTabVisualState {
-    val materialMode = when {
-        isLiquidGlassEnabled -> TopTabMaterialMode.LIQUID_GLASS
-        isBottomBarBlurEnabled -> TopTabMaterialMode.BLUR
-        else -> TopTabMaterialMode.PLAIN
-    }
+    val materialMode = if (isBottomBarBlurEnabled) TopTabMaterialMode.BLUR else TopTabMaterialMode.PLAIN
 
     return TopTabVisualState(
         floating = isBottomBarFloating,
@@ -639,13 +627,6 @@ internal fun resolveEffectiveHomeHeaderTabMaterialMode(
     interactionBudget: HomeInteractionMotionBudget
 ): TopTabMaterialMode {
     return materialMode
-}
-
-internal fun resolveEffectiveTopTabLiquidGlassEnabled(
-    isLiquidGlassEnabled: Boolean,
-    interactionBudget: HomeInteractionMotionBudget
-): Boolean {
-    return isLiquidGlassEnabled
 }
 
 internal fun shouldDrawHomeTopTabOuterChromeSurface(

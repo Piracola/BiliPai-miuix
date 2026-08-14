@@ -104,9 +104,7 @@ import com.android.purebilibili.core.ui.rememberAppBackIcon
 import com.android.purebilibili.core.ui.components.AppIconButton
 import com.android.purebilibili.core.store.HomeSettings
 import com.android.purebilibili.core.store.HomeFeedCardStyle
-import com.android.purebilibili.core.store.BottomBarLiquidGlassPreset
 import com.android.purebilibili.core.store.SettingsManager
-import com.android.purebilibili.core.ui.rememberAppChromeLiquidGlassEnabled
 import com.android.purebilibili.core.ui.rememberAppTopChromePolicy
 import com.android.purebilibili.core.ui.transition.LocalVideoCardSharedElementSourceRoute
 import com.android.purebilibili.data.model.response.BangumiType
@@ -455,10 +453,7 @@ fun PartitionContent(
     val context = LocalContext.current
     val homeSettings by SettingsManager.getHomeSettings(context).collectAsStateWithLifecycle(initialValue = HomeSettings())
     val topChromeIconFamily = rememberAppTopChromePolicy().effectiveIconFamily
-    val liquidGlassIndicatorEnabled = rememberAppChromeLiquidGlassEnabled(
-        individualEnabled = homeSettings.isBottomBarLiquidGlassEnabled,
-        androidNativeEnabled = homeSettings.androidNativeLiquidGlassEnabled,
-    )
+    val liquidGlassIndicatorEnabled = false
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
     val layoutDirection = LocalLayoutDirection.current
@@ -518,7 +513,6 @@ fun PartitionContent(
                     end = 4.dp
                 ),
                 liquidGlassIndicatorEnabled = liquidGlassIndicatorEnabled,
-                liquidGlassPreset = homeSettings.bottomBarLiquidGlassPreset,
                 onVideoListPushChanged = { sideRailVideoPushTargetPx = it },
                 onPartitionSelected = { partition ->
                     val bangumiType = resolvePartitionBangumiType(partition.id)
@@ -566,7 +560,6 @@ private fun PartitionSideRail(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues,
     liquidGlassIndicatorEnabled: Boolean,
-    liquidGlassPreset: BottomBarLiquidGlassPreset,
     onVideoListPushChanged: (Float) -> Unit,
     onPartitionSelected: (PartitionCategory) -> Unit
 ) {
@@ -638,8 +631,6 @@ private fun PartitionSideRail(
             indicatorOffsetPxProvider = currentIndicatorOffsetPxProvider,
             indicatorWidth = indicatorWidth,
             liquidGlassIndicatorEnabled = liquidGlassIndicatorEnabled,
-            liquidGlassPreset = liquidGlassPreset,
-            backdrop = railPageBackdrop,
             maxVideoPushPx = maxVideoPushPx,
             horizontalPadding = indicatorHorizontalPadding,
             onVideoListPushChanged = onVideoListPushChanged,
@@ -688,8 +679,6 @@ private fun PartitionSideRailMovingIndicator(
     indicatorOffsetPxProvider: () -> Float,
     indicatorWidth: androidx.compose.ui.unit.Dp,
     liquidGlassIndicatorEnabled: Boolean,
-    liquidGlassPreset: BottomBarLiquidGlassPreset,
-    backdrop: top.yukonga.miuix.kmp.blur.Backdrop,
     maxVideoPushPx: Float,
     horizontalPadding: PartitionSideRailIndicatorHorizontalPadding,
     onVideoListPushChanged: (Float) -> Unit,
@@ -697,21 +686,10 @@ private fun PartitionSideRailMovingIndicator(
 ) {
     val shape = resolveSharedBottomBarCapsuleShape()
     val isDarkTheme = isSystemInDarkTheme()
-    val motionSpec = remember { resolveSegmentedControlMotionSpec() }
     val pressProgress by remember {
         derivedStateOf { dragState.pressProgress }
     }
-    val refractionMotionProfile = resolveBottomBarRefractionMotionProfile(
-        position = dragState.value,
-        velocity = dragState.velocityPxPerSecond,
-        isDragging = dragState.isDragging,
-        motionSpec = motionSpec
-    )
-    val motionProgress = resolveSegmentedControlMotionProgress(
-        pressProgress = pressProgress,
-        refractionProgress = refractionMotionProfile.progress,
-        tapPressRefractionEnabled = true
-    )
+    val motionProgress = pressProgress.coerceIn(0f, 1f)
     val videoListPushPx = resolvePartitionVideoListPushPx(
         pressProgress = pressProgress,
         dragOffsetPx = dragState.dragOffset,
@@ -725,34 +703,20 @@ private fun PartitionSideRailMovingIndicator(
         isDragging = dragState.isDragging
     )
     val indicatorLayerScaleProgress = maxOf(indicatorDragScaleProgress, pressProgress)
-    // Align with home bottom bar indicator: press-driven lens + no compound scale transform.
-    val indicatorLensSpec = resolveBottomBarBackdropPresetIndicatorLens(
-        progress = pressProgress
-    )
 
     Box(modifier = modifier) {
         val density = LocalDensity.current
         BottomBarMatchedLiquidIndicator(
             visible = true,
-            dockContentAlpha = 1f,
             indicatorTranslationXPx = with(density) { horizontalPadding.start.toPx() },
             indicatorTranslationYPx = indicatorOffsetPxProvider(),
             indicatorPanelOffsetPx = 0f,
             indicatorWidth = indicatorWidth,
             indicatorHeight = PartitionSideRailItemHeight,
             shellShape = shape,
-            liquidGlassPreset = liquidGlassPreset,
-            contentBackdrop = backdrop,
-            backdrop = backdrop,
-            indicatorLensSpec = indicatorLensSpec,
-            effectivePressProgress = pressProgress,
             indicatorIdleSurfaceColor = resolveAndroidNativeIdleIndicatorSurfaceColor(darkTheme = isDarkTheme),
-            glassEnabled = liquidGlassIndicatorEnabled,
-            motionProgress = motionProgress,
-            velocityItemsPerSecond = dragState.deformationVelocityItemsPerSecond,
-            isDragging = dragState.isDragging,
+            indicatorEffectsEnabled = liquidGlassIndicatorEnabled,
             indicatorLayerScaleProgress = indicatorLayerScaleProgress,
-            bottomBarMotionSpec = motionSpec,
             isDarkTheme = isDarkTheme,
             orientation = BottomBarLiquidOrientation.VERTICAL,
             indicatorAlignment = Alignment.TopStart

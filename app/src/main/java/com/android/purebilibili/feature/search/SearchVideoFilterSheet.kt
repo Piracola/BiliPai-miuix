@@ -42,14 +42,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.android.purebilibili.core.theme.LocalAppUiStyle
 import com.android.purebilibili.core.ui.AppModalBottomSheet
-import com.android.purebilibili.core.ui.BottomSheetHost
+import top.yukonga.miuix.kmp.overlay.OverlayBottomSheet
 import com.android.purebilibili.core.ui.components.AppFilterChip
 import com.android.purebilibili.core.ui.components.AppIcon
 import com.android.purebilibili.core.ui.components.AppText
 import com.android.purebilibili.core.ui.components.AppTextButton
-import com.android.purebilibili.core.ui.resolveBottomSheetHost
 import com.android.purebilibili.data.repository.SearchDuration
 import com.android.purebilibili.data.repository.SearchOrder
 import top.yukonga.miuix.kmp.overlay.OverlayBottomSheet
@@ -189,11 +187,8 @@ private fun SearchVideoFilterSheetHost(
     onPubTimeTypeChange: (SearchVideoPubTimeType) -> Unit,
     onCustomPubTimeRange: (Long, Long) -> Unit
 ) {
-    // Host contract from stage 3: MIUIX → OverlayBottomSheet (needs the Miuix popup
-    // host mounted by AdaptiveScaffold), MATERIAL3 → Material3 ModalBottomSheet via
-    // the neutral AppModalBottomSheet facade. Never copy the host decision here.
-    val useMiuixSheet = resolveBottomSheetHost(LocalAppUiStyle.current) ==
-        BottomSheetHost.MIUIX_OVERLAY
+    // Host contract from stage 3: the single Miuix theme resolves to the Miuix
+    // OverlayBottomSheet host. Never copy the host decision here.
     val sheetContent: @Composable () -> Unit = {
         SearchVideoFilterSheetContent(
             currentDurations = currentDurations,
@@ -207,20 +202,12 @@ private fun SearchVideoFilterSheetHost(
             onCustomPubTimeRange = onCustomPubTimeRange
         )
     }
-    if (useMiuixSheet) {
-        OverlayBottomSheet(
-            show = true,
-            title = "筛选",
-            onDismissRequest = onDismiss,
-            content = sheetContent
-        )
-    } else {
-        AppModalBottomSheet(
-            onDismissRequest = onDismiss
-        ) {
-            sheetContent()
-        }
-    }
+    OverlayBottomSheet(
+        show = true,
+        title = "筛选",
+        onDismissRequest = onDismiss,
+        content = sheetContent
+    )
 }
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)

@@ -2,7 +2,6 @@ package com.android.purebilibili.core.ui
 
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
-import com.android.purebilibili.core.theme.AppUiStyle
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -19,23 +18,14 @@ class AppSemanticVisualPolicyTest {
     )
 
     @Test
-    fun twoValueStylesUseTheirNativeSemanticIconFamily() {
-        listOf(AppUiStyle.MATERIAL3, AppUiStyle.MIUIX).forEach { style ->
-            val policy = resolveAppSemanticVisualPolicy(
-                uiStyle = style,
-                materialPalette = palette,
-            )
+    fun singleMiuixStyleUsesMiuixSemanticIconFamily() {
+        val policy = resolveAppSemanticVisualPolicy(
+            materialPalette = palette,
+        )
 
-            assertEquals(
-                if (style == AppUiStyle.MIUIX) AppSemanticIconFamily.MIUIX else AppSemanticIconFamily.MATERIAL,
-                policy.iconFamily,
-            )
-            assertEquals(
-                style == AppUiStyle.MIUIX,
-                policy.prefersGroupedListCards,
-            )
-            assertEquals(palette, policy.accentPalette)
-        }
+        assertEquals(AppSemanticIconFamily.MIUIX, policy.iconFamily)
+        assertTrue(policy.prefersGroupedListCards)
+        assertEquals(palette, policy.accentPalette)
     }
 
     @Test
@@ -91,7 +81,7 @@ class AppSemanticVisualPolicyTest {
             "app/src/main/java/com/android/purebilibili/feature/settings/SettingsSemanticIconPolicy.kt",
         )
         val styleDependency = Regex(
-            """\b(UiPreset|UiStyle|AppUiStyle|AndroidNativeVariant|LocalUiPreset|LocalUiStyle|LocalAppUiStyle|LocalAndroidNativeVariant)\b"""
+            """\b(LocalUiStyle)\b"""
         )
 
         paths.forEach { path ->

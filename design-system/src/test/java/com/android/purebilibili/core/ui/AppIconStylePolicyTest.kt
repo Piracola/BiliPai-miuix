@@ -1,22 +1,16 @@
 package com.android.purebilibili.core.ui
 
-import com.android.purebilibili.core.theme.AppUiStyle
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class AppIconStylePolicyTest {
 
     @Test
-    fun `auto style keeps miuix unchanged and uses md3 standard for material3`() {
-        // MIUIX 预设保持现状(设置图标多彩色等),不引入容器化/单色化
+    fun `auto style keeps miuix unchanged`() {
+        // 单值 MIUIX 预设保持现状(设置图标多彩色等),不引入容器化/单色化
         assertEquals(
             AppIconStyle.AUTO,
-            resolveAppIconStyle(AppIconStyle.AUTO, AppUiStyle.MIUIX),
-        )
-        // MATERIAL3 预设是优化对象:默认解析为官方推荐样式
-        assertEquals(
-            AppIconStyle.MD3_STANDARD,
-            resolveAppIconStyle(AppIconStyle.AUTO, AppUiStyle.MATERIAL3),
+            resolveAppIconStyle(AppIconStyle.AUTO),
         )
     }
 
@@ -24,11 +18,11 @@ class AppIconStylePolicyTest {
     fun `explicit style wins over runtime theme`() {
         assertEquals(
             AppIconStyle.MD3_STANDARD,
-            resolveAppIconStyle(AppIconStyle.MD3_STANDARD, AppUiStyle.MIUIX),
+            resolveAppIconStyle(AppIconStyle.MD3_STANDARD),
         )
         assertEquals(
             AppIconStyle.THEME_CONTAINER,
-            resolveAppIconStyle(AppIconStyle.THEME_CONTAINER, AppUiStyle.MATERIAL3),
+            resolveAppIconStyle(AppIconStyle.THEME_CONTAINER),
         )
     }
 
@@ -60,14 +54,13 @@ class AppIconStylePolicyTest {
     @Test
     fun `top chrome policy resolves from runtime theme with icon style`() {
         val material3Chrome = resolveAppTopChromePolicy(
-            uiStyle = AppUiStyle.MATERIAL3,
             iconStyle = AppIconStyle.MD3_STANDARD,
         )
         assertEquals(AppSemanticIconFamily.MATERIAL, material3Chrome.effectiveIconFamily)
         assertEquals(AppIconStyle.MD3_STANDARD, material3Chrome.iconStyle)
         assertEquals(AppTopTabPresentation.MATERIAL_UNDERLINE, material3Chrome.tabPresentation)
 
-        val miuixChrome = resolveAppTopChromePolicy(uiStyle = AppUiStyle.MIUIX)
+        val miuixChrome = resolveAppTopChromePolicy()
         assertEquals(AppTopTabPresentation.MATERIAL_UNDERLINE, miuixChrome.tabPresentation)
         assertEquals(AppIconStyle.AUTO, miuixChrome.iconStyle)
     }

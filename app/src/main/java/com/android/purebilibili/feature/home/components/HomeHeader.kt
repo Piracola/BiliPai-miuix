@@ -53,7 +53,6 @@ import com.android.purebilibili.core.util.iOSTapEffect
 import com.android.purebilibili.core.util.rememberHapticFeedback
 import com.android.purebilibili.feature.home.UserState
 import com.android.purebilibili.core.theme.iOSSystemGray
-import com.android.purebilibili.core.store.LiquidGlassStyle
 import dev.chrisbanes.haze.HazeState
 import com.android.purebilibili.core.ui.blur.shouldAllowDirectHazeLiquidGlassFallback
 import com.android.purebilibili.core.ui.blur.shouldAllowHomeChromeLiquidGlass
@@ -70,8 +69,6 @@ import com.android.purebilibili.core.store.HomeHeaderBlurMode
 import com.android.purebilibili.core.store.HomeSettings
 import com.android.purebilibili.core.store.HomeTopLayoutOrder
 import com.android.purebilibili.core.store.HomeTopRightAction
-import com.android.purebilibili.core.store.BottomBarLiquidGlassPreset
-import com.android.purebilibili.core.store.resolveGlobalLiquidGlassReuseEnabled
 import com.android.purebilibili.feature.home.resolveHomeTopCategories
 import com.android.purebilibili.feature.home.resolveHomeTopCollapsedHandleHeight
 import com.android.purebilibili.feature.home.resolveHomeTopTabPresentationHeight
@@ -87,8 +84,6 @@ import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Messages
 import top.yukonga.miuix.kmp.icon.extended.Search
 import top.yukonga.miuix.kmp.icon.extended.Settings
-
-private const val HOME_HEADER_LIQUID_GLASS_ALPHA = 0.10f
 
 internal data class HomeTopChromeMotionPolicy(
     val isScrolling: Boolean,
@@ -143,9 +138,7 @@ internal fun resolveHomeSkinTopTabRowHeight(): Dp = AppSpacingTokens.TripleExtra
 
 internal enum class HomeTopChromeRenderMode {
     PLAIN,
-    BLUR,
-    LIQUID_GLASS_HAZE,
-    LIQUID_GLASS_BACKDROP
+    BLUR
 }
 
 internal enum class HomeTopChromeSurfaceTreatment {
@@ -163,13 +156,8 @@ internal fun resolveHomeTopLinkedBottomBarAppearance(
     )
     return HomeTopLinkedBottomBarAppearance(
         isFloating = navigationAppearance.bottomBarFloating,
-        blurEnabled = navigationAppearance.bottomBarBlurEnabled && !(
-            presentation == AppTopTabPresentation.MATERIAL_UNDERLINE &&
-                !resolvedHomeSettings.androidNativeLiquidGlassEnabled
-            ),
-        liquidGlassEnabled = resolveHomeTopChromeLiquidGlassEnabled(
-            homeSettings = resolvedHomeSettings,
-        )
+        blurEnabled = navigationAppearance.bottomBarBlurEnabled,
+        liquidGlassEnabled = false
     )
 }
 
@@ -217,38 +205,11 @@ internal fun resolveHomeTopRightActionContentDescription(
     return "${action.label}，$badgeText 条未读"
 }
 
-/**
- * Top dock / search / indicator liquid glass uses the exact bottom-bar contract:
- * the shared "安卓原生液态玻璃" switch is the single source of truth.
- */
-internal fun resolveHomeTopChromeLiquidGlassEnabled(
-    homeSettings: HomeSettings?,
-): Boolean {
-    val resolvedHomeSettings = homeSettings ?: HomeSettings()
-    return resolveGlobalLiquidGlassReuseEnabled(
-        androidNativeLiquidGlassEnabled = resolvedHomeSettings.androidNativeLiquidGlassEnabled,
-    )
-}
-
-internal fun resolveHomeTopTabIndicatorLiquidGlassEnabled(
-    homeSettings: HomeSettings?,
-): Boolean {
-    return resolveHomeTopChromeLiquidGlassEnabled(homeSettings)
-}
-
-internal fun resolveHomeTopSearchLiquidGlassEnabled(
-    homeSettings: HomeSettings?,
-): Boolean {
-    return resolveHomeTopChromeLiquidGlassEnabled(homeSettings)
-}
-
 internal fun resolveHomeTopChromeMaterialMode(
     isHeaderBlurEnabled: Boolean,
     isBottomBarBlurEnabled: Boolean,
-    isLiquidGlassEnabled: Boolean,
 ): TopTabMaterialMode {
     return when {
-        isLiquidGlassEnabled -> TopTabMaterialMode.LIQUID_GLASS
         !isHeaderBlurEnabled && !isBottomBarBlurEnabled -> TopTabMaterialMode.PLAIN
         else -> TopTabMaterialMode.BLUR
     }
@@ -256,20 +217,14 @@ internal fun resolveHomeTopChromeMaterialMode(
 
 internal fun resolveHomeTopChromeRenderMode(
     materialMode: TopTabMaterialMode,
-    isGlassSupported: Boolean,
-    hasBackdrop: Boolean,
-    hasHazeState: Boolean,
-    allowHazeLiquidGlassFallback: Boolean = true
+    hasHazeState: Boolean
 ): HomeTopChromeRenderMode {
     return when (materialMode) {
         TopTabMaterialMode.PLAIN -> HomeTopChromeRenderMode.PLAIN
-        TopTabMaterialMode.BLUR -> HomeTopChromeRenderMode.BLUR
-        TopTabMaterialMode.LIQUID_GLASS -> when {
-            isGlassSupported && hasBackdrop -> HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP
-            isGlassSupported && hasHazeState && allowHazeLiquidGlassFallback ->
-                HomeTopChromeRenderMode.LIQUID_GLASS_HAZE
-            hasHazeState -> HomeTopChromeRenderMode.BLUR
-            else -> HomeTopChromeRenderMode.PLAIN
+        TopTabMaterialMode.BLUR -> if (hasHazeState) {
+            HomeTopChromeRenderMode.BLUR
+        } else {
+            HomeTopChromeRenderMode.PLAIN
         }
     }
 }
@@ -282,8 +237,7 @@ internal fun shouldDrawHomeTopSearchLegacyHighlight(
 ): Boolean {
     if (presentation != AppTopTabPresentation.MOVING_CAPSULE || useUnifiedTopPanel) return false
     if (refractionOverlayAlpha > 0f) return false
-    return renderMode != HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP &&
-        renderMode != HomeTopChromeRenderMode.LIQUID_GLASS_HAZE
+    return renderMode != HomeTopChromeRenderMode.PLAIN
 }
 
 internal fun resolveHomeTopChromeSurfaceTreatment(
@@ -291,12 +245,7 @@ internal fun resolveHomeTopChromeSurfaceTreatment(
     preferFlatGlass: Boolean
 ): HomeTopChromeSurfaceTreatment {
     if (!preferFlatGlass) return HomeTopChromeSurfaceTreatment.STRUCTURED_GLASS
-    return when (renderMode) {
-        HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP,
-        HomeTopChromeRenderMode.LIQUID_GLASS_HAZE -> HomeTopChromeSurfaceTreatment.FLAT_GLASS
-        HomeTopChromeRenderMode.BLUR,
-        HomeTopChromeRenderMode.PLAIN -> HomeTopChromeSurfaceTreatment.STRUCTURED_GLASS
-    }
+    return HomeTopChromeSurfaceTreatment.STRUCTURED_GLASS
 }
 
 internal fun resolveHomeHeaderSurfaceAlpha(
@@ -304,8 +253,9 @@ internal fun resolveHomeHeaderSurfaceAlpha(
     blurEnabled: Boolean,
     blurIntensity: BlurIntensity
 ): Float {
+    @Suppress("UNUSED_PARAMETER")
+    val unusedGlass = isGlassEnabled
     if (!blurEnabled) return 1f
-    if (isGlassEnabled) return HOME_HEADER_LIQUID_GLASS_ALPHA
     return BlurStyles.getBackgroundAlpha(blurIntensity)
 }
 
@@ -321,7 +271,6 @@ internal fun resolveHomeTopTabOverlayAlpha(
     return when (materialMode) {
         TopTabMaterialMode.PLAIN -> if (isTabFloating) containerAlpha else 1f
         TopTabMaterialMode.BLUR -> containerAlpha
-        TopTabMaterialMode.LIQUID_GLASS -> containerAlpha
     }
 }
 
@@ -781,8 +730,6 @@ internal fun resolveHomeTopSearchChromeRenderMode(
 ): HomeTopChromeRenderMode {
     if (useUnifiedPanel) {
         return when (renderMode) {
-            HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP,
-            HomeTopChromeRenderMode.LIQUID_GLASS_HAZE,
             HomeTopChromeRenderMode.BLUR -> renderMode
             HomeTopChromeRenderMode.PLAIN -> HomeTopChromeRenderMode.PLAIN
         }
@@ -855,8 +802,6 @@ internal fun resolveHomeTopDetachedTabDockSurfaceColor(
     val alpha = when (renderMode) {
         HomeTopChromeRenderMode.PLAIN -> if (isLightMode) 0.58f else 0.64f
         HomeTopChromeRenderMode.BLUR -> if (isLightMode) 0.46f else 0.58f
-        HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP,
-        HomeTopChromeRenderMode.LIQUID_GLASS_HAZE -> if (isLightMode) 0.34f else 0.42f
     }
     return if (isLightMode) {
         OpticalContrastPalette.Highlight.copy(alpha = alpha)
@@ -872,8 +817,6 @@ internal fun resolveHomeTopUnifiedSearchContainerColor(
     val alpha = when (renderMode) {
         HomeTopChromeRenderMode.PLAIN -> if (isLightMode) 0.62f else 0.42f
         HomeTopChromeRenderMode.BLUR -> if (isLightMode) 0.38f else 0.32f
-        HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP,
-        HomeTopChromeRenderMode.LIQUID_GLASS_HAZE -> if (isLightMode) 0.34f else 0.18f
     }
     return if (isLightMode) {
         OpticalContrastPalette.Highlight.copy(alpha = alpha)
@@ -920,8 +863,6 @@ internal fun resolveHomeTopEdgeControlContainerColor(
     val alpha = when (renderMode) {
         HomeTopChromeRenderMode.PLAIN -> if (isLightMode) 0.58f else 0.40f
         HomeTopChromeRenderMode.BLUR -> if (isLightMode) 0.38f else 0.32f
-        HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP,
-        HomeTopChromeRenderMode.LIQUID_GLASS_HAZE -> if (isLightMode) 0.12f else 0.14f
     }
     return if (isLightMode) {
         OpticalContrastPalette.Highlight.copy(alpha = alpha)
@@ -945,8 +886,6 @@ internal fun resolveHomeTopEdgeControlBorderColor(
         } else {
             OpticalContrastPalette.Highlight.copy(alpha = 0.16f)
         }
-        HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP,
-        HomeTopChromeRenderMode.LIQUID_GLASS_HAZE -> Color.Transparent
     }
 }
 
@@ -955,8 +894,6 @@ internal fun resolveHomeTopUnifiedPanelReadabilityColor(
     renderMode: HomeTopChromeRenderMode
 ): Color {
     val alpha = when (renderMode) {
-        HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP -> 0.18f
-        HomeTopChromeRenderMode.LIQUID_GLASS_HAZE -> 0.20f
         HomeTopChromeRenderMode.BLUR -> 0.16f
         HomeTopChromeRenderMode.PLAIN -> 0f
     }
@@ -971,8 +908,6 @@ internal fun resolveHomeTopWideChromePreferFlatGlass(
     renderMode: HomeTopChromeRenderMode
 ): Boolean {
     return when (renderMode) {
-        HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP,
-        HomeTopChromeRenderMode.LIQUID_GLASS_HAZE -> false
         HomeTopChromeRenderMode.BLUR,
         HomeTopChromeRenderMode.PLAIN -> true
     }
@@ -1015,8 +950,6 @@ internal fun resolveHomeTopTabChromeMotionPolicy(
     isTransitionRunning: Boolean
 ): HomeTopChromeMotionPolicy {
     return when (renderMode) {
-        HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP,
-        HomeTopChromeRenderMode.LIQUID_GLASS_HAZE,
         HomeTopChromeRenderMode.BLUR -> HomeTopChromeMotionPolicy(
             isScrolling = false,
             isTransitionRunning = false
@@ -1035,11 +968,10 @@ internal fun shouldEnableTopTabSecondaryBlur(
     isScrolling: Boolean,
     isTransitionRunning: Boolean
 ): Boolean {
+    @Suppress("UNUSED_PARAMETER")
+    val unused = listOf(isScrolling, isTransitionRunning)
     if (!hasHeaderBlur) return false
     if (topTabMaterialMode == TopTabMaterialMode.PLAIN) return false
-    if (topTabMaterialMode == TopTabMaterialMode.LIQUID_GLASS && (isScrolling || isTransitionRunning)) {
-        return false
-    }
     return true
 }
 
@@ -1047,6 +979,8 @@ internal fun resolveHomeHeaderTabBorderAlpha(
     isTabFloating: Boolean,
     isTabGlassEnabled: Boolean
 ): Float {
+    @Suppress("UNUSED_PARAMETER")
+    val unused = listOf(isTabFloating, isTabGlassEnabled)
     return 0f
 }
 
@@ -1054,8 +988,6 @@ internal fun resolveHomeTopChromeReadabilityAlpha(
     renderMode: HomeTopChromeRenderMode
 ): Float {
     return when (renderMode) {
-        HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP -> 0.26f
-        HomeTopChromeRenderMode.LIQUID_GLASS_HAZE -> 0.28f
         HomeTopChromeRenderMode.BLUR -> 0.30f
         HomeTopChromeRenderMode.PLAIN -> 0.16f
     }
@@ -1065,8 +997,6 @@ internal fun resolveHomeTopSearchContentAlpha(
     renderMode: HomeTopChromeRenderMode
 ): Float {
     return when (renderMode) {
-        HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP -> 0.88f
-        HomeTopChromeRenderMode.LIQUID_GLASS_HAZE -> 0.90f
         HomeTopChromeRenderMode.BLUR -> 0.92f
         HomeTopChromeRenderMode.PLAIN -> 0.78f
     }
@@ -1178,8 +1108,6 @@ internal fun resolveHomeTopActionIconAlpha(
     renderMode: HomeTopChromeRenderMode
 ): Float {
     return when (renderMode) {
-        HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP -> 0.86f
-        HomeTopChromeRenderMode.LIQUID_GLASS_HAZE -> 0.88f
         HomeTopChromeRenderMode.BLUR -> 0.90f
         HomeTopChromeRenderMode.PLAIN -> 0.78f
     }
@@ -1189,8 +1117,6 @@ internal fun resolveHomeTopUnifiedPanelDividerAlpha(
     renderMode: HomeTopChromeRenderMode
 ): Float {
     return when (renderMode) {
-        HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP,
-        HomeTopChromeRenderMode.LIQUID_GLASS_HAZE -> 0f
         HomeTopChromeRenderMode.BLUR -> 0.18f
         HomeTopChromeRenderMode.PLAIN -> 0.12f
     }
@@ -1207,8 +1133,6 @@ internal fun resolveHomeTopTabContentUnderlayAlpha(
     softenWideChrome: Boolean = false
 ): Float {
     val base = when (renderMode) {
-        HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP -> 0.10f
-        HomeTopChromeRenderMode.LIQUID_GLASS_HAZE -> 0.12f
         HomeTopChromeRenderMode.BLUR -> 0.14f
         HomeTopChromeRenderMode.PLAIN -> 0.08f
     }
@@ -1241,65 +1165,12 @@ private data class HomeTopChromeSurfaceStyle(
     val hazeBackgroundAlphaMultiplier: Float
 )
 
-private data class HomeTopChromeBackdropSpec(
-    val refractionAmount: Float,
-    val surfaceAlpha: Float,
-    val whiteOverlayAlpha: Float
-)
-
-private fun resolveHomeTopChromeBackdropSpec(
-    tuning: LiquidGlassTuning,
-    scrollOffset: Float,
-    isDarkTheme: Boolean,
-    style: HomeTopChromeSurfaceStyle
-): HomeTopChromeBackdropSpec {
-    val refractionAmount = if (tuning.scrollCoupledRefractionAmount > 0f) {
-        tuning.refractionAmount + (
-            scrollOffset * style.refractionAmountScrollMultiplier * tuning.scrollCoupledRefractionAmount
-        ).coerceIn(0f, style.refractionAmountScrollCap * tuning.scrollCoupledRefractionAmount)
-    } else {
-        tuning.refractionAmount
-    }
-    val surfaceAlpha = if (tuning.scrollCoupledRefractionAmount > 0f) {
-        tuning.surfaceAlpha + (
-            scrollOffset * style.surfaceAlphaScrollMultiplier * tuning.scrollCoupledRefractionAmount
-        ).coerceIn(0f, style.surfaceAlphaScrollCap * tuning.scrollCoupledRefractionAmount)
-    } else {
-        tuning.surfaceAlpha
-    }
-    val whiteOverlayAlpha = if (isDarkTheme) {
-        tuning.whiteOverlayAlpha * style.darkThemeWhiteOverlayMultiplier
-    } else {
-        tuning.whiteOverlayAlpha
-    }
-    return HomeTopChromeBackdropSpec(
-        refractionAmount = refractionAmount,
-        surfaceAlpha = surfaceAlpha,
-        whiteOverlayAlpha = whiteOverlayAlpha
-    )
-}
-
-private fun resolveHomeTopChromeSurfaceColor(
-    surfaceColor: Color,
-    backdropSpec: HomeTopChromeBackdropSpec,
-    style: HomeTopChromeSurfaceStyle
-): Color {
-    return if (style.useTuningSurfaceAlpha) {
-        surfaceColor.copy(alpha = backdropSpec.surfaceAlpha)
-    } else {
-        surfaceColor
-    }
-}
-
 internal fun Modifier.homeTopChromeSurface(
     renderMode: HomeTopChromeRenderMode,
     shape: Shape,
     surfaceColor: Color,
     hazeState: HazeState?,
     miuixBackdrop: top.yukonga.miuix.kmp.blur.Backdrop? = null,
-    liquidStyle: LiquidGlassStyle,
-    liquidGlassTuning: LiquidGlassTuning? = null,
-    liquidGlassPreset: BottomBarLiquidGlassPreset = BottomBarLiquidGlassPreset.BILIPAI_TUNED,
     motionTier: MotionTier,
     isScrolling: Boolean,
     isTransitionRunning: Boolean,
@@ -1307,34 +1178,9 @@ internal fun Modifier.homeTopChromeSurface(
     preferFlatGlass: Boolean = false,
     darkThemeWhiteOverlayMultiplier: Float = 0.86f
 ): Modifier = composed {
-    val isLiquidGlassMode = renderMode == HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP ||
-        renderMode == HomeTopChromeRenderMode.LIQUID_GLASS_HAZE
-    // Liquid chrome always reuses the bottom-bar BiliPai material so every reusable surface
-    // (top dock / search / continuous slab / segmented dock) stays visually identical.
-    if (isLiquidGlassMode) {
-        return@composed this.homeTopBottomBarMatchedSurface(
-            renderMode = renderMode,
-            shape = shape,
-            hazeState = hazeState,
-            miuixBackdrop = miuixBackdrop,
-            liquidGlassStyle = liquidStyle,
-            liquidGlassTuning = liquidGlassTuning,
-            liquidGlassPreset = liquidGlassPreset,
-            motionTier = motionTier,
-            isTransitionRunning = isTransitionRunning,
-            forceLowBlurBudget = forceLowBlurBudget,
-            // 顶栏/搜索小胶囊关闭 shell lens，避免 iOS 主题复用安卓原生液态玻璃时的边沿虾线。
-            drawShellLens = false,
-            isScrolling = isScrolling
-        )
-    }
-
+    @Suppress("UNUSED_PARAMETER")
+    val unused = listOf(miuixBackdrop, preferFlatGlass, darkThemeWhiteOverlayMultiplier)
     when (renderMode) {
-        HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP,
-        HomeTopChromeRenderMode.LIQUID_GLASS_HAZE -> {
-            this.background(surfaceColor, shape)
-        }
-
         HomeTopChromeRenderMode.BLUR -> {
             this
                 .then(
@@ -1447,30 +1293,23 @@ fun HomeHeader(
     } else {
         onSettingsClick
     }
-    val topChromeLiquidGlassEnabled = resolveHomeTopChromeLiquidGlassEnabled(
-        homeSettings = homeSettings,
-    )
+    val topChromeLiquidGlassEnabled = false
 
     // 状态栏高度
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     
-    // [Feature] Liquid Glass Logic
+    // [Feature] Liquid Glass Logic (retired: Haze blur only)
     val topChromeMaterialMode = resolveHomeTopChromeMaterialMode(
         isHeaderBlurEnabled = isHeaderBlurEnabled,
         isBottomBarBlurEnabled = linkedBottomBarAppearance.blurEnabled,
-        isLiquidGlassEnabled = topChromeLiquidGlassEnabled,
     )
-    val isGlassEnabled = topChromeMaterialMode == TopTabMaterialMode.LIQUID_GLASS
+    val isGlassEnabled = false
     val isTopChromeBlurEnabled = topChromeMaterialMode != TopTabMaterialMode.PLAIN
-    val searchLiquidGlassEnabled = resolveHomeTopSearchLiquidGlassEnabled(
-        homeSettings = homeSettings,
-    )
     val searchChromeMaterialMode = resolveHomeTopChromeMaterialMode(
         isHeaderBlurEnabled = isHeaderBlurEnabled,
         isBottomBarBlurEnabled = linkedBottomBarAppearance.blurEnabled,
-        isLiquidGlassEnabled = searchLiquidGlassEnabled,
     )
-    val isSearchGlassEnabled = searchChromeMaterialMode == TopTabMaterialMode.LIQUID_GLASS
+    val isSearchGlassEnabled = false
     val isSearchBlurEnabled = searchChromeMaterialMode != TopTabMaterialMode.PLAIN
 
     //  读取当前模糊强度以确定背景透明度
@@ -1484,10 +1323,9 @@ fun HomeHeader(
     val topTabStyle = resolveTopTabStyle(
         isBottomBarFloating = linkedBottomBarAppearance.isFloating,
         isBottomBarBlurEnabled = isHeaderBlurEnabled,
-        isLiquidGlassEnabled = topChromeLiquidGlassEnabled
     )
     val isTabFloating = topTabStyle.floating
-    val isTabGlassEnabled = topChromeMaterialMode == TopTabMaterialMode.LIQUID_GLASS
+    val isTabGlassEnabled = false
     val isTabBlurEnabled = topChromeMaterialMode == TopTabMaterialMode.BLUR
     val enableTopTabSecondaryBlur = shouldEnableTopTabSecondaryBlur(
         hasHeaderBlur = hazeState != null,
@@ -1495,23 +1333,9 @@ fun HomeHeader(
         isScrolling = isScrolling,
         isTransitionRunning = isTransitionRunning
     )
-    val isGlassSupported = shouldAllowHomeChromeLiquidGlass(Build.VERSION.SDK_INT)
-    val allowHazeLiquidGlassFallback = shouldAllowDirectHazeLiquidGlassFallback(Build.VERSION.SDK_INT)
-    val liquidStyle = homeSettings?.liquidGlassStyle ?: LiquidGlassStyle.CLASSIC
-    val bottomBarLiquidGlassPreset = homeSettings?.bottomBarLiquidGlassPreset
-        ?: HomeSettings().bottomBarLiquidGlassPreset
-    val liquidGlassTuning = remember(
-        homeSettings?.liquidGlassProgress,
-        liquidStyle
-    ) {
-        resolveLiquidGlassTuning(liquidStyle)
-    }
     val topChromeRenderMode = resolveHomeTopChromeRenderMode(
         materialMode = topChromeMaterialMode,
-        isGlassSupported = isGlassSupported,
-        hasBackdrop = miuixBackdrop != null,
-        hasHazeState = hazeState != null,
-        allowHazeLiquidGlassFallback = allowHazeLiquidGlassFallback
+        hasHazeState = hazeState != null
     )
     val surfaceColor = AppSurfaceTokens.cardContainer()
     val surfaceContainerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -1605,7 +1429,7 @@ fun HomeHeader(
     }
     val rawTabChromeColors = tuneHomeTopGlassColors(
         colors = rememberHomeGlassChromeColors(
-            glassEnabled = effectiveTabMaterialMode == TopTabMaterialMode.LIQUID_GLASS,
+            glassEnabled = false,
             blurEnabled = enableTopTabSecondaryBlur || effectiveTabMaterialMode != TopTabMaterialMode.PLAIN
         ),
         isLightMode = isLightMode,
@@ -1631,7 +1455,7 @@ fun HomeHeader(
     }
     val tabChromeStyle = remember(effectiveTabMaterialMode, enableTopTabSecondaryBlur) {
         resolveHomeGlassChromeStyle(
-            glassEnabled = effectiveTabMaterialMode == TopTabMaterialMode.LIQUID_GLASS,
+            glassEnabled = false,
             blurEnabled = enableTopTabSecondaryBlur || effectiveTabMaterialMode != TopTabMaterialMode.PLAIN
         )
     }
@@ -1644,13 +1468,6 @@ fun HomeHeader(
         isTransitionRunning = isTransitionRunning
     )
     val tabChromeRenderMode = when (effectiveTabMaterialMode) {
-        TopTabMaterialMode.LIQUID_GLASS -> resolveHomeTopChromeRenderMode(
-            materialMode = effectiveTabMaterialMode,
-            isGlassSupported = isGlassSupported,
-            hasBackdrop = miuixBackdrop != null,
-            hasHazeState = hazeState != null,
-            allowHazeLiquidGlassFallback = allowHazeLiquidGlassFallback
-        )
         TopTabMaterialMode.BLUR -> if (enableTopTabSecondaryBlur) {
             HomeTopChromeRenderMode.BLUR
         } else {
@@ -1673,20 +1490,14 @@ fun HomeHeader(
     )
     val searchChromeBaseRenderMode = resolveHomeTopChromeRenderMode(
         materialMode = searchChromeMaterialMode,
-        isGlassSupported = isGlassSupported,
-        hasBackdrop = miuixBackdrop != null,
-        hasHazeState = hazeState != null,
-        allowHazeLiquidGlassFallback = allowHazeLiquidGlassFallback
+        hasHazeState = hazeState != null
     )
     val searchChromeRenderMode = resolveHomeTopSearchChromeRenderMode(
         renderMode = searchChromeBaseRenderMode,
         useUnifiedPanel = useUnifiedTopPanel,
         usesNativeContainerTreatment = usesNativeContainerTreatment,
     )
-    // 搜索栏液态玻璃必须复用顶部标签 dock 的材质链，避免单独的搜索胶囊渲染分支产生质感偏差。
-    val useBottomBarMatchedTopControls =
-        searchChromeRenderMode == HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP ||
-            searchChromeRenderMode == HomeTopChromeRenderMode.LIQUID_GLASS_HAZE
+    val useBottomBarMatchedTopControls = false
     val localTopChromeRenderMode = resolveHomeTopLocalChromeRenderMode(
         renderMode = topChromeRenderMode,
         usesNativeContainerTreatment = usesNativeContainerTreatment,
@@ -1863,11 +1674,7 @@ fun HomeHeader(
     } else {
         topPanelChromeRenderMode
     }
-    val useUnifiedLiquidChrome = embedTopTabsInUnifiedPanel &&
-        (
-            effectiveTopPanelChromeRenderMode == HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP ||
-                effectiveTopPanelChromeRenderMode == HomeTopChromeRenderMode.LIQUID_GLASS_HAZE
-        )
+    val useUnifiedLiquidChrome = false
     val unifiedLocalTabChromeRenderMode = resolveHomeTopUnifiedLocalTabChromeRenderMode(
         renderMode = tabChromeRenderMode,
         usesNativeContainerTreatment = usesNativeContainerTreatment,
@@ -1923,13 +1730,7 @@ fun HomeHeader(
             drawUnifiedTopPanelChrome &&
             currentSearchHeight > AppSpacingTokens.None &&
             searchRevealFraction > 0f
-    val useTopTabBottomBarMatchedDock =
-        useUnifiedTopPanel &&
-            effectiveTabMaterialMode == TopTabMaterialMode.LIQUID_GLASS &&
-            (
-                topTabDockChromeRenderMode == HomeTopChromeRenderMode.LIQUID_GLASS_BACKDROP ||
-                    topTabDockChromeRenderMode == HomeTopChromeRenderMode.LIQUID_GLASS_HAZE
-            )
+    val useTopTabBottomBarMatchedDock = false
     val drawTopTabDockChrome = drawTopTabOuterChromeSurface || useTopTabBottomBarMatchedDock || useDetachedTopTabDock
     val topTabLabelMode = homeSettings?.topTabLabelMode
         ?: com.android.purebilibili.core.store.SettingsManager.TopTabLabelMode.TEXT_ONLY
@@ -1996,9 +1797,6 @@ fun HomeHeader(
             tabSurfaceColor = skinTintedTabSurfaceColor,
             hazeState = hazeState,
             miuixBackdrop = miuixBackdrop,
-            liquidStyle = liquidStyle,
-            liquidGlassTuning = liquidGlassTuning,
-            liquidGlassPreset = bottomBarLiquidGlassPreset,
             motionTier = motionTier,
             isScrolling = tabChromeMotionPolicy.isScrolling,
             isTransitionRunning = tabChromeMotionPolicy.isTransitionRunning,
@@ -2034,11 +1832,6 @@ fun HomeHeader(
             isTabsCollapsed = topTabsCollapsed,
             onTabsCollapsedChange = onTopTabsCollapsedChange,
             drawChromeSurface = drawTopTabDockChrome,
-            useBottomBarMatchedSurface = useTopTabBottomBarMatchedDock,
-            // 顶部分类 dock：soft shell lens（保留上下滑动液态折射，贴近指示器；
-            // 强度低于底栏整壳，避免矮 dock 边沿虾线）。搜索小胶囊仍关 lens。
-            drawMatchedShellLens = useTopTabBottomBarMatchedDock,
-            matchedShellLensIntensity = TOP_DOCK_SHELL_LENS_INTENSITY,
             // Floating / matched dock: length follows icon+text × tab count (no full-bleed empty glass).
             wrapDockWidth = wrapTopTabDockWidth,
             dockCategoryCount = topCategories.size,
@@ -2056,12 +1849,6 @@ fun HomeHeader(
                 },
                 pagerState = pagerState,
                 labelMode = topTabLabelMode,
-                isLiquidGlassEnabled = resolveHomeTopTabIndicatorLiquidGlassEnabled(
-                    homeSettings = homeSettings,
-                ) && isGlassSupported,
-                liquidGlassStyle = liquidStyle,
-                liquidGlassTuning = liquidGlassTuning,
-                liquidGlassPreset = bottomBarLiquidGlassPreset,
                 hazeState = hazeState,
                 miuixBackdrop = miuixBackdrop,
                 isFloatingStyle = isTabFloating,
@@ -2110,9 +1897,6 @@ fun HomeHeader(
                         ),
                         hazeState = hazeState,
                         miuixBackdrop = miuixBackdrop,
-                        liquidStyle = liquidStyle,
-                        liquidGlassTuning = liquidGlassTuning,
-                        liquidGlassPreset = bottomBarLiquidGlassPreset,
                         motionTier = motionTier,
                         isScrolling = topChromeMotionPolicy.isScrolling,
                         isTransitionRunning = topChromeMotionPolicy.isTransitionRunning,
@@ -2157,12 +1941,7 @@ fun HomeHeader(
                                             shape = unifiedPanelShape,
                                             surfaceColor = headerChromeColors.containerColor,
                                             hazeState = hazeState,
-
                                             miuixBackdrop = miuixBackdrop,
-
-                                            liquidStyle = liquidStyle,
-                                            liquidGlassTuning = liquidGlassTuning,
-                                            liquidGlassPreset = bottomBarLiquidGlassPreset,
                                             motionTier = motionTier,
                                             isScrolling = topChromeMotionPolicy.isScrolling,
                                             isTransitionRunning = topChromeMotionPolicy.isTransitionRunning,
@@ -2317,12 +2096,7 @@ fun HomeHeader(
                                                             shape = edgeButtonShape,
                                                             surfaceColor = headerChromeColors.containerColor,
                                                             hazeState = hazeState,
-
                                                             miuixBackdrop = miuixBackdrop,
-
-                                                            liquidStyle = liquidStyle,
-                                                            liquidGlassTuning = liquidGlassTuning,
-                                                            liquidGlassPreset = bottomBarLiquidGlassPreset,
                                                             motionTier = motionTier,
                                                             isScrolling = topChromeMotionPolicy.isScrolling,
                                                             isTransitionRunning = topChromeMotionPolicy.isTransitionRunning,
@@ -2342,12 +2116,7 @@ fun HomeHeader(
                                                         shape = edgeButtonShape,
                                                         surfaceColor = headerChromeColors.containerColor,
                                                         hazeState = hazeState,
-
                                                         miuixBackdrop = miuixBackdrop,
-
-                                                        liquidStyle = liquidStyle,
-                                                        liquidGlassTuning = liquidGlassTuning,
-                                                        liquidGlassPreset = bottomBarLiquidGlassPreset,
                                                         motionTier = motionTier,
                                                         isScrolling = topChromeMotionPolicy.isScrolling,
                                                         isTransitionRunning = topChromeMotionPolicy.isTransitionRunning,
@@ -2439,47 +2208,23 @@ fun HomeHeader(
                                             }
                                         )
                                         .then(
-                                            if (useBottomBarMatchedTopControls) {
-                                                Modifier.homeTopBottomBarMatchedSurface(
-                                                    renderMode = searchChromeRenderMode,
-                                                    shape = searchContainerShape,
-                                                    hazeState = hazeState,
-                                                    miuixBackdrop = miuixBackdrop,
-                                                    liquidGlassStyle = liquidStyle,
-                                                    liquidGlassTuning = liquidGlassTuning,
-                                                    liquidGlassPreset = bottomBarLiquidGlassPreset,
-                                                    motionTier = motionTier,
-                                                    isTransitionRunning = topChromeMotionPolicy.isTransitionRunning,
-                                                    forceLowBlurBudget = forceLowBlurBudget,
-                                                    // Same soft BiliPai shell as the top dock.
-                                                    drawShellLens = true,
-                                                    shellLensIntensity = TOP_DOCK_SHELL_LENS_INTENSITY,
-                                                    isScrolling = topChromeMotionPolicy.isScrolling
+                                            Modifier.homeTopChromeSurface(
+                                                renderMode = searchChromeRenderMode,
+                                                shape = searchContainerShape,
+                                                surfaceColor = skinSearchSurfaceColor,
+                                                hazeState = hazeState,
+                                                miuixBackdrop = miuixBackdrop,
+                                                motionTier = motionTier,
+                                                isScrolling = topChromeMotionPolicy.isScrolling,
+                                                isTransitionRunning = topChromeMotionPolicy.isTransitionRunning,
+                                                forceLowBlurBudget = forceLowBlurBudget,
+                                                preferFlatGlass = resolveHomeTopWideChromePreferFlatGlass(
+                                                    searchChromeRenderMode
+                                                ),
+                                                darkThemeWhiteOverlayMultiplier = resolveHomeTopSearchDarkWhiteOverlayMultiplier(
+                                                    isLightMode = isLightMode
                                                 )
-                                            } else {
-                                                Modifier.homeTopChromeSurface(
-                                                    renderMode = searchChromeRenderMode,
-                                                    shape = searchContainerShape,
-                                                    surfaceColor = skinSearchSurfaceColor,
-                                                    hazeState = hazeState,
-
-                                                    miuixBackdrop = miuixBackdrop,
-
-                                                    liquidStyle = liquidStyle,
-                                                    liquidGlassTuning = liquidGlassTuning,
-                                                    liquidGlassPreset = bottomBarLiquidGlassPreset,
-                                                    motionTier = motionTier,
-                                                    isScrolling = topChromeMotionPolicy.isScrolling,
-                                                    isTransitionRunning = topChromeMotionPolicy.isTransitionRunning,
-                                                    forceLowBlurBudget = forceLowBlurBudget,
-                                                    preferFlatGlass = resolveHomeTopWideChromePreferFlatGlass(
-                                                        searchChromeRenderMode
-                                                    ),
-                                                    darkThemeWhiteOverlayMultiplier = resolveHomeTopSearchDarkWhiteOverlayMultiplier(
-                                                        isLightMode = isLightMode
-                                                    )
-                                                )
-                                            }
+                                            )
                                         )
                                         .border(
                                             width = AppSpacingTokens.Micro * 0.4f,
@@ -2557,39 +2302,21 @@ fun HomeHeader(
                                         .clip(edgeButtonShape)
                                         .then(
                                             if (useUnifiedTopPanel) {
-                                                if (useBottomBarMatchedTopControls) {
-                                                    Modifier
-                                                        .homeTopBottomBarMatchedSurface(
-                                                            renderMode = localTopChromeRenderMode,
-                                                            shape = edgeButtonShape,
-                                                            hazeState = hazeState,
-                                                            miuixBackdrop = miuixBackdrop,
-                                                            liquidGlassStyle = liquidStyle,
-                                                            liquidGlassTuning = liquidGlassTuning,
-                                                            liquidGlassPreset = bottomBarLiquidGlassPreset,
-                                                            motionTier = motionTier,
-                                                            isTransitionRunning = topChromeMotionPolicy.isTransitionRunning,
-                                                            forceLowBlurBudget = forceLowBlurBudget,
-                                                            drawShellLens = false,
-                                                            isScrolling = topChromeMotionPolicy.isScrolling
+                                                Modifier
+                                                    .background(
+                                                        resolveHomeTopEdgeControlContainerColor(
+                                                            isLightMode = isLightMode,
+                                                            renderMode = localTopChromeRenderMode
                                                         )
-                                                } else {
-                                                    Modifier
-                                                        .background(
-                                                            resolveHomeTopEdgeControlContainerColor(
-                                                                isLightMode = isLightMode,
-                                                                renderMode = localTopChromeRenderMode
-                                                            )
-                                                        )
-                                                        .border(
-                                                            width = AppSpacingTokens.Micro * 0.4f,
-                                                            color = resolveHomeTopEdgeControlBorderColor(
-                                                                isLightMode = isLightMode,
-                                                                renderMode = localTopChromeRenderMode
-                                                            ),
-                                                            shape = edgeButtonShape
-                                                        )
-                                                }
+                                                    )
+                                                    .border(
+                                                        width = AppSpacingTokens.Micro * 0.4f,
+                                                        color = resolveHomeTopEdgeControlBorderColor(
+                                                            isLightMode = isLightMode,
+                                                            renderMode = localTopChromeRenderMode
+                                                        ),
+                                                        shape = edgeButtonShape
+                                                    )
                                             } else {
                                                 Modifier
                                                     .homeTopChromeSurface(
@@ -2597,12 +2324,7 @@ fun HomeHeader(
                                                         shape = edgeButtonShape,
                                                         surfaceColor = headerChromeColors.containerColor,
                                                         hazeState = hazeState,
-
                                                         miuixBackdrop = miuixBackdrop,
-
-                                                        liquidStyle = liquidStyle,
-                                                        liquidGlassTuning = liquidGlassTuning,
-                                                        liquidGlassPreset = bottomBarLiquidGlassPreset,
                                                         motionTier = motionTier,
                                                         isScrolling = topChromeMotionPolicy.isScrolling,
                                                         isTransitionRunning = topChromeMotionPolicy.isTransitionRunning,

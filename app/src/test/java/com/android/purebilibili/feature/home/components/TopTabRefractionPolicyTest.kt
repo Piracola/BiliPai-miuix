@@ -19,9 +19,8 @@ class TopTabRefractionPolicyTest {
             .substringAfter("val searchClickInteractionSource = remember { MutableInteractionSource() }")
             .substringBefore(".clickable(")
         assertTrue(searchChrome.contains("if (useBottomBarMatchedTopControls)"))
-        assertTrue(searchChrome.contains("drawShellLens = true"))
-        assertTrue(searchChrome.contains("shellLensIntensity = TOP_DOCK_SHELL_LENS_INTENSITY"))
         assertTrue(searchChrome.contains("Modifier.clip(searchContainerShape)"))
+        assertTrue(searchChrome.contains("homeTopChromeSurface("))
     }
 
     @Test
@@ -31,25 +30,21 @@ class TopTabRefractionPolicyTest {
         assertTrue(source.contains("shouldUseMovingIosCapsule"))
         assertTrue(source.contains("shouldUseLiquidGlassIndicator"))
         assertFalse(source.contains("shouldForceDragLiquidGlassIndicator"))
-        assertTrue(source.contains("BiliPaiFloatingDockIndicator("))
+        assertTrue(source.contains("TopBarMovingIndicator("))
         assertFalse(source.contains("BottomBarMatchedLiquidIndicator("))
         assertFalse(source.contains("BottomBarLiquidIndicatorSurface("))
         assertTrue(source.contains("resolveBottomBarRefractionMotionProfile("))
         assertTrue(source.contains("topTabShouldStretchIndicator"))
         assertTrue(source.contains("val shouldPrimeTopTabLiquidGlassCapture ="))
         assertFalse(source.contains("val topTabContentBackdrop = rememberLayerBackdrop()"))
-        assertTrue(source.contains("val topTabMiuixContentBackdrop = rememberMiuixLayerBackdrop()"))
         assertFalse(source.contains("rememberCombinedBackdrop(backdrop, topTabContentBackdrop)"))
-        assertTrue(source.contains("rememberMiuixCombinedBackdrop(miuixBackdrop, topTabMiuixContentBackdrop)"))
-        assertTrue(source.contains("biliPaiFloatingDockCaptureSurface("))
-        assertTrue(source.contains("biliPaiFloatingDockShell("))
         assertFalse(source.contains("legacyContentBackdrop = topTabContentBackdrop"))
         assertFalse(source.contains("legacyBackdrop = topTabIndicatorLegacyBackdrop"))
         assertFalse(source.contains("DampedDragTrackingMode"))
         assertTrue(source.contains("resolveTopTabIndicatorBackdropPolicy("))
         assertTrue(source.contains("scaleX = indicatorScaleX"))
         assertTrue(source.contains("scaleY = indicatorScaleY"))
-        assertTrue(source.contains("val topTabLensProgress = topTabIndicatorLayerScaleProgress"))
+        assertTrue(source.contains("val topTabIndicatorLayerScaleProgress = resolveTopTabIndicatorScaleProgress("))
         assertFalse(source.contains(".bottomBarMatchedCaptureOverflow("))
         assertFalse(source.contains("import com.kyant"))
         assertTrue(source.contains("resolveBottomBarDarkTheme(AppSurfaceTokens.background())"))
@@ -379,25 +374,16 @@ class TopTabRefractionPolicyTest {
     }
 
     @Test
-    fun `top tab render material keeps glass ahead of blur`() {
-        assertEquals(
-            TopTabMaterialMode.LIQUID_GLASS,
-            resolveTopTabRenderMaterialMode(
-                liquidGlassEnabled = true,
-                hasHazeState = true
-            )
-        )
+    fun `top tab render material keeps blur ahead of plain`() {
         assertEquals(
             TopTabMaterialMode.BLUR,
             resolveTopTabRenderMaterialMode(
-                liquidGlassEnabled = false,
                 hasHazeState = true
             )
         )
         assertEquals(
             TopTabMaterialMode.PLAIN,
             resolveTopTabRenderMaterialMode(
-                liquidGlassEnabled = false,
                 hasHazeState = false
             )
         )
@@ -413,7 +399,7 @@ class TopTabRefractionPolicyTest {
         assertTrue(source.contains("resolveTopTabIndicatorRenderPosition("))
         assertTrue(source.contains("pagerCurrentPageOffsetFraction = pagerState?.currentPageOffsetFraction"))
         assertTrue(source.contains("resolveTopTabClickAction(index, selectedIndex)"))
-        assertTrue(source.contains("BiliPaiFloatingDockIndicator("))
+        assertTrue(source.contains("TopBarMovingIndicator("))
         assertFalse(source.contains("BottomBarMatchedLiquidIndicator("))
         assertFalse(source.contains("BottomBarLiquidIndicatorSurface("))
         assertFalse(Regex("""(?m)^\s*LiquidIndicator\(""").containsMatchIn(source))
@@ -423,10 +409,7 @@ class TopTabRefractionPolicyTest {
         assertFalse(source.contains("layerBackdrop(topTabContentBackdrop)"))
         assertFalse(source.contains("rememberCombinedBackdrop(backdrop, tabsBackdrop)"))
         assertFalse(source.contains("rememberCombinedBackdrop(backdrop, topTabContentBackdrop)"))
-        assertTrue(source.contains("rememberMiuixCombinedBackdrop(miuixBackdrop, topTabMiuixContentBackdrop)"))
-        assertTrue(source.contains("biliPaiFloatingDockCaptureSurface("))
-        assertTrue(source.contains("if (shouldPrimeTopTabLiquidGlassCapture)"))
-        assertTrue(source.contains("miuixLayerBackdrop(topTabMiuixContentBackdrop)"))
+        assertTrue(source.contains("val shouldPrimeTopTabLiquidGlassCapture = false"))
         assertFalse(source.contains("DampedDragTrackingMode"))
     }
 
@@ -438,7 +421,7 @@ class TopTabRefractionPolicyTest {
 
         assertTrue(source.contains("val shouldUseMd3LiquidCapsule = effectivePresentation == AppTopTabPresentation.MATERIAL_UNDERLINE"))
         assertTrue(source.contains("val shouldUseMd3DockBackedCapsule = effectivePresentation == AppTopTabPresentation.MATERIAL_UNDERLINE"))
-        assertTrue(source.contains("pressProgress = topTabLensProgress"))
+        assertTrue(source.contains("pressProgress = topTabPressProgress"))
         assertTrue(source.contains("height = dockIndicatorHeight"))
     }
 

@@ -63,7 +63,6 @@ internal fun VideoDetailPhoneSuccessContentLayer(
     videoContentPagerState: PagerState,
     commentState: CommentUiState,
     engagementState: VideoEngagementUiState,
-    androidNativeLiquidGlassEnabled: Boolean,
     commentMemberDecorationsEnabled: Boolean,
     playbackActions: VideoDetailPlaybackActions,
     engagementActions: VideoDetailEngagementActions,
@@ -149,9 +148,7 @@ internal fun VideoDetailPhoneSuccessContentLayer(
                     }
                 ) {
                     Box(modifier = Modifier.fillMaxSize()) {
-                        val floatingLiquidBottomInputBar = shouldUseFloatingLiquidBottomInputBar(
-                            androidNativeLiquidGlassEnabled = androidNativeLiquidGlassEnabled
-                        )
+                        val floatingLiquidBottomInputBar = shouldUseFloatingLiquidBottomInputBar()
                         // Capture scrolling detail content only; BottomInputBar stays outside
                         // the source so neither blur nor backdrop samples the bar itself.
                         val bottomInputBarBackdrop = rememberLayerBackdrop()

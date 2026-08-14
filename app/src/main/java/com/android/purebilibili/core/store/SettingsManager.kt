@@ -26,12 +26,6 @@ import com.android.purebilibili.core.store.player.PlayerSettingsStore
 import com.android.purebilibili.core.store.player.defaultAudioQualityPreferenceKey
 import com.android.purebilibili.core.theme.AppFontSizePreset
 import com.android.purebilibili.core.theme.AppUiScalePreset
-import com.android.purebilibili.core.theme.AndroidNativeVariant
-import com.android.purebilibili.core.theme.AppUiStyle
-import com.android.purebilibili.core.theme.UiPreset
-import com.android.purebilibili.core.theme.normalizeThemeColorIndex
-import com.android.purebilibili.core.theme.resolveColorSpecPreference
-import com.android.purebilibili.core.theme.resolvePaletteStylePreference
 import com.android.purebilibili.data.model.response.LiveFavoriteTagEntry
 import com.android.purebilibili.feature.settings.share.SettingsShareApplyResult
 import com.android.purebilibili.feature.settings.share.SettingsShareEntryDefinition
@@ -39,11 +33,8 @@ import com.android.purebilibili.feature.settings.share.SettingsShareSection
 import com.android.purebilibili.feature.settings.AppLanguage
 import com.android.purebilibili.feature.settings.AppThemeMode
 import com.android.purebilibili.feature.settings.DarkThemeStyle
-import com.android.purebilibili.feature.settings.Md3ColorSource
-import com.android.purebilibili.feature.settings.normalizeMd3CustomColorHex
 import com.android.purebilibili.feature.settings.resolveAppLanguagePreference
 import com.android.purebilibili.feature.settings.resolveDarkThemeStylePreference
-import com.android.purebilibili.feature.settings.resolveMd3ColorSourcePreference
 import com.android.purebilibili.feature.settings.resolveThemeModePreference
 import com.android.purebilibili.feature.screenshot.AppScreenshotCaptureMode
 import com.android.purebilibili.feature.screenshot.AppScreenshotGestureMode
@@ -56,8 +47,6 @@ import com.android.purebilibili.feature.video.subtitle.normalizeSubtitleVertical
 import com.android.purebilibili.feature.video.ui.gesture.TwoFingerSpeedToggleState
 import com.android.purebilibili.feature.video.ui.gesture.applyHorizontalTwoFingerSpeedToggle
 import com.android.purebilibili.feature.video.ui.gesture.applyVerticalTwoFingerSpeedToggle
-import com.materialkolor.PaletteStyle
-import com.materialkolor.dynamiccolor.ColorSpec
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.first
@@ -97,41 +86,6 @@ internal val DEFAULT_PLAYER_DIAGNOSTIC_LOGGING_ENABLED: Boolean =
  *  首页设置合并类 - 减少 HomeScreen 重组次数
  * 将多个独立的设置流合并为单一流，避免每个设置变化都触发重组
  */
-enum class LiquidGlassStyle(val value: Int) {
-    CLASSIC(0),      // BiliPai's Wavy Ripple
-    SUKISU(1),       // SukiSU floating bottom bar glass
-    IOS26(2);        // iOS26-like layered liquid glass
-
-    companion object {
-        fun fromValue(value: Int): LiquidGlassStyle = entries.find { it.value == value } ?: CLASSIC
-    }
-}
-
-enum class LiquidGlassMode(val value: Int, val label: String) {
-    CLEAR(0, "通透玻璃"),
-    BALANCED(1, "平衡"),
-    FROSTED(2, "柔和磨砂");
-
-    companion object {
-        fun fromValue(value: Int): LiquidGlassMode = entries.find { it.value == value } ?: BALANCED
-    }
-}
-
-internal fun resolveLegacyLiquidGlassMode(style: LiquidGlassStyle): LiquidGlassMode = when (style) {
-    LiquidGlassStyle.IOS26 -> LiquidGlassMode.CLEAR
-    LiquidGlassStyle.CLASSIC -> LiquidGlassMode.BALANCED
-    LiquidGlassStyle.SUKISU -> LiquidGlassMode.BALANCED
-}
-
-internal fun resolveDefaultLiquidGlassStrength(mode: LiquidGlassMode): Float = when (mode) {
-    LiquidGlassMode.CLEAR -> 0.42f
-    LiquidGlassMode.BALANCED -> 0.52f
-    LiquidGlassMode.FROSTED -> 0.62f
-}
-
-internal fun normalizeLiquidGlassStrength(value: Float): Float = value.coerceIn(0f, 1f)
-
-internal fun normalizeLiquidGlassProgress(value: Float): Float = value.coerceIn(0f, 1f)
 
 /** 长按倍速提示整体缩放（0.8×–1.5×，默认 1.0×）。 */
 internal const val LONG_PRESS_SPEED_HINT_SCALE_MIN = 0.8f
@@ -150,61 +104,6 @@ internal fun normalizeLongPressSpeedHintScale(value: Float): Float =
 internal fun normalizeLongPressSpeedHintAlpha(value: Float): Float =
     if (!value.isFinite()) LONG_PRESS_SPEED_HINT_DEFAULT_ALPHA
     else value.coerceIn(LONG_PRESS_SPEED_HINT_ALPHA_MIN, LONG_PRESS_SPEED_HINT_ALPHA_MAX)
-
-internal fun resolveLegacyLiquidGlassProgress(
-    mode: LiquidGlassMode,
-    strength: Float
-): Float {
-    val normalizedStrength = normalizeLiquidGlassStrength(strength)
-    val (start, end) = when (mode) {
-        LiquidGlassMode.CLEAR -> 0f to 0.32f
-        LiquidGlassMode.BALANCED -> 0.34f to 0.66f
-        LiquidGlassMode.FROSTED -> 0.68f to 1f
-    }
-    return normalizeLiquidGlassProgress(start + (end - start) * normalizedStrength)
-}
-
-internal fun resolveLegacyLiquidGlassProgress(style: LiquidGlassStyle): Float {
-    val mode = resolveLegacyLiquidGlassMode(style)
-    return resolveLegacyLiquidGlassProgress(
-        mode = mode,
-        strength = resolveDefaultLiquidGlassStrength(mode)
-    )
-}
-
-internal fun resolveLiquidGlassModeFromProgress(progress: Float): LiquidGlassMode {
-    val normalizedProgress = normalizeLiquidGlassProgress(progress)
-    return when {
-        normalizedProgress < 0.34f -> LiquidGlassMode.CLEAR
-        normalizedProgress < 0.68f -> LiquidGlassMode.BALANCED
-        else -> LiquidGlassMode.FROSTED
-    }
-}
-
-internal fun resolveLiquidGlassStrengthFromProgress(progress: Float): Float {
-    val normalizedProgress = normalizeLiquidGlassProgress(progress)
-    val mode = resolveLiquidGlassModeFromProgress(normalizedProgress)
-    val (start, end) = when (mode) {
-        LiquidGlassMode.CLEAR -> 0f to 0.32f
-        LiquidGlassMode.BALANCED -> 0.34f to 0.66f
-        LiquidGlassMode.FROSTED -> 0.68f to 1f
-    }
-    return normalizeLiquidGlassStrength(
-        if (end <= start) {
-            0f
-        } else {
-            (normalizedProgress - start) / (end - start)
-        }
-    )
-}
-
-internal fun resolveLegacyLiquidGlassStyleFromProgress(progress: Float): LiquidGlassStyle {
-    return when (resolveLiquidGlassModeFromProgress(progress)) {
-        LiquidGlassMode.CLEAR -> LiquidGlassStyle.IOS26
-        LiquidGlassMode.BALANCED -> LiquidGlassStyle.CLASSIC
-        LiquidGlassMode.FROSTED -> LiquidGlassStyle.SUKISU
-    }
-}
 
 enum class HomeHeaderBlurMode(val value: Int, val label: String) {
     FOLLOW_PRESET(0, "跟随预设"),
@@ -436,54 +335,6 @@ enum class HomeCardBadgeEffectMode(
     }
 }
 
-/**
- * Card info strip (title + UP under cover) glass — independent of cover badge pills.
- * Realtime blur (Haze) and realtime liquid glass (LayerBackdrop) are separate modes.
- */
-enum class HomeCardInfoGlassMode(
-    val value: Int,
-    val label: String,
-    val subtitle: String
-) {
-    OFF(0, "关闭", "实色/轻 tint，性能最好（推荐）"),
-    REALTIME_BLUR(1, "实时模糊", "开发中，请勿使用：Haze 采样壁纸磨砂"),
-    REALTIME_LIQUID_GLASS(2, "实时液态玻璃", "开发中，请勿使用：折射液态玻璃"),
-    BLUR_AND_LIQUID(3, "模糊+液态", "开发中，请勿使用：Haze + 液态叠加");
-
-    val usesRealtimeBlur: Boolean
-        get() = this == REALTIME_BLUR || this == BLUR_AND_LIQUID
-
-    val usesRealtimeLiquidGlass: Boolean
-        get() = this == REALTIME_LIQUID_GLASS || this == BLUR_AND_LIQUID
-
-    companion object {
-        fun fromValue(value: Int): HomeCardInfoGlassMode =
-            entries.find { it.value == value } ?: OFF
-    }
-}
-
-enum class BottomBarLiquidGlassPreset(
-    val value: Int,
-    val label: String,
-    val description: String
-) {
-    BILIPAI_TUNED(
-        0,
-        "BiliPai 调校",
-        "保留当前多层折射、色散和指示器动效"
-    ),
-    IOS26_REFINED(
-        1,
-        "iOS 26 玻璃",
-        "厚边折射 + 顶光高亮环，无色散，沿用 BiliPai 指示器滑动与配色"
-    );
-
-    companion object {
-        fun fromValue(value: Int): BottomBarLiquidGlassPreset =
-            entries.find { it.value == value } ?: BILIPAI_TUNED
-    }
-}
-
 data class HomeSettings(
     val displayMode: Int = 0,              // 展示模式 (0=网格, 1=故事卡片)
     val isBottomBarFloating: Boolean = true,
@@ -494,21 +345,11 @@ data class HomeSettings(
     val isHeaderBlurEnabled: Boolean = true,
     val headerBlurMode: HomeHeaderBlurMode = HomeHeaderBlurMode.FOLLOW_PRESET,
     val isBottomBarBlurEnabled: Boolean = false,
-    val isTopBarLiquidGlassEnabled: Boolean = false,
-    val isHomeSearchLiquidGlassEnabled: Boolean = false,
-    val isBottomBarLiquidGlassEnabled: Boolean = false,
-    val bottomBarLiquidGlassPreset: BottomBarLiquidGlassPreset =
-        BottomBarLiquidGlassPreset.BILIPAI_TUNED,
     val isBottomBarSearchEnabled: Boolean = false,
     val bottomBarSearchAutoExpandMode: BottomBarSearchAutoExpandMode =
         BottomBarSearchAutoExpandMode.EXPAND_AT_HOME_TOP,
     val bottomBarSearchLayoutMode: BottomBarSearchLayoutMode =
         BottomBarSearchLayoutMode.FULL_DOCK,
-    val androidNativeLiquidGlassEnabled: Boolean = false,
-    val liquidGlassStyle: LiquidGlassStyle = LiquidGlassStyle.CLASSIC, // [New]
-    val liquidGlassMode: LiquidGlassMode = LiquidGlassMode.BALANCED,
-    val liquidGlassStrength: Float = 0.52f,
-    val liquidGlassProgress: Float = 0.5f,
     val homeHeaderCollapseMode: HomeHeaderCollapseMode = HomeHeaderCollapseMode.BOTH,
     val commonListHeaderCollapseMode: CommonListHeaderCollapseMode =
         CommonListHeaderCollapseMode.SHOW_ON_REVERSE_SCROLL,
@@ -526,16 +367,13 @@ data class HomeSettings(
     // [Retired] 旧的首页 feed「智能流畅优先」，固定关闭。
     // 运行时视觉守卫是另一套机制，见 [runtimeVisualGuardEnabled]。
     val smartVisualGuardEnabled: Boolean = false,
-    // 运行时视觉守卫：连续掉帧时自动降级毛玻璃/液态玻璃/景深。
+    // 运行时视觉守卫：连续掉帧时自动降级毛玻璃/景深。
     // 影响面覆盖全 App 视觉，必须保留 kill switch——某机型 JankStats 读数异常时可关闭。
     val runtimeVisualGuardEnabled: Boolean = true,
     val compactVideoStatsOnCover: Boolean = true, //  播放量/评论数显示在封面底部（默认开启）
     val lowQualityHomeCoverInDataSaver: Boolean = false, // 省流量时首页封面使用低清晰度
     // 卡片标签 / 信息区玻璃效果已下线，保留字段仅为兼容旧数据结构。
-    val showHomeCoverGlassBadges: Boolean = false,
-    val showHomeInfoGlassBadges: Boolean = false,
     val homeCardBadgeEffectMode: HomeCardBadgeEffectMode = HomeCardBadgeEffectMode.OFF,
-    val homeCardInfoGlassMode: HomeCardInfoGlassMode = HomeCardInfoGlassMode.OFF,
     val homeWallpaperEffectMode: HomeWallpaperEffectMode = HomeWallpaperEffectMode.SOFT_BLUR,
     val homeWallpaperEffectScope: HomeWallpaperEffectScope = HomeWallpaperEffectScope.HOME_ONLY,
     val showHomeUpBadges: Boolean = false, // 首页和相关推荐 UP 主标识显示(默认关闭,设置后全局生效)
@@ -544,22 +382,12 @@ data class HomeSettings(
     //  [修复] 默认值改为 true，避免在 Flow 加载实际值之前错误触发弹窗
     // 当 Flow 加载完成后，如果实际值是 false，LaunchedEffect 会再次触发并显示弹窗
     val crashTrackingConsentShown: Boolean = true
-) {
-    val isLiquidGlassEnabled: Boolean
-        get() = isBottomBarLiquidGlassEnabled
-}
+)
 
 data class AppThemeSettings(
-    val uiStyle: AppUiStyle = AppUiStyle.MIUIX,
     val themeMode: AppThemeMode = AppThemeMode.FOLLOW_SYSTEM,
     val darkThemeStyle: DarkThemeStyle = DarkThemeStyle.DEFAULT,
     val appLanguage: AppLanguage = AppLanguage.FOLLOW_SYSTEM,
-    val md3ColorSource: Md3ColorSource = Md3ColorSource.FOLLOW_WALLPAPER,
-    val md3CustomColorHex: String = "#007AFF",
-    val themeRoleOverrides: ThemeRoleOverrides = ThemeRoleOverrides(),
-    val colorStyle: PaletteStyle = PaletteStyle.TonalSpot,
-    val colorSpec: ColorSpec.SpecVersion = ColorSpec.SpecVersion.SPEC_2021,
-    val themeColorIndex: Int = 0,
     val appFontSizePreset: AppFontSizePreset = AppFontSizePreset.DEFAULT,
     val appFontFileName: String = "",
     val appUiScalePreset: AppUiScalePreset = AppUiScalePreset.STANDARD,
@@ -573,29 +401,6 @@ data class AppThemeSettings(
     val appListItemStyle: AppListItemStyle = AppListItemStyle.AUTO,
     val singleChoicePresentation: AppSingleChoicePresentation =
         AppSingleChoicePresentation.WINDOW_POPUP,
-)
-
-data class ThemeModeRoleOverrides(
-    val backgroundHex: String,
-    val primaryTextHex: String,
-    val secondaryTextHex: String,
-    val controlAccentHex: String
-)
-
-data class ThemeRoleOverrides(
-    val enabled: Boolean = false,
-    val light: ThemeModeRoleOverrides = ThemeModeRoleOverrides(
-        backgroundHex = "#FFFDF8",
-        primaryTextHex = "#1C1B1F",
-        secondaryTextHex = "#49454F",
-        controlAccentHex = "#0061A4"
-    ),
-    val dark: ThemeModeRoleOverrides = ThemeModeRoleOverrides(
-        backgroundHex = "#121212",
-        primaryTextHex = "#E6E1E5",
-        secondaryTextHex = "#CAC4D0",
-        controlAccentHex = "#9ECAFF"
-    )
 )
 
 enum class BottomBarSearchAutoExpandMode(val value: Int, val label: String) {
@@ -722,14 +527,6 @@ internal fun resolveHomeHeaderCollapseModeForSearch(
         currentMode.collapseTabs -> HomeHeaderCollapseMode.TABS_ONLY
         else -> HomeHeaderCollapseMode.OFF
     }
-}
-
-internal fun resolveUiPresetPreferenceValue(rawValue: Int?): UiPreset {
-    return UiPreset.fromValue(rawValue ?: UiPreset.MD3.value)
-}
-
-internal fun resolveAndroidNativeVariantPreferenceValue(rawValue: Int?): AndroidNativeVariant {
-    return AndroidNativeVariant.fromValue(rawValue ?: AndroidNativeVariant.MIUIX.value)
 }
 
 enum class DanmakuPanelWidthMode(val value: Int, val label: String, val widthFraction: Float) {
@@ -1121,23 +918,6 @@ object SettingsManager {
     private val KEY_THEME_MODE = intPreferencesKey("theme_mode_v2")
     private val KEY_DARK_THEME_STYLE = intPreferencesKey("dark_theme_style_v1")
     private val KEY_APP_LANGUAGE = intPreferencesKey("app_language_v1")
-    private val KEY_UI_PRESET = intPreferencesKey("ui_preset")
-    private val KEY_ANDROID_NATIVE_VARIANT = intPreferencesKey("android_native_variant_v1")
-    private val KEY_DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
-    private val KEY_MD3_COLOR_SOURCE = stringPreferencesKey("md3_color_source")
-    private val KEY_MD3_CUSTOM_COLOR_HEX = stringPreferencesKey("md3_custom_color_hex")
-    private val KEY_THEME_ROLE_OVERRIDES_ENABLED =
-        booleanPreferencesKey("theme_role_overrides_enabled")
-    private val KEY_THEME_LIGHT_BACKGROUND = stringPreferencesKey("theme_light_background")
-    private val KEY_THEME_LIGHT_PRIMARY_TEXT = stringPreferencesKey("theme_light_primary_text")
-    private val KEY_THEME_LIGHT_SECONDARY_TEXT = stringPreferencesKey("theme_light_secondary_text")
-    private val KEY_THEME_LIGHT_CONTROL_ACCENT = stringPreferencesKey("theme_light_control_accent")
-    private val KEY_THEME_DARK_BACKGROUND = stringPreferencesKey("theme_dark_background")
-    private val KEY_THEME_DARK_PRIMARY_TEXT = stringPreferencesKey("theme_dark_primary_text")
-    private val KEY_THEME_DARK_SECONDARY_TEXT = stringPreferencesKey("theme_dark_secondary_text")
-    private val KEY_THEME_DARK_CONTROL_ACCENT = stringPreferencesKey("theme_dark_control_accent")
-    private val KEY_THEME_COLOR_STYLE = stringPreferencesKey("theme_color_style")
-    private val KEY_THEME_COLOR_SPEC = stringPreferencesKey("theme_color_spec")
     private val KEY_SINGLE_CHOICE_PRESENTATION =
         stringPreferencesKey("single_choice_presentation")
     private val KEY_BG_PLAY = booleanPreferencesKey("bg_play")
@@ -1186,7 +966,6 @@ object SettingsManager {
     private val KEY_DEFAULT_PLAYBACK_SPEED = floatPreferencesKey("default_playback_speed")
     private val KEY_REMEMBER_LAST_PLAYBACK_SPEED = booleanPreferencesKey("remember_last_playback_speed")
     private val KEY_LAST_PLAYBACK_SPEED = floatPreferencesKey("last_playback_speed")
-    private val KEY_THEME_COLOR_INDEX = intPreferencesKey("theme_color_index")
     private val KEY_APP_FONT_SIZE_PRESET = intPreferencesKey("app_font_size_preset")
     private val KEY_APP_FONT_FILE_NAME = stringPreferencesKey("app_font_file_name")
     private val KEY_APP_FONT_DISPLAY_NAME = stringPreferencesKey("app_font_display_name")
@@ -1265,25 +1044,11 @@ object SettingsManager {
         intPreferencesKey("common_list_header_collapse_mode")
     private val KEY_HOME_TOP_LAYOUT_ORDER = intPreferencesKey("home_top_layout_order")
     private val KEY_BOTTOM_BAR_BLUR_ENABLED = booleanPreferencesKey("bottom_bar_blur_enabled")
-    private val KEY_TOP_BAR_LIQUID_GLASS_ENABLED = booleanPreferencesKey("top_bar_liquid_glass_enabled")
-    private val KEY_HOME_SEARCH_LIQUID_GLASS_ENABLED =
-        booleanPreferencesKey("home_search_liquid_glass_enabled")
-    private val KEY_BOTTOM_BAR_LIQUID_GLASS_ENABLED = booleanPreferencesKey("bottom_bar_liquid_glass_enabled")
     private val KEY_BOTTOM_BAR_SEARCH_ENABLED = booleanPreferencesKey("bottom_bar_search_enabled")
     private val KEY_BOTTOM_BAR_SEARCH_AUTO_EXPAND_MODE =
         intPreferencesKey("bottom_bar_search_auto_expand_mode")
     private val KEY_BOTTOM_BAR_SEARCH_LAYOUT_MODE =
         intPreferencesKey("bottom_bar_search_layout_mode")
-    private val KEY_ANDROID_NATIVE_LIQUID_GLASS_ENABLED =
-        booleanPreferencesKey("android_native_liquid_glass_enabled")
-    private val KEY_LEGACY_ANDROID_NATIVE_TOP_TAB_LIQUID_GLASS_ENABLED =
-        booleanPreferencesKey("android_native_top_tab_liquid_glass_enabled")
-    //  Legacy shared Liquid Glass toggle, kept as migration fallback.
-    private val KEY_LIQUID_GLASS_ENABLED = booleanPreferencesKey("liquid_glass_enabled")
-    
-    // MOVED KEY_LIQUID_GLASS_STYLE down to where enum is defined to avoid forward reference issues if Kotlin 
-    // but better to keep keys together. 
-    // For simplicity, I will use getLiquidGlassStyle() helper in the flow below.
 
     //  [新增] 模糊强度 (ULTRA_THIN, THIN, THICK)
     private val KEY_BLUR_INTENSITY = stringPreferencesKey("blur_intensity")
@@ -1323,7 +1088,6 @@ object SettingsManager {
     private val KEY_HOME_COVER_GLASS_BADGES_VISIBLE = booleanPreferencesKey("home_cover_glass_badges_visible")
     private val KEY_HOME_INFO_GLASS_BADGES_VISIBLE = booleanPreferencesKey("home_info_glass_badges_visible")
     private val KEY_HOME_CARD_BADGE_EFFECT_MODE = intPreferencesKey("home_card_badge_effect_mode")
-    private val KEY_HOME_CARD_INFO_GLASS_MODE = intPreferencesKey("home_card_info_glass_mode")
     private val KEY_HOME_WALLPAPER_URI = stringPreferencesKey("home_wallpaper_uri")
     private val KEY_HOME_WALLPAPER_EFFECT_MODE = intPreferencesKey("home_wallpaper_effect_mode")
     private val KEY_HOME_WALLPAPER_EFFECT_SCOPE = intPreferencesKey("home_wallpaper_effect_scope")
@@ -1334,13 +1098,6 @@ object SettingsManager {
     private val KEY_HOME_DURATION_STYLE = intPreferencesKey("home_duration_style")
     //  [合并] 崩溃追踪同意弹窗
     private val KEY_CRASH_TRACKING_CONSENT_SHOWN = booleanPreferencesKey("crash_tracking_consent_shown")
-    private val KEY_LIQUID_GLASS_MODE = intPreferencesKey("liquid_glass_mode")
-    private val KEY_LIQUID_GLASS_STRENGTH = floatPreferencesKey("liquid_glass_strength")
-    private val KEY_LIQUID_GLASS_PROGRESS = floatPreferencesKey("liquid_glass_progress")
-    private val FIXED_LIQUID_GLASS_STYLE = LiquidGlassStyle.SUKISU
-    private val FIXED_LIQUID_GLASS_MODE = LiquidGlassMode.BALANCED
-    private const val FIXED_LIQUID_GLASS_STRENGTH = 0.52f
-    private const val FIXED_LIQUID_GLASS_PROGRESS = 0.5f
     //  [新增] 底栏自定义 - 顺序和可见性
     private val KEY_BOTTOM_BAR_ORDER = stringPreferencesKey("bottom_bar_order")  // 逗号分隔的项目顺序
     private val KEY_BOTTOM_BAR_VISIBLE_TABS = stringPreferencesKey("bottom_bar_visible_tabs")  // 逗号分隔的可见项目
@@ -1384,7 +1141,6 @@ object SettingsManager {
             ?: HomeHeaderCollapseMode.fromLegacyBoolean(
                 preferences[KEY_HEADER_COLLAPSE_ENABLED] ?: true
             )
-        val legacyLiquidGlassEnabled = preferences[KEY_LIQUID_GLASS_ENABLED] ?: false
         return HomeSettings(
             displayMode = preferences[KEY_DISPLAY_MODE] ?: 0,
             isBottomBarFloating = preferences[KEY_BOTTOM_BAR_FLOATING] ?: true,
@@ -1399,11 +1155,6 @@ object SettingsManager {
             isHeaderBlurEnabled = headerBlurMode != HomeHeaderBlurMode.ALWAYS_OFF,
             headerBlurMode = headerBlurMode,
             isBottomBarBlurEnabled = preferences[KEY_BOTTOM_BAR_BLUR_ENABLED] ?: false,
-            isTopBarLiquidGlassEnabled = preferences[KEY_TOP_BAR_LIQUID_GLASS_ENABLED] ?: false,
-            isHomeSearchLiquidGlassEnabled =
-                preferences[KEY_HOME_SEARCH_LIQUID_GLASS_ENABLED]
-                    ?: (preferences[KEY_TOP_BAR_LIQUID_GLASS_ENABLED] ?: false),
-            isBottomBarLiquidGlassEnabled = preferences[KEY_BOTTOM_BAR_LIQUID_GLASS_ENABLED] ?: legacyLiquidGlassEnabled,
             isBottomBarSearchEnabled = preferences[KEY_BOTTOM_BAR_SEARCH_ENABLED] ?: false,
             bottomBarSearchAutoExpandMode = BottomBarSearchAutoExpandMode.fromValue(
                 preferences[KEY_BOTTOM_BAR_SEARCH_AUTO_EXPAND_MODE]
@@ -1413,13 +1164,6 @@ object SettingsManager {
                 preferences[KEY_BOTTOM_BAR_SEARCH_LAYOUT_MODE]
                     ?: BottomBarSearchLayoutMode.FULL_DOCK.value
             ),
-            androidNativeLiquidGlassEnabled =
-                preferences[KEY_ANDROID_NATIVE_LIQUID_GLASS_ENABLED]
-                    ?: false,
-            liquidGlassStyle = FIXED_LIQUID_GLASS_STYLE,
-            liquidGlassMode = FIXED_LIQUID_GLASS_MODE,
-            liquidGlassStrength = FIXED_LIQUID_GLASS_STRENGTH,
-            liquidGlassProgress = FIXED_LIQUID_GLASS_PROGRESS,
             homeHeaderCollapseMode = headerCollapseMode,
             commonListHeaderCollapseMode = CommonListHeaderCollapseMode.fromValue(
                 preferences[KEY_COMMON_LIST_HEADER_COLLAPSE_MODE]
@@ -1454,10 +1198,7 @@ object SettingsManager {
             lowQualityHomeCoverInDataSaver =
                 preferences[KEY_LOW_QUALITY_HOME_COVER_IN_DATA_SAVER] ?: false,
             // 已下线：忽略旧数据，确保历史上开启过实时模糊/液态玻璃的用户不会继续走该路径。
-            showHomeCoverGlassBadges = false,
-            showHomeInfoGlassBadges = false,
             homeCardBadgeEffectMode = HomeCardBadgeEffectMode.OFF,
-            homeCardInfoGlassMode = HomeCardInfoGlassMode.OFF,
             homeWallpaperEffectMode = HomeWallpaperEffectMode.fromValue(
                 preferences[KEY_HOME_WALLPAPER_EFFECT_MODE] ?: HomeWallpaperEffectMode.SOFT_BLUR.value
             ),
@@ -1822,16 +1563,7 @@ object SettingsManager {
 
     internal fun mapAppThemeSettingsFromPreferences(preferences: Preferences): AppThemeSettings {
         val rawDpiOverride = preferences[KEY_APP_DPI_OVERRIDE_PERCENT] ?: 0
-        val defaultRoleOverrides = ThemeRoleOverrides()
-        // 两值运行时模型：优先新键；缺失时回退旧键解析并归一化。
-        // 历史 iOS、缺失、非法值均按迁移表单向迁移为默认主题 MIUIX。
-        val uiStyle = resolveThemeSelectionFromPreferences(
-            preferences,
-            KEY_UI_PRESET,
-            KEY_ANDROID_NATIVE_VARIANT
-        )
         return AppThemeSettings(
-            uiStyle = uiStyle,
             themeMode = resolveThemeModePreference(
                 preferences[KEY_THEME_MODE] ?: AppThemeMode.FOLLOW_SYSTEM.value
             ),
@@ -1840,53 +1572,6 @@ object SettingsManager {
                 legacyThemeModeValue = preferences[KEY_THEME_MODE]
             ),
             appLanguage = resolveAppLanguagePreference(preferences[KEY_APP_LANGUAGE]),
-            md3ColorSource = resolveMd3ColorSourcePreference(
-                sourceValue = preferences[KEY_MD3_COLOR_SOURCE],
-                legacyDynamicColorEnabled = preferences[KEY_DYNAMIC_COLOR]
-            ),
-            md3CustomColorHex = normalizeMd3CustomColorHex(preferences[KEY_MD3_CUSTOM_COLOR_HEX]),
-            themeRoleOverrides = ThemeRoleOverrides(
-                enabled = preferences[KEY_THEME_ROLE_OVERRIDES_ENABLED] ?: false,
-                light = ThemeModeRoleOverrides(
-                    backgroundHex = normalizeMd3CustomColorHex(
-                        preferences[KEY_THEME_LIGHT_BACKGROUND],
-                        defaultRoleOverrides.light.backgroundHex
-                    ),
-                    primaryTextHex = normalizeMd3CustomColorHex(
-                        preferences[KEY_THEME_LIGHT_PRIMARY_TEXT],
-                        defaultRoleOverrides.light.primaryTextHex
-                    ),
-                    secondaryTextHex = normalizeMd3CustomColorHex(
-                        preferences[KEY_THEME_LIGHT_SECONDARY_TEXT],
-                        defaultRoleOverrides.light.secondaryTextHex
-                    ),
-                    controlAccentHex = normalizeMd3CustomColorHex(
-                        preferences[KEY_THEME_LIGHT_CONTROL_ACCENT],
-                        defaultRoleOverrides.light.controlAccentHex
-                    )
-                ),
-                dark = ThemeModeRoleOverrides(
-                    backgroundHex = normalizeMd3CustomColorHex(
-                        preferences[KEY_THEME_DARK_BACKGROUND],
-                        defaultRoleOverrides.dark.backgroundHex
-                    ),
-                    primaryTextHex = normalizeMd3CustomColorHex(
-                        preferences[KEY_THEME_DARK_PRIMARY_TEXT],
-                        defaultRoleOverrides.dark.primaryTextHex
-                    ),
-                    secondaryTextHex = normalizeMd3CustomColorHex(
-                        preferences[KEY_THEME_DARK_SECONDARY_TEXT],
-                        defaultRoleOverrides.dark.secondaryTextHex
-                    ),
-                    controlAccentHex = normalizeMd3CustomColorHex(
-                        preferences[KEY_THEME_DARK_CONTROL_ACCENT],
-                        defaultRoleOverrides.dark.controlAccentHex
-                    )
-                )
-            ),
-            colorStyle = resolvePaletteStylePreference(preferences[KEY_THEME_COLOR_STYLE]),
-            colorSpec = resolveColorSpecPreference(preferences[KEY_THEME_COLOR_SPEC]),
-            themeColorIndex = normalizeThemeColorIndex(preferences[KEY_THEME_COLOR_INDEX] ?: 0),
             appFontSizePreset = AppFontSizePreset.fromValue(
                 preferences[KEY_APP_FONT_SIZE_PRESET] ?: AppFontSizePreset.DEFAULT.value
             ),
@@ -1917,7 +1602,6 @@ object SettingsManager {
     }
 
     fun getAppThemeSettings(context: Context): Flow<AppThemeSettings> = flow {
-        ensureThemeSelectionMigrated(context, KEY_UI_PRESET, KEY_ANDROID_NATIVE_VARIANT)
         emitAll(
             context.settingsDataStore.data
                 .map(::mapAppThemeSettingsFromPreferences)
@@ -2047,132 +1731,6 @@ object SettingsManager {
             "SettingsManager",
             " Dark theme style saved: ${style.value} (${style.label}), success=$success"
         )
-    }
-
-    fun getUiStyle(context: Context): Flow<AppUiStyle> = flow {
-        ensureThemeSelectionMigrated(context, KEY_UI_PRESET, KEY_ANDROID_NATIVE_VARIANT)
-        emitAll(
-            context.settingsDataStore.data
-                .map { preferences ->
-                    resolveThemeSelectionFromPreferences(
-                        preferences,
-                        KEY_UI_PRESET,
-                        KEY_ANDROID_NATIVE_VARIANT
-                    )
-                }
-                .distinctUntilChanged()
-        )
-    }
-
-    suspend fun setUiStyle(context: Context, uiStyle: AppUiStyle) {
-        // 只写新稳定键，不再双写旧键；两值模型不存在非法运行时值。
-        context.settingsDataStore.edit { preferences ->
-            preferences[KEY_THEME_SELECTION] = uiStyle.name
-            preferences.remove(KEY_UI_PRESET)
-            preferences.remove(KEY_ANDROID_NATIVE_VARIANT)
-        }
-    }
-
-    // --- Dynamic Color ---
-    fun getDynamicColor(context: Context): Flow<Boolean> = context.settingsDataStore.data
-        .map { preferences ->
-            resolveMd3ColorSourcePreference(
-                sourceValue = preferences[KEY_MD3_COLOR_SOURCE],
-                legacyDynamicColorEnabled = preferences[KEY_DYNAMIC_COLOR]
-            ) == Md3ColorSource.FOLLOW_WALLPAPER
-        }
-
-    suspend fun setDynamicColor(context: Context, value: Boolean) {
-        setMd3ColorSource(
-            context = context,
-            source = if (value) Md3ColorSource.FOLLOW_WALLPAPER else Md3ColorSource.CUSTOM
-        )
-    }
-
-    fun getMd3ColorSource(context: Context): Flow<Md3ColorSource> = context.settingsDataStore.data
-        .map { preferences ->
-            resolveMd3ColorSourcePreference(
-                sourceValue = preferences[KEY_MD3_COLOR_SOURCE],
-                legacyDynamicColorEnabled = preferences[KEY_DYNAMIC_COLOR]
-            )
-        }
-
-    suspend fun setMd3ColorSource(context: Context, source: Md3ColorSource) = context.settingsDataStore.edit { preferences ->
-        preferences[KEY_MD3_COLOR_SOURCE] = source.name
-        // 保持旧 key 同步，避免旧入口或导入旧配置时出现来源状态不一致。
-        preferences[KEY_DYNAMIC_COLOR] = source == Md3ColorSource.FOLLOW_WALLPAPER
-    }
-
-    fun getMd3CustomColorHex(context: Context): Flow<String> = context.settingsDataStore.data.map {
-        normalizeMd3CustomColorHex(it[KEY_MD3_CUSTOM_COLOR_HEX])
-    }
-
-    suspend fun setMd3CustomColorHex(context: Context, hex: String) = context.settingsDataStore.edit { preferences ->
-        preferences[KEY_MD3_CUSTOM_COLOR_HEX] = normalizeMd3CustomColorHex(hex)
-    }
-
-    suspend fun applyMd3CustomColor(context: Context, hex: String) = context.settingsDataStore.edit { preferences ->
-        preferences[KEY_MD3_COLOR_SOURCE] = Md3ColorSource.CUSTOM.name
-        preferences[KEY_DYNAMIC_COLOR] = false
-        preferences[KEY_MD3_CUSTOM_COLOR_HEX] = normalizeMd3CustomColorHex(hex)
-    }
-
-    fun getThemeRoleOverrides(context: Context): Flow<ThemeRoleOverrides> =
-        context.settingsDataStore.data.map { preferences ->
-            mapAppThemeSettingsFromPreferences(preferences).themeRoleOverrides
-        }
-
-    suspend fun setThemeRoleOverrides(context: Context, overrides: ThemeRoleOverrides) {
-        val defaults = ThemeRoleOverrides()
-        context.settingsDataStore.edit { preferences ->
-            preferences[KEY_THEME_ROLE_OVERRIDES_ENABLED] = overrides.enabled
-            preferences[KEY_THEME_LIGHT_BACKGROUND] = normalizeMd3CustomColorHex(
-                overrides.light.backgroundHex,
-                defaults.light.backgroundHex
-            )
-            preferences[KEY_THEME_LIGHT_PRIMARY_TEXT] = normalizeMd3CustomColorHex(
-                overrides.light.primaryTextHex,
-                defaults.light.primaryTextHex
-            )
-            preferences[KEY_THEME_LIGHT_SECONDARY_TEXT] = normalizeMd3CustomColorHex(
-                overrides.light.secondaryTextHex,
-                defaults.light.secondaryTextHex
-            )
-            preferences[KEY_THEME_LIGHT_CONTROL_ACCENT] = normalizeMd3CustomColorHex(
-                overrides.light.controlAccentHex,
-                defaults.light.controlAccentHex
-            )
-            preferences[KEY_THEME_DARK_BACKGROUND] = normalizeMd3CustomColorHex(
-                overrides.dark.backgroundHex,
-                defaults.dark.backgroundHex
-            )
-            preferences[KEY_THEME_DARK_PRIMARY_TEXT] = normalizeMd3CustomColorHex(
-                overrides.dark.primaryTextHex,
-                defaults.dark.primaryTextHex
-            )
-            preferences[KEY_THEME_DARK_SECONDARY_TEXT] = normalizeMd3CustomColorHex(
-                overrides.dark.secondaryTextHex,
-                defaults.dark.secondaryTextHex
-            )
-            preferences[KEY_THEME_DARK_CONTROL_ACCENT] = normalizeMd3CustomColorHex(
-                overrides.dark.controlAccentHex,
-                defaults.dark.controlAccentHex
-            )
-        }
-    }
-
-    fun getThemeColorStyle(context: Context): Flow<PaletteStyle> = context.settingsDataStore.data
-        .map { preferences -> resolvePaletteStylePreference(preferences[KEY_THEME_COLOR_STYLE]) }
-
-    suspend fun setThemeColorStyle(context: Context, style: PaletteStyle) {
-        context.settingsDataStore.edit { preferences -> preferences[KEY_THEME_COLOR_STYLE] = style.name }
-    }
-
-    fun getThemeColorSpec(context: Context): Flow<ColorSpec.SpecVersion> = context.settingsDataStore.data
-        .map { preferences -> resolveColorSpecPreference(preferences[KEY_THEME_COLOR_SPEC]) }
-
-    suspend fun setThemeColorSpec(context: Context, spec: ColorSpec.SpecVersion) {
-        context.settingsDataStore.edit { preferences -> preferences[KEY_THEME_COLOR_SPEC] = spec.name }
     }
 
     fun getAppFontSizePreset(context: Context): Flow<AppFontSizePreset> = context.settingsDataStore.data
@@ -2600,17 +2158,6 @@ object SettingsManager {
     fun getPlayerInsightModeSync(context: Context): PlayerSettingsStore.PlayerInsightMode =
         PlayerSettingsStore.getPlayerInsightModeSync(context)
 
-    //  [新增] --- 主题色索引 (默认 0 = 经典蓝) ---
-    fun getThemeColorIndex(context: Context): Flow<Int> = context.settingsDataStore.data
-        .map { preferences -> normalizeThemeColorIndex(preferences[KEY_THEME_COLOR_INDEX] ?: 0) }
-
-    suspend fun setThemeColorIndex(context: Context, index: Int) {
-        context.settingsDataStore.edit { preferences -> 
-            preferences[KEY_THEME_COLOR_INDEX] = normalizeThemeColorIndex(index)
-        }
-    }
-    
-    
     //  --- 首页展示模式 功能方法 ---
     
     fun getDisplayMode(context: Context): Flow<Int> = context.settingsDataStore.data
@@ -2863,25 +2410,6 @@ object SettingsManager {
         } else {
             HomeCardBadgeEffectMode.SOFT_GLASS
         }
-    }
-
-    fun getHomeCardInfoGlassMode(context: Context): Flow<HomeCardInfoGlassMode> =
-        context.settingsDataStore.data.map { preferences ->
-            resolveHomeCardInfoGlassMode(preferences)
-        }
-
-    suspend fun setHomeCardInfoGlassMode(context: Context, mode: HomeCardInfoGlassMode) {
-        context.settingsDataStore.edit { preferences ->
-            preferences[KEY_HOME_CARD_INFO_GLASS_MODE] = mode.value
-        }
-    }
-
-    private fun resolveHomeCardInfoGlassMode(preferences: Preferences): HomeCardInfoGlassMode {
-        preferences[KEY_HOME_CARD_INFO_GLASS_MODE]?.let { raw ->
-            return HomeCardInfoGlassMode.fromValue(raw)
-        }
-        // WIP realtime glass defaults off — do not auto-enable from badge mode.
-        return HomeCardInfoGlassMode.OFF
     }
 
     fun getHomeWallpaperUri(context: Context): Flow<String> = context.settingsDataStore.data
@@ -3384,64 +2912,10 @@ object SettingsManager {
 
     suspend fun setBottomBarVisualEffects(
         context: Context,
-        blurEnabled: Boolean,
-        liquidGlassEnabled: Boolean
+        blurEnabled: Boolean
     ) {
         context.settingsDataStore.edit { preferences ->
             preferences[KEY_BOTTOM_BAR_BLUR_ENABLED] = blurEnabled
-            preferences[KEY_BOTTOM_BAR_LIQUID_GLASS_ENABLED] = liquidGlassEnabled
-        }
-    }
-    
-    //  [New] --- Liquid Glass Effect ---
-
-    private val KEY_LIQUID_GLASS_STYLE = intPreferencesKey("liquid_glass_style")
-
-    fun getLiquidGlassEnabled(context: Context): Flow<Boolean> = context.settingsDataStore.data
-        .map { preferences ->
-            val legacy = preferences[KEY_LIQUID_GLASS_ENABLED] ?: true
-            val bottom = preferences[KEY_BOTTOM_BAR_LIQUID_GLASS_ENABLED] ?: legacy
-            bottom
-        }
-
-    suspend fun setLiquidGlassEnabled(context: Context, value: Boolean) {
-        context.settingsDataStore.edit { preferences ->
-            preferences[KEY_LIQUID_GLASS_ENABLED] = value
-            preferences[KEY_BOTTOM_BAR_LIQUID_GLASS_ENABLED] = value
-        }
-    }
-
-    fun getTopBarLiquidGlassEnabled(context: Context): Flow<Boolean> = context.settingsDataStore.data
-        .map { preferences ->
-            preferences[KEY_TOP_BAR_LIQUID_GLASS_ENABLED] ?: false
-        }
-
-    suspend fun setTopBarLiquidGlassEnabled(context: Context, value: Boolean) {
-        context.settingsDataStore.edit { preferences ->
-            preferences[KEY_TOP_BAR_LIQUID_GLASS_ENABLED] = value
-        }
-    }
-
-    fun getHomeSearchLiquidGlassEnabled(context: Context): Flow<Boolean> =
-        context.settingsDataStore.data.map { preferences ->
-            preferences[KEY_HOME_SEARCH_LIQUID_GLASS_ENABLED]
-                ?: (preferences[KEY_TOP_BAR_LIQUID_GLASS_ENABLED] ?: false)
-        }
-
-    suspend fun setHomeSearchLiquidGlassEnabled(context: Context, value: Boolean) {
-        context.settingsDataStore.edit { preferences ->
-            preferences[KEY_HOME_SEARCH_LIQUID_GLASS_ENABLED] = value
-        }
-    }
-
-    fun getBottomBarLiquidGlassEnabled(context: Context): Flow<Boolean> = context.settingsDataStore.data
-        .map { preferences ->
-            preferences[KEY_BOTTOM_BAR_LIQUID_GLASS_ENABLED] ?: (preferences[KEY_LIQUID_GLASS_ENABLED] ?: false)
-        }
-
-    suspend fun setBottomBarLiquidGlassEnabled(context: Context, value: Boolean) {
-        context.settingsDataStore.edit { preferences ->
-            preferences[KEY_BOTTOM_BAR_LIQUID_GLASS_ENABLED] = value
         }
     }
 
@@ -3490,67 +2964,6 @@ object SettingsManager {
         }
     }
 
-    fun getAndroidNativeLiquidGlassEnabled(context: Context): Flow<Boolean> =
-        context.settingsDataStore.data
-            .map { preferences ->
-                preferences[KEY_ANDROID_NATIVE_LIQUID_GLASS_ENABLED]
-                    ?: false
-            }
-
-    suspend fun setAndroidNativeLiquidGlassEnabled(context: Context, value: Boolean) {
-        context.settingsDataStore.edit { preferences ->
-            preferences[KEY_ANDROID_NATIVE_LIQUID_GLASS_ENABLED] = value
-        }
-    }
-    
-    fun getLiquidGlassStyle(context: Context): Flow<LiquidGlassStyle> = context.settingsDataStore.data
-        .map { FIXED_LIQUID_GLASS_STYLE }
-
-    suspend fun setLiquidGlassStyle(context: Context, style: LiquidGlassStyle) {
-        context.settingsDataStore.edit { preferences ->
-            preferences[KEY_LIQUID_GLASS_STYLE] = FIXED_LIQUID_GLASS_STYLE.value
-            preferences[KEY_LIQUID_GLASS_MODE] = FIXED_LIQUID_GLASS_MODE.value
-            preferences[KEY_LIQUID_GLASS_STRENGTH] = FIXED_LIQUID_GLASS_STRENGTH
-            preferences[KEY_LIQUID_GLASS_PROGRESS] = FIXED_LIQUID_GLASS_PROGRESS
-        }
-    }
-
-    fun getLiquidGlassMode(context: Context): Flow<LiquidGlassMode> = context.settingsDataStore.data
-        .map { FIXED_LIQUID_GLASS_MODE }
-
-    suspend fun setLiquidGlassMode(context: Context, mode: LiquidGlassMode) {
-        context.settingsDataStore.edit { preferences ->
-            preferences[KEY_LIQUID_GLASS_MODE] = FIXED_LIQUID_GLASS_MODE.value
-            preferences[KEY_LIQUID_GLASS_STRENGTH] = FIXED_LIQUID_GLASS_STRENGTH
-            preferences[KEY_LIQUID_GLASS_PROGRESS] = FIXED_LIQUID_GLASS_PROGRESS
-            preferences[KEY_LIQUID_GLASS_STYLE] = FIXED_LIQUID_GLASS_STYLE.value
-        }
-    }
-
-    fun getLiquidGlassStrength(context: Context): Flow<Float> = context.settingsDataStore.data
-        .map { FIXED_LIQUID_GLASS_STRENGTH }
-
-    suspend fun setLiquidGlassStrength(context: Context, strength: Float) {
-        context.settingsDataStore.edit { preferences ->
-            preferences[KEY_LIQUID_GLASS_STRENGTH] = FIXED_LIQUID_GLASS_STRENGTH
-            preferences[KEY_LIQUID_GLASS_PROGRESS] = FIXED_LIQUID_GLASS_PROGRESS
-            preferences[KEY_LIQUID_GLASS_MODE] = FIXED_LIQUID_GLASS_MODE.value
-            preferences[KEY_LIQUID_GLASS_STYLE] = FIXED_LIQUID_GLASS_STYLE.value
-        }
-    }
-
-    fun getLiquidGlassProgress(context: Context): Flow<Float> = context.settingsDataStore.data
-        .map { FIXED_LIQUID_GLASS_PROGRESS }
-
-    suspend fun setLiquidGlassProgress(context: Context, progress: Float) {
-        context.settingsDataStore.edit { preferences ->
-            preferences[KEY_LIQUID_GLASS_PROGRESS] = FIXED_LIQUID_GLASS_PROGRESS
-            preferences[KEY_LIQUID_GLASS_MODE] = FIXED_LIQUID_GLASS_MODE.value
-            preferences[KEY_LIQUID_GLASS_STRENGTH] = FIXED_LIQUID_GLASS_STRENGTH
-            preferences[KEY_LIQUID_GLASS_STYLE] = FIXED_LIQUID_GLASS_STYLE.value
-        }
-    }
-    
     //  [修复] --- 模糊强度 (THIN, THICK, APPLE_DOCK) ---
     fun getBlurIntensity(context: Context): Flow<BlurIntensity> = context.settingsDataStore.data
         .map { preferences ->
@@ -4649,7 +4062,7 @@ object SettingsManager {
 
     /**
      * 启动时一次性迁移首页视觉默认值（仅在版本未迁移时覆盖）。
-     * 目标：默认开启底栏悬浮、顶/底液态玻璃、顶部模糊，并在 v3 一次性
+     * 目标：默认开启底栏悬浮、顶部模糊，并在 v3 一次性
      * 覆盖底栏项目，确保“推荐”（HOME）恢复为第一项。版本标记写入后不再重复覆盖。
      */
     suspend fun ensureHomeVisualDefaults(context: Context) {
@@ -4657,10 +4070,6 @@ object SettingsManager {
             val currentVersion = preferences[KEY_HOME_VISUAL_DEFAULTS_VERSION] ?: 0
             if (currentVersion < HOME_VISUAL_DEFAULTS_VERSION) {
                 preferences[KEY_BOTTOM_BAR_FLOATING] = true
-                preferences[KEY_LIQUID_GLASS_ENABLED] = true
-                preferences[KEY_BOTTOM_BAR_LIQUID_GLASS_ENABLED] = true
-                preferences[KEY_TOP_BAR_LIQUID_GLASS_ENABLED] = true
-                preferences[KEY_HOME_SEARCH_LIQUID_GLASS_ENABLED] = true
                 preferences[KEY_HEADER_BLUR_ENABLED] = true
                 preferences[KEY_BOTTOM_BAR_ORDER] = DEFAULT_BOTTOM_BAR_ORDER
                 preferences[KEY_BOTTOM_BAR_VISIBLE_TABS] = DEFAULT_BOTTOM_BAR_VISIBLE_TABS
@@ -6481,29 +5890,13 @@ object SettingsManager {
 
     private val shareableSettingDefinitions: List<ShareablePreferenceDefinition> by lazy {
         listOf(
-            StringShareablePreferenceDefinition(KEY_THEME_SELECTION, SettingsShareSection.APPEARANCE),
             IntShareablePreferenceDefinition(KEY_THEME_MODE, SettingsShareSection.APPEARANCE),
             IntShareablePreferenceDefinition(KEY_DARK_THEME_STYLE, SettingsShareSection.APPEARANCE),
             IntShareablePreferenceDefinition(KEY_APP_LANGUAGE, SettingsShareSection.APPEARANCE),
-            BooleanShareablePreferenceDefinition(KEY_DYNAMIC_COLOR, SettingsShareSection.APPEARANCE),
-            StringShareablePreferenceDefinition(KEY_MD3_COLOR_SOURCE, SettingsShareSection.APPEARANCE),
-            StringShareablePreferenceDefinition(KEY_MD3_CUSTOM_COLOR_HEX, SettingsShareSection.APPEARANCE),
-            BooleanShareablePreferenceDefinition(KEY_THEME_ROLE_OVERRIDES_ENABLED, SettingsShareSection.APPEARANCE),
-            StringShareablePreferenceDefinition(KEY_THEME_LIGHT_BACKGROUND, SettingsShareSection.APPEARANCE),
-            StringShareablePreferenceDefinition(KEY_THEME_LIGHT_PRIMARY_TEXT, SettingsShareSection.APPEARANCE),
-            StringShareablePreferenceDefinition(KEY_THEME_LIGHT_SECONDARY_TEXT, SettingsShareSection.APPEARANCE),
-            StringShareablePreferenceDefinition(KEY_THEME_LIGHT_CONTROL_ACCENT, SettingsShareSection.APPEARANCE),
-            StringShareablePreferenceDefinition(KEY_THEME_DARK_BACKGROUND, SettingsShareSection.APPEARANCE),
-            StringShareablePreferenceDefinition(KEY_THEME_DARK_PRIMARY_TEXT, SettingsShareSection.APPEARANCE),
-            StringShareablePreferenceDefinition(KEY_THEME_DARK_SECONDARY_TEXT, SettingsShareSection.APPEARANCE),
-            StringShareablePreferenceDefinition(KEY_THEME_DARK_CONTROL_ACCENT, SettingsShareSection.APPEARANCE),
-            StringShareablePreferenceDefinition(KEY_THEME_COLOR_STYLE, SettingsShareSection.APPEARANCE),
-            StringShareablePreferenceDefinition(KEY_THEME_COLOR_SPEC, SettingsShareSection.APPEARANCE),
             StringShareablePreferenceDefinition(
                 KEY_SINGLE_CHOICE_PRESENTATION,
                 SettingsShareSection.APPEARANCE,
             ),
-            IntShareablePreferenceDefinition(KEY_THEME_COLOR_INDEX, SettingsShareSection.APPEARANCE),
             StringShareablePreferenceDefinition(KEY_APP_ICON, SettingsShareSection.APPEARANCE),
             IntShareablePreferenceDefinition(KEY_APP_ICON_APPEARANCE, SettingsShareSection.APPEARANCE),
             StringShareablePreferenceDefinition(KEY_APP_ICON_STYLE, SettingsShareSection.APPEARANCE),
@@ -6517,14 +5910,7 @@ object SettingsManager {
             StringShareablePreferenceDefinition(KEY_DYNAMIC_TAB_VISIBLE_TABS, SettingsShareSection.APPEARANCE),
             BooleanShareablePreferenceDefinition(KEY_HEADER_BLUR_ENABLED, SettingsShareSection.APPEARANCE),
             BooleanShareablePreferenceDefinition(KEY_BOTTOM_BAR_BLUR_ENABLED, SettingsShareSection.APPEARANCE),
-            BooleanShareablePreferenceDefinition(KEY_BOTTOM_BAR_LIQUID_GLASS_ENABLED, SettingsShareSection.APPEARANCE),
             IntShareablePreferenceDefinition(KEY_BOTTOM_BAR_SEARCH_LAYOUT_MODE, SettingsShareSection.APPEARANCE),
-            BooleanShareablePreferenceDefinition(
-                KEY_ANDROID_NATIVE_LIQUID_GLASS_ENABLED,
-                SettingsShareSection.APPEARANCE
-            ),
-            BooleanShareablePreferenceDefinition(KEY_LIQUID_GLASS_ENABLED, SettingsShareSection.APPEARANCE),
-            IntShareablePreferenceDefinition(KEY_LIQUID_GLASS_STYLE, SettingsShareSection.APPEARANCE),
             StringShareablePreferenceDefinition(KEY_BLUR_INTENSITY, SettingsShareSection.APPEARANCE),
             IntShareablePreferenceDefinition(KEY_DISPLAY_MODE, SettingsShareSection.APPEARANCE),
             IntShareablePreferenceDefinition(KEY_GRID_COLUMN_COUNT, SettingsShareSection.APPEARANCE),

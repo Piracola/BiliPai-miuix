@@ -1,30 +1,21 @@
 package com.android.purebilibili.core.ui
 
-import com.android.purebilibili.core.theme.AppUiStyle
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class ContentCardSurfacePolicyTest {
 
     @Test
     fun miuixContentCardsUseTokenSurfaceAndFlatElevation() {
-        val spec = resolveContentCardSurfaceSpec(AppUiStyle.MIUIX)
+        val spec = resolveContentCardSurfaceSpec()
         assertTrue(spec.usesTonalContainerTreatment)
         assertEquals(ContainerLevel.Card, spec.cornerLevel)
         assertEquals(0.8f, spec.borderWidthDp)
         assertEquals(0.22f, spec.borderAlpha)
         assertEquals(0f, spec.tonalElevationDp)
         assertEquals(0f, spec.shadowElevationDp)
-    }
-
-    @Test
-    fun materialContentCardsKeepLegacyGlassShellDefaults() {
-        val spec = resolveContentCardSurfaceSpec(AppUiStyle.MATERIAL3)
-        assertFalse(spec.usesTonalContainerTreatment)
-        assertEquals(0f, spec.borderWidthDp)
     }
 
     @Test

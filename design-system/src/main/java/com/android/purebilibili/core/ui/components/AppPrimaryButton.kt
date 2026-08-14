@@ -32,7 +32,6 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.android.purebilibili.core.theme.LocalAppUiStyle
 import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.AppSpacingTokens
 import com.android.purebilibili.core.ui.ContainerLevel
@@ -61,7 +60,6 @@ fun AppPrimaryButton(
     )
     val shape = AppShapes.resolveContainerShape(
         level = ContainerLevel.Card,
-        uiStyle = LocalAppUiStyle.current,
     )
     val containerColors = if (enabled) {
         listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)

@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Surface
@@ -26,23 +24,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.android.purebilibili.core.theme.AppUiStyle
-import com.android.purebilibili.core.theme.LocalAppUiStyle
 
 enum class AppAlertDialogRenderer {
-    MATERIAL_ALERT,
     LOCAL_DIALOG
 }
 
-fun resolveAppAlertDialogRenderer(
-    uiStyle: AppUiStyle
-): AppAlertDialogRenderer = when (uiStyle) {
-    // 设置等页对话框常在 AdaptiveScaffold 外层组合；窗口 Dialog 不依赖
-    // Miuix Scaffold 的 DialogStates host，点击后状态与弹窗保持一致。
-    AppUiStyle.MIUIX ->
-        AppAlertDialogRenderer.LOCAL_DIALOG
-    AppUiStyle.MATERIAL3 -> AppAlertDialogRenderer.MATERIAL_ALERT
-}
+fun resolveAppAlertDialogRenderer(): AppAlertDialogRenderer =
+    AppAlertDialogRenderer.LOCAL_DIALOG
 
 data class DialogActionLayoutPolicy(
     val expandToContainer: Boolean
@@ -74,49 +62,27 @@ internal fun AdaptiveAlertDialog(
     tonalElevation: Dp? = null,
     properties: DialogProperties = DialogProperties()
 ) {
-    val uiStyle = LocalAppUiStyle.current
-    when (resolveAppAlertDialogRenderer(uiStyle)) {
-        AppAlertDialogRenderer.LOCAL_DIALOG -> {
-            val contentLayout = resolveAppCompactContentDialogLayoutPolicy()
-            Dialog(
-                onDismissRequest = onDismissRequest,
-                properties = resolveAppContentDialogProperties(
-                    base = properties,
-                    usePlatformDefaultWidth = contentLayout.usePlatformDefaultWidth,
-                ),
-            ) {
-                Surface(
-                    modifier = modifier.appContentDialogWidth(policy = contentLayout),
-                    shape = shape ?: MaterialTheme.shapes.extraLarge,
-                    color = containerColor ?: AppSurfaceTokens.cardContainer(),
-                    tonalElevation = tonalElevation ?: 6.dp,
-                ) {
-                    MiuixAlertDialogBody(
-                        icon = icon,
-                        title = title,
-                        text = text,
-                        confirmButton = confirmButton,
-                        dismissButton = dismissButton,
-                    )
-                }
-            }
-            return
-        }
-        AppAlertDialogRenderer.MATERIAL_ALERT -> {
-            AlertDialog(
-                onDismissRequest = onDismissRequest,
-                modifier = modifier,
+    val contentLayout = resolveAppCompactContentDialogLayoutPolicy()
+    Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = resolveAppContentDialogProperties(
+            base = properties,
+            usePlatformDefaultWidth = contentLayout.usePlatformDefaultWidth,
+        ),
+    ) {
+        Surface(
+            modifier = modifier.appContentDialogWidth(policy = contentLayout),
+            shape = shape ?: MaterialTheme.shapes.extraLarge,
+            color = containerColor ?: AppSurfaceTokens.cardContainer(),
+            tonalElevation = tonalElevation ?: 6.dp,
+        ) {
+            MiuixAlertDialogBody(
                 icon = icon,
                 title = title,
                 text = text,
-                confirmButton = { confirmButton?.invoke() ?: Spacer(modifier = Modifier) },
+                confirmButton = confirmButton,
                 dismissButton = dismissButton,
-                properties = properties,
-                shape = shape ?: MaterialTheme.shapes.extraLarge,
-                containerColor = containerColor ?: MaterialTheme.colorScheme.surface,
-                tonalElevation = tonalElevation ?: AlertDialogDefaults.TonalElevation,
             )
-            return
         }
     }
 }

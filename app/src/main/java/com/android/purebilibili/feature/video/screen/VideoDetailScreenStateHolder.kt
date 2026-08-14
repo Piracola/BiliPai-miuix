@@ -928,12 +928,6 @@ internal fun VideoDetailScreenStateHolder(
             initialValue = false,
             lifecycle = lifecycleOwner.lifecycle
         )
-    val homeSettings by com.android.purebilibili.core.store.SettingsManager
-        .getHomeSettings(context)
-        .collectAsStateWithLifecycle(
-            initialValue = com.android.purebilibili.core.store.HomeSettings(),
-            lifecycle = lifecycleOwner.lifecycle
-        )
     val tabletCommentPanelWidthPreset by com.android.purebilibili.core.store.SettingsManager
         .getTabletCommentPanelWidthPreset(context)
         .collectAsStateWithLifecycle(
@@ -4069,8 +4063,6 @@ internal fun VideoDetailScreenStateHolder(
                                         videoContentPagerState = videoContentPagerState,
                                         commentState = commentState,
                                         engagementState = engagementState,
-                                        androidNativeLiquidGlassEnabled =
-                                            homeSettings.androidNativeLiquidGlassEnabled,
                                         commentMemberDecorationsEnabled = commentMemberDecorationsEnabled,
                                         playbackActions = playbackActions,
                                         engagementActions = engagementActions,

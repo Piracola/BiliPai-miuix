@@ -1,15 +1,12 @@
 package com.android.purebilibili.core.store
 
 import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.mutablePreferencesOf
-import androidx.datastore.preferences.core.stringPreferencesKey
 import com.android.purebilibili.core.ui.transition.VIDEO_SHARED_TRANSITION_CUSTOM_DEFAULT_MILLIS
 import com.android.purebilibili.core.ui.transition.VIDEO_SHARED_TRANSITION_CUSTOM_MAX_MILLIS
 import com.android.purebilibili.core.ui.transition.VIDEO_SHARED_TRANSITION_CUSTOM_MIN_MILLIS
 import com.android.purebilibili.core.ui.transition.VideoSharedTransitionSpeed
-import com.android.purebilibili.core.theme.UiPreset
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -38,17 +35,9 @@ class HomeSettingsMappingPolicyTest {
         )
         assertTrue(result.isHeaderCollapseEnabled)
         assertFalse(result.isBottomBarBlurEnabled)
-        assertFalse(result.isTopBarLiquidGlassEnabled)
-        assertFalse(result.isHomeSearchLiquidGlassEnabled)
-        assertFalse(result.isBottomBarLiquidGlassEnabled)
         assertFalse(result.isBottomBarSearchEnabled)
         assertEquals(BottomBarSearchAutoExpandMode.EXPAND_AT_HOME_TOP, result.bottomBarSearchAutoExpandMode)
         assertEquals(BottomBarSearchLayoutMode.FULL_DOCK, result.bottomBarSearchLayoutMode)
-        assertFalse(result.androidNativeLiquidGlassEnabled)
-        assertFalse(result.isLiquidGlassEnabled)
-        assertEquals(LiquidGlassStyle.SUKISU, result.liquidGlassStyle)
-        assertEquals(LiquidGlassMode.BALANCED, result.liquidGlassMode)
-        assertEquals(0.52f, result.liquidGlassStrength)
         assertEquals(0, result.gridColumnCount)
         assertEquals(HomeFeedCardWidthPreset.AUTO, result.homeFeedCardWidthPreset)
         assertFalse(result.cardAnimationEnabled)
@@ -65,8 +54,8 @@ class HomeSettingsMappingPolicyTest {
         assertEquals(HomeWallpaperEffectMode.SOFT_BLUR, result.homeWallpaperEffectMode)
         assertEquals(HomeWallpaperEffectScope.HOME_ONLY, result.homeWallpaperEffectScope)
         assertFalse(result.lowQualityHomeCoverInDataSaver)
-        assertTrue(result.showHomeUpBadges)
-        assertTrue(result.showHomeUpAvatars)
+        assertFalse(result.showHomeUpBadges)
+        assertFalse(result.showHomeUpAvatars)
         assertFalse(result.crashTrackingConsentShown)
     }
 
@@ -85,14 +74,9 @@ class HomeSettingsMappingPolicyTest {
             intPreferencesKey("common_list_header_collapse_mode") to
                 CommonListHeaderCollapseMode.SHOW_AT_TOP_ONLY.value,
             booleanPreferencesKey("bottom_bar_blur_enabled") to false,
-            booleanPreferencesKey("top_bar_liquid_glass_enabled") to true,
-            booleanPreferencesKey("home_search_liquid_glass_enabled") to false,
-            booleanPreferencesKey("bottom_bar_liquid_glass_enabled") to false,
             booleanPreferencesKey("bottom_bar_search_enabled") to true,
             intPreferencesKey("bottom_bar_search_auto_expand_mode") to BottomBarSearchAutoExpandMode.DISABLED.value,
             intPreferencesKey("bottom_bar_search_layout_mode") to BottomBarSearchLayoutMode.HOME_AND_SEARCH.value,
-            booleanPreferencesKey("android_native_liquid_glass_enabled") to true,
-            intPreferencesKey("liquid_glass_style") to LiquidGlassStyle.IOS26.value,
             intPreferencesKey("grid_column_count") to 4,
             intPreferencesKey("home_feed_card_width_preset") to HomeFeedCardWidthPreset.WIDE.value,
             intPreferencesKey("home_feed_card_style") to HomeFeedCardStyle.OFFICIAL.value,
@@ -108,7 +92,6 @@ class HomeSettingsMappingPolicyTest {
             booleanPreferencesKey("low_quality_home_cover_in_data_saver") to true,
             booleanPreferencesKey("home_up_badges_visible") to false,
             booleanPreferencesKey("home_up_avatars_visible") to false,
-            booleanPreferencesKey("easter_egg_enabled") to true,
             booleanPreferencesKey("crash_tracking_consent_shown") to true
         )
 
@@ -129,18 +112,9 @@ class HomeSettingsMappingPolicyTest {
         )
         assertTrue(result.isHeaderCollapseEnabled)
         assertFalse(result.isBottomBarBlurEnabled)
-        assertTrue(result.isTopBarLiquidGlassEnabled)
-        assertFalse(result.isHomeSearchLiquidGlassEnabled)
-        assertFalse(result.isBottomBarLiquidGlassEnabled)
         assertTrue(result.isBottomBarSearchEnabled)
         assertEquals(BottomBarSearchAutoExpandMode.DISABLED, result.bottomBarSearchAutoExpandMode)
         assertEquals(BottomBarSearchLayoutMode.HOME_AND_SEARCH, result.bottomBarSearchLayoutMode)
-        assertTrue(result.androidNativeLiquidGlassEnabled)
-        assertFalse(result.isLiquidGlassEnabled)
-        assertEquals(LiquidGlassStyle.SUKISU, result.liquidGlassStyle)
-        assertEquals(LiquidGlassMode.BALANCED, result.liquidGlassMode)
-        assertEquals(0.52f, result.liquidGlassStrength)
-        assertEquals(0.5f, result.liquidGlassProgress)
         assertEquals(4, result.gridColumnCount)
         assertEquals(HomeFeedCardWidthPreset.WIDE, result.homeFeedCardWidthPreset)
         assertTrue(result.cardAnimationEnabled)
@@ -198,20 +172,6 @@ class HomeSettingsMappingPolicyTest {
             VIDEO_SHARED_TRANSITION_CUSTOM_MAX_MILLIS,
             mapHomeSettingsFromPreferences(highPrefs).videoSharedTransitionCustomDurationMillis
         )
-    }
-
-    @Test
-    fun homeSearchLiquidGlassFallsBackToTopDockPreferenceUntilConfigured() {
-        val fallbackPrefs = mutablePreferencesOf(
-            booleanPreferencesKey("top_bar_liquid_glass_enabled") to true
-        )
-        val overriddenPrefs = mutablePreferencesOf(
-            booleanPreferencesKey("top_bar_liquid_glass_enabled") to true,
-            booleanPreferencesKey("home_search_liquid_glass_enabled") to false
-        )
-
-        assertTrue(mapHomeSettingsFromPreferences(fallbackPrefs).isHomeSearchLiquidGlassEnabled)
-        assertFalse(mapHomeSettingsFromPreferences(overriddenPrefs).isHomeSearchLiquidGlassEnabled)
     }
 
     @Test
@@ -331,17 +291,6 @@ class HomeSettingsMappingPolicyTest {
     }
 
     @Test
-    fun legacyAndroidNativeTopTabLiquidGlassKey_mapsToGlobalOptIn() {
-        val prefs = mutablePreferencesOf(
-            booleanPreferencesKey("android_native_top_tab_liquid_glass_enabled") to true
-        )
-
-        val result = mapHomeSettingsFromPreferences(prefs)
-
-        assertTrue(result.androidNativeLiquidGlassEnabled)
-    }
-
-    @Test
     fun explicitHeaderBlurMode_overridesLegacyBoolean() {
         val prefs = mutablePreferencesOf(
             booleanPreferencesKey("header_blur_enabled") to false,
@@ -366,48 +315,6 @@ class HomeSettingsMappingPolicyTest {
                 mode = HomeHeaderBlurMode.FOLLOW_PRESET,
             )
         )
-    }
-
-    @Test
-    fun legacyLiquidGlassTuning_isCollapsedToSingleSharedMaterialRecipe() {
-        val prefs = mutablePreferencesOf(
-            intPreferencesKey("liquid_glass_style") to LiquidGlassStyle.SUKISU.value,
-            intPreferencesKey("liquid_glass_mode") to LiquidGlassMode.BALANCED.value,
-            floatPreferencesKey("liquid_glass_strength") to 0.31f
-        )
-
-        val result = mapHomeSettingsFromPreferences(prefs)
-
-        assertEquals(LiquidGlassStyle.SUKISU, result.liquidGlassStyle)
-        assertEquals(LiquidGlassMode.BALANCED, result.liquidGlassMode)
-        assertEquals(0.52f, result.liquidGlassStrength)
-        assertEquals(0.5f, result.liquidGlassProgress)
-    }
-
-    @Test
-    fun legacySharedLiquidGlassToggle_backfillsBottomSwitchOnly() {
-        val prefs = mutablePreferencesOf(
-            booleanPreferencesKey("liquid_glass_enabled") to false
-        )
-
-        val result = mapHomeSettingsFromPreferences(prefs)
-
-        assertFalse(result.isTopBarLiquidGlassEnabled)
-        assertFalse(result.isBottomBarLiquidGlassEnabled)
-        assertFalse(result.isLiquidGlassEnabled)
-    }
-
-    @Test
-    fun legacySharedLiquidGlassToggle_trueStillBackfillsBottomSwitch() {
-        val prefs = mutablePreferencesOf(
-            booleanPreferencesKey("liquid_glass_enabled") to true
-        )
-
-        val result = mapHomeSettingsFromPreferences(prefs)
-
-        assertFalse(result.isTopBarLiquidGlassEnabled)
-        assertTrue(result.isBottomBarLiquidGlassEnabled)
-        assertTrue(result.isLiquidGlassEnabled)
     }
 
     @Test

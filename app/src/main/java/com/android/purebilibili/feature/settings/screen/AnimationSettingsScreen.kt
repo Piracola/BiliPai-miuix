@@ -27,7 +27,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.purebilibili.R
 import com.android.purebilibili.core.theme.*
 import com.android.purebilibili.core.ui.blur.BlurIntensity
-import com.android.purebilibili.core.store.LiquidGlassMode
 import com.android.purebilibili.core.store.AppNavigationSettings
 import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.ui.AppShapes
@@ -73,12 +72,10 @@ fun AnimationSettingsScreen(
         scrollHost = SettingsPageScrollHost.External,
         topBarBlurEnabled = state.headerBlurEnabled,
     ) {
-        CompositionLocalProvider(LocalSettingsLiquidGlassEnabled provides state.isLiquidGlassEnabled) {
-            AnimationSettingsContent(
-                state = state,
-                viewModel = viewModel,
-            )
-        }
+        AnimationSettingsContent(
+            state = state,
+            viewModel = viewModel,
+        )
     }
 }
 

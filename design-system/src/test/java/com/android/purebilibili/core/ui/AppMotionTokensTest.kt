@@ -4,7 +4,6 @@ import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.ui.unit.IntOffset
 
-import com.android.purebilibili.core.theme.AppUiStyle
 import com.android.purebilibili.core.theme.resolveAndroidNativeChromeTokens
 import com.android.purebilibili.core.ui.motion.AppMotionTokens
 import com.android.purebilibili.core.ui.motion.navigationSlideSpring
@@ -16,40 +15,16 @@ import kotlin.test.assertTrue
 class AppMotionTokensTest {
 
     @Test
-    fun material3_standardSpec_isTween200ms() {
-        val spec = AppMotionTokens.resolveStandardSpec<Float>(
-            uiStyle = AppUiStyle.MATERIAL3
-        )
-        val tween = spec as? TweenSpec<Float>
-            ?: error("expected TweenSpec, got ${spec::class.simpleName}")
-        assertEquals(200, tween.durationMillis)
-    }
-
-    @Test
-    fun miuix_standardSpec_isTween180ms() {
-        val spec = AppMotionTokens.resolveStandardSpec<Float>(
-            uiStyle = AppUiStyle.MIUIX
-        )
+    fun singleMiuix_standardSpec_isTween180ms() {
+        val spec = AppMotionTokens.resolveStandardSpec<Float>()
         val tween = spec as? TweenSpec<Float>
             ?: error("expected TweenSpec, got ${spec::class.simpleName}")
         assertEquals(180, tween.durationMillis)
     }
 
     @Test
-    fun material3_emphasizedSpec_isTween300ms() {
-        val spec = AppMotionTokens.resolveEmphasizedSpec<Float>(
-            uiStyle = AppUiStyle.MATERIAL3
-        )
-        val tween = spec as? TweenSpec<Float>
-            ?: error("expected TweenSpec, got ${spec::class.simpleName}")
-        assertEquals(300, tween.durationMillis)
-    }
-
-    @Test
-    fun miuix_emphasizedSpec_isTween240ms() {
-        val spec = AppMotionTokens.resolveEmphasizedSpec<Float>(
-            uiStyle = AppUiStyle.MIUIX
-        )
+    fun singleMiuix_emphasizedSpec_isTween240ms() {
+        val spec = AppMotionTokens.resolveEmphasizedSpec<Float>()
         val tween = spec as? TweenSpec<Float>
             ?: error("expected TweenSpec, got ${spec::class.simpleName}")
         assertEquals(240, tween.durationMillis)
@@ -67,30 +42,15 @@ class AppMotionTokensTest {
 
     @Test
     fun chromeTokens_exposeMotionMillis() {
-        val md3 = resolveAndroidNativeChromeTokens(AppUiStyle.MATERIAL3)
-        val miuix = resolveAndroidNativeChromeTokens(AppUiStyle.MIUIX)
+        val miuix = resolveAndroidNativeChromeTokens()
 
-        assertEquals(200, md3.motionStandardMillis)
-        assertEquals(300, md3.motionEmphasizedMillis)
         assertEquals(180, miuix.motionStandardMillis)
         assertEquals(240, miuix.motionEmphasizedMillis)
     }
 
     @Test
-    fun material3_bottomSheetSlideSpec_usesStandardTween() {
-        val spec = AppMotionTokens.resolveBottomSheetSlideSpec<Int>(
-            uiStyle = AppUiStyle.MATERIAL3
-        )
-        val tween = spec as? TweenSpec<Int>
-            ?: error("expected TweenSpec, got ${spec::class.simpleName}")
-        assertEquals(200, tween.durationMillis)
-    }
-
-    @Test
-    fun miuix_bottomSheetSlideSpec_usesDenserTween() {
-        val spec = AppMotionTokens.resolveBottomSheetSlideSpec<Int>(
-            uiStyle = AppUiStyle.MIUIX
-        )
+    fun singleMiuix_bottomSheetSlideSpec_usesDenserTween() {
+        val spec = AppMotionTokens.resolveBottomSheetSlideSpec<Int>()
         val tween = spec as? TweenSpec<Int>
             ?: error("expected TweenSpec, got ${spec::class.simpleName}")
         assertEquals(180, tween.durationMillis)

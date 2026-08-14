@@ -37,8 +37,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.android.purebilibili.feature.home.HomeTopTabGestureAction
 import com.android.purebilibili.feature.home.resolveHomeTopTabGestureAction
-import com.android.purebilibili.core.store.BottomBarLiquidGlassPreset
-import com.android.purebilibili.core.store.LiquidGlassStyle
 import com.android.purebilibili.core.ui.adaptive.MotionTier
 import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.ContainerLevel
@@ -61,9 +59,6 @@ internal fun HomeTopTabChrome(
     tabSurfaceColor: Color,
     hazeState: HazeState?,
     miuixBackdrop: MiuixBackdrop? = null,
-    liquidStyle: LiquidGlassStyle,
-    liquidGlassTuning: LiquidGlassTuning? = null,
-    liquidGlassPreset: BottomBarLiquidGlassPreset = BottomBarLiquidGlassPreset.BILIPAI_TUNED,
     motionTier: MotionTier,
     isScrolling: Boolean,
     isTransitionRunning: Boolean,
@@ -76,26 +71,9 @@ internal fun HomeTopTabChrome(
     isTabsCollapsed: Boolean = false,
     onTabsCollapsedChange: ((Boolean) -> Unit)? = null,
     drawChromeSurface: Boolean = true,
-    useBottomBarMatchedSurface: Boolean = false,
-    /**
-     * 顶栏分类 dock 默认开 soft shell lens（[TOP_DOCK_SHELL_LENS_INTENSITY]）：
-     * 保留上下滑动液态折射以贴近指示器，强度低于底栏整壳以避免虾线。
-     * 搜索等小胶囊仍应显式传 false。
-     */
-    drawMatchedShellLens: Boolean = true,
-    matchedShellLensIntensity: Float = TOP_DOCK_SHELL_LENS_INTENSITY,
-    /**
-     * When true, the floating dock shell shrinks to tab content width (icon/text density ×
-     * count) and centers in the padded track — no full-bleed empty glass on the right.
-     */
     wrapDockWidth: Boolean = false,
     dockCategoryCount: Int = 0,
     dockLabelMode: Int = 2,
-    /**
-     * Cap on the dock width so the tab strip never exceeds the top controls'
-     * combined width (avatar + search pill + settings) — keeps left/right edges
-     * aligned with the search row. [Dp.Infinity] keeps legacy full-bleed docks.
-     */
     maxDockWidth: Dp = Dp.Infinity,
     content: @Composable () -> Unit
 ) {
@@ -199,39 +177,18 @@ internal fun HomeTopTabChrome(
                     )
                     .then(
                         if (drawChromeSurface) {
-                            if (useBottomBarMatchedSurface) {
-                                Modifier.homeTopBottomBarMatchedSurface(
-                                    renderMode = tabChromeRenderMode,
-                                    shape = tabShape,
-                                    hazeState = hazeState,
-                                    miuixBackdrop = miuixBackdrop,
-                                    liquidGlassStyle = liquidStyle,
-                                    liquidGlassTuning = liquidGlassTuning,
-                                    liquidGlassPreset = liquidGlassPreset,
-                                    motionTier = motionTier,
-                                    isTransitionRunning = isTransitionRunning,
-                                    forceLowBlurBudget = forceLowBlurBudget,
-                                    drawShellLens = drawMatchedShellLens,
-                                    shellLensIntensity = matchedShellLensIntensity,
-                                    isScrolling = isScrolling
-                                )
-                            } else {
-                                Modifier.homeTopChromeSurface(
-                                    renderMode = tabChromeRenderMode,
-                                    shape = tabShape,
-                                    surfaceColor = tabSurfaceColor,
-                                    hazeState = hazeState,
-                                    miuixBackdrop = miuixBackdrop,
-                                    liquidStyle = liquidStyle,
-                                    liquidGlassTuning = liquidGlassTuning,
-                                    liquidGlassPreset = liquidGlassPreset,
-                                    motionTier = motionTier,
-                                    isScrolling = isScrolling,
-                                    isTransitionRunning = isTransitionRunning,
-                                    forceLowBlurBudget = forceLowBlurBudget,
-                                    preferFlatGlass = preferFlatGlass
-                                )
-                            }
+                            Modifier.homeTopChromeSurface(
+                                renderMode = tabChromeRenderMode,
+                                shape = tabShape,
+                                surfaceColor = tabSurfaceColor,
+                                hazeState = hazeState,
+                                miuixBackdrop = miuixBackdrop,
+                                motionTier = motionTier,
+                                isScrolling = isScrolling,
+                                isTransitionRunning = isTransitionRunning,
+                                forceLowBlurBudget = forceLowBlurBudget,
+                                preferFlatGlass = preferFlatGlass
+                            )
                         } else {
                             Modifier
                         }

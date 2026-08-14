@@ -8,8 +8,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.ui.rememberAppSegmentedControlPolicy
-import com.android.purebilibili.core.ui.renderer.material3.AppMaterial3SegmentedControl
-import com.android.purebilibili.core.ui.renderer.material3.AppMaterial3TabRow
 import com.android.purebilibili.core.ui.renderer.miuix.AppMiuixSegmentedControl
 import com.android.purebilibili.core.ui.renderer.miuix.AppMiuixTabRow
 
@@ -24,7 +22,6 @@ enum class AppSegmentedChrome {
 }
 
 enum class AppSegmentedRenderer {
-    MATERIAL3,
     MIUIX,
 }
 
@@ -60,8 +57,7 @@ fun resolveAppSegmentedChrome(
     AppSegmentedChrome.LIQUID
 }
 
-fun resolveAppSegmentedRenderer(usesNativeTabRow: Boolean): AppSegmentedRenderer =
-    if (usesNativeTabRow) AppSegmentedRenderer.MIUIX else AppSegmentedRenderer.MATERIAL3
+fun resolveAppSegmentedRenderer(): AppSegmentedRenderer = AppSegmentedRenderer.MIUIX
 
 fun resolveAppSegmentedLabelFontSizeSp(
     optionCount: Int,
@@ -171,25 +167,15 @@ fun <T> AppNativeSegmentedControl(
         miuixSurfaceContainerHigh = AppSurfaceTokens.surfaceContainerHigh(),
         miuixOnSurfaceVariantSummary = AppSurfaceTokens.onSurfaceVariantSummary(),
     )
-    when (resolveAppSegmentedRenderer(policy.usesNativeTabRow)) {
-        AppSegmentedRenderer.MATERIAL3 -> AppMaterial3SegmentedControl(
-            options = options,
-            selectedValue = selectedValue,
-            enabled = enabled,
-            colors = colors,
-            modifier = modifier,
-            onSelectionChange = onSelectionChange,
-        )
-        AppSegmentedRenderer.MIUIX -> AppMiuixSegmentedControl(
-            options = options,
-            selectedValue = selectedValue,
-            enabled = enabled,
-            colors = colors,
-            pillCornerRadius = policy.pillCornerRadius,
-            modifier = modifier,
-            onSelectionChange = onSelectionChange,
-        )
-    }
+    AppMiuixSegmentedControl(
+        options = options,
+        selectedValue = selectedValue,
+        enabled = enabled,
+        colors = colors,
+        pillCornerRadius = policy.pillCornerRadius,
+        modifier = modifier,
+        onSelectionChange = onSelectionChange,
+    )
 }
 
 /**
@@ -221,26 +207,15 @@ fun <T> AppNativeTabRow(
         miuixSurfaceContainerHigh = AppSurfaceTokens.surfaceContainerHigh(),
         miuixOnSurfaceVariantSummary = AppSurfaceTokens.onSurfaceVariantSummary(),
     )
-    when (resolveAppSegmentedRenderer(policy.usesNativeTabRow)) {
-        AppSegmentedRenderer.MATERIAL3 -> AppMaterial3TabRow(
-            options = options,
-            selectedValue = selectedValue,
-            enabled = enabled,
-            scrollable = scrollable,
-            minTabWidth = minTabWidth,
-            modifier = modifier,
-            onSelectionChange = onSelectionChange,
-        )
-        AppSegmentedRenderer.MIUIX -> AppMiuixTabRow(
-            options = options,
-            selectedValue = selectedValue,
-            enabled = enabled,
-            scrollable = scrollable,
-            minTabWidth = minTabWidth,
-            colors = colors,
-            pillCornerRadius = policy.pillCornerRadius,
-            modifier = modifier,
-            onSelectionChange = onSelectionChange,
-        )
-    }
+    AppMiuixTabRow(
+        options = options,
+        selectedValue = selectedValue,
+        enabled = enabled,
+        scrollable = scrollable,
+        minTabWidth = minTabWidth,
+        colors = colors,
+        pillCornerRadius = policy.pillCornerRadius,
+        modifier = modifier,
+        onSelectionChange = onSelectionChange,
+    )
 }

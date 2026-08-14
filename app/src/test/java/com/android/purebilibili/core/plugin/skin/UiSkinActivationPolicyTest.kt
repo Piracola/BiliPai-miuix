@@ -105,14 +105,14 @@ class UiSkinActivationPolicyTest {
     }
 
     @Test
-    fun skinStateDoesNotMutateLiquidGlassSettings() {
+    fun skinStateDoesNotMutateOtherHomeSettings() {
         val installed = installedSkin(
             skinId = "local.bilibili_skin.winter_cloud",
             packageSha256 = "1111111111111111111111111111111111111111111111111111111111111111",
             version = "1.0.0"
         )
         val homeSettings = HomeSettings(
-            isBottomBarLiquidGlassEnabled = true
+            isBottomBarFloating = true
         )
         val state = resolveUiSkinState(
             selection = UiSkinSelection(
@@ -128,7 +128,7 @@ class UiSkinActivationPolicyTest {
         )
 
         assertEquals(homeSettings, resolved)
-        assertTrue(resolved.isBottomBarLiquidGlassEnabled)
+        assertTrue(resolved.isBottomBarFloating)
     }
 
     private fun installedSkin(

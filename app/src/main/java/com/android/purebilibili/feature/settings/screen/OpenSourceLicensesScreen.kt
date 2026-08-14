@@ -157,28 +157,10 @@ val openSourceLibraries = listOf(
         description = "Kotlin 优先的图片加载库"
     ),
     OpenSourceLibrary(
-        name = "Material Kolor",
+        name = "AndroidX Media3 ExoPlayer",
         license = "Apache 2.0",
-        url = "https://github.com/jordond/materialkolor",
-        description = "Material You 动态配色生成"
-    ),
-    OpenSourceLibrary(
-        name = "Skydoves ColorPicker Compose",
-        license = "Apache 2.0",
-        url = "https://github.com/skydoves/colorpicker-compose",
-        description = "Compose 颜色选择器"
-    ),
-    OpenSourceLibrary(
-        name = "RichEditor Compose",
-        license = "Apache 2.0",
-        url = "https://github.com/MohamedRejeb/compose-rich-editor",
-        description = "富文本编辑能力"
-    ),
-    OpenSourceLibrary(
-        name = "Lottie Compose",
-        license = "Apache 2.0",
-        url = "https://github.com/airbnb/lottie-android",
-        description = "矢量动画库"
+        url = "https://github.com/androidx/media",
+        description = "Android 官方媒体播放引擎"
     ),
     OpenSourceLibrary(
         name = "Haze",

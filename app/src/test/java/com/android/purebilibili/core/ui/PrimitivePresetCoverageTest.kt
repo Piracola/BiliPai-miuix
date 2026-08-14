@@ -1,29 +1,24 @@
 package com.android.purebilibili.core.ui
 
-import com.android.purebilibili.core.theme.AppUiStyle
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * Asserts every shared adaptive primitive exposes a preset-aware renderer decision
- * so feature screens get the right look on MIUIX / MD3 without primitive
- * call sites changing. Compose UI tests would assert actual rendered nodes;
- * here we assert the policy layer that drives the dispatch.
+ * Asserts shared adaptive primitives converge on the single Miuix renderer
+ * decision so feature screens get the right look without primitive call sites
+ * changing. Compose UI tests would assert actual rendered nodes; here we
+ * assert the policy layer that drives the dispatch.
  */
 class PrimitivePresetCoverageTest {
 
     @Test
-    fun unifiedRenderer_matches_uiStyleMatrix() {
-        // 两值模型：MIUIX → MIUIX_BRIDGED、MATERIAL3 → MATERIAL3。
+    fun unifiedRenderer_matchesMiuixOnlyModel() {
+        // 单主题模型：所有风格统一走 Miuix 桥接渲染器。
         assertEquals(
             PresetPrimitiveRenderer.MIUIX_BRIDGED,
-            resolvePresetPrimitiveRenderer(AppUiStyle.MIUIX)
-        )
-        assertEquals(
-            PresetPrimitiveRenderer.MATERIAL3,
-            resolvePresetPrimitiveRenderer(AppUiStyle.MATERIAL3)
+            resolvePresetPrimitiveRenderer()
         )
     }
 
@@ -43,14 +38,10 @@ class PrimitivePresetCoverageTest {
     }
 
     @Test
-    fun adaptiveBottomSheetVisual_branchesByUiStyle() {
-        // AppSheetComponents 按两值风格分支圆角等级（胶囊级）。
-        val miuix = resolveAdaptiveBottomSheetVisualSpec(AppUiStyle.MIUIX)
-        val material3 = resolveAdaptiveBottomSheetVisualSpec(AppUiStyle.MATERIAL3)
-        // 2B 迁移：两值风格统一使用胶囊圆角与 Material 拖拽把手。
-        assertEquals(22, miuix.cornerRadiusDp)
-        assertEquals(28, material3.cornerRadiusDp)
-        assertTrue(miuix.useMaterialDragHandle)
-        assertTrue(material3.useMaterialDragHandle)
+    fun adaptiveBottomSheetVisual_usesMiuixCapsule() {
+        // 单主题模型：统一使用胶囊圆角与 Material 拖拽把手。
+        val spec = resolveAdaptiveBottomSheetVisualSpec()
+        assertEquals(22, spec.cornerRadiusDp)
+        assertTrue(spec.useMaterialDragHandle)
     }
 }

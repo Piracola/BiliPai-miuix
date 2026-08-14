@@ -50,7 +50,6 @@ class AppNavigationAppearancePolicyTest {
             homeSettings = HomeSettings(
                 isBottomBarFloating = false,
                 isBottomBarBlurEnabled = true,
-                androidNativeLiquidGlassEnabled = false,
             ),
         )
 

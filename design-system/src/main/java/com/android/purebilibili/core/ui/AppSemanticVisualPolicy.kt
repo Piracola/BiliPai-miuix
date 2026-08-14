@@ -6,9 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import com.android.purebilibili.core.theme.AppUiStyle
-import com.android.purebilibili.core.theme.LocalAppUiStyle
-import com.android.purebilibili.core.theme.LocalDynamicColorActive
 
 enum class AppSemanticIconFamily {
     MATERIAL,
@@ -17,7 +14,7 @@ enum class AppSemanticIconFamily {
 
 /**
  * 全局图标呈现样式(用户可切换的两套方案)。
- * - [AUTO]:跟随运行时主题 —— MIUIX 保持现状(设置图标多彩色),仅 MATERIAL3 解析为官方推荐。
+ * - [AUTO]:保持现状 —— Miuix 图标(设置图标多彩色等既有外观)。
  * - [THEME_CONTAINER]:主题色容器 —— 图标置于主题色(secondaryContainer)
  *   圆角容器内,图标用 onSecondaryContainer,对齐官方 Settings 容器图标规范。
  * - [MD3_STANDARD]:MD3 官方推荐 —— onSurfaceVariant 单色图标、无容器。
@@ -29,17 +26,12 @@ enum class AppIconStyle {
 }
 
 /**
- * AUTO 表示"保持现状":MIUIX 预设不引入容器化与单色化(设置图标保持多彩色等既有外观),
- * 仅 MATERIAL3 预设解析为官方推荐样式。
+ * AUTO 表示"保持现状":Miuix 预设不引入容器化与单色化(设置图标保持多彩色等既有外观)。
  */
 fun resolveAppIconStyle(
     iconStyle: AppIconStyle,
-    uiStyle: AppUiStyle,
 ): AppIconStyle = when (iconStyle) {
-    AppIconStyle.AUTO -> when (uiStyle) {
-        AppUiStyle.MATERIAL3 -> AppIconStyle.MD3_STANDARD
-        AppUiStyle.MIUIX -> AppIconStyle.AUTO
-    }
+    AppIconStyle.AUTO -> AppIconStyle.AUTO
     else -> iconStyle
 }
 
@@ -62,9 +54,8 @@ val LocalAppIconStyle = staticCompositionLocalOf {
 @Composable
 fun rememberResolvedAppIconStyle(): AppIconStyle {
     val iconStyle = LocalAppIconStyle.current
-    val uiStyle = LocalAppUiStyle.current
-    return remember(iconStyle, uiStyle) {
-        resolveAppIconStyle(iconStyle, uiStyle)
+    return remember(iconStyle) {
+        resolveAppIconStyle(iconStyle)
     }
 }
 
@@ -131,30 +122,23 @@ fun resolveAppSemanticAccentPalette(
 )
 
 fun resolveAppSemanticVisualPolicy(
-    uiStyle: AppUiStyle,
     materialPalette: AppSemanticAccentPalette,
     iconStyle: AppIconStyle = AppIconStyle.AUTO,
-): AppSemanticVisualPolicy = when (uiStyle) {
-    AppUiStyle.MATERIAL3 -> AppSemanticVisualPolicy.material(materialPalette).copy(iconStyle = iconStyle)
-    AppUiStyle.MIUIX -> AppSemanticVisualPolicy.material(materialPalette).copy(
-        iconFamily = AppSemanticIconFamily.MIUIX,
-        prefersGroupedListCards = true,
-        iconStyle = iconStyle,
-    )
-}
+): AppSemanticVisualPolicy = AppSemanticVisualPolicy.material(materialPalette).copy(
+    iconFamily = AppSemanticIconFamily.MIUIX,
+    prefersGroupedListCards = true,
+    iconStyle = iconStyle,
+)
 
 @Composable
 fun rememberAppSemanticVisualPolicy(): AppSemanticVisualPolicy {
-    val uiStyle = LocalAppUiStyle.current
-    val dynamicColorActive = LocalDynamicColorActive.current
     val colorScheme = MaterialTheme.colorScheme
     val iconStyle = rememberResolvedAppIconStyle()
-    return remember(uiStyle, dynamicColorActive, colorScheme, iconStyle) {
+    return remember(colorScheme, iconStyle) {
         resolveAppSemanticVisualPolicy(
-            uiStyle = uiStyle,
             materialPalette = resolveAppSemanticAccentPalette(
                 colorScheme = colorScheme,
-                useSemanticAccentRoles = dynamicColorActive,
+                useSemanticAccentRoles = false,
             ),
             iconStyle = iconStyle,
         )

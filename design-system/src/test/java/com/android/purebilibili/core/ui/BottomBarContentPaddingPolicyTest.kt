@@ -1,7 +1,6 @@
 package com.android.purebilibili.core.ui
 
 import androidx.compose.ui.unit.dp
-import com.android.purebilibili.core.theme.AppUiStyle
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -17,7 +16,6 @@ class BottomBarContentPaddingPolicyTest {
                 isBottomBarFloating = true,
                 bottomBarLabelMode = 0,
                 isTablet = false,
-                uiStyle = AppUiStyle.MATERIAL3,
                 hasUiSkinDecoration = false,
                 extraContentPadding = 8.dp,
             ),
@@ -34,7 +32,6 @@ class BottomBarContentPaddingPolicyTest {
                 isBottomBarFloating = false,
                 bottomBarLabelMode = 2,
                 isTablet = true,
-                uiStyle = AppUiStyle.MIUIX,
                 hasUiSkinDecoration = false,
                 extraContentPadding = 8.dp,
             ),
@@ -51,7 +48,6 @@ class BottomBarContentPaddingPolicyTest {
                 isBottomBarFloating = true,
                 bottomBarLabelMode = 0,
                 isTablet = true,
-                uiStyle = AppUiStyle.MATERIAL3,
                 hasUiSkinDecoration = false,
                 extraContentPadding = 8.dp,
             ),
@@ -68,7 +64,6 @@ class BottomBarContentPaddingPolicyTest {
                 isBottomBarFloating = false,
                 bottomBarLabelMode = 1,
                 isTablet = false,
-                uiStyle = AppUiStyle.MATERIAL3,
                 hasUiSkinDecoration = false,
                 extraContentPadding = (-8).dp,
             ),
@@ -85,7 +80,6 @@ class BottomBarContentPaddingPolicyTest {
                 isBottomBarFloating = true,
                 bottomBarLabelMode = 0,
                 isTablet = false,
-                uiStyle = AppUiStyle.MIUIX,
                 hasUiSkinDecoration = true,
                 extraContentPadding = 8.dp,
             ),
@@ -93,16 +87,15 @@ class BottomBarContentPaddingPolicyTest {
     }
 
     @Test
-    fun `material docked navigation reserves material navigation bar`() {
+    fun `docked navigation reserves docked body height`() {
         assertEquals(
-            124.dp,
+            108.dp,
             resolveBottomBarContentPadding(
                 navigationBarsBottom = 24.dp,
                 reserveBottomBar = true,
                 isBottomBarFloating = false,
                 bottomBarLabelMode = 0,
                 isTablet = false,
-                uiStyle = AppUiStyle.MATERIAL3,
                 hasUiSkinDecoration = false,
                 extraContentPadding = 8.dp,
             ),

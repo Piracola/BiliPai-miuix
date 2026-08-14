@@ -2,8 +2,6 @@ package com.android.purebilibili.feature.settings
 
 import com.android.purebilibili.core.ui.AppIconStyle
 import com.android.purebilibili.core.ui.AppListItemStyle
-import com.materialkolor.PaletteStyle
-import com.materialkolor.dynamiccolor.ColorSpec
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -79,30 +77,5 @@ class AppearanceThemeSegmentPolicyTest {
         assertEquals(4, options.size)
         assertEquals(listOf("系统", "简体", "繁體", "EN"), options.map { it.label })
         assertTrue(options.all { it.label.length <= 2 })
-    }
-
-    @Test
-    fun `color preset option labels should expose BiliPai compatible names`() {
-        val styleOptions = resolveColorStyleOptions()
-        val specOptions = resolveColorSpecOptions()
-
-        assertEquals(PaletteStyle.TonalSpot, styleOptions.first().value)
-        assertEquals("TonalSpot", styleOptions.first().label)
-        assertEquals(ColorSpec.SpecVersion.SPEC_2021, specOptions.first().value)
-        assertEquals("SPEC_2021", specOptions.first().label)
-    }
-
-    @Test
-    fun `color spec options should not expose duplicate labels`() {
-        val specOptions = resolveColorSpecOptions()
-
-        assertEquals(
-            specOptions.map { it.label },
-            specOptions.map { it.label }.distinct()
-        )
-        assertEquals(
-            listOf(ColorSpec.SpecVersion.SPEC_2021, ColorSpec.SpecVersion.SPEC_2025),
-            specOptions.map { it.value }
-        )
     }
 }

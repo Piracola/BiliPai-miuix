@@ -11,18 +11,10 @@ import org.junit.Test
 class SegmentedControlRendererPolicyTest {
 
     @Test
-    fun `miuix variant routes md3 segmented chrome to tab row`() {
+    fun `single miuix renderer routes segmented chrome to tab row`() {
         assertEquals(
             AppSegmentedRenderer.MIUIX,
-            resolveAppSegmentedRenderer(usesNativeTabRow = true)
-        )
-    }
-
-    @Test
-    fun `material3 variant keeps segmented buttons renderer`() {
-        assertEquals(
-            AppSegmentedRenderer.MATERIAL3,
-            resolveAppSegmentedRenderer(usesNativeTabRow = false)
+            resolveAppSegmentedRenderer()
         )
     }
 

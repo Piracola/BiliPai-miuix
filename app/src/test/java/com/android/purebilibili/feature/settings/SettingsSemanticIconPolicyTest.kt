@@ -118,13 +118,6 @@ class SettingsSemanticIconPolicyTest {
         )
     }
 
-    @Test
-    fun themeRoleColorRows_useDistinctSemanticRoles() {
-        val roles = ThemeRoleColorTarget.entries.map(::resolveThemeRoleColorIconRole)
-
-        assertEquals(roles.size, roles.toSet().size)
-    }
-
     private fun assertSettingsRoleIconsAreUnique(iconFamily: AppSemanticIconFamily) {
         val duplicates = SettingsIconRole.entries
             .groupBy { role -> resolveSettingsSemanticIcon(role, iconFamily).assetKey() }

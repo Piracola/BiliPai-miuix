@@ -1,7 +1,6 @@
 package com.android.purebilibili.feature.home.components
 
 import com.android.purebilibili.core.ui.AppDrawerContainerTreatment
-import com.android.purebilibili.core.ui.PresetPrimitiveRenderer
 import com.android.purebilibili.core.ui.resolveAppDrawerVisualPolicy
 import org.junit.Assert.assertTrue
 import org.junit.Assert.assertEquals
@@ -57,9 +56,8 @@ class MineSideDrawerVisualPolicyTest {
     }
 
     @Test
-    fun `material drawer should use opaque containers and larger chevron when blur is off`() {
+    fun `drawer should use opaque containers and larger chevron when blur is off`() {
         val policy = resolveAppDrawerVisualPolicy(
-            renderer = PresetPrimitiveRenderer.MATERIAL3,
             blurEnabled = false
         )
 
@@ -68,18 +66,12 @@ class MineSideDrawerVisualPolicyTest {
     }
 
     @Test
-    fun `material-family drawers keep translucent glass while blur is active`() {
-        listOf(
-            PresetPrimitiveRenderer.MATERIAL3,
-            PresetPrimitiveRenderer.MIUIX_BRIDGED,
-        ).forEach { renderer ->
-            val policy = resolveAppDrawerVisualPolicy(
-                renderer = renderer,
-                blurEnabled = true,
-            )
+    fun `drawers keep translucent glass while blur is active`() {
+        val policy = resolveAppDrawerVisualPolicy(
+            blurEnabled = true,
+        )
 
-            assertEquals(AppDrawerContainerTreatment.TRANSLUCENT, policy.containerTreatment)
-            assertEquals(20, policy.profileChevronSizeDp)
-        }
+        assertEquals(AppDrawerContainerTreatment.TRANSLUCENT, policy.containerTreatment)
+        assertEquals(20, policy.profileChevronSizeDp)
     }
 }

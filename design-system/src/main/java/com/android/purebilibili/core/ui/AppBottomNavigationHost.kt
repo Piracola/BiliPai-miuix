@@ -15,21 +15,16 @@ internal fun resolveAppBottomNavigationVisualPolicy(
     )
 }
 
-/** Selects the active bottom-navigation implementation without leaking a style enum to callers. */
+/** Selects the active bottom-navigation implementation (Miuix only). */
 @Composable
 fun AppBottomNavigationHost(
     androidNativeLiquidGlassEnabled: Boolean,
-    materialContent: @Composable (AppBottomNavigationVisualPolicy) -> Unit,
     platformContent: @Composable (AppBottomNavigationVisualPolicy) -> Unit,
 ) {
-    val renderer = rememberPresetPrimitiveRenderer()
     val policy = remember(androidNativeLiquidGlassEnabled) {
         resolveAppBottomNavigationVisualPolicy(
             androidNativeLiquidGlassEnabled = androidNativeLiquidGlassEnabled,
         )
     }
-    when (renderer) {
-        PresetPrimitiveRenderer.MATERIAL3 -> materialContent(policy)
-        PresetPrimitiveRenderer.MIUIX_BRIDGED -> platformContent(policy)
-    }
+    platformContent(policy)
 }

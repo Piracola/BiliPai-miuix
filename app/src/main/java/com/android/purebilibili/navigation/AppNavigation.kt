@@ -160,7 +160,6 @@ import com.android.purebilibili.core.store.AccountSessionStore
 import com.android.purebilibili.core.store.HomeWallpaperEffectScope
 import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.store.navigation.NavigationSettingsStore
-import com.android.purebilibili.core.store.resolveEffectiveHomeSettings
 import com.android.purebilibili.core.util.NetworkUtils
 import com.android.purebilibili.navigation3.BiliPaiNavDisplayHost
 import com.android.purebilibili.navigation3.BiliPaiProgrammaticBackDispatcher
@@ -358,11 +357,7 @@ fun AppNavigation(
     val homeSettings by SettingsManager.getHomeSettings(context).collectAsStateWithLifecycle(initialValue = com.android.purebilibili.core.store.HomeSettings(),
         context = kotlin.coroutines.EmptyCoroutineContext
     )
-    val effectiveHomeSettings = remember(homeSettings) {
-        resolveEffectiveHomeSettings(
-            homeSettings = homeSettings,
-        )
-    }
+    val effectiveHomeSettings = homeSettings
     val uiSkinState by rememberUiSkinState(context)
     val bottomBarUiSkinDecoration = rememberBottomBarUiSkinDecoration(uiSkinState)
     val appearance = remember(homeSettings) {

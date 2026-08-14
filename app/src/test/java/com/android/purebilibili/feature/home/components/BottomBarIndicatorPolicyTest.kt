@@ -2,8 +2,6 @@ package com.android.purebilibili.feature.home.components
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
-import com.android.purebilibili.core.store.BottomBarLiquidGlassPreset
-import com.android.purebilibili.core.store.LiquidGlassMode
 import com.android.purebilibili.core.ui.motion.BottomBarMotionProfile
 import com.android.purebilibili.core.ui.motion.resolveBottomBarMotionSpec
 import kotlin.test.Test
@@ -335,7 +333,6 @@ class BottomBarIndicatorPolicyTest {
                 shouldRefract = true,
                 useNeutralTint = true
             ),
-            liquidGlassTuning = resolveLiquidGlassTuning(progress = 0.2f)
         )
         val surface = resolveBottomBarMovingIndicatorSurfaceColor(isDarkTheme = false)
 
@@ -355,7 +352,6 @@ class BottomBarIndicatorPolicyTest {
                 shouldRefract = true,
                 useNeutralTint = false
             ),
-            liquidGlassTuning = resolveLiquidGlassTuning(progress = 0.7f)
         )
         val surface = resolveBottomBarMovingIndicatorSurfaceColor(isDarkTheme = false)
 
@@ -391,7 +387,6 @@ class BottomBarIndicatorPolicyTest {
                 shouldRefract = true,
                 useNeutralTint = true
             ),
-            liquidGlassTuning = resolveLiquidGlassTuning(progress = 0.2f)
         )
         val surface = resolveBottomBarMovingIndicatorSurfaceColor(isDarkTheme = false)
 
@@ -427,7 +422,6 @@ class BottomBarIndicatorPolicyTest {
             isDragging = true
         )
         val effectiveProfile = resolveBottomBarEffectiveRefractionMotionProfile(
-            preset = BottomBarLiquidGlassPreset.BILIPAI_TUNED,
             profile = profile
         )
 
@@ -652,10 +646,10 @@ class BottomBarIndicatorPolicyTest {
         ).first { it.exists() }.readText()
 
         // BiliPai: indicator lens height/amount scale with pressProgress.
-        assertTrue(floating.contains("val progress = dampedDragState.pressProgress"))
+        assertTrue(floating.contains("val progress = dampedDragAnimation.pressProgress"))
         assertTrue(floating.contains("refractionHeight = 10.dp.toPx() * progress"))
         assertTrue(floating.contains("refractionAmount = 14.dp.toPx() * progress"))
-        assertTrue(floating.contains("pillHighlight.copy(alpha = dampedDragState.pressProgress)"))
+        assertTrue(floating.contains("pillHighlight.copy(alpha = dampedDragAnimation.pressProgress)"))
         assertTrue(floating.contains("depthEffect = true"))
         assertTrue(floating.contains("chromaticAberration = 0.5f"))
     }

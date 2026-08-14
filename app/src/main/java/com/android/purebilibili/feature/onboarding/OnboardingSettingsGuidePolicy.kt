@@ -4,7 +4,6 @@ import android.content.Context
 import com.android.purebilibili.core.store.BottomBarSearchAutoExpandMode
 import com.android.purebilibili.core.store.HomeTopLayoutOrder
 import com.android.purebilibili.core.store.SettingsManager
-import com.android.purebilibili.core.store.applyOnboardingRecommendedUiStyle
 
 enum class OnboardingSettingsProfile(
     val title: String,
@@ -12,7 +11,7 @@ enum class OnboardingSettingsProfile(
 ) {
     RECOMMENDED(
         title = "推荐默认",
-        subtitle = "MD3、悬浮底栏、五个纯文字顶部标签"
+        subtitle = "Miuix 主题、悬浮底栏、五个纯文字顶部标签"
     ),
     PERFORMANCE(
         title = "流畅优先",
@@ -27,7 +26,6 @@ enum class OnboardingSettingsProfile(
 data class OnboardingSettingsGuidePreset(
     val profile: OnboardingSettingsProfile,
     val bottomBarFloating: Boolean,
-    val bottomBarLiquidGlassEnabled: Boolean,
     val bottomBarSearchEnabled: Boolean,
     val topTabLabelMode: Int,
     val topTabOrderIds: List<String>,
@@ -51,15 +49,14 @@ fun resolveOnboardingSettingsGuidePreset(
     profile: OnboardingSettingsProfile
 ): OnboardingSettingsGuidePreset {
     val sharedSummary = listOf(
-        "默认使用 MD3 / Material 3",
-        "关闭液态玻璃，开启悬浮底栏",
+        "默认使用 Miuix 主题",
+        "开启悬浮底栏",
         "首页顶部标签纯文字显示 5 个"
     )
     return when (profile) {
         OnboardingSettingsProfile.RECOMMENDED -> OnboardingSettingsGuidePreset(
             profile = profile,
             bottomBarFloating = true,
-            bottomBarLiquidGlassEnabled = false,
             bottomBarSearchEnabled = false,
             topTabLabelMode = SettingsManager.TopTabLabelMode.TEXT_ONLY,
             topTabOrderIds = DEFAULT_ONBOARDING_TOP_TAB_IDS,
@@ -74,7 +71,6 @@ fun resolveOnboardingSettingsGuidePreset(
         OnboardingSettingsProfile.PERFORMANCE -> OnboardingSettingsGuidePreset(
             profile = profile,
             bottomBarFloating = true,
-            bottomBarLiquidGlassEnabled = false,
             bottomBarSearchEnabled = false,
             topTabLabelMode = SettingsManager.TopTabLabelMode.TEXT_ONLY,
             topTabOrderIds = DEFAULT_ONBOARDING_TOP_TAB_IDS,
@@ -89,7 +85,6 @@ fun resolveOnboardingSettingsGuidePreset(
         OnboardingSettingsProfile.DATA_SAVER -> OnboardingSettingsGuidePreset(
             profile = profile,
             bottomBarFloating = true,
-            bottomBarLiquidGlassEnabled = false,
             bottomBarSearchEnabled = false,
             topTabLabelMode = SettingsManager.TopTabLabelMode.TEXT_ONLY,
             topTabOrderIds = DEFAULT_ONBOARDING_TOP_TAB_IDS,
@@ -108,9 +103,7 @@ suspend fun applyOnboardingSettingsGuidePreset(
     profile: OnboardingSettingsProfile
 ) {
     val preset = resolveOnboardingSettingsGuidePreset(profile)
-    applyOnboardingRecommendedUiStyle(context)
     SettingsManager.setBottomBarFloating(context, preset.bottomBarFloating)
-    SettingsManager.setBottomBarLiquidGlassEnabled(context, preset.bottomBarLiquidGlassEnabled)
     SettingsManager.setBottomBarSearchEnabled(context, preset.bottomBarSearchEnabled)
     SettingsManager.setTopTabLabelMode(context, preset.topTabLabelMode)
     SettingsManager.setTopTabOrder(context, preset.topTabOrderIds)

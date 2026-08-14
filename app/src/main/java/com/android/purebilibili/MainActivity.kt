@@ -98,7 +98,6 @@ import com.android.purebilibili.feature.settings.AppUpdateDownloadStatus
 import com.android.purebilibili.feature.settings.AppUpdateInstallAction
 import com.android.purebilibili.feature.settings.AppLanguage
 import com.android.purebilibili.feature.settings.applyAppLanguage
-import com.android.purebilibili.core.theme.resolveEffectiveDynamicColorEnabled
 import com.android.purebilibili.core.theme.buildDisplayMetricsSnapshot
 import com.android.purebilibili.core.ui.AppAlertDialog
 import com.android.purebilibili.core.ui.AppDialogAction
@@ -126,7 +125,6 @@ import com.android.purebilibili.feature.settings.resolveUpdateReleaseNotesText
 import com.android.purebilibili.feature.settings.selectPreferredAppUpdateAsset
 import com.android.purebilibili.feature.settings.shouldRunAppEntryAutoCheck
 import com.android.purebilibili.feature.settings.resolveThemePreferenceState
-import com.android.purebilibili.core.theme.resolveMd3DynamicColorEnabled
 import com.android.purebilibili.feature.screenshot.AppScreenshotCaptureMode
 import com.android.purebilibili.feature.screenshot.AppScreenshotGestureBlockState
 import com.android.purebilibili.feature.screenshot.AppScreenshotResult
@@ -1115,12 +1113,6 @@ open class MainActivity : AppCompatActivity() {
             //  检查并请求所有文件访问权限 (已移除启动时强制检查，改为按需申请)
             // LaunchedEffect(Unit) { ... }
 
-            val md3ColorSource = appThemeSettings.md3ColorSource
-            val md3CustomColorHex = appThemeSettings.md3CustomColorHex
-            val themeRoleOverrides = appThemeSettings.themeRoleOverrides
-            val colorStyle = appThemeSettings.colorStyle
-            val colorSpec = appThemeSettings.colorSpec
-            val themeColorIndex = appThemeSettings.themeColorIndex
             val appFontSizePreset = appThemeSettings.appFontSizePreset
             val appFontFileName = appThemeSettings.appFontFileName
             val appUiScalePreset = appThemeSettings.appUiScalePreset
@@ -1158,14 +1150,6 @@ open class MainActivity : AppCompatActivity() {
             )
             val useDarkTheme = themePreferenceState.useDarkTheme
             val useAmoledDarkTheme = themePreferenceState.useAmoledDarkTheme
-            val effectiveDynamicColor = resolveEffectiveDynamicColorEnabled(
-                dynamicColorEnabled = resolveMd3DynamicColorEnabled(
-                    source = md3ColorSource,
-                    sdkInt = Build.VERSION.SDK_INT
-                ),
-                amoledDarkTheme = useAmoledDarkTheme,
-                uiStyle = appThemeSettings.uiStyle
-            )
 
             //  [新增] 根据主题动态更新状态栏样式
             LaunchedEffect(useDarkTheme) {
@@ -1216,17 +1200,9 @@ open class MainActivity : AppCompatActivity() {
 
             // 6. 传入参数
             PureBiliBiliTheme(
-                uiStyle = appThemeSettings.uiStyle,
                 themeMode = themeMode,
                 darkTheme = useDarkTheme,
-                dynamicColor = effectiveDynamicColor,
                 amoledDarkTheme = useAmoledDarkTheme,
-                themeColorIndex = themeColorIndex, //  传入主题色索引
-                md3ColorSource = md3ColorSource,
-                md3CustomColorHex = md3CustomColorHex,
-                themeRoleOverrides = themeRoleOverrides,
-                colorStyle = colorStyle,
-                colorSpec = colorSpec,
                 fontSizePreset = appFontSizePreset,
                 appFontFileName = appFontFileName,
                 appIconStyle = appThemeSettings.appIconStyle,

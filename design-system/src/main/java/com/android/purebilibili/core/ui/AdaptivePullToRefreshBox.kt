@@ -60,47 +60,31 @@ fun AdaptivePullToRefreshBox(
         )
     }
 
-    when (rememberPresetPrimitiveRenderer()) {
-        PresetPrimitiveRenderer.MIUIX_BRIDGED -> {
-            val miuixState = rememberMiuixPullToRefreshState()
-            MiuixPullToRefresh(
-                isRefreshing = isRefreshing,
-                onRefresh = onRefresh,
-                modifier = modifier,
-                pullToRefreshState = miuixState,
-                contentPadding = mergedContentPadding,
-                color = AppSurfaceTokens.primary(),
-                refreshTexts = resolveMiuixPullToRefreshTexts(),
-                content = {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = contentAlignment,
-                    ) {
-                        content()
-                    }
-                },
-            )
-        }
-        PresetPrimitiveRenderer.MATERIAL3 -> {
-            ComfortablePullToRefreshBox(
-                isRefreshing = isRefreshing,
-                onRefresh = onRefresh,
-                modifier = modifier,
-                state = state,
+    val miuixState = rememberMiuixPullToRefreshState()
+    MiuixPullToRefresh(
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh,
+        modifier = modifier,
+        pullToRefreshState = miuixState,
+        contentPadding = mergedContentPadding,
+        color = AppSurfaceTokens.primary(),
+        refreshTexts = resolveMiuixPullToRefreshTexts(),
+        content = {
+            Box(
+                modifier = Modifier.fillMaxSize(),
                 contentAlignment = contentAlignment,
-                indicator = indicator,
-                content = content,
-            )
-        }
-    }
+            ) {
+                content()
+            }
+        },
+    )
 }
 
 /**
  * Default pull-to-refresh chrome for [AdaptivePullToRefreshBox].
  *
- * - Material 3: official expressive [PullToRefreshDefaults.LoadingIndicator]
- *   (ContainedLoadingIndicator + dynamic colors).
- * - Miuix: unused — the Miuix branch mounts native [MiuixPullToRefresh] instead.
+ * The Miuix branch mounts native [MiuixPullToRefresh] instead, so this slot
+ * falls back to the framework indicator for custom slots.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -113,20 +97,9 @@ fun BoxScope.AdaptivePullToRefreshDefaultIndicator(
     val indicatorModifier = modifier
         .align(Alignment.TopCenter)
         .padding(top = indicatorTopInset)
-    when (rememberPresetPrimitiveRenderer()) {
-        PresetPrimitiveRenderer.MATERIAL3 -> {
-            PullToRefreshDefaults.LoadingIndicator(
-                modifier = indicatorModifier,
-                isRefreshing = isRefreshing,
-                state = state,
-            )
-        }
-        PresetPrimitiveRenderer.MIUIX_BRIDGED -> {
-            PullToRefreshDefaults.Indicator(
-                modifier = indicatorModifier,
-                isRefreshing = isRefreshing,
-                state = state,
-            )
-        }
-    }
+    PullToRefreshDefaults.Indicator(
+        modifier = indicatorModifier,
+        isRefreshing = isRefreshing,
+        state = state,
+    )
 }

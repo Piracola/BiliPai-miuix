@@ -165,10 +165,6 @@ fun CommentSegmentedControl(
         indicatorHeight = spec.indicatorHeightDp.dp,
         labelFontSize = 13.sp,
         modifier = modifier,
-        backdrop = backdrop,
-        miuixBackdrop = miuixBackdrop,
-        forceLiquidChrome = homeSettings.androidNativeLiquidGlassEnabled,
-        liquidGlassEffectsEnabled = backdrop != null,
-        tapPressRefractionEnabled = false
+        dragSelectionEnabled = false
     )
 }

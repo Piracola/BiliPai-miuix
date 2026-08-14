@@ -16,9 +16,7 @@ internal data class HistoryFilterTabChromeSpec(
     val dragSelectionEnabled: Boolean
 )
 
-internal fun shouldUseHistoryFilterLiquidDock(
-    androidNativeLiquidGlassEnabled: Boolean
-): Boolean = androidNativeLiquidGlassEnabled
+internal fun shouldUseHistoryFilterLiquidDock(): Boolean = false
 
 internal fun resolveHistoryFilterTabItemWidthDp(filterCount: Int): Int {
     return when {
@@ -33,9 +31,9 @@ internal fun resolveHistoryFilterTabChromeSpec(
     topChromePolicy: AppTopChromePolicy,
     filterCount: Int = HistoryContentFilter.entries.size
 ): HistoryFilterTabChromeSpec {
-    val useLiquidDock = shouldUseHistoryFilterLiquidDock(
-        androidNativeLiquidGlassEnabled = homeSettings.androidNativeLiquidGlassEnabled
-    )
+    @Suppress("UNUSED_PARAMETER")
+    val unusedHomeSettings = homeSettings
+    val useLiquidDock = shouldUseHistoryFilterLiquidDock()
     val compactChrome = topChromePolicy.compactChromeSpec
     return if (useLiquidDock) {
         HistoryFilterTabChromeSpec(

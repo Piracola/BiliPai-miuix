@@ -46,10 +46,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.input.ImeAction
-import com.android.purebilibili.core.theme.AppUiStyle
-import com.android.purebilibili.core.theme.LocalAppUiStyle
 import com.android.purebilibili.core.theme.LocalCornerRadiusScale
-import com.android.purebilibili.core.theme.LocalDynamicColorActive
 import com.android.purebilibili.core.theme.resolveAndroidNativeChromeTokens
 import com.android.purebilibili.core.ui.resolveCompactCapsuleChromeSpec
 import com.android.purebilibili.core.theme.iOSCornerRadius
@@ -145,92 +142,54 @@ data class AdaptiveListVisualCapabilities(
     val showExplicitActionChevron: Boolean,
 )
 
-internal fun resolveAdaptiveListComponentVisualSpec(
-    uiStyle: AppUiStyle
-): AdaptiveListComponentVisualSpec {
-    val chromeTokens = resolveAndroidNativeChromeTokens(uiStyle)
-    val compactChrome = resolveCompactCapsuleChromeSpec(uiStyle)
-    return if (uiStyle == AppUiStyle.MIUIX) {
-        AdaptiveListComponentVisualSpec(
-            sectionStartPaddingDp = chromeTokens.denseHorizontalSpacingDp,
-            groupCornerRadiusDp = chromeTokens.containerCornerRadiusDp,
-            groupTonalElevationDp = chromeTokens.tonalSurfaceElevationDp,
-            iconCornerRadiusDp = 10,
-            iconContainerSizeDp = 38,
-            iconGlyphSizeDp = 20,
-            iconBackgroundAlpha = chromeTokens.selectedContainerAlpha,
-            gridCornerRadiusDp = chromeTokens.containerCornerRadiusDp,
-            searchBarCornerRadiusDp = compactChrome.primaryCornerRadiusDp,
-            searchBarHeightDp = compactChrome.primaryHeightDp,
-            dividerThicknessDp = 0f,
-            dividerStartIndentDp = chromeTokens.denseHorizontalSpacingDp
-        )
-    } else {
-        AdaptiveListComponentVisualSpec(
-            sectionStartPaddingDp = chromeTokens.denseHorizontalSpacingDp,
-            groupCornerRadiusDp = chromeTokens.containerCornerRadiusDp,
-            groupTonalElevationDp = chromeTokens.tonalSurfaceElevationDp,
-            iconCornerRadiusDp = 12,
-            iconContainerSizeDp = 40,
-            iconGlyphSizeDp = 22,
-            iconBackgroundAlpha = chromeTokens.selectedContainerAlpha,
-            gridCornerRadiusDp = chromeTokens.containerCornerRadiusDp,
-            searchBarCornerRadiusDp = compactChrome.primaryCornerRadiusDp,
-            searchBarHeightDp = compactChrome.primaryHeightDp,
-            dividerThicknessDp = 0f,
-            dividerStartIndentDp = chromeTokens.denseHorizontalSpacingDp
-        )
-    }
+internal fun resolveAdaptiveListComponentVisualSpec(): AdaptiveListComponentVisualSpec {
+    val chromeTokens = resolveAndroidNativeChromeTokens()
+    val compactChrome = resolveCompactCapsuleChromeSpec()
+    return AdaptiveListComponentVisualSpec(
+        sectionStartPaddingDp = chromeTokens.denseHorizontalSpacingDp,
+        groupCornerRadiusDp = chromeTokens.containerCornerRadiusDp,
+        groupTonalElevationDp = chromeTokens.tonalSurfaceElevationDp,
+        iconCornerRadiusDp = 10,
+        iconContainerSizeDp = 38,
+        iconGlyphSizeDp = 20,
+        iconBackgroundAlpha = chromeTokens.selectedContainerAlpha,
+        gridCornerRadiusDp = chromeTokens.containerCornerRadiusDp,
+        searchBarCornerRadiusDp = compactChrome.primaryCornerRadiusDp,
+        searchBarHeightDp = compactChrome.primaryHeightDp,
+        dividerThicknessDp = 0f,
+        dividerStartIndentDp = chromeTokens.denseHorizontalSpacingDp
+    )
 }
 
-internal fun resolveAdaptiveListRowVisualSpec(
-    uiStyle: AppUiStyle
-): AdaptiveListRowVisualSpec {
-    val chromeTokens = resolveAndroidNativeChromeTokens(uiStyle)
-    return if (uiStyle == AppUiStyle.MIUIX) {
-        AdaptiveListRowVisualSpec(
-            insideHorizontalPaddingDp = 16,
-            insideVerticalPaddingDp = 14,
-            trailingIconSizeDp = 14,
-            trailingSpacingDp = 6,
-            minTouchTargetHeightDp = chromeTokens.rowMinTouchTargetDp
-        )
-    } else {
-        AdaptiveListRowVisualSpec(
-            insideHorizontalPaddingDp = 18,
-            insideVerticalPaddingDp = 16,
-            trailingIconSizeDp = 16,
-            trailingSpacingDp = 8,
-            minTouchTargetHeightDp = chromeTokens.rowMinTouchTargetDp
-        )
-    }
+internal fun resolveAdaptiveListRowVisualSpec(): AdaptiveListRowVisualSpec {
+    val chromeTokens = resolveAndroidNativeChromeTokens()
+    return AdaptiveListRowVisualSpec(
+        insideHorizontalPaddingDp = 16,
+        insideVerticalPaddingDp = 14,
+        trailingIconSizeDp = 14,
+        trailingSpacingDp = 6,
+        minTouchTargetHeightDp = chromeTokens.rowMinTouchTargetDp
+    )
 }
 
-internal fun resolveAdaptiveListVisualCapabilities(
-    uiStyle: AppUiStyle,
-): AdaptiveListVisualCapabilities = AdaptiveListVisualCapabilities(
-    componentSpec = resolveAdaptiveListComponentVisualSpec(uiStyle),
-    rowSpec = resolveAdaptiveListRowVisualSpec(uiStyle),
-    showExplicitActionChevron = !shouldUseNativeMiuixSearchBar(uiStyle),
+internal fun resolveAdaptiveListVisualCapabilities(): AdaptiveListVisualCapabilities = AdaptiveListVisualCapabilities(
+    componentSpec = resolveAdaptiveListComponentVisualSpec(),
+    rowSpec = resolveAdaptiveListRowVisualSpec(),
+    showExplicitActionChevron = !shouldUseNativeMiuixSearchBar(),
 )
 
 @Composable
 fun rememberAdaptiveListVisualCapabilities(): AdaptiveListVisualCapabilities {
-    val uiStyle = LocalAppUiStyle.current
-    return remember(uiStyle) {
-        resolveAdaptiveListVisualCapabilities(uiStyle)
+    return remember {
+        resolveAdaptiveListVisualCapabilities()
     }
 }
 
 internal fun resolveAdaptiveGroupContainerColor(
-    uiStyle: AppUiStyle,
     colorScheme: ColorScheme,
     globalWallpaperVisible: Boolean = false
 ): Color {
-    val resolvedColor = when (uiStyle) {
-        AppUiStyle.MIUIX -> colorScheme.surfaceContainer
-        AppUiStyle.MATERIAL3 -> colorScheme.surfaceContainerLow
-    }
+    val resolvedColor = colorScheme.surfaceContainer
     return resolveGlobalWallpaperListContainerColor(
         containerColor = resolvedColor,
         colorScheme = colorScheme,
@@ -240,14 +199,10 @@ internal fun resolveAdaptiveGroupContainerColor(
 }
 
 internal fun resolveAdaptiveSearchBarContainerColor(
-    uiStyle: AppUiStyle,
     colorScheme: ColorScheme,
     globalWallpaperVisible: Boolean = false
 ): Color {
-    val resolvedColor = when (uiStyle) {
-        AppUiStyle.MIUIX -> colorScheme.surfaceContainer
-        AppUiStyle.MATERIAL3 -> colorScheme.surfaceContainerHigh
-    }
+    val resolvedColor = colorScheme.surfaceContainer
     return resolveGlobalWallpaperListContainerColor(
         containerColor = resolvedColor,
         colorScheme = colorScheme,
@@ -256,9 +211,7 @@ internal fun resolveAdaptiveSearchBarContainerColor(
     )
 }
 
-internal fun shouldUseNativeMiuixSearchBar(
-    uiStyle: AppUiStyle
-): Boolean = uiStyle == AppUiStyle.MIUIX
+internal fun shouldUseNativeMiuixSearchBar(): Boolean = true
 
 internal fun resolveGlobalWallpaperListContainerColor(
     containerColor: Color,
@@ -289,24 +242,9 @@ private fun isDefaultListContainerColor(
         opaqueColor == colorScheme.surfaceContainerHigh.copy(alpha = 1f)
 }
 
-@Suppress("UNUSED_PARAMETER")
 internal fun resolveAdaptiveSemanticIconTint(
     iconTint: Color,
-    uiStyle: AppUiStyle,
-    colorScheme: ColorScheme,
-    useSemanticAccentRoles: Boolean = true,
-): Color {
-    if (
-        uiStyle != AppUiStyle.MATERIAL3 ||
-        iconTint == Color.Unspecified
-    ) {
-        return iconTint
-    }
-    // Settings icons are navigation affordances rather than status indicators.
-    // MATERIAL3 therefore uses the active theme accent consistently across the whole
-    // settings hierarchy; MIUIX keeps its familiar per-item colors.
-    return colorScheme.primary
-}
+): Color = iconTint
 
 @Suppress("UNUSED_PARAMETER")
 internal fun resolveAdaptivePreferenceIconContainerColor(
@@ -377,17 +315,9 @@ internal fun resolveAdaptivePreferenceIconBackgroundAlpha(
 @Composable
 fun rememberAdaptiveSemanticIconTint(
     iconTint: Color,
-    uiStyle: AppUiStyle = LocalAppUiStyle.current,
-    dynamicColorActive: Boolean = LocalDynamicColorActive.current
 ): Color {
-    val colorScheme = MaterialTheme.colorScheme
-    return remember(iconTint, uiStyle, dynamicColorActive, colorScheme) {
-        resolveAdaptiveSemanticIconTint(
-            iconTint = iconTint,
-            uiStyle = uiStyle,
-            colorScheme = colorScheme,
-            useSemanticAccentRoles = dynamicColorActive,
-        )
+    return remember(iconTint) {
+        resolveAdaptiveSemanticIconTint(iconTint = iconTint)
     }
 }
 
@@ -448,62 +378,26 @@ fun AppAdaptiveSwitch(
     modifier: Modifier = Modifier,
     enabled: Boolean = true
 ) {
-    val uiStyle = LocalAppUiStyle.current
-    when (resolveAppAdaptiveSwitchTreatment(uiStyle)) {
-        AppAdaptiveSwitchTreatment.MATERIAL -> {
-            val platformHaptic = LocalHapticFeedback.current
-            val effectiveHaptic = if (LocalAppThemeConfig.current.hapticFeedbackEnabled) {
-                platformHaptic
-            } else {
-                NoOpHapticFeedback
-            }
-            CompositionLocalProvider(LocalHapticFeedback provides effectiveHaptic) {
-                AppSwitch(
-                    checked = checked,
-                    onCheckedChange = onCheckedChange,
-                    enabled = enabled,
-                    modifier = modifier,
-                )
-            }
-        }
-        AppAdaptiveSwitchTreatment.MIUIX -> {
-            MiuixSwitch(
-                checked = checked,
-                onCheckedChange = onCheckedChange,
-                enabled = enabled,
-                modifier = modifier
-            )
-        }
-    }
+    MiuixSwitch(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        enabled = enabled,
+        modifier = modifier
+    )
 }
 
 @Composable
 fun AdaptivePreferenceSectionTitleRenderer(title: String) {
-    val uiStyle = LocalAppUiStyle.current
-    val visualSpec = remember(uiStyle) {
-        resolveAdaptiveListComponentVisualSpec(uiStyle)
+    val visualSpec = remember {
+        resolveAdaptiveListComponentVisualSpec()
     }
-    if (uiStyle == AppUiStyle.MIUIX) {
-        SmallTitle(
-            text = title,
-            textColor = AppSurfaceTokens.onSurfaceVariantSummary(),
-            insideMargin = PaddingValues(
-                start = visualSpec.sectionStartPaddingDp.dp,
-                top = 24.dp,
-                bottom = 8.dp
-            )
-        )
-        return
-    }
-    Text(
+    SmallTitle(
         text = title,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        letterSpacing = 0.sp,
-        modifier = Modifier.padding(
+        textColor = AppSurfaceTokens.onSurfaceVariantSummary(),
+        insideMargin = PaddingValues(
             start = visualSpec.sectionStartPaddingDp.dp,
-            top = 28.dp,
-            bottom = 10.dp
+            top = 24.dp,
+            bottom = 8.dp
         )
     )
 }
@@ -529,43 +423,24 @@ fun AdaptivePreferenceGroupRenderer(
         return
     }
 
-    val uiStyle = LocalAppUiStyle.current
-    val visualSpec = remember(uiStyle) {
-        resolveAdaptiveListComponentVisualSpec(uiStyle)
+    val visualSpec = remember {
+        resolveAdaptiveListComponentVisualSpec()
     }
     val colorScheme = MaterialTheme.colorScheme
     val defaultShape = RoundedCornerShape(visualSpec.groupCornerRadiusDp.dp)
     val appliedShape = shape ?: defaultShape
     val resolvedContainerColor = resolveAdaptiveGroupContainerColor(
-        uiStyle = uiStyle,
         colorScheme = colorScheme,
         globalWallpaperVisible = LocalGlobalWallpaperBackdropVisible.current
     )
 
-    if (uiStyle == AppUiStyle.MIUIX) {
-        MiuixCard(
-            modifier = modifier.padding(horizontal = 14.dp),
-            cornerRadius = visualSpec.groupCornerRadiusDp.dp,
-            insideMargin = PaddingValues(0.dp),
-            colors = MiuixCardDefaults.defaultColors(color = resolvedContainerColor)
-        ) {
-            content()
-        }
-        return
-    }
-    
-    Surface(
-        modifier = modifier.padding(horizontal = 12.dp),
-        shape = appliedShape,
-        color = resolvedContainerColor,
-        shadowElevation = 0.dp,
-        tonalElevation = visualSpec.groupTonalElevationDp.dp,
-        border = androidx.compose.foundation.BorderStroke(
-            0.8.dp,
-            colorScheme.outlineVariant.copy(alpha = 0.6f)
-        )
+    MiuixCard(
+        modifier = modifier.padding(horizontal = 14.dp),
+        cornerRadius = visualSpec.groupCornerRadiusDp.dp,
+        insideMargin = PaddingValues(0.dp),
+        colors = MiuixCardDefaults.defaultColors(color = resolvedContainerColor)
     ) {
-        Column(content = content)
+        content()
     }
 }
 
@@ -581,12 +456,11 @@ internal fun AdaptiveSwitchPreferenceContent(
     textColor: Color = MaterialTheme.colorScheme.onSurface,
     subtitleColor: Color = MaterialTheme.colorScheme.onSurfaceVariant
 ) {
-    val uiStyle = LocalAppUiStyle.current
-    val visualSpec = remember(uiStyle) {
-        resolveAdaptiveListComponentVisualSpec(uiStyle)
+    val visualSpec = remember {
+        resolveAdaptiveListComponentVisualSpec()
     }
-    val rowSpec = remember(uiStyle) {
-        resolveAdaptiveListRowVisualSpec(uiStyle)
+    val rowSpec = remember {
+        resolveAdaptiveListRowVisualSpec()
     }
     val iconTreatment = LocalAppPreferenceIconTreatment.current
     val iconStyle = rememberResolvedAppIconStyle()
@@ -604,60 +478,7 @@ internal fun AdaptiveSwitchPreferenceContent(
         iconStyle,
     )
     val listItemStyle = rememberResolvedAppListItemStyle()
-    if (listItemStyle == AppListItemStyle.NATIVE && uiStyle == AppUiStyle.MATERIAL3) {
-        // MD3 原生:ListItem + M3 Switch
-        val haptic = LocalHapticFeedback.current
-        val hapticsEnabled = LocalAppThemeConfig.current.hapticFeedbackEnabled
-        ListItem(
-            headlineContent = {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = textColor,
-                )
-            },
-            supportingContent = subtitle?.let { subtitleText ->
-                {
-                    Text(
-                        text = subtitleText,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = subtitleColor,
-                    )
-                }
-            },
-            leadingContent = if (icon != null) {
-                {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(24.dp),
-                    )
-                }
-            } else {
-                null
-            },
-            trailingContent = {
-                AppAdaptiveSwitch(
-                    checked = checked,
-                    onCheckedChange = onCheckedChange,
-                    enabled = enabled,
-                )
-            },
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = rowSpec.minTouchTargetHeightDp.dp)
-                .clickable(enabled = enabled) {
-                    if (hapticsEnabled) {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    }
-                    onCheckedChange(!checked)
-                },
-        )
-        return
-    }
-    if (listItemStyle == AppListItemStyle.NATIVE && uiStyle == AppUiStyle.MIUIX) {
+    if (listItemStyle == AppListItemStyle.NATIVE) {
         val platformHaptic = LocalHapticFeedback.current
         val effectiveHaptic = if (LocalAppThemeConfig.current.hapticFeedbackEnabled) {
             platformHaptic
@@ -763,12 +584,11 @@ fun AdaptiveSliderPreferenceRenderer(
     subtitleColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     valueColor: Color = MaterialTheme.colorScheme.primary
 ) {
-    val uiStyle = LocalAppUiStyle.current
-    val visualSpec = remember(uiStyle) {
-        resolveAdaptiveListComponentVisualSpec(uiStyle)
+    val visualSpec = remember {
+        resolveAdaptiveListComponentVisualSpec()
     }
-    val rowSpec = remember(uiStyle) {
-        resolveAdaptiveListRowVisualSpec(uiStyle)
+    val rowSpec = remember {
+        resolveAdaptiveListRowVisualSpec()
     }
     val iconTreatment = LocalAppPreferenceIconTreatment.current
     val iconStyle = rememberResolvedAppIconStyle()
@@ -786,63 +606,28 @@ fun AdaptiveSliderPreferenceRenderer(
         iconStyle,
     )
     val iconCornerRadius = visualSpec.iconCornerRadiusDp.dp
-    if (shouldRouteSliderPreferenceToMiuixSliderPreference(uiStyle)) {
-        MiuixSliderPreference(
-            value = value,
-            onValueChange = onValueChange,
-            title = title,
-            titleColor = BasicComponentDefaults.titleColor(color = textColor),
-            summary = subtitle,
-            summaryColor = BasicComponentDefaults.summaryColor(color = subtitleColor),
-            valueText = valueLabel,
-            valueRange = valueRange,
-            steps = steps,
-            insideMargin = PaddingValues(
-                horizontal = rowSpec.insideHorizontalPaddingDp.dp,
-                vertical = rowSpec.insideVerticalPaddingDp.dp
-            ),
-            startAction = {
-                if (icon != null) {
-                    Box(
-                        modifier = Modifier
-                            .size(visualSpec.iconContainerSizeDp.dp)
-                            .adaptiveSquircleBackground(
-                                color = effectiveIconTint.copy(alpha = iconBackgroundAlpha),
-                                cornerRadius = visualSpec.iconCornerRadiusDp.dp,
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = null,
-                            tint = iconContentColor,
-                            modifier = Modifier.size(visualSpec.iconGlyphSizeDp.dp)
-                        )
-                    }
-                }
-            }
-        )
-        return
-    }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                horizontal = rowSpec.insideHorizontalPaddingDp.dp,
-                vertical = rowSpec.insideVerticalPaddingDp.dp
-            )
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+    MiuixSliderPreference(
+        value = value,
+        onValueChange = onValueChange,
+        title = title,
+        titleColor = BasicComponentDefaults.titleColor(color = textColor),
+        summary = subtitle,
+        summaryColor = BasicComponentDefaults.summaryColor(color = subtitleColor),
+        valueText = valueLabel,
+        valueRange = valueRange,
+        steps = steps,
+        insideMargin = PaddingValues(
+            horizontal = rowSpec.insideHorizontalPaddingDp.dp,
+            vertical = rowSpec.insideVerticalPaddingDp.dp
+        ),
+        startAction = {
             if (icon != null) {
                 Box(
                     modifier = Modifier
                         .size(visualSpec.iconContainerSizeDp.dp)
                         .adaptiveSquircleBackground(
                             color = effectiveIconTint.copy(alpha = iconBackgroundAlpha),
-                            cornerRadius = iconCornerRadius,
+                            cornerRadius = visualSpec.iconCornerRadiusDp.dp,
                         ),
                     contentAlignment = Alignment.Center
                 ) {
@@ -853,132 +638,8 @@ fun AdaptiveSliderPreferenceRenderer(
                         modifier = Modifier.size(visualSpec.iconGlyphSizeDp.dp)
                     )
                 }
-                Spacer(modifier = Modifier.width(14.dp))
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = title, style = MaterialTheme.typography.bodyLarge, color = textColor)
-                if (subtitle != null) {
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = subtitleColor
-                    )
-                }
-            }
-            if (valueLabel != null) {
-                Spacer(modifier = Modifier.width(rowSpec.trailingSpacingDp.dp))
-                Text(
-                    text = valueLabel,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = valueColor
-                )
             }
         }
-        Spacer(modifier = Modifier.height(12.dp))
-        Slider(
-            value = value,
-            onValueChange = onValueChange,
-            valueRange = valueRange,
-            steps = steps
-        )
-    }
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun Md3NativeListItemContent(
-    icon: ImageVector? = null,
-    iconPainter: androidx.compose.ui.graphics.painter.Painter? = null,
-    title: String,
-    subtitle: String? = null,
-    value: String? = null,
-    onClick: (() -> Unit)?,
-    textColor: Color,
-    subtitleColor: Color,
-    valueColor: Color,
-    showChevron: Boolean,
-    trailingContent: (@Composable (() -> Unit))? = null,
-    minTouchHeight: Int,
-) {
-    val haptic = LocalHapticFeedback.current
-    val hapticsEnabled = LocalAppThemeConfig.current.hapticFeedbackEnabled
-    val colorScheme = MaterialTheme.colorScheme
-    ListItem(
-        headlineContent = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = textColor,
-            )
-        },
-        supportingContent = subtitle?.let { subtitleText ->
-            {
-                Text(
-                    text = subtitleText,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = subtitleColor,
-                )
-            }
-        },
-        leadingContent = if (icon != null || iconPainter != null) {
-            {
-                when {
-                    icon != null -> Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(24.dp),
-                    )
-
-                    else -> Icon(
-                        painter = iconPainter!!,
-                        contentDescription = null,
-                        tint = colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(24.dp),
-                    )
-                }
-            }
-        } else {
-            null
-        },
-        trailingContent = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                trailingContent?.invoke()
-                if (!value.isNullOrBlank()) {
-                    Text(
-                        text = value,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = valueColor,
-                        maxLines = APP_PREFERENCE_VALUE_MAX_LINES,
-                        softWrap = true,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.End,
-                        modifier = Modifier
-                            .padding(start = 12.dp)
-                            .appPreferenceValueTextModifier(),
-                    )
-                }
-                if (showChevron && onClick != null) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = null,
-                        tint = valueColor,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-            }
-        },
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = minTouchHeight.dp)
-            .clickable(enabled = onClick != null) {
-                if (hapticsEnabled) {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                }
-                onClick?.invoke()
-            },
     )
 }
 
@@ -1002,12 +663,11 @@ internal fun AdaptivePreferenceContent(
     showChevron: Boolean = true,
     trailingContent: @Composable (() -> Unit)? = null,
 ) {
-    val uiStyle = LocalAppUiStyle.current
-    val visualSpec = remember(uiStyle) {
-        resolveAdaptiveListComponentVisualSpec(uiStyle)
+    val visualSpec = remember {
+        resolveAdaptiveListComponentVisualSpec()
     }
-    val rowSpec = remember(uiStyle) {
-        resolveAdaptiveListRowVisualSpec(uiStyle)
+    val rowSpec = remember {
+        resolveAdaptiveListRowVisualSpec()
     }
     val iconTreatment = LocalAppPreferenceIconTreatment.current
     val iconStyle = rememberResolvedAppIconStyle()
@@ -1026,30 +686,12 @@ internal fun AdaptivePreferenceContent(
     )
     val iconCornerRadius = visualSpec.iconCornerRadiusDp.dp
     val clickableRenderer = resolveAppClickableItemRenderer(
-        uiStyle = uiStyle,
         onClick = onClick,
         showChevron = showChevron,
         centered = centered
     )
     val listItemStyle = rememberResolvedAppListItemStyle()
     val nativeListItem = listItemStyle == AppListItemStyle.NATIVE
-    if (nativeListItem && uiStyle == AppUiStyle.MATERIAL3) {
-        Md3NativeListItemContent(
-            icon = icon,
-            iconPainter = iconPainter,
-            title = title,
-            subtitle = subtitle,
-            value = value,
-            onClick = onClick,
-            textColor = textColor,
-            subtitleColor = subtitleColor,
-            valueColor = valueColor,
-            showChevron = showChevron,
-            trailingContent = trailingContent,
-            minTouchHeight = rowSpec.minTouchTargetHeightDp,
-        )
-        return
-    }
     if (nativeListItem && clickableRenderer == AppClickableItemRenderer.MIUIX_ARROW) {
         BasicComponent(
             onClick = onClick,
@@ -1149,119 +791,17 @@ internal fun AdaptivePreferenceContent(
         }
         return
     }
-    if (clickableRenderer == AppClickableItemRenderer.MD3_BASIC) {
-        val haptic = LocalHapticFeedback.current
-        val hapticsEnabled = LocalAppThemeConfig.current.hapticFeedbackEnabled
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = rowSpec.minTouchTargetHeightDp.dp)
-                .clickable(enabled = onClick != null) {
-                    if (hapticsEnabled) {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    }
-                    onClick?.invoke()
-                }
-                .padding(
-                    horizontal = rowSpec.insideHorizontalPaddingDp.dp,
-                    vertical = rowSpec.insideVerticalPaddingDp.dp
-                ),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (icon != null || iconPainter != null) {
-                Box(
-                    modifier = Modifier
-                        .size(visualSpec.iconContainerSizeDp.dp)
-                        .adaptiveSquircleBackground(
-                            color = if (effectiveIconTint == Color.Unspecified) {
-                                Color.Transparent
-                            } else {
-                                effectiveIconTint.copy(alpha = iconBackgroundAlpha)
-                            },
-                            cornerRadius = visualSpec.iconCornerRadiusDp.dp,
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (icon != null) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = null,
-                            tint = iconContentColor,
-                            modifier = Modifier.size(visualSpec.iconGlyphSizeDp.dp)
-                        )
-                    } else if (iconPainter != null) {
-                        Icon(
-                            painter = iconPainter,
-                            contentDescription = null,
-                            tint = effectiveIconTint,
-                            modifier = Modifier.size(visualSpec.iconGlyphSizeDp.dp)
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.width(14.dp))
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = textColor,
-                )
-                if (subtitle != null) {
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = subtitleColor,
-                    )
-                }
-            }
-            if (trailingContent != null || !value.isNullOrBlank() || (onClick != null && showChevron)) {
-                Spacer(modifier = Modifier.width(rowSpec.trailingSpacingDp.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    trailingContent?.invoke()
-                    if (!value.isNullOrBlank()) {
-                        Text(
-                            text = value,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = valueColor,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.End,
-                            maxLines = APP_PREFERENCE_VALUE_MAX_LINES,
-                            softWrap = true,
-                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                            modifier = Modifier
-                                .appPreferenceValueTextModifier()
-                                .onLongPressAction(
-                                    enabled = enableCopy && onCopyRequest != null,
-                                    onLongPress = { onCopyRequest?.invoke(copyValue ?: value, title) },
-                                )
-                        )
-                    }
-                    if (onClick != null && showChevron) {
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
-                            contentDescription = null,
-                            tint = chevronTint,
-                            modifier = Modifier.size(rowSpec.trailingIconSizeDp.dp)
-                        )
-                    }
-                }
-            }
-        }
-        return
-    }
-    if (clickableRenderer != AppClickableItemRenderer.MD3_BASIC) {
-        BasicComponent(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = rowSpec.minTouchTargetHeightDp.dp),
-            title = title,
-            summary = subtitle,
-            onClick = onClick,
-            insideMargin = PaddingValues(
-                horizontal = rowSpec.insideHorizontalPaddingDp.dp,
-                vertical = rowSpec.insideVerticalPaddingDp.dp
-            ),
+    BasicComponent(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = rowSpec.minTouchTargetHeightDp.dp),
+        title = title,
+        summary = subtitle,
+        onClick = onClick,
+        insideMargin = PaddingValues(
+            horizontal = rowSpec.insideHorizontalPaddingDp.dp,
+            vertical = rowSpec.insideVerticalPaddingDp.dp
+        ),
             startAction = {
                 when {
                     icon != null -> {
@@ -1337,137 +877,6 @@ internal fun AdaptivePreferenceContent(
                 }
             }
         )
-        return
-    }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = onClick != null) { onClick?.invoke() }
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = if (centered) Arrangement.Center else Arrangement.Start
-    ) {
-        if (!centered) {
-            if (icon != null || iconPainter != null) {
-                if (effectiveIconTint != Color.Unspecified) {
-                    Box(
-                        modifier = Modifier
-                            .size(visualSpec.iconContainerSizeDp.dp)
-                            .adaptiveSquircleBackground(
-                                color = effectiveIconTint.copy(alpha = iconBackgroundAlpha),
-                                cornerRadius = iconCornerRadius,
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (icon != null) {
-                            Icon(
-                                icon,
-                                contentDescription = null,
-                                tint = iconContentColor,
-                                modifier = Modifier.size(visualSpec.iconGlyphSizeDp.dp)
-                            )
-                        } else if (iconPainter != null) {
-                            Icon(
-                                painter = iconPainter,
-                                contentDescription = null,
-                                tint = iconContentColor,
-                                modifier = Modifier.size(visualSpec.iconGlyphSizeDp.dp)
-                            )
-                        }
-                    }
-                } else {
-                    Box(
-                        modifier = Modifier.size(visualSpec.iconContainerSizeDp.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (icon != null) {
-                            Icon(
-                                icon,
-                                contentDescription = null,
-                                tint = Color.Unspecified,
-                                modifier = Modifier.size(visualSpec.iconContainerSizeDp.dp)
-                            )
-                        } else if (iconPainter != null) {
-                            Icon(
-                                painter = iconPainter,
-                                contentDescription = null,
-                                tint = Color.Unspecified,
-                                modifier = Modifier.size(visualSpec.iconContainerSizeDp.dp)
-                            )
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.width(14.dp))
-            }
-        }
-        
-        if (centered) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = textColor,
-                modifier = Modifier,
-                maxLines = 1,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
-        } else {
-            // Title stays single-line so long search labels don't wrap under the trailing section path.
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = textColor,
-                    maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Start
-                )
-                if (subtitle != null) {
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = subtitleColor,
-                        maxLines = 2,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                    )
-                }
-            }
-        }
-        
-        if (!centered) {
-            Spacer(modifier = Modifier.width(rowSpec.trailingSpacingDp.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                trailingContent?.invoke()
-                if (!value.isNullOrBlank()) {
-                    Text(
-                        text = value,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = valueColor,
-                        maxLines = APP_PREFERENCE_VALUE_MAX_LINES,
-                        softWrap = true,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.End,
-                        modifier = Modifier
-                            .appPreferenceValueTextModifier()
-                            .onLongPressAction(
-                                enabled = enableCopy && onCopyRequest != null,
-                                onLongPress = { onCopyRequest?.invoke(copyValue ?: value, title) },
-                            )
-                    )
-                }
-                if (onClick != null && showChevron) {
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
-                        contentDescription = null,
-                        tint = chevronTint,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-            }
-        }
-    }
 }
 
 @Composable
@@ -1490,9 +899,8 @@ fun AdaptivePreferenceGridItemRenderer(
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     modifier: Modifier = Modifier
 ) {
-    val uiStyle = LocalAppUiStyle.current
-    val visualSpec = remember(uiStyle) {
-        resolveAdaptiveListComponentVisualSpec(uiStyle)
+    val visualSpec = remember {
+        resolveAdaptiveListComponentVisualSpec()
     }
     val iconTreatment = LocalAppPreferenceIconTreatment.current
     val iconStyle = rememberResolvedAppIconStyle()
@@ -1574,14 +982,12 @@ fun AdaptiveSearchFieldRenderer(
     focusRequester: FocusRequester? = null,
     interactionSource: MutableInteractionSource? = null,
 ) {
-    val uiStyle = LocalAppUiStyle.current
     val colorScheme = MaterialTheme.colorScheme
-    val visualSpec = remember(uiStyle) {
-        resolveAdaptiveListComponentVisualSpec(uiStyle)
+    val visualSpec = remember {
+        resolveAdaptiveListComponentVisualSpec()
     }
     val searchBarCornerRadius = visualSpec.searchBarCornerRadiusDp.dp
     val resolvedContainerColor = resolveAdaptiveSearchBarContainerColor(
-        uiStyle = uiStyle,
         colorScheme = colorScheme,
         globalWallpaperVisible = LocalGlobalWallpaperBackdropVisible.current
     )
@@ -1597,219 +1003,30 @@ fun AdaptiveSearchFieldRenderer(
             }
         }
         val focusModifier = Modifier.focusRequester(resolvedFocusRequester)
-        if (shouldUseNativeMiuixSearchBar(uiStyle)) {
-            MiuixAdaptiveSearchBar(
-                query = query,
-                onQueryChange = onQueryChange,
-                modifier = modifier.then(focusModifier),
-                placeholder = placeholder,
-                containerColor = resolvedContainerColor,
-                height = resolvedHeight,
-                forceExpandedInput = true,
-                onSearch = onSearch,
-                interactionSource = interactionSource,
-            )
-            return
-        }
-        // 顶栏固定高度不能用 OutlinedTextField：默认 contentPadding 会把字裁掉（平板尤其明显）。
-        // 用 BasicTextField + 可选聚焦描边，保证 44–56dp 内文字完整可见。
-        if (topBarChrome) {
-            val textStyle = MaterialTheme.typography.bodyLarge
-            val resolvedInteraction = interactionSource ?: remember { MutableInteractionSource() }
-            val isFocused by resolvedInteraction.collectIsFocusedAsState()
-            val fieldShape = RoundedCornerShape(searchBarCornerRadius)
-            BasicTextField(
-                value = query,
-                onValueChange = onQueryChange,
-                modifier = modifier
-                    .fillMaxWidth()
-                    .height(resolvedHeight)
-                    .clip(fieldShape)
-                    .background(resolvedContainerColor, fieldShape)
-                    .then(
-                        if (isFocused) {
-                            Modifier.border(
-                                width = 1.5.dp,
-                                color = MaterialTheme.colorScheme.primary,
-                                shape = fieldShape,
-                            )
-                        } else {
-                            Modifier
-                        }
-                    )
-                    .then(focusModifier),
-                textStyle = textStyle.copy(color = MaterialTheme.colorScheme.onSurface),
-                singleLine = true,
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(onSearch = { onSearch() }),
-                interactionSource = resolvedInteraction,
-                decorationBox = { innerTextField ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 12.dp),
-                    ) {
-                        Box(
-                            contentAlignment = Alignment.CenterStart,
-                            modifier = Modifier.weight(1f),
-                        ) {
-                            if (query.isEmpty()) {
-                                Text(
-                                    text = placeholder,
-                                    maxLines = 1,
-                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                                    style = textStyle,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                            innerTextField()
-                        }
-                        if (showClearAction && query.isNotEmpty()) {
-                            IconButton(
-                                onClick = onClear,
-                                modifier = Modifier.size(28.dp),
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Clear,
-                                    contentDescription = "Clear",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(18.dp),
-                                )
-                            }
-                        }
-                    }
-                },
-            )
-            return
-        }
-        val textStyle = MaterialTheme.typography.bodyMedium
-        val sizeModifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = resolvedHeight)
-        OutlinedTextField(
-            value = query,
-            onValueChange = onQueryChange,
-            modifier = modifier
-                .then(sizeModifier)
-                .then(focusModifier),
-            placeholder = {
-                Text(
-                    text = placeholder,
-                    maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                    style = textStyle,
-                )
-            },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(18.dp),
-                )
-            },
-            trailingIcon = if (showClearAction && query.isNotEmpty()) {
-                {
-                    IconButton(onClick = onClear) {
-                        Icon(
-                            imageVector = Icons.Default.Clear,
-                            contentDescription = "Clear",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(18.dp),
-                        )
-                    }
-                }
-            } else {
-                null
-            },
-            singleLine = true,
-            textStyle = textStyle.copy(
-                color = MaterialTheme.colorScheme.onSurface,
-            ),
-            shape = RoundedCornerShape(searchBarCornerRadius),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color.Transparent,
-                unfocusedBorderColor = Color.Transparent,
-                disabledBorderColor = Color.Transparent,
-                focusedContainerColor = resolvedContainerColor,
-                unfocusedContainerColor = resolvedContainerColor,
-                disabledContainerColor = resolvedContainerColor,
-            ),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(onSearch = { onSearch() }),
-            interactionSource = interactionSource,
-        )
-        return
-    }
-
-    if (shouldUseNativeMiuixSearchBar(uiStyle)) {
         MiuixAdaptiveSearchBar(
             query = query,
             onQueryChange = onQueryChange,
-            modifier = modifier,
+            modifier = modifier.then(focusModifier),
             placeholder = placeholder,
             containerColor = resolvedContainerColor,
             height = resolvedHeight,
-            forceExpandedInput = forceExpandedInput,
-            onSearch = { onSearch() },
+            forceExpandedInput = true,
+            onSearch = onSearch,
             interactionSource = interactionSource,
         )
         return
     }
 
-    BasicTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(resolvedHeight)
-            .clip(RoundedCornerShape(searchBarCornerRadius))
-            .background(resolvedContainerColor),
-        textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
-        singleLine = true,
-        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        keyboardActions = KeyboardActions(onSearch = { onSearch() }),
+    MiuixAdaptiveSearchBar(
+        query = query,
+        onQueryChange = onQueryChange,
+        modifier = modifier,
+        placeholder = placeholder,
+        containerColor = resolvedContainerColor,
+        height = resolvedHeight,
+        forceExpandedInput = forceExpandedInput,
+        onSearch = { onSearch() },
         interactionSource = interactionSource,
-        decorationBox = { innerTextField ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 12.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Box(contentAlignment = Alignment.CenterStart, modifier = Modifier.weight(1f)) {
-                    if (query.isEmpty()) {
-                        Text(
-                            text = placeholder,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    innerTextField()
-                }
-                if (showClearAction && query.isNotEmpty()) {
-                    IconButton(
-                        onClick = onClear,
-                        modifier = Modifier.size(20.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Clear,
-                            contentDescription = "Clear",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                }
-            }
-        }
     )
 }
 
@@ -1820,11 +1037,9 @@ fun AppSearchEntry(
     placeholder: String = "搜索",
     containerColor: Color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
 ) {
-    val uiStyle = LocalAppUiStyle.current
     val colorScheme = MaterialTheme.colorScheme
     val visualSpec = rememberAdaptiveListVisualCapabilities().componentSpec
     val resolvedContainerColor = resolveAdaptiveSearchBarContainerColor(
-        uiStyle = uiStyle,
         colorScheme = colorScheme,
         globalWallpaperVisible = LocalGlobalWallpaperBackdropVisible.current,
     )
@@ -1869,42 +1084,26 @@ fun AdaptiveTextFieldRenderer(
     isError: Boolean = false,
     supportingText: @Composable (() -> Unit)? = null,
 ) {
-    val uiStyle = LocalAppUiStyle.current
-    if (shouldUseNativeMiuixSearchBar(uiStyle)) {
-        Column(modifier = modifier.fillMaxWidth()) {
-            MiuixTextField(
-                value = value,
-                onValueChange = onValueChange,
-                modifier = Modifier.fillMaxWidth(),
-                label = label ?: placeholder.orEmpty(),
-                useLabelAsPlaceholder = label == null,
-                singleLine = singleLine,
-                minLines = minLines,
-                maxLines = maxLines,
-                colors = MiuixTextFieldDefaults.textFieldColors(
-                    borderColor = if (isError) {
-                        MaterialTheme.colorScheme.error
-                    } else {
-                        MiuixTheme.colorScheme.primary
-                    },
-                ),
-            )
-            supportingText?.invoke()
-        }
-        return
+    Column(modifier = modifier.fillMaxWidth()) {
+        MiuixTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = label ?: placeholder.orEmpty(),
+            useLabelAsPlaceholder = label == null,
+            singleLine = singleLine,
+            minLines = minLines,
+            maxLines = maxLines,
+            colors = MiuixTextFieldDefaults.textFieldColors(
+                borderColor = if (isError) {
+                    MaterialTheme.colorScheme.error
+                } else {
+                    MiuixTheme.colorScheme.primary
+                },
+            ),
+        )
+        supportingText?.invoke()
     }
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = modifier.fillMaxWidth(),
-        label = label?.let { { Text(it) } },
-        placeholder = placeholder?.let { { Text(it) } },
-        singleLine = singleLine,
-        minLines = minLines,
-        maxLines = maxLines,
-        isError = isError,
-        supportingText = supportingText
-    )
 }
 
 @Composable

@@ -56,6 +56,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.foundation.text.KeyboardActions
@@ -95,12 +96,10 @@ import com.android.purebilibili.core.ui.AppScaffold
 import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.ContainerLevel
 import com.android.purebilibili.core.ui.AppSurfaceTokens
-import com.android.purebilibili.core.theme.LocalAppUiStyle
 import com.android.purebilibili.core.theme.resolveAccessibleContainerColors
 import com.android.purebilibili.core.theme.resolveFilledSelectionAccentColors
 import com.android.purebilibili.core.ui.AppSpacingTokens
 import com.android.purebilibili.core.ui.rememberContentCardSurfaceSpec
-import com.android.purebilibili.feature.home.components.SimpleLiquidIndicator
 import com.android.purebilibili.feature.home.components.resolveTopTabPagerPosition
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -115,7 +114,6 @@ import com.android.purebilibili.core.ui.resolveBottomSafeAreaPadding
 import com.android.purebilibili.core.ui.AppTopChromePolicy
 import com.android.purebilibili.core.ui.AppTopTabPresentation
 import com.android.purebilibili.core.ui.rememberAppTopChromePolicy
-import com.android.purebilibili.core.ui.rememberAppChromeLiquidGlassEnabled
 import com.android.purebilibili.core.ui.rememberAppSemanticVisualPolicy
 import com.android.purebilibili.core.ui.rememberAppBackIcon
 import com.android.purebilibili.core.ui.rememberAppChevronDownIcon
@@ -675,14 +673,7 @@ fun SearchScreen(
         .collectAsStateWithLifecycle(initialValue = HomeDurationStyle.OUTSIDE_COVER)
     val hotSearchEnabled by SettingsManager.getSearchHotSectionEnabled(context).collectAsStateWithLifecycle(initialValue = true)
     val discoverSectionEnabled by SettingsManager.getSearchDiscoverSectionEnabled(context).collectAsStateWithLifecycle(initialValue = true)
-    val liquidGlassEnabled by SettingsManager.getLiquidGlassEnabled(context).collectAsStateWithLifecycle(initialValue = true)
-    val androidNativeLiquidGlassEnabled by SettingsManager
-        .getAndroidNativeLiquidGlassEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = false)
-    val effectiveLiquidGlassEnabled = rememberAppChromeLiquidGlassEnabled(
-        individualEnabled = liquidGlassEnabled,
-        androidNativeEnabled = androidNativeLiquidGlassEnabled,
-    )
+    val effectiveLiquidGlassEnabled = false
     val headerBlurEnabled by SettingsManager.getHeaderBlurEnabled(context).collectAsStateWithLifecycle(initialValue = true)
     val bottomBarBlurEnabled by SettingsManager.getBottomBarBlurEnabled(context).collectAsStateWithLifecycle(initialValue = false)
     val cardMotionTier = resolveEffectiveMotionTier(
@@ -696,23 +687,21 @@ fun SearchScreen(
         )
     }
     val videoCardAppearance = remember(
-        effectiveLiquidGlassEnabled,
         searchCardBlurEnabled,
     ) {
         resolveSearchVideoCardAppearance(
-            effectiveLiquidGlassEnabled = effectiveLiquidGlassEnabled,
+            effectiveLiquidGlassEnabled = false,
             blurEnabled = searchCardBlurEnabled,
             showHomeCoverGlassBadges = false,
             showHomeInfoGlassBadges = false,
         )
     }
     val genericResultCardAppearance = remember(
-        effectiveLiquidGlassEnabled,
         semanticVisualPolicy.supportsIndependentLiquidGlass,
         contentCardSurfaceSpec.tonalElevationDp,
     ) {
         resolveSearchResultCardAppearance(
-            effectiveLiquidGlassEnabled = effectiveLiquidGlassEnabled,
+            effectiveLiquidGlassEnabled = false,
             supportsIndependentLiquidGlass = semanticVisualPolicy.supportsIndependentLiquidGlass,
             tonalElevationDp = contentCardSurfaceSpec.tonalElevationDp.toInt(),
         )
@@ -2428,10 +2417,9 @@ private fun SearchResultTypeTabRow(
     val selectionColors = resolveFilledSelectionAccentColors(colorScheme)
     val unselectedLabelColor = AppSurfaceTokens.onSurfaceVariantSummary()
     val selectedLabelColor = selectionColors.contentColor
-    val uiStyle = LocalAppUiStyle.current
-    val pillCorner = AppShapes.resolveContainerCornerDp(ContainerLevel.Pill, uiStyle)
+    val pillCorner = AppShapes.resolveContainerCornerDp(ContainerLevel.Pill)
     val density = LocalDensity.current
-    // Equal-width slots like home top tabs so SimpleLiquidIndicator can track by index.
+    // Equal-width slots so the capsule can track by index.
     val itemWidth = 64.dp
     val itemWidthPx = with(density) { itemWidth.toPx() }
     val rowHeight = 40.dp
@@ -2468,19 +2456,17 @@ private fun SearchResultTypeTabRow(
                 .width(itemWidth * tabs.size)
                 .fillMaxHeight(),
         ) {
-            SimpleLiquidIndicator(
-                position = indicatorPosition,
-                itemWidthPx = itemWidthPx,
-                isDragging = isScrolling,
-                indicatorColor = selectionColors.backgroundColor,
-                indicatorHeight = rowHeight - 8.dp,
-                cornerRadius = pillCorner,
-                widthRatio = 0.92f,
-                minWidth = 48.dp,
-                horizontalInset = 4.dp,
-                // Soft tonal pill: no optical highlight ring outside the capsule.
-                drawHighlightBorder = false,
-                modifier = Modifier.fillMaxSize(),
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        translationX = indicatorPosition * itemWidthPx
+                    }
+                    .width(itemWidth - 8.dp)
+                    .fillMaxHeight()
+                    .padding(vertical = 4.dp)
+                    .clip(RoundedCornerShape(pillCorner))
+                    .background(selectionColors.backgroundColor),
             )
             Row(
                 modifier = Modifier.fillMaxSize(),

@@ -9,7 +9,6 @@ import com.android.purebilibili.core.ui.components.AppText
 import com.android.purebilibili.core.ui.components.AppSegmentOption
 
 import android.os.Build
-import android.os.SystemClock
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -20,7 +19,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.animation.*
 import com.android.purebilibili.core.ui.AdaptivePlainTooltipBox
 import com.android.purebilibili.core.ui.AppAlertDialog
@@ -34,14 +32,12 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -56,8 +52,6 @@ import com.android.purebilibili.core.store.HomeFeedCardStyle
 import com.android.purebilibili.core.store.HomeWallpaperEffectMode
 import com.android.purebilibili.core.store.HomeWallpaperEffectScope
 import com.android.purebilibili.core.store.SettingsManager
-import com.android.purebilibili.core.store.ThemeModeRoleOverrides
-import com.android.purebilibili.core.store.ThemeRoleOverrides
 import coil.compose.AsyncImage
 import com.android.purebilibili.core.theme.deleteStoredAppFont
 import com.android.purebilibili.core.theme.importAppFontFromUri
@@ -65,21 +59,13 @@ import com.android.purebilibili.core.theme.*
 import com.android.purebilibili.core.ui.adaptive.resolveDeviceUiProfile
 import com.android.purebilibili.core.ui.adaptive.resolveEffectiveMotionTier
 import com.android.purebilibili.core.ui.blur.BlurIntensity
-import com.android.purebilibili.core.ui.blur.shouldAllowHomeChromeLiquidGlass
 import com.android.purebilibili.core.ui.getWindowNavigationBarColor
 import com.android.purebilibili.core.ui.rememberAppSparklesIcon
 import com.android.purebilibili.core.ui.setWindowNavigationBarColor
 import com.android.purebilibili.feature.settings.ui.SettingsPageScaffold
-import com.android.purebilibili.core.util.HapticType
 import com.android.purebilibili.core.util.LocalWindowSizeClass
-import com.android.purebilibili.core.util.rememberHapticFeedback
 import kotlinx.coroutines.launch
 import com.android.purebilibili.core.ui.components.*
-import com.github.skydoves.colorpicker.compose.BrightnessSlider
-import com.github.skydoves.colorpicker.compose.HsvColorPicker
-import com.github.skydoves.colorpicker.compose.HueSlider
-import com.github.skydoves.colorpicker.compose.SaturationSlider
-import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 /**
@@ -120,7 +106,7 @@ fun AppearanceSettingsScreen(
             if (state.headerBlurEnabled) 0.1f else 0f +
             if (state.isBottomBarFloating) 0.1f else 0f
         ).coerceIn(0f, 1f)
-    val appearanceAnimationSpeed = if (state.dynamicColor) 1.1f else 1f
+    val appearanceAnimationSpeed = 1f
     
     val bottomContentPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
@@ -149,19 +135,17 @@ fun AppearanceSettingsScreen(
         scrollHost = SettingsPageScrollHost.External,
         topBarBlurEnabled = state.headerBlurEnabled,
     ) {
-        CompositionLocalProvider(LocalSettingsLiquidGlassEnabled provides state.isLiquidGlassEnabled) {
-            AppearanceSettingsContent(
-                state = state,
-                contentMode = contentMode,
-                viewModel = viewModel,
-                context = context,
-                onAppLanguageChange = { language ->
-                    if (shouldPromptAppRestartForLanguageChange(state.appLanguage, language)) {
-                        pendingLanguageRestart = language
-                    }
-                },
-            )
-        }
+        AppearanceSettingsContent(
+            state = state,
+            contentMode = contentMode,
+            viewModel = viewModel,
+            context = context,
+            onAppLanguageChange = { language ->
+                if (shouldPromptAppRestartForLanguageChange(state.appLanguage, language)) {
+                    pendingLanguageRestart = language
+                }
+            },
+        )
     }
 
     pendingLanguageRestart?.let { pendingLanguage ->
@@ -414,33 +398,9 @@ fun AppearanceSettingsContent(
             AppSegmentOption(mode, mode.label)
         }
     }
-    val themeRoleOverrides by SettingsManager
-        .getThemeRoleOverrides(context)
-        .collectAsStateWithLifecycle(initialValue = ThemeRoleOverrides())
-    val baseThemeRoleOverrides = LocalBaseThemeRoleOverrides.current
     val showOnlineCount by SettingsManager
         .getShowOnlineCount(context)
         .collectAsStateWithLifecycle(initialValue = false)
-    val showThemeColorPicker = state.md3ColorSource == Md3ColorSource.CUSTOM
-    var showMd3ColorPickerDialog by remember { mutableStateOf(false) }
-    var roleColorTarget by remember { mutableStateOf<ThemeRoleColorTarget?>(null) }
-    val md3ColorSourceOptions = remember { resolveMd3ColorSourceOptions() }
-    val selectedMd3ColorSourceLabel = md3ColorSourceOptions
-        .firstOrNull { it.value == state.md3ColorSource }
-        ?.label ?: state.md3ColorSource.label
-    val selectedCustomThemeColor = remember(state.md3CustomColorHex) {
-        parseMd3CustomColorHex(state.md3CustomColorHex)
-    }
-    val selectedThemeColorName = remember(selectedCustomThemeColor) {
-        val selectedIndex = ThemeColors.indexOf(selectedCustomThemeColor)
-        ThemeColorNames.getOrNull(selectedIndex) ?: "自定义"
-    }
-    var themeColorPaletteExpanded by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(showThemeColorPicker) {
-        if (!showThemeColorPicker) themeColorPaletteExpanded = false
-    }
-    val colorStyleOptions = remember { resolveColorStyleOptions() }
-    val colorSpecOptions = remember { resolveColorSpecOptions() }
     val fontPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
@@ -574,234 +534,6 @@ fun AppearanceSettingsContent(
                         AppPreferenceDivider()
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        SettingsSingleChoicePreference(
-                            title = "MD3 颜色来源：$selectedMd3ColorSourceLabel",
-                            subtitle = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                                "可跟随系统壁纸，也可使用自定义主题色"
-                            } else {
-                                "当前系统不支持 Monet 壁纸取色，可使用自定义主题色"
-                            },
-                            options = md3ColorSourceOptions,
-                            selectedValue = state.md3ColorSource,
-                            onSelectionChange = viewModel::setMd3ColorSource
-                        )
-
-                        AnimatedVisibility(
-                            visible = state.md3ColorSource == Md3ColorSource.FOLLOW_WALLPAPER,
-                            enter = expandVertically() + fadeIn(),
-                            exit = shrinkVertically() + fadeOut()
-                        ) {
-                            Column(modifier = Modifier.padding(top = 12.dp)) {
-                                DynamicColorPreview()
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-                        AppPreferenceDivider()
-                        AppPreference(
-                            icon = rememberSettingsSemanticIcon(SettingsIconRole.CUSTOM_MD3_COLOR),
-                            title = "自定义 MD3 颜色",
-                            subtitle = if (state.md3ColorSource == Md3ColorSource.CUSTOM) {
-                                "可直接使用取色器，也可输入 #RRGGBB 色值"
-                            } else {
-                                "当前跟随系统壁纸；确认后切换为自定义颜色"
-                            },
-                            value = state.md3CustomColorHex,
-                            onClick = { showMd3ColorPickerDialog = true },
-                            iconTint = selectedCustomThemeColor
-                        )
-
-                        AppPreferenceDivider()
-                        AppSwitchPreference(
-                            icon = rememberSettingsSemanticIcon(SettingsIconRole.ADVANCED_COLOR),
-                            title = "高级配色",
-                            subtitle = "分别覆盖明暗模式的背景、文字与控件色",
-                            checked = themeRoleOverrides.enabled,
-                            onCheckedChange = { enabled ->
-                                scope.launch {
-                                    SettingsManager.setThemeRoleOverrides(
-                                        context,
-                                        if (enabled) {
-                                            baseThemeRoleOverrides.copy(enabled = true)
-                                        } else {
-                                            themeRoleOverrides.copy(enabled = false)
-                                        }
-                                    )
-                                }
-                            },
-                            iconTint = MaterialTheme.colorScheme.primary
-                        )
-
-                        AnimatedVisibility(
-                            visible = themeRoleOverrides.enabled,
-                            enter = expandVertically() + fadeIn(),
-                            exit = shrinkVertically() + fadeOut()
-                        ) {
-                            ThemeRoleOverrideEditor(
-                                overrides = themeRoleOverrides,
-                                onColorClick = { roleColorTarget = it }
-                            )
-                        }
-
-                        AppPreferenceDivider()
-	                        ThemePresetChoiceSetting(
-	                            icon = rememberSettingsSemanticIcon(SettingsIconRole.COLOR_STYLE),
-                            title = "色彩风格",
-                            selectedValue = state.colorStyle,
-                            options = colorStyleOptions,
-                            onSelectionChange = viewModel::setThemeColorStyle,
-                            iconTint = iOSPurple
-                        )
-
-                        AppPreferenceDivider()
-	                        ThemePresetChoiceSetting(
-	                            icon = rememberSettingsSemanticIcon(SettingsIconRole.COLOR_SPEC),
-                            title = "色彩标准",
-                            selectedValue = state.colorSpec,
-                            options = colorSpecOptions,
-                            onSelectionChange = viewModel::setThemeColorSpec,
-                            iconTint = iOSBlue
-                        )
-
-                        // 主题色选择 (仅当动态取色关闭时显示)
-                        androidx.compose.animation.AnimatedVisibility(
-                            visible = showThemeColorPicker,
-                            enter =   androidx.compose.animation.expandVertically() +   androidx.compose.animation.fadeIn(),
-                            exit =   androidx.compose.animation.shrinkVertically() +   androidx.compose.animation.fadeOut()
-	                        ) {
-	                            Column(modifier = Modifier.padding(top = 16.dp)) {
-	                                AppPreferenceDivider()
-		                                AppPreference(
-		                                    icon = rememberSettingsSemanticIcon(SettingsIconRole.THEME_COLOR_PICKER),
-		                                    title = "主题色：$selectedThemeColorName",
-	                                    subtitle = if (themeColorPaletteExpanded) {
-	                                        "当前 ${state.md3CustomColorHex}；点按收起色板"
-	                                    } else {
-	                                        "当前 ${state.md3CustomColorHex}；点按展开预设色板"
-	                                    },
-	                                    value = if (themeColorPaletteExpanded) "收起" else "展开",
-	                                    onClick = { themeColorPaletteExpanded = !themeColorPaletteExpanded },
-	                                    iconTint = selectedCustomThemeColor,
-	                                )
-
-	                                AnimatedVisibility(
-	                                    visible = themeColorPaletteExpanded,
-	                                    enter = expandVertically() + fadeIn(),
-	                                    exit = shrinkVertically() + fadeOut(),
-	                                ) {
-	                                    Column(modifier = Modifier.padding(top = 12.dp)) {
-                                
-	                                // 直接预览最终 MaterialTheme ColorScheme，不再用原始种子色手工画渐变。
-                                Md3ThemeColorPreview(colorHex = state.md3CustomColorHex)
-
-                                //  [Redesign] Theme Color Grid - Strict 2 Rows x 5 Columns
-                                val spacing = 12.dp
-                                
-                                Column(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalArrangement = Arrangement.spacedBy(16.dp) // 增加行间距以容纳文字
-                                ) {
-                                    ThemeColors.chunked(5).forEach { rowColors ->
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.spacedBy(spacing)
-                                        ) {
-                                            rowColors.forEach { color ->
-                                                val index = ThemeColors.indexOf(color)
-                                                val isSelected = selectedCustomThemeColor == color
-                                                
-                                                Column(
-                                                    modifier = Modifier.weight(1f),
-                                                    horizontalAlignment = Alignment.CenterHorizontally
-                                                ) {
-                                                    // 选中状态动画
-                                                    val scale by androidx.compose.animation.core.animateFloatAsState(
-                                                        targetValue = if (isSelected) 1.1f else 1.0f,
-                                                        label = "scale",
-                                                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
-                                                    )
-                                                    
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .aspectRatio(1f) // Ensure square aspect ratio for perfect circles
-                                                            .graphicsLayer {
-                                                                scaleX = scale
-                                                                scaleY = scale
-                                                            }
-                                                            // 选中时的外光环 (圆形)
-                                                            .border(
-                                                                width = if (isSelected) 2.dp else 0.dp,
-                                                                color = if (isSelected) color.copy(alpha = 0.5f) else Color.Transparent,
-                                                                shape = CircleShape
-                                                            )
-                                                            .padding(3.dp) // 光环与色块的间距
-                                                            .clip(CircleShape) // 裁剪为圆形
-                                                            .background(
-                                                                brush = androidx.compose.ui.graphics.Brush.radialGradient(
-                                                                    colors = listOf(
-                                                                        color.copy(alpha = 0.9f), // 中心稍亮
-                                                                        color // 边缘原色
-                                                                    ),
-                                                                    center = androidx.compose.ui.geometry.Offset.Unspecified,
-                                                                    radius = Float.POSITIVE_INFINITY
-                                                                )
-                                                            )
-                                                            // 添加个内部高光，增加球体质感
-                                                            .background(
-                                                                brush = androidx.compose.ui.graphics.Brush.linearGradient(
-                                                                    colors = listOf(
-                                                                        Color.White.copy(alpha = 0.2f),
-                                                                        Color.Transparent
-                                                                    ),
-                                                                    start = androidx.compose.ui.geometry.Offset(0f, 0f),
-                                                                    end = androidx.compose.ui.geometry.Offset(100f, 100f)
-                                                                )
-                                                            )
-                                                            .clickable {
-                                                                viewModel.setThemeColorIndex(index)
-                                                                viewModel.setMd3CustomColorHex(formatMd3CustomColorHex(color))
-                                                            },
-                                                        contentAlignment = Alignment.Center
-                                                    ) {
-                                                        androidx.compose.animation.AnimatedVisibility(
-                                                            visible = isSelected,
-                                                            enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.scaleIn(),
-                                                            exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.scaleOut()
-                                                        ) {
-                                                            AppIcon(
-                                                                Icons.Outlined.Check,
-                                                                contentDescription = null,
-                                                                tint = Color.White,
-                                                                modifier = Modifier.size(18.dp)
-                                                            )
-                                                        }
-                                                    }
-                                                    
-                                                    // 颜色名称
-                                                    Spacer(modifier = Modifier.height(8.dp))
-                                                    AppText(
-                                                        text = ThemeColorNames.getOrElse(index) { "" },
-                                                        style = MaterialTheme.typography.labelSmall,
-                                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                                        maxLines = 1
-                                                    )
-                                                }
-                                            }
-                                            
-                                            // Fill empty spots if last row has fewer than 5 items
-                                            if (rowColors.size < 5) {
-                                                repeat(5 - rowColors.size) {
-                                                    Spacer(modifier = Modifier.weight(1f))
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                            }
-                        }
                     }
                 }
             }
@@ -1484,433 +1216,6 @@ fun AppearanceSettingsContent(
 
     }
 
-    if (showMd3ColorPickerDialog) {
-        Md3CustomColorPickerDialog(
-            initialHex = state.md3CustomColorHex,
-            onDismiss = { showMd3ColorPickerDialog = false },
-            onConfirm = { hex ->
-                viewModel.applyMd3CustomColor(hex)
-                showMd3ColorPickerDialog = false
-            }
-        )
-    }
-
-    roleColorTarget?.let { target ->
-        Md3CustomColorPickerDialog(
-            initialHex = target.read(themeRoleOverrides),
-            onDismiss = { roleColorTarget = null },
-            onConfirm = { hex ->
-                scope.launch {
-                    SettingsManager.setThemeRoleOverrides(
-                        context,
-                        target.write(themeRoleOverrides, hex)
-                    )
-                }
-                roleColorTarget = null
-            }
-        )
-    }
-}
-
-internal enum class ThemeRoleColorTarget(val label: String) {
-    LIGHT_BACKGROUND("浅色背景"),
-    LIGHT_PRIMARY_TEXT("浅色主要文字"),
-    LIGHT_SECONDARY_TEXT("浅色次要文字"),
-    LIGHT_CONTROL("浅色控件"),
-    DARK_BACKGROUND("深色背景"),
-    DARK_PRIMARY_TEXT("深色主要文字"),
-    DARK_SECONDARY_TEXT("深色次要文字"),
-    DARK_CONTROL("深色控件");
-
-    fun read(overrides: ThemeRoleOverrides): String = when (this) {
-        LIGHT_BACKGROUND -> overrides.light.backgroundHex
-        LIGHT_PRIMARY_TEXT -> overrides.light.primaryTextHex
-        LIGHT_SECONDARY_TEXT -> overrides.light.secondaryTextHex
-        LIGHT_CONTROL -> overrides.light.controlAccentHex
-        DARK_BACKGROUND -> overrides.dark.backgroundHex
-        DARK_PRIMARY_TEXT -> overrides.dark.primaryTextHex
-        DARK_SECONDARY_TEXT -> overrides.dark.secondaryTextHex
-        DARK_CONTROL -> overrides.dark.controlAccentHex
-    }
-
-    fun write(overrides: ThemeRoleOverrides, hex: String): ThemeRoleOverrides {
-        return when (this) {
-            LIGHT_BACKGROUND -> overrides.copy(light = overrides.light.copy(backgroundHex = hex))
-            LIGHT_PRIMARY_TEXT -> overrides.copy(light = overrides.light.copy(primaryTextHex = hex))
-            LIGHT_SECONDARY_TEXT -> overrides.copy(light = overrides.light.copy(secondaryTextHex = hex))
-            LIGHT_CONTROL -> overrides.copy(light = overrides.light.copy(controlAccentHex = hex))
-            DARK_BACKGROUND -> overrides.copy(dark = overrides.dark.copy(backgroundHex = hex))
-            DARK_PRIMARY_TEXT -> overrides.copy(dark = overrides.dark.copy(primaryTextHex = hex))
-            DARK_SECONDARY_TEXT -> overrides.copy(dark = overrides.dark.copy(secondaryTextHex = hex))
-            DARK_CONTROL -> overrides.copy(dark = overrides.dark.copy(controlAccentHex = hex))
-        }
-    }
-}
-
-internal fun resolveThemeRoleColorIconRole(
-    target: ThemeRoleColorTarget,
-): SettingsIconRole = when (target) {
-    ThemeRoleColorTarget.LIGHT_BACKGROUND -> SettingsIconRole.THEME_LIGHT_BACKGROUND
-    ThemeRoleColorTarget.LIGHT_PRIMARY_TEXT -> SettingsIconRole.THEME_LIGHT_PRIMARY_TEXT
-    ThemeRoleColorTarget.LIGHT_SECONDARY_TEXT -> SettingsIconRole.THEME_LIGHT_SECONDARY_TEXT
-    ThemeRoleColorTarget.LIGHT_CONTROL -> SettingsIconRole.THEME_LIGHT_CONTROL
-    ThemeRoleColorTarget.DARK_BACKGROUND -> SettingsIconRole.THEME_DARK_BACKGROUND
-    ThemeRoleColorTarget.DARK_PRIMARY_TEXT -> SettingsIconRole.THEME_DARK_PRIMARY_TEXT
-    ThemeRoleColorTarget.DARK_SECONDARY_TEXT -> SettingsIconRole.THEME_DARK_SECONDARY_TEXT
-    ThemeRoleColorTarget.DARK_CONTROL -> SettingsIconRole.THEME_DARK_CONTROL
-}
-
-@Composable
-private fun ThemeRoleOverrideEditor(
-    overrides: ThemeRoleOverrides,
-    onColorClick: (ThemeRoleColorTarget) -> Unit
-) {
-    Column(modifier = Modifier.padding(top = 8.dp)) {
-        ThemeRoleModeEditor(
-            title = "浅色模式",
-            roles = overrides.light,
-            targets = ThemeRoleColorTarget.entries.take(4),
-            onColorClick = onColorClick
-        )
-        AppPreferenceDivider()
-        ThemeRoleModeEditor(
-            title = "深色模式",
-            roles = overrides.dark,
-            targets = ThemeRoleColorTarget.entries.takeLast(4),
-            onColorClick = onColorClick
-        )
-    }
-}
-
-@Composable
-internal fun ThemeRoleModeEditor(
-    title: String,
-    roles: ThemeModeRoleOverrides,
-    targets: List<ThemeRoleColorTarget>,
-    onColorClick: (ThemeRoleColorTarget) -> Unit
-) {
-    val warning = remember(roles) { hasThemeRoleContrastWarning(roles) }
-    val primaryContrast = remember(roles) {
-        themeRoleContrastRatio(roles.primaryTextHex, roles.backgroundHex)
-    }
-    val secondaryContrast = remember(roles) {
-        themeRoleContrastRatio(roles.secondaryTextHex, roles.backgroundHex)
-    }
-    val colors = listOf(
-        roles.backgroundHex,
-        roles.primaryTextHex,
-        roles.secondaryTextHex,
-        roles.controlAccentHex
-    )
-    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-        AppText(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            colors.forEach { hex ->
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(32.dp)
-                        .clip(AppShapes.container(ContainerLevel.Field))
-                        .background(parseMd3CustomColorHex(hex))
-                        .border(
-                            1.dp,
-                            MaterialTheme.colorScheme.outlineVariant,
-                            AppShapes.container(ContainerLevel.Field)
-                        )
-                )
-            }
-        }
-        targets.forEachIndexed { index, target ->
-            AppPreference(
-                icon = rememberSettingsSemanticIcon(resolveThemeRoleColorIconRole(target)),
-                title = target.label,
-                subtitle = colors[index],
-                value = colors[index],
-                onClick = { onColorClick(target) },
-                iconTint = parseMd3CustomColorHex(colors[index])
-            )
-        }
-        AppText(
-            text = "对比度：主要文字 %.2f:1，次要文字 %.2f:1".format(
-                primaryContrast,
-                secondaryContrast
-            ),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.padding(top = 8.dp)
-        )
-        if (warning) {
-            AppText(
-                text = "当前文字与背景对比度偏低，仍可按精确颜色保存。",
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-        }
-    }
-}
-
-@Composable
-private fun Md3CustomColorPickerDialog(
-    initialHex: String,
-    onDismiss: () -> Unit,
-    onConfirm: (String) -> Unit
-) {
-    val controller = rememberColorPickerController()
-    val haptic = rememberHapticFeedback()
-    var pendingHex by remember(initialHex) { mutableStateOf(normalizeMd3CustomColorHex(initialHex)) }
-    var lastValidHex by remember(initialHex) { mutableStateOf(normalizeMd3CustomColorHex(initialHex)) }
-    var lastSelectionHapticAtMs by remember { mutableLongStateOf(0L) }
-    val hasValidHex = isValidMd3CustomColorHex(pendingHex)
-    val pendingColor = remember(lastValidHex) { parseMd3CustomColorHex(lastValidHex) }
-    val invalidInput = pendingHex.isNotBlank() && !hasValidHex
-    val sliderPositions = remember(pendingColor) { resolveMd3ColorPickerSliderPositions(pendingColor) }
-
-    fun updatePendingHex(value: String) {
-        val nextHex = value.uppercase().take(9)
-        pendingHex = nextHex
-        if (isValidMd3CustomColorHex(nextHex)) {
-            lastValidHex = normalizeMd3CustomColorHex(nextHex)
-        }
-    }
-
-    // HsvColorPicker only consumes initialColor during setup. Keep its controller in sync with
-    // manual HEX edits and presets so the next slider gesture cannot restore the initial blue.
-    LaunchedEffect(pendingColor) {
-        controller.selectByColor(pendingColor, fromUser = false)
-    }
-
-    fun emitSelectionHapticIfNeeded() {
-        val nowMs = SystemClock.elapsedRealtime()
-        if (shouldEmitMd3ColorPickerSelectionHaptic(lastSelectionHapticAtMs, nowMs)) {
-            haptic(HapticType.SELECTION)
-            lastSelectionHapticAtMs = nowMs
-        }
-    }
-
-    AppAlertDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            AppTextButton(
-                enabled = hasValidHex,
-                onClick = {
-                    haptic(HapticType.LIGHT)
-                    onConfirm(lastValidHex)
-                }
-            ) {
-                AppText("保存并应用")
-            }
-        },
-        dismissButton = {
-            AppTextButton(
-                onClick = {
-                    haptic(HapticType.LIGHT)
-                    onDismiss()
-                }
-            ) {
-                AppText("取消")
-            }
-        },
-        title = { AppText("自定义 MD3 颜色") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp)
-                        .clip(AppShapes.container(ContainerLevel.Dialog))
-                        .background(pendingColor),
-                    contentAlignment = Alignment.Center
-                ) {
-                    AppText(
-                        text = if (hasValidHex) lastValidHex else pendingHex.ifBlank { "#RRGGBB" },
-                        style = MaterialTheme.typography.titleMedium,
-                        color = if (pendingColor.luminance() < 0.5f) Color.White else Color.Black,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                HsvColorPicker(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(220.dp),
-                    controller = controller,
-                    initialColor = pendingColor,
-                    onStart = { emitSelectionHapticIfNeeded() },
-                    onColorChanged = { envelope ->
-                        if (envelope.fromUser) {
-                            val nextHex = formatMd3CustomColorHex(envelope.color)
-                            if (nextHex != pendingHex) {
-                                updatePendingHex(nextHex)
-                                emitSelectionHapticIfNeeded()
-                            }
-                        }
-                    }
-                )
-
-                Md3ColorPickerSliderFrame(position = sliderPositions.hue) {
-                    HueSlider(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(resolveMd3ColorPickerSliderLayout().trackHeight),
-                        controller = controller,
-                        wheelRadius = 0.dp,
-                        wheelAlpha = 0f,
-                        onStart = { emitSelectionHapticIfNeeded() }
-                    )
-                }
-                Md3ColorPickerSliderFrame(position = sliderPositions.saturation) {
-                    SaturationSlider(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(resolveMd3ColorPickerSliderLayout().trackHeight),
-                        controller = controller,
-                        wheelRadius = 0.dp,
-                        wheelAlpha = 0f,
-                        onStart = { emitSelectionHapticIfNeeded() }
-                    )
-                }
-                Md3ColorPickerSliderFrame(position = sliderPositions.brightness) {
-                    BrightnessSlider(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(resolveMd3ColorPickerSliderLayout().trackHeight),
-                        controller = controller,
-                        wheelRadius = 0.dp,
-                        wheelAlpha = 0f,
-                        onStart = { emitSelectionHapticIfNeeded() }
-                    )
-                }
-
-                AppTextField(
-                    value = pendingHex,
-                    onValueChange = ::updatePendingHex,
-                    label = "HEX（#RRGGBB）",
-                    singleLine = true,
-                    isError = invalidInput,
-                    supportingText = {
-                        if (invalidInput) {
-                            AppText("请输入 6 位 RGB，例如 #BBCAAE")
-                        } else {
-                            AppText("点击“保存并应用”后会立即保存，下次启动仍生效")
-                        }
-                    }
-                )
-
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    items(ThemeColors.size, key = { it }) { index ->
-                        val color = ThemeColors[index]
-                        val hex = formatMd3CustomColorHex(color)
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(color)
-                                .border(
-                                    width = if (normalizeMd3CustomColorHex(pendingHex) == hex) 2.dp else 1.dp,
-                                    color = if (normalizeMd3CustomColorHex(pendingHex) == hex) {
-                                        MaterialTheme.colorScheme.primary
-                                    } else {
-                                        MaterialTheme.colorScheme.outlineVariant
-                                    },
-                                    shape = CircleShape
-                                )
-                                .clickable {
-                                    updatePendingHex(hex)
-                                    haptic(HapticType.SELECTION)
-                                }
-                        )
-                    }
-                }
-            }
-        }
-    )
-}
-
-internal data class Md3ColorPickerSliderLayout(
-    val trackHeight: Dp,
-    val frameHeight: Dp,
-    val thumbRadius: Dp,
-    val horizontalPadding: Dp
-)
-
-internal fun resolveMd3ColorPickerSliderLayout(): Md3ColorPickerSliderLayout =
-    Md3ColorPickerSliderLayout(
-        trackHeight = 28.dp,
-        frameHeight = 36.dp,
-        thumbRadius = 14.dp,
-        horizontalPadding = 14.dp
-    )
-
-private const val MD3_COLOR_PICKER_HAPTIC_MIN_INTERVAL_MS = 72L
-
-internal fun shouldEmitMd3ColorPickerSelectionHaptic(
-    lastFeedbackAtMs: Long,
-    nowMs: Long,
-    minIntervalMs: Long = MD3_COLOR_PICKER_HAPTIC_MIN_INTERVAL_MS
-): Boolean {
-    return lastFeedbackAtMs <= 0L || nowMs - lastFeedbackAtMs >= minIntervalMs
-}
-
-private data class Md3ColorPickerSliderPositions(
-    val hue: Float,
-    val saturation: Float,
-    val brightness: Float
-)
-
-private fun resolveMd3ColorPickerSliderPositions(color: Color): Md3ColorPickerSliderPositions {
-    val hsv = FloatArray(3)
-    android.graphics.Color.colorToHSV(color.toArgb(), hsv)
-    return Md3ColorPickerSliderPositions(
-        hue = (hsv[0] / 360f).coerceIn(0f, 1f),
-        saturation = hsv[1].coerceIn(0f, 1f),
-        brightness = hsv[2].coerceIn(0f, 1f)
-    )
-}
-
-@Composable
-private fun Md3ColorPickerSliderFrame(
-    position: Float,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit
-) {
-    val layout = resolveMd3ColorPickerSliderLayout()
-    BoxWithConstraints(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(layout.frameHeight)
-    ) {
-        val thumbDiameter = layout.thumbRadius * 2
-        val thumbTravelWidth = if (maxWidth > thumbDiameter) maxWidth - thumbDiameter else 0.dp
-        Box(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .padding(horizontal = layout.horizontalPadding)
-                .fillMaxWidth()
-                .height(layout.trackHeight)
-        ) {
-            content()
-        }
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .offset(x = thumbTravelWidth * position.coerceIn(0f, 1f))
-                .size(thumbDiameter)
-                .background(Color.White, CircleShape)
-                .border(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f),
-                    shape = CircleShape
-                )
-        )
-    }
 }
 
 internal fun restartApp(context: android.content.Context) {
@@ -1920,170 +1225,6 @@ internal fun restartApp(context: android.content.Context) {
     context.startActivity(launchIntent)
 }
 
-/**
- * Material 3 native preview of the generated theme roles.
- *
- * The picker value is only a seed. This preview deliberately consumes the active
- * [MaterialTheme.colorScheme], so its container, control and text colors match the roles that
- * the rest of the app receives after MaterialKolor tone mapping.
- */
-@Composable
-private fun Md3ThemeColorPreview(
-    colorHex: String,
-    modifier: Modifier = Modifier,
-) {
-    val colorScheme = MaterialTheme.colorScheme
-
-    ElevatedCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(bottom = 24.dp),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = colorScheme.surfaceContainerLow,
-            contentColor = colorScheme.onSurface,
-        ),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 18.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Surface(
-                modifier = Modifier.size(56.dp),
-                shape = MaterialTheme.shapes.large,
-                color = colorScheme.primaryContainer,
-                contentColor = colorScheme.onPrimaryContainer,
-                tonalElevation = 2.dp,
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Filled.PlayArrow,
-                        contentDescription = null,
-                    )
-                }
-            }
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-            ) {
-                Text(
-                    text = colorHex,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = colorScheme.onSurface,
-                )
-                Text(
-                    text = "Material 3 原生配色预览",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-    }
-}
-
-
-/**
- *  动态取色预览组件
- * 显示从壁纸提取的 Material You 颜色
- */
-
-
-@Composable
-fun DynamicColorPreview() {
-    val colorScheme = MaterialTheme.colorScheme
-    
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-    ) {
-        AppText(
-            text = "当前取色预览",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-        
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // Primary
-            ColorPreviewItem(
-                color = colorScheme.primary,
-                label = "主色",
-                modifier = Modifier.weight(1f)
-            )
-            // Secondary
-            ColorPreviewItem(
-                color = colorScheme.secondary,
-                label = "辅色",
-                modifier = Modifier.weight(1f)
-            )
-            // Tertiary
-            ColorPreviewItem(
-                color = colorScheme.tertiary,
-                label = "第三色",
-                modifier = Modifier.weight(1f)
-            )
-            // Primary Container
-            ColorPreviewItem(
-                color = colorScheme.primaryContainer,
-                label = "容器",
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
-fun ColorPreviewItem(
-    color: Color,
-    label: String,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(AppShapes.container(ContainerLevel.Field))
-                .background(color)
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        AppText(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-@Composable
-private fun <T> ThemePresetChoiceSetting(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    title: String,
-    selectedValue: T,
-    options: List<AppSegmentOption<T>>,
-    onSelectionChange: (T) -> Unit,
-    iconTint: Color
-) {
-    SettingsSingleChoicePreference(
-        title = title,
-        options = options,
-        selectedValue = selectedValue,
-        icon = icon,
-        iconTint = iconTint,
-        onSelectionChange = onSelectionChange,
-    )
-}
 
 private const val DEFAULT_APP_DPI_OVERRIDE_PERCENT = 100
 

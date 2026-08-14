@@ -1,6 +1,5 @@
 package com.android.purebilibili.core.ui
 
-import com.android.purebilibili.core.theme.AppUiStyle
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -23,44 +22,28 @@ class AdaptiveBottomSheetPolicyTest {
     }
 
     @Test
-    fun `material3 style uses material drag handle and material corner radius`() {
-        val spec = resolveAdaptiveBottomSheetVisualSpec(AppUiStyle.MATERIAL3)
+    fun `single miuix theme uses native drag handle and miuix corner radius`() {
+        val spec = resolveAdaptiveBottomSheetVisualSpec()
 
-        assertEquals(28, spec.cornerRadiusDp)
-        assertTrue(spec.useMaterialDragHandle)
-    }
-
-    @Test
-    fun `miuix style uses native drag handle and miuix corner radius`() {
-        val spec = resolveAdaptiveBottomSheetVisualSpec(AppUiStyle.MIUIX)
-
-        // 两值风格统一使用胶囊圆角（MIUIX 22 / MATERIAL3 28）。
         assertEquals(22, spec.cornerRadiusDp)
         assertTrue(spec.useMaterialDragHandle)
     }
 
     @Test
-    fun `miuix style uses softer sheet motion`() {
-        val spec = resolveAdaptiveBottomSheetMotionSpec(AppUiStyle.MIUIX)
+    fun `single miuix theme uses softer sheet motion`() {
+        val spec = resolveAdaptiveBottomSheetMotionSpec()
 
         assertEquals(240, spec.scrimEnterDurationMillis)
         assertEquals(180, spec.scrimExitDurationMillis)
         assertEquals(240, spec.contentEnterFadeDurationMillis)
         assertEquals(180, spec.contentExitFadeDurationMillis)
-    }
-
-    @Test
-    fun `material3 style keeps sheet dismiss faster than enter`() {
-        val spec = resolveAdaptiveBottomSheetMotionSpec(AppUiStyle.MATERIAL3)
-
         assertTrue(spec.scrimExitDurationMillis < spec.scrimEnterDurationMillis)
         assertTrue(spec.contentExitFadeDurationMillis < spec.contentEnterFadeDurationMillis)
     }
 
     @Test
-    fun `host contract resolves miuix to overlay host and material3 to material host`() {
-        assertEquals(BottomSheetHost.MIUIX_OVERLAY, resolveBottomSheetHost(AppUiStyle.MIUIX))
-        assertEquals(BottomSheetHost.MATERIAL3, resolveBottomSheetHost(AppUiStyle.MATERIAL3))
+    fun `host contract resolves single theme to overlay host`() {
+        assertEquals(BottomSheetHost.MIUIX_OVERLAY, resolveBottomSheetHost())
     }
 
     @Test
@@ -71,8 +54,8 @@ class AdaptiveBottomSheetPolicyTest {
             ?.readText()
             ?: error("Cannot locate AppSheetComponents.kt from ${File(".").absolutePath}")
 
-        // OverlayBottomSheet 依赖 Miuix popup host（仅 AdaptiveScaffold 的 MIUIX
-        // 模式挂载），AppModalBottomSheet 调用点无法保证处于该宿主之下 —— 宿主契约
+        // OverlayBottomSheet 依赖 Miuix popup host（仅 AdaptiveScaffold 挂载），
+        // AppModalBottomSheet 调用点无法保证处于该宿主之下 —— 宿主契约
         // 由 resolveBottomSheetHost 独立承担，facade 本身禁止机械替换。
         assertTrue(source.contains("ModalBottomSheet("))
         assertFalse(source.contains("OverlayBottomSheet("))

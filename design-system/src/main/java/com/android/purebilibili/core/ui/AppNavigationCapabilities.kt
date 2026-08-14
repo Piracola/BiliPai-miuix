@@ -6,12 +6,10 @@ data class AppNavigationCapabilities(
     val usePlatformSideRail: Boolean,
 )
 
-fun resolveAppNavigationCapabilities(
-    renderer: PresetPrimitiveRenderer,
-): AppNavigationCapabilities = AppNavigationCapabilities(
-    usePlatformSideRail = renderer == PresetPrimitiveRenderer.MIUIX_BRIDGED,
+fun resolveAppNavigationCapabilities(): AppNavigationCapabilities = AppNavigationCapabilities(
+    usePlatformSideRail = true,
 )
 
 @Composable
 fun rememberAppNavigationCapabilities(): AppNavigationCapabilities =
-    resolveAppNavigationCapabilities(rememberPresetPrimitiveRenderer())
+    resolveAppNavigationCapabilities()

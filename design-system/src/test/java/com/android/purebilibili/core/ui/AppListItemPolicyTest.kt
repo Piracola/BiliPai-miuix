@@ -1,6 +1,5 @@
 package com.android.purebilibili.core.ui
 
-import com.android.purebilibili.core.theme.AppUiStyle
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -8,29 +7,23 @@ class AppListItemPolicyTest {
 
     @Test
     fun `auto style follows runtime theme`() {
-        // MATERIAL3 默认自定义条目(现状),MIUIX 默认原生 Miuix 条目(现状)
-        assertEquals(
-            AppListItemStyle.CUSTOM,
-            resolveAppListItemStyle(AppListItemStyle.AUTO, AppUiStyle.MATERIAL3),
-        )
+        // 单值 MIUIX 默认原生 Miuix 条目(现状)
         assertEquals(
             AppListItemStyle.NATIVE,
-            resolveAppListItemStyle(AppListItemStyle.AUTO, AppUiStyle.MIUIX),
+            resolveAppListItemStyle(AppListItemStyle.AUTO),
         )
     }
 
     @Test
-    fun `explicit style applies to both presets`() {
-        listOf(AppUiStyle.MATERIAL3, AppUiStyle.MIUIX).forEach { uiStyle ->
-            assertEquals(
-                AppListItemStyle.NATIVE,
-                resolveAppListItemStyle(AppListItemStyle.NATIVE, uiStyle),
-            )
-            assertEquals(
-                AppListItemStyle.CUSTOM,
-                resolveAppListItemStyle(AppListItemStyle.CUSTOM, uiStyle),
-            )
-        }
+    fun `explicit style applies`() {
+        assertEquals(
+            AppListItemStyle.NATIVE,
+            resolveAppListItemStyle(AppListItemStyle.NATIVE),
+        )
+        assertEquals(
+            AppListItemStyle.CUSTOM,
+            resolveAppListItemStyle(AppListItemStyle.CUSTOM),
+        )
     }
 
     @Test

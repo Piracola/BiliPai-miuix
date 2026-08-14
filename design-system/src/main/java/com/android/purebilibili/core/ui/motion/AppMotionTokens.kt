@@ -10,8 +10,6 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.IntOffset
-import com.android.purebilibili.core.theme.AppUiStyle
-import com.android.purebilibili.core.theme.LocalAppUiStyle
 import com.android.purebilibili.core.theme.resolveAndroidNativeChromeTokens
 
 object AppMotionEasing {
@@ -79,51 +77,26 @@ fun indicatorSpring(): SpringSpec<Float> =
     )
 
 /**
- * 两值主题的运动 tokens。Screens should call the @Composable accessors
+ * 单值 Miuix 主题的运动 tokens。Screens should call the @Composable accessors
  * (e.g. [AppMotionTokens.standardSpec]) instead of writing literal `tween(...)`
- * or `spring(...)` calls. MIUIX resolves to denser tween durations; MATERIAL3
- * resolves to the standard Material tween durations.
+ * or `spring(...)` calls. Miuix resolves to denser tween durations.
  */
 object AppMotionTokens {
 
-    fun <T> resolveStandardSpec(
-        uiStyle: AppUiStyle
-    ): FiniteAnimationSpec<T> = when (uiStyle) {
-        AppUiStyle.MIUIX -> tween(
-            durationMillis = 180,
-            easing = AppMotionEasing.Continuity
-        )
-        AppUiStyle.MATERIAL3 -> tween(
-            durationMillis = 200,
-            easing = AppMotionEasing.Continuity
-        )
-    }
+    fun <T> resolveStandardSpec(): FiniteAnimationSpec<T> = tween(
+        durationMillis = 180,
+        easing = AppMotionEasing.Continuity
+    )
 
-    fun <T> resolveEmphasizedSpec(
-        uiStyle: AppUiStyle
-    ): FiniteAnimationSpec<T> = when (uiStyle) {
-        AppUiStyle.MIUIX -> tween(
-            durationMillis = 240,
-            easing = AppMotionEasing.EmphasizedEnter
-        )
-        AppUiStyle.MATERIAL3 -> tween(
-            durationMillis = 300,
-            easing = AppMotionEasing.EmphasizedEnter
-        )
-    }
+    fun <T> resolveEmphasizedSpec(): FiniteAnimationSpec<T> = tween(
+        durationMillis = 240,
+        easing = AppMotionEasing.EmphasizedEnter
+    )
 
-    fun <T> resolveExpressiveSpec(
-        uiStyle: AppUiStyle
-    ): FiniteAnimationSpec<T> = when (uiStyle) {
-        AppUiStyle.MIUIX -> tween(
-            durationMillis = 150,
-            easing = AppMotionEasing.EmphasizedExit
-        )
-        AppUiStyle.MATERIAL3 -> tween(
-            durationMillis = 180,
-            easing = AppMotionEasing.EmphasizedExit
-        )
-    }
+    fun <T> resolveExpressiveSpec(): FiniteAnimationSpec<T> = tween(
+        durationMillis = 150,
+        easing = AppMotionEasing.EmphasizedExit
+    )
 
     fun <T> resolveSpatialSpec(): FiniteAnimationSpec<T> = spring(
         dampingRatio = 0.82f,
@@ -131,41 +104,27 @@ object AppMotionTokens {
     )
 
     @Composable
-    fun <T> standardSpec(): FiniteAnimationSpec<T> = resolveStandardSpec(
-        uiStyle = LocalAppUiStyle.current
-    )
+    fun <T> standardSpec(): FiniteAnimationSpec<T> = resolveStandardSpec()
 
     @Composable
-    fun <T> emphasizedSpec(): FiniteAnimationSpec<T> = resolveEmphasizedSpec(
-        uiStyle = LocalAppUiStyle.current
-    )
+    fun <T> emphasizedSpec(): FiniteAnimationSpec<T> = resolveEmphasizedSpec()
 
     @Composable
-    fun <T> expressiveSpec(): FiniteAnimationSpec<T> = resolveExpressiveSpec(
-        uiStyle = LocalAppUiStyle.current
-    )
+    fun <T> expressiveSpec(): FiniteAnimationSpec<T> = resolveExpressiveSpec()
 
     fun <T> spatialSpec(): FiniteAnimationSpec<T> = resolveSpatialSpec()
 
-    fun <T> resolveBottomSheetSlideSpec(
-        uiStyle: AppUiStyle
-    ): FiniteAnimationSpec<T> {
-        val tokens = resolveAndroidNativeChromeTokens(uiStyle)
+    fun <T> resolveBottomSheetSlideSpec(): FiniteAnimationSpec<T> {
+        val tokens = resolveAndroidNativeChromeTokens()
         return continuityTween(tokens.motionStandardMillis)
     }
 
-    fun <T> resolveBottomSheetFadeEnterSpec(
-        uiStyle: AppUiStyle
-    ): FiniteAnimationSpec<T> = resolveEmphasizedSpec(uiStyle)
+    fun <T> resolveBottomSheetFadeEnterSpec(): FiniteAnimationSpec<T> = resolveEmphasizedSpec()
 
-    fun <T> resolveBottomSheetFadeExitSpec(
-        uiStyle: AppUiStyle
-    ): FiniteAnimationSpec<T> = resolveExpressiveSpec(uiStyle)
+    fun <T> resolveBottomSheetFadeExitSpec(): FiniteAnimationSpec<T> = resolveExpressiveSpec()
 
-    fun resolveBottomSheetSlideExitSpec(
-        uiStyle: AppUiStyle
-    ): FiniteAnimationSpec<IntOffset> {
-        val tokens = resolveAndroidNativeChromeTokens(uiStyle)
+    fun resolveBottomSheetSlideExitSpec(): FiniteAnimationSpec<IntOffset> {
+        val tokens = resolveAndroidNativeChromeTokens()
         return emphasizedExitTween(tokens.expressiveMotionDurationMillis)
     }
 }

@@ -57,11 +57,7 @@ class CommonListAppearancePolicyTest {
         val appearance = resolveCommonListVideoCardAppearance(
             homeSettings = HomeSettings(
                 headerBlurMode = HomeHeaderBlurMode.FOLLOW_PRESET,
-                isBottomBarBlurEnabled = false,
-                isTopBarLiquidGlassEnabled = false,
-                isBottomBarLiquidGlassEnabled = false,
-                showHomeCoverGlassBadges = true,
-                showHomeInfoGlassBadges = true
+                isBottomBarBlurEnabled = false
             ),
             liquidGlassEnabled = false,
         )

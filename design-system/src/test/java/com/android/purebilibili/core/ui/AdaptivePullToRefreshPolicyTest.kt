@@ -1,28 +1,15 @@
 package com.android.purebilibili.core.ui
 
-import com.android.purebilibili.core.theme.AppUiStyle
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class AdaptivePullToRefreshPolicyTest {
 
     @Test
-    fun `miuix style routes to miuix bridged renderer`() {
+    fun `single miuix style routes to miuix bridged renderer`() {
         assertEquals(
             PresetPrimitiveRenderer.MIUIX_BRIDGED,
-            resolveAdaptivePullToRefreshRenderer(
-                uiStyle = AppUiStyle.MIUIX
-            )
-        )
-    }
-
-    @Test
-    fun `material3 style keeps material renderer`() {
-        assertEquals(
-            PresetPrimitiveRenderer.MATERIAL3,
-            resolveAdaptivePullToRefreshRenderer(
-                uiStyle = AppUiStyle.MATERIAL3
-            )
+            resolveAdaptivePullToRefreshRenderer()
         )
     }
 
