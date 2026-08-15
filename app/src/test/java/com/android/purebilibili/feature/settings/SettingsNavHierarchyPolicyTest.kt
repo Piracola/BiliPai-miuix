@@ -26,7 +26,6 @@ class SettingsNavHierarchyPolicyTest {
         assertEquals(1, resolveSettingsNavDepth("settings_category"))
         assertEquals(2, resolveSettingsNavDepth("appearance_settings"))
         assertEquals(2, resolveSettingsNavDepth("home_settings"))
-        assertEquals(3, resolveSettingsNavDepth("icon_settings"))
         assertEquals(2, resolveSettingsNavDepth("animation_settings"))
     }
 
@@ -34,7 +33,6 @@ class SettingsNavHierarchyPolicyTest {
     fun resolveSettingsNavParentRoute_keepsIndependentCategoriesAtRootDetailDepth() {
         assertEquals("settings_category", resolveSettingsNavParentRoute("animation_settings"))
         assertEquals("settings_category", resolveSettingsNavParentRoute("home_settings"))
-        assertEquals("appearance_settings", resolveSettingsNavParentRoute("icon_settings"))
         assertEquals("settings_category", resolveSettingsNavParentRoute("appearance_settings"))
     }
 

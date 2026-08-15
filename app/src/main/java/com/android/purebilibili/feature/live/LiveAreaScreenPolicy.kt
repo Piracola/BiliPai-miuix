@@ -57,10 +57,3 @@ internal fun resolveLiveAreaParentTabItemWidthDp(
         fittedWidth
     }
 }
-
-internal fun shouldUseLiveAreaParentLiquidIndicator(
-    itemCount: Int,
-    bottomBarLiquidGlassEnabled: Boolean
-): Boolean {
-    return itemCount > 1 && bottomBarLiquidGlassEnabled
-}

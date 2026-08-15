@@ -6,16 +6,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.android.purebilibili.core.store.DEFAULT_APP_ICON_KEY
-import com.android.purebilibili.core.store.AppIconAppearance
 import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.store.BottomBarSearchAutoExpandMode
 import com.android.purebilibili.core.store.BottomBarSearchLayoutMode
 import com.android.purebilibili.core.store.HomeFeedCardWidthPreset
-import com.android.purebilibili.core.store.allManagedAppIconLauncherAliases
-import com.android.purebilibili.core.store.normalizeAppIconKey
-import com.android.purebilibili.core.store.resolveAppIconLauncherAlias
-import com.android.purebilibili.core.store.supportsAppIconAppearance
 import com.android.purebilibili.core.theme.AppFontSizePreset
 import com.android.purebilibili.core.theme.AppUiScalePreset
 import com.android.purebilibili.core.ui.AppIconStyle
@@ -63,7 +57,6 @@ data class SettingsUiState(
     val appDpiOverridePercent: Int = 0,
     val bgPlay: Boolean = false,
     val gestureSensitivity: Float = 1.0f,
-    val appIcon: String = DEFAULT_APP_ICON_KEY,
     val appIconStyle: AppIconStyle = AppIconStyle.AUTO,
     val appListItemStyle: AppListItemStyle = AppListItemStyle.AUTO,
     val isBottomBarFloating: Boolean = true,
@@ -118,7 +111,6 @@ private data class CoreSettings(
 
 data class ExtraSettings(
     val gestureSensitivity: Float,
-    val appIcon: String,
     val appIconStyle: AppIconStyle,
     val appListItemStyle: AppListItemStyle,
     val appFontSizePreset: AppFontSizePreset,
@@ -173,7 +165,6 @@ private data class BaseSettings(
     val appDpiOverridePercent: Int,
     val bgPlay: Boolean,
     val gestureSensitivity: Float,
-    val appIcon: String,
     val appIconStyle: AppIconStyle,
     val appListItemStyle: AppListItemStyle,
     val isBottomBarFloating: Boolean,
@@ -211,7 +202,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     private data class UiSettingsGroup1(
         val gestureSensitivity: Float,
-        val appIcon: String,
         val appIconStyle: AppIconStyle,
         val appListItemStyle: AppListItemStyle,
         val appFontSizePreset: AppFontSizePreset,
@@ -250,7 +240,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     // 第 2 步：合并界面设置 (分两组，每组最多5个)
     private val uiSettingsFlow1 = combine(
         SettingsManager.getGestureSensitivity(context).asAnyFlow(),
-        SettingsManager.getAppIcon(context).asAnyFlow(),
         SettingsManager.getAppIconStyle(context).asAnyFlow(),
         SettingsManager.getAppListItemStyle(context).asAnyFlow(),
         SettingsManager.getAppFontSizePreset(context).asAnyFlow(),
@@ -261,14 +250,13 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     ) { values ->
         UiSettingsGroup1(
             gestureSensitivity = values[0] as Float,
-            appIcon = values[1] as String,
-            appIconStyle = values[2] as AppIconStyle,
-            appListItemStyle = values[3] as AppListItemStyle,
-            appFontSizePreset = values[4] as AppFontSizePreset,
-            appFontFileName = values[5] as String,
-            appFontDisplayName = values[6] as String,
-            appUiScalePreset = values[7] as AppUiScalePreset,
-            appDpiOverridePercent = values[8] as Int
+            appIconStyle = values[1] as AppIconStyle,
+            appListItemStyle = values[2] as AppListItemStyle,
+            appFontSizePreset = values[3] as AppFontSizePreset,
+            appFontFileName = values[4] as String,
+            appFontDisplayName = values[5] as String,
+            appUiScalePreset = values[6] as AppUiScalePreset,
+            appDpiOverridePercent = values[7] as Int
         )
     }
     
@@ -350,7 +338,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         // ui2: Ui2 class
         ExtraSettings(
             gestureSensitivity = ui1.gestureSensitivity,
-            appIcon = ui1.appIcon,
             appIconStyle = ui1.appIconStyle,
             appListItemStyle = ui1.appListItemStyle,
             appFontSizePreset = ui1.appFontSizePreset,
@@ -431,7 +418,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             appDpiOverridePercent = extra.appDpiOverridePercent,
             bgPlay = core.bgPlay,
             gestureSensitivity = extra.gestureSensitivity,
-            appIcon = extra.appIcon,
             appIconStyle = extra.appIconStyle,
             appListItemStyle = extra.appListItemStyle,
             isBottomBarFloating = extra.isBottomBarFloating,
@@ -481,7 +467,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             appDpiOverridePercent = settings.appDpiOverridePercent,
             bgPlay = settings.bgPlay,
             gestureSensitivity = settings.gestureSensitivity,
-            appIcon = settings.appIcon,
             appIconStyle = settings.appIconStyle,
             appListItemStyle = settings.appListItemStyle,
             isBottomBarFloating = settings.isBottomBarFloating,
@@ -647,80 +632,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     //  [新增] 手势灵敏度
     fun setGestureSensitivity(value: Float) { viewModelScope.launch { SettingsManager.setGestureSensitivity(context, value) } }
 
-    //  [新增] 切换应用图标
-    fun setAppIcon(iconKey: String) {
-        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            val normalizedIconKey = normalizeAppIconKey(iconKey)
-            // 1. 保存偏好
-            SettingsManager.setAppIcon(context, normalizedIconKey)
-            applyLauncherAliasForCurrentSplashIconSetting(normalizedIconKey)
-        }
-    }
-
-    fun setAppIconAppearance(appearance: AppIconAppearance) {
-        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            SettingsManager.setAppIconAppearance(context, appearance)
-            val currentIcon = SettingsManager.getAppIconSync(context)
-            if (!supportsAppIconAppearance(currentIcon)) return@launch
-            applyLauncherAliasForCurrentSplashIconSetting(
-                iconKey = currentIcon,
-                appearance = appearance
-            )
-        }
-    }
-
-    private suspend fun applyLauncherAliasForCurrentSplashIconSetting(
-        iconKey: String,
-        appearance: AppIconAppearance = SettingsManager.getAppIconAppearanceSync(context)
-    ) {
-        val normalizedIconKey = normalizeAppIconKey(iconKey)
-        // 2. 应用 Alias
-        val pm = context.packageManager
-        val packageName = context.packageName
-        val splashIconVisible = SettingsManager.isSplashIconAnimationEnabledSync(context)
-
-        val targetAlias = resolveAppIconLauncherAlias(
-            packageName = packageName,
-            rawKey = normalizedIconKey,
-            splashIconVisible = splashIconVisible,
-            appearance = appearance
-        )
-        val allUniqueAliases = allManagedAppIconLauncherAliases(packageName)
-
-        android.util.Log.d("SettingsViewModel", "Switching icon to: $normalizedIconKey, splashIconVisible=$splashIconVisible -> $targetAlias")
-
-        try {
-            // 第一步：先启用目标 alias（确保始终有一个活动入口点）
-            // ⚠️ [修复] 在尝试杀死进程的操作前，再次延迟，确保 DataStore/SharedPrefs 完全写入磁盘
-            kotlinx.coroutines.delay(100)
-
-            pm.setComponentEnabledSetting(
-                android.content.ComponentName(packageName, targetAlias),
-                android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                android.content.pm.PackageManager.DONT_KILL_APP
-            )
-            android.util.Log.d("SettingsViewModel", "Enabled alias: $targetAlias")
-
-            // 第二步：立即禁用其他 alias，避免部分桌面出现“双图标”残留
-            allUniqueAliases
-                .filter { it != targetAlias }
-                .forEach { aliasFullName ->
-                    try {
-                        pm.setComponentEnabledSetting(
-                            android.content.ComponentName(packageName, aliasFullName),
-                            android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                            android.content.pm.PackageManager.DONT_KILL_APP
-                        )
-                    } catch (e: Exception) {
-                        android.util.Log.w("SettingsViewModel", "Failed to disable alias: $aliasFullName", e)
-                    }
-                }
-            android.util.Log.d("SettingsViewModel", "Icon switch completed: $normalizedIconKey")
-        } catch (e: Exception) {
-            android.util.Log.e("SettingsViewModel", "Failed to switch app icon to $normalizedIconKey", e)
-        }
-    }
-
     //  [新增] 切换底栏样式
     fun toggleBottomBarFloating(value: Boolean) { viewModelScope.launch { SettingsManager.setBottomBarFloating(context, value) } }
     
@@ -814,10 +725,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun toggleSplashEnabled(value: Boolean) { viewModelScope.launch { SettingsManager.setSplashEnabled(context, value) } }
     fun toggleSplashRandomEnabled(value: Boolean) { viewModelScope.launch { SettingsManager.setSplashRandomEnabled(context, value) } }
     fun toggleSplashIconAnimationEnabled(value: Boolean) {
-        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+        viewModelScope.launch {
             SettingsManager.setSplashIconAnimationEnabled(context, value)
-            val currentIcon = SettingsManager.getAppIconSync(context)
-            applyLauncherAliasForCurrentSplashIconSetting(currentIcon)
         }
     }
 

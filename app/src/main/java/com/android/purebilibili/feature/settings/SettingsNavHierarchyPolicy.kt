@@ -13,7 +13,6 @@ internal val SETTINGS_SUBTREE_ROUTE_BASES: Set<String> = setOf(
     SETTINGS_SEARCH_ROUTE_BASE,
     "appearance_settings",
     "home_settings",
-    "icon_settings",
     "animation_settings",
     "playback_settings",
     "permission_settings",
@@ -23,7 +22,6 @@ internal val SETTINGS_SUBTREE_ROUTE_BASES: Set<String> = setOf(
     "bottom_bar_settings",
     "settings_share",
     "webdav_backup",
-    "tips_settings",
     "open_source_licenses",
 )
 
@@ -37,12 +35,10 @@ private val SETTINGS_DEPTH2_ROUTE_BASES: Set<String> = setOf(
     "bottom_bar_settings",
     "settings_share",
     "webdav_backup",
-    "tips_settings",
     "open_source_licenses",
 )
 
 private val SETTINGS_DEPTH3_ROUTE_BASES: Set<String> = setOf(
-    "icon_settings",
     "js_plugin",
 )
 
@@ -74,7 +70,6 @@ private val ROUTE_TO_CATEGORY: Map<String, SettingsRootCategory> = mapOf(
     "appearance_settings" to SettingsRootCategory.APPEARANCE_THEME,
     "home_settings" to SettingsRootCategory.HOME_RECOMMENDATION,
     "animation_settings" to SettingsRootCategory.NAVIGATION_INTERACTION,
-    "icon_settings" to SettingsRootCategory.APPEARANCE_THEME,
     "bottom_bar_settings" to SettingsRootCategory.NAVIGATION_INTERACTION,
     "playback_settings" to SettingsRootCategory.PLAYBACK_QUALITY,
     "permission_settings" to SettingsRootCategory.PRIVACY_PERMISSION,
@@ -83,7 +78,6 @@ private val ROUTE_TO_CATEGORY: Map<String, SettingsRootCategory> = mapOf(
     "plugins_settings" to SettingsRootCategory.PLUGINS_EXTENSIONS,
     "js_plugin" to SettingsRootCategory.PLUGINS_EXTENSIONS,
     "external_media" to SettingsRootCategory.PLUGINS_EXTENSIONS,
-    "tips_settings" to SettingsRootCategory.SYSTEM_ABOUT,
     "open_source_licenses" to SettingsRootCategory.SYSTEM_ABOUT,
 )
 
@@ -114,7 +108,6 @@ internal fun resolveSettingsNavParentRoute(childRoute: String?): String? {
         SETTINGS_CATEGORY_ROUTE_BASE,
         SETTINGS_SEARCH_ROUTE_BASE -> SETTINGS_ROUTE_BASE
         in SETTINGS_DEPTH2_ROUTE_BASES -> SETTINGS_CATEGORY_ROUTE_BASE
-        "icon_settings" -> "appearance_settings"
         "js_plugin" -> "plugins_settings"
         "external_media" -> "js_plugin"
         else -> null

@@ -14,7 +14,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -161,72 +160,6 @@ internal fun createMiuixMaterialBridge(colorScheme: ColorScheme): MiuixMaterialB
     )
 }
 
-internal fun resolveMaterialColorSchemeFromMiuixBridge(
-    bridge: MiuixMaterialBridge,
-    amoledDarkTheme: Boolean
-): ColorScheme {
-    val baseScheme = if (bridge.background.luminance() < 0.5f) {
-        darkColorScheme(
-            primary = bridge.primary,
-            onPrimary = bridge.onPrimary,
-            primaryContainer = bridge.primaryContainer,
-            onPrimaryContainer = bridge.onPrimaryContainer,
-            secondary = bridge.secondary,
-            onSecondary = bridge.onSecondary,
-            secondaryContainer = bridge.secondaryContainer,
-            onSecondaryContainer = bridge.onSecondaryContainer,
-            tertiary = bridge.tertiary,
-            onTertiary = bridge.onTertiary,
-            tertiaryContainer = bridge.tertiaryContainer,
-            onTertiaryContainer = bridge.onTertiaryContainer,
-            error = bridge.error,
-            onError = bridge.onError,
-            background = bridge.background,
-            onBackground = bridge.onBackground,
-            surface = bridge.surface,
-            onSurface = bridge.onSurface,
-            surfaceVariant = bridge.surfaceVariant,
-            onSurfaceVariant = bridge.onSurfaceVariant,
-            surfaceContainer = bridge.surfaceContainer,
-            surfaceContainerHigh = bridge.surfaceContainerHigh,
-            outline = bridge.outline,
-            outlineVariant = bridge.outlineVariant
-        )
-    } else {
-        lightColorScheme(
-            primary = bridge.primary,
-            onPrimary = bridge.onPrimary,
-            primaryContainer = bridge.primaryContainer,
-            onPrimaryContainer = bridge.onPrimaryContainer,
-            secondary = bridge.secondary,
-            onSecondary = bridge.onSecondary,
-            secondaryContainer = bridge.secondaryContainer,
-            onSecondaryContainer = bridge.onSecondaryContainer,
-            tertiary = bridge.tertiary,
-            onTertiary = bridge.onTertiary,
-            tertiaryContainer = bridge.tertiaryContainer,
-            onTertiaryContainer = bridge.onTertiaryContainer,
-            error = bridge.error,
-            onError = bridge.onError,
-            background = bridge.background,
-            onBackground = bridge.onBackground,
-            surface = bridge.surface,
-            onSurface = bridge.onSurface,
-            surfaceVariant = bridge.surfaceVariant,
-            onSurfaceVariant = bridge.onSurfaceVariant,
-            surfaceContainer = bridge.surfaceContainer,
-            surfaceContainerHigh = bridge.surfaceContainerHigh,
-            outline = bridge.outline,
-            outlineVariant = bridge.outlineVariant
-        )
-    }
-    return if (amoledDarkTheme) {
-        applyAmoledSurfaceOverrides(baseScheme)
-    } else {
-        baseScheme
-    }
-}
-
 internal fun resolveMiuixColorsFromMaterialBridge(
     bridge: MiuixMaterialBridge,
     darkTheme: Boolean
@@ -313,17 +246,6 @@ internal fun resolveMiuixColorsFromMaterialBridge(
         sliderBackground = opaqueCompositeOver(bridge.primary.copy(alpha = 0.2f), bridge.surface),
     )
 }
-
-internal fun applyAmoledSurfaceOverrides(
-    baseScheme: ColorScheme
-): ColorScheme = baseScheme.copy(
-    background = Black,
-    surface = Black,
-    surfaceVariant = Color(0xFF050505),
-    surfaceContainer = Color(0xFF090909),
-    outline = Color(0xFF262626),
-    outlineVariant = Color(0xFF1A1A1A)
-)
 
 private fun createLightColorScheme(primaryColor: Color) = lightColorScheme(
     primary = primaryColor,

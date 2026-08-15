@@ -121,10 +121,7 @@ import com.android.purebilibili.feature.home.components.rememberBottomBarMatched
 import com.android.purebilibili.feature.home.components.resolveAndroidNativeIdleIndicatorSurfaceColor
 import com.android.purebilibili.feature.home.components.resolveBottomBarBackdropPresetIndicatorLens
 import com.android.purebilibili.feature.home.components.resolveBottomBarCaptureSafeInsetDp
-import com.android.purebilibili.feature.home.components.resolveBottomBarBackdropPresetProgress
 import com.android.purebilibili.feature.home.components.resolveBottomBarIndicatorGlowAlpha
-import com.android.purebilibili.feature.home.components.resolveBottomBarLiquidGlassHighlightAlpha
-import com.android.purebilibili.feature.home.components.resolveBottomBarRefractionMotionProfile
 import com.android.purebilibili.feature.home.components.resolveSharedBottomBarCapsuleShape
 import com.android.purebilibili.feature.home.components.rememberBottomBarIndicatorDragScaleProgress
 import com.android.purebilibili.feature.home.components.normalizeTopTabLabelMode

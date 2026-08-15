@@ -81,13 +81,6 @@ class LiveAreaScreenPolicyTest {
         )
     }
 
-    @Test
-    fun parentTabLiquidIndicatorFollowsBottomBarLiquidGlassSetting() {
-        assertTrue(shouldUseLiveAreaParentLiquidIndicator(itemCount = 4, bottomBarLiquidGlassEnabled = true))
-        assertFalse(shouldUseLiveAreaParentLiquidIndicator(itemCount = 1, bottomBarLiquidGlassEnabled = true))
-        assertFalse(shouldUseLiveAreaParentLiquidIndicator(itemCount = 4, bottomBarLiquidGlassEnabled = false))
-    }
-
     private fun liveAreaChild(
         id: String,
         name: String,

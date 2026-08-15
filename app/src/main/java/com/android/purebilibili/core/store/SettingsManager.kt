@@ -971,9 +971,6 @@ object SettingsManager {
     private val KEY_APP_FONT_DISPLAY_NAME = stringPreferencesKey("app_font_display_name")
     private val KEY_APP_UI_SCALE_PRESET = intPreferencesKey("app_ui_scale_preset")
     private val KEY_APP_DPI_OVERRIDE_PERCENT = intPreferencesKey("app_dpi_override_percent")
-    //  [新增] 应用图标 Key (Blue, Red, Green...)
-    private val KEY_APP_ICON = androidx.datastore.preferences.core.stringPreferencesKey("app_icon_key")
-    private val KEY_APP_ICON_APPEARANCE = intPreferencesKey("app_icon_appearance")
     private val KEY_APP_ICON_STYLE = stringPreferencesKey("app_icon_style")
     private val KEY_APP_LIST_ITEM_STYLE = stringPreferencesKey("app_list_item_style")
     //  [新增] 底部栏样式 (true=悬浮, false=贴底)
@@ -2359,30 +2356,6 @@ object SettingsManager {
         }
     }
 
-    fun getHomeCoverGlassBadgesVisible(context: Context): Flow<Boolean> = context.settingsDataStore.data
-        .map { preferences ->
-            resolveHomeCardBadgeEffectMode(preferences) != HomeCardBadgeEffectMode.OFF
-        }
-
-    suspend fun setHomeCoverGlassBadgesVisible(context: Context, value: Boolean) {
-        setHomeCardBadgeEffectMode(
-            context,
-            if (value) HomeCardBadgeEffectMode.SOFT_GLASS else HomeCardBadgeEffectMode.OFF
-        )
-    }
-
-    fun getHomeInfoGlassBadgesVisible(context: Context): Flow<Boolean> = context.settingsDataStore.data
-        .map { preferences ->
-            resolveHomeCardBadgeEffectMode(preferences) != HomeCardBadgeEffectMode.OFF
-        }
-
-    suspend fun setHomeInfoGlassBadgesVisible(context: Context, value: Boolean) {
-        setHomeCardBadgeEffectMode(
-            context,
-            if (value) HomeCardBadgeEffectMode.SOFT_GLASS else HomeCardBadgeEffectMode.OFF
-        )
-    }
-
     fun getHomeCardBadgeEffectMode(context: Context): Flow<HomeCardBadgeEffectMode> =
         context.settingsDataStore.data.map { preferences ->
             resolveHomeCardBadgeEffectMode(preferences)
@@ -2483,33 +2456,6 @@ object SettingsManager {
         }
     }
 
-    //  [新增] --- 应用图标 ---
-    fun getAppIcon(context: Context): Flow<String> = context.settingsDataStore.data
-        .map { preferences -> normalizeAppIconKey(preferences[KEY_APP_ICON]) }
-
-    suspend fun setAppIcon(context: Context, iconKey: String) {
-        val normalizedKey = normalizeAppIconKey(iconKey)
-        val success = editSettingsAndCommitPrefs(
-            context, "app_icon_cache",
-            editSettings = { this[KEY_APP_ICON] = normalizedKey },
-            editPrefs = { putString("current_icon", normalizedKey) },
-        )
-            
-        com.android.purebilibili.core.util.Logger.d("SettingsManager", "App icon saved: $iconKey -> $normalizedKey, persisted to prefs: $success")
-    }
-
-    fun getAppIconAppearance(context: Context): Flow<AppIconAppearance> =
-        context.settingsDataStore.data.map { preferences ->
-            resolveAppIconAppearance(preferences[KEY_APP_ICON_APPEARANCE] ?: 0)
-        }
-
-    suspend fun setAppIconAppearance(context: Context, appearance: AppIconAppearance) {
-        editSettingsAndCommitPrefs(
-            context, "app_icon_cache",
-            editSettings = { this[KEY_APP_ICON_APPEARANCE] = appearance.storedValue },
-            editPrefs = { putInt("appearance", appearance.storedValue) },
-        )
-    }
     
     //  [新增] --- 开屏壁纸 ---
     fun getSplashWallpaperUri(context: Context): Flow<String> = context.settingsDataStore.data
@@ -2666,12 +2612,6 @@ object SettingsManager {
             context.getSharedPreferences("app_icon_cache", Context.MODE_PRIVATE)
                 .getString("current_icon", DEFAULT_APP_ICON_KEY)
         )
-    }
-
-    fun getAppIconAppearanceSync(context: Context): AppIconAppearance {
-        val storedValue = context.getSharedPreferences("app_icon_cache", Context.MODE_PRIVATE)
-            .getInt("appearance", AppIconAppearance.FOLLOW_SYSTEM.storedValue)
-        return resolveAppIconAppearance(storedValue)
     }
 
     //  [新增] --- 底部栏样式 ---
@@ -5897,8 +5837,6 @@ object SettingsManager {
                 KEY_SINGLE_CHOICE_PRESENTATION,
                 SettingsShareSection.APPEARANCE,
             ),
-            StringShareablePreferenceDefinition(KEY_APP_ICON, SettingsShareSection.APPEARANCE),
-            IntShareablePreferenceDefinition(KEY_APP_ICON_APPEARANCE, SettingsShareSection.APPEARANCE),
             StringShareablePreferenceDefinition(KEY_APP_ICON_STYLE, SettingsShareSection.APPEARANCE),
             StringShareablePreferenceDefinition(KEY_APP_LIST_ITEM_STYLE, SettingsShareSection.APPEARANCE),
             BooleanShareablePreferenceDefinition(KEY_BOTTOM_BAR_FLOATING, SettingsShareSection.APPEARANCE),

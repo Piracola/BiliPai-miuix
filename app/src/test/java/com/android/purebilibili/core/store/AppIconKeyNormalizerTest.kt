@@ -47,20 +47,4 @@ class AppIconKeyNormalizerTest {
         assertEquals("icon_bilipai_white", normalizeAppIconKey("icon_bilipai_white"))
         assertEquals("icon_bilipai_monet", normalizeAppIconKey("icon_bilipai_monet"))
     }
-
-    @Test
-    fun resolveAppIconAppearance_defaultsUnknownValuesToFollowSystem() {
-        assertEquals(AppIconAppearance.FOLLOW_SYSTEM, resolveAppIconAppearance(0))
-        assertEquals(AppIconAppearance.LIGHT, resolveAppIconAppearance(1))
-        assertEquals(AppIconAppearance.DARK, resolveAppIconAppearance(2))
-        assertEquals(AppIconAppearance.FOLLOW_SYSTEM, resolveAppIconAppearance(99))
-    }
-
-    @Test
-    fun supportsAppIconAppearance_onlyForMaidArtwork() {
-        assertEquals(true, supportsAppIconAppearance("icon_blue_snow_maid"))
-        assertEquals(true, supportsAppIconAppearance("icon_blue_snow_maid_announcement"))
-        assertEquals(true, supportsAppIconAppearance("icon_blue_snow_maid_front"))
-        assertEquals(false, supportsAppIconAppearance("icon_bilipai"))
-    }
 }

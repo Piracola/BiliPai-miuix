@@ -403,11 +403,6 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.7.0")
     implementation("io.coil-kt:coil-gif:2.7.0")  // 🔥 GIF 动图支持
     
-    // --- 3.1 Palette (颜色提取 - 动态取色) ---
-    implementation("androidx.palette:palette-ktx:1.0.0")
-    implementation("com.materialkolor:material-kolor:4.1.1")
-    implementation("com.github.skydoves:colorpicker-compose:1.1.4")
-    
     // --- 3.2 Haze 2 (毛玻璃：core + blur + materials) ---
     implementation("dev.chrisbanes.haze:haze:$hazeVersion")
     implementation("dev.chrisbanes.haze:haze-blur:$hazeVersion")

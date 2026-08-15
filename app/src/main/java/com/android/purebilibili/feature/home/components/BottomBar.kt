@@ -1339,15 +1339,6 @@ internal fun resolveBottomBarLiquidGlassLensProgress(
     )
 }
 
-internal fun resolveBottomBarLiquidGlassHighlightAlpha(
-    motionProgress: Float
-): Float {
-    return resolveBottomBarLiquidGlassLensProgress(
-        motionProgress = motionProgress,
-        idleProgress = 0.22f
-    )
-}
-
 internal fun resolveBottomBarIndicatorGlowAlpha(
     glassEnabled: Boolean,
     pressProgress: Float,
@@ -1388,17 +1379,6 @@ internal fun resolveBottomBarBackdropPresetProgress(
         shellProgress = clampedPress,
         captureProgress = maxOf(clampedMotion, clampedPress * 0.72f),
         indicatorProgress = maxOf(clampedMotion, clampedPress)
-    )
-}
-
-internal fun resolveBottomBarEffectiveBackdropPresetProgress(
-    motionProgress: Float,
-    pressProgress: Float
-): BottomBarBackdropPresetProgress {
-    return resolveBottomBarBackdropPresetProgress(
-        motionProgress = motionProgress,
-        verticalProgress = 0f,
-        pressProgress = pressProgress
     )
 }
 
@@ -1697,12 +1677,6 @@ internal fun resolveBottomBarRefractionMotionProfile(
         exportSelectionEmphasis = lerp(1f, 0.52f, progress),
         exportCaptureWidthScale = lerp(1f, 1.16f, progress)
     )
-}
-
-internal fun resolveBottomBarEffectiveRefractionMotionProfile(
-    profile: BottomBarRefractionMotionProfile
-): BottomBarRefractionMotionProfile {
-    return profile
 }
 
 internal fun resolveBottomBarPresetPanelOffsets(

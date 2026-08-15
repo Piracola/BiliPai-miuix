@@ -50,12 +50,10 @@ internal enum class SettingsIconRole {
     REFRESH_COUNT,
     DYNAMIC_PREVIEW_TEXT,
     DYNAMIC_TAB_VISIBILITY,
-    EASTER_EGG,
     AUTO_CHECK_UPDATE,
     BUILD_SOURCE,
     BUILD_FINGERPRINT,
     BUILD_VERIFICATION,
-    ANDROID_LIQUID_GLASS,
     DYNAMIC_COLOR,
     THEME_COLOR_PICKER,
     COLOR_STYLE,
@@ -258,12 +256,10 @@ private fun resolveMiuixSettingsSemanticIcon(role: SettingsIconRole): ImageVecto
     SettingsIconRole.REFRESH_COUNT -> MiuixIcons.Refresh
     SettingsIconRole.DYNAMIC_PREVIEW_TEXT -> MiuixIcons.Show
     SettingsIconRole.DYNAMIC_TAB_VISIBILITY -> MiuixIcons.SelectAll
-    SettingsIconRole.EASTER_EGG -> MiuixIcons.Favorites
     SettingsIconRole.AUTO_CHECK_UPDATE -> MiuixIcons.Update
     SettingsIconRole.BUILD_SOURCE -> MiuixIcons.File
     SettingsIconRole.BUILD_FINGERPRINT -> MiuixIcons.Scan
     SettingsIconRole.BUILD_VERIFICATION -> MiuixIcons.Ok
-    SettingsIconRole.ANDROID_LIQUID_GLASS -> MiuixIcons.Layers
     SettingsIconRole.DYNAMIC_COLOR -> MiuixIcons.Promotions
     SettingsIconRole.THEME_COLOR_PICKER -> MiuixIcons.Tune
     SettingsIconRole.COLOR_STYLE -> MiuixIcons.Edit
@@ -406,12 +402,10 @@ private fun resolveMd3SettingsSemanticIcon(role: SettingsIconRole): ImageVector 
     SettingsIconRole.REFRESH_COUNT -> Icons.Outlined.Refresh
     SettingsIconRole.DYNAMIC_PREVIEW_TEXT -> Icons.AutoMirrored.Outlined.TextSnippet
     SettingsIconRole.DYNAMIC_TAB_VISIBILITY -> Icons.Outlined.Visibility
-    SettingsIconRole.EASTER_EGG -> Icons.Outlined.AutoAwesome
     SettingsIconRole.AUTO_CHECK_UPDATE -> Icons.Outlined.Update
     SettingsIconRole.BUILD_SOURCE -> Icons.Outlined.Tag
     SettingsIconRole.BUILD_FINGERPRINT -> Icons.Outlined.Fingerprint
     SettingsIconRole.BUILD_VERIFICATION -> Icons.Outlined.VerifiedUser
-    SettingsIconRole.ANDROID_LIQUID_GLASS -> Icons.Outlined.WaterDrop
     SettingsIconRole.DYNAMIC_COLOR -> Icons.Outlined.FormatColorText
     SettingsIconRole.THEME_COLOR_PICKER -> Icons.Outlined.Colorize
     SettingsIconRole.COLOR_STYLE -> Icons.Outlined.Brush
