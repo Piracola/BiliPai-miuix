@@ -8,7 +8,6 @@ import com.android.purebilibili.core.theme.iOSGreen
 import com.android.purebilibili.core.theme.iOSPurple
 import com.android.purebilibili.core.theme.iOSRed
 import com.android.purebilibili.core.theme.iOSSystemGray
-import com.android.purebilibili.core.ui.AppIconStyle
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -93,90 +92,6 @@ class AdaptiveListComponentPolicyTest {
                 iconTint = iOSBlue,
                 semanticTint = colorScheme.secondary,
                 treatment = AppPreferenceIconTreatment.FILLED,
-            ),
-        )
-    }
-
-    @Test
-    fun `theme container icon style uses opaque secondary container with on color glyphs`() {
-        val colorScheme = lightColorScheme()
-
-        assertEquals(
-            colorScheme.secondaryContainer,
-            resolveAdaptivePreferenceIconContainerColor(
-                iconTint = iOSBlue,
-                semanticTint = colorScheme.primary,
-                treatment = AppPreferenceIconTreatment.FILLED,
-                iconStyle = AppIconStyle.THEME_CONTAINER,
-                colorScheme = colorScheme,
-            ),
-        )
-        assertEquals(
-            1f,
-            resolveAdaptivePreferenceIconBackgroundAlpha(
-                treatment = AppPreferenceIconTreatment.FILLED,
-                tonalAlpha = 0.14f,
-                iconStyle = AppIconStyle.THEME_CONTAINER,
-            ),
-        )
-        assertEquals(
-            colorScheme.onSecondaryContainer,
-            resolveAdaptivePreferenceIconContentColor(
-                containerColor = colorScheme.secondaryContainer,
-                colorScheme = colorScheme,
-                iconStyle = AppIconStyle.THEME_CONTAINER,
-            ),
-        )
-        assertEquals(
-            colorScheme.onSecondaryContainer,
-            resolveAdaptivePreferenceIconGlyphColor(
-                treatment = AppPreferenceIconTreatment.TONAL,
-                iconStyle = AppIconStyle.THEME_CONTAINER,
-                containerContentColor = colorScheme.onSecondaryContainer,
-                semanticIconColor = colorScheme.secondaryContainer,
-            ),
-        )
-    }
-
-    @Test
-    fun `md3 standard icon style is monochrome without container`() {
-        val colorScheme = lightColorScheme()
-
-        assertEquals(
-            Color.Transparent,
-            resolveAdaptivePreferenceIconContainerColor(
-                iconTint = iOSBlue,
-                semanticTint = colorScheme.primary,
-                treatment = AppPreferenceIconTreatment.FILLED,
-                iconStyle = AppIconStyle.MD3_STANDARD,
-                colorScheme = colorScheme,
-            ),
-        )
-        assertEquals(
-            0f,
-            resolveAdaptivePreferenceIconBackgroundAlpha(
-                treatment = AppPreferenceIconTreatment.FILLED,
-                tonalAlpha = 0.14f,
-                iconStyle = AppIconStyle.MD3_STANDARD,
-            ),
-        )
-        assertEquals(
-            colorScheme.onSurfaceVariant,
-            resolveAdaptivePreferenceIconContentColor(
-                containerColor = Color.Transparent,
-                colorScheme = colorScheme,
-                iconStyle = AppIconStyle.MD3_STANDARD,
-            ),
-        )
-        // 回归：MD3_STANDARD 容器色为 Transparent，glyph 必须落到
-        // containerContentColor（onSurfaceVariant 单色），否则图标透明消失只剩文字。
-        assertEquals(
-            colorScheme.onSurfaceVariant,
-            resolveAdaptivePreferenceIconGlyphColor(
-                treatment = AppPreferenceIconTreatment.TONAL,
-                iconStyle = AppIconStyle.MD3_STANDARD,
-                containerContentColor = colorScheme.onSurfaceVariant,
-                semanticIconColor = Color.Transparent,
             ),
         )
     }

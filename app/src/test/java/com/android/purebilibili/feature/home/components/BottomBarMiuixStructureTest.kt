@@ -317,7 +317,7 @@ class BottomBarMiuixStructureTest {
             .substringBefore("@Composable\nprivate fun BiliPaiFloatingBottomBar(")
 
         assertTrue(miuixRendererSource.contains("BiliPaiFloatingBottomBar("))
-        assertTrue(miuixRendererSource.contains("iconStyle = sharedBarIconStyle"))
+        assertTrue(miuixRendererSource.contains("resolveHomeNavigationBarIcon("))
         assertTrue(miuixRendererSource.contains("if (isFloating) {"))
         assertFalse(miuixRendererSource.contains("if (isFloating && homeSettings.isBottomBarLiquidGlassEnabled)"))
     }
@@ -334,8 +334,6 @@ class BottomBarMiuixStructureTest {
         assertTrue(source.contains("MiuixBottomBar("))
         assertTrue(source.contains("if (isFloating) {"))
         assertTrue(source.contains("BiliPaiFloatingBottomBar("))
-        assertTrue(source.contains("iconStyle = sharedBarIconStyle"))
-        assertTrue(source.contains("private enum class SharedFloatingBottomBarIconStyle"))
         assertTrue(source.contains("AppNavigationBar("))
         assertTrue(source.contains("AppPlatformNavigationBar("))
         assertTrue(source.contains("MiuixDockedBottomBarItem("))
@@ -356,8 +354,7 @@ class BottomBarMiuixStructureTest {
         assertTrue(miuixRendererSource.contains("AppPlatformNavigationBadge {"))
         assertTrue(miuixRendererSource.contains("shouldUseMiuixOfficialNavigationBarItem("))
         assertTrue(miuixRendererSource.contains("MiuixDockedBottomBarItem("))
-        assertTrue(miuixRendererSource.contains("resolveSharedBottomBarIcon("))
-        assertTrue(miuixRendererSource.contains("resolveSharedBottomBarSidebarIcon("))
+        assertTrue(miuixRendererSource.contains("resolveHomeNavigationBarIcon("))
         assertFalse(miuixRendererSource.contains("icon = resolveMaterialBottomBarIcon("))
         assertFalse(miuixRendererSource.contains("MiuixFloatingNavigationBar("))
         assertFalse(miuixRendererSource.contains("MiuixFloatingNavigationBarItem("))
@@ -388,7 +385,7 @@ class BottomBarMiuixStructureTest {
         assertTrue(miuixRendererSource.contains("decoration = uiSkinDecoration"))
         assertTrue(miuixRendererSource.indexOf("DockedBottomBarSkinContainer(") < miuixRendererSource.indexOf("AppPlatformNavigationBar("))
         assertTrue(miuixRendererSource.contains("AppPlatformNavigationBadge {"))
-        assertTrue(miuixRendererSource.contains("modifier.height(resolveBottomBarSkinDockHeight())"))
+        assertTrue(miuixRendererSource.contains("Modifier.height(resolveBottomBarSkinDockHeight())"))
         assertTrue(miuixDockedItemSource.contains("height(resolveMiuixDockedBottomBarItemHeight(skinIconPath != null))"))
         assertFalse(miuixDockedItemSource.contains("height(64.dp)"))
     }

@@ -1,8 +1,6 @@
 // 文件路径: feature/home/components/BottomBar.kt
 package com.android.purebilibili.feature.home.components
 
-import com.android.purebilibili.core.ui.AppIconStyle
-import com.android.purebilibili.core.ui.rememberResolvedAppIconStyle
 import com.android.purebilibili.core.ui.AppChromeSizeTokens
 import com.android.purebilibili.core.ui.AppBottomNavigationHost
 import com.android.purebilibili.core.ui.AppSpacingTokens
@@ -41,29 +39,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.MenuOpen
-import androidx.compose.material.icons.filled.CollectionsBookmark
-import androidx.compose.material.icons.filled.Extension
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.LiveTv
-import androidx.compose.material.icons.filled.LibraryMusic
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PlayCircle
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.WatchLater
-import androidx.compose.material.icons.outlined.CollectionsBookmark
-import androidx.compose.material.icons.outlined.Extension
-import androidx.compose.material.icons.outlined.History
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.LiveTv
-import androidx.compose.material.icons.outlined.LibraryMusic
-import androidx.compose.material.icons.outlined.NotificationsNone
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.PlayCircleOutline
-import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.WatchLater
 import com.android.purebilibili.core.ui.components.AppIcon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -410,11 +385,6 @@ internal data class AndroidNativeBottomBarTuning(
     val indicatorHeightDp: Float,
     val indicatorLensRadiusDp: Float
 )
-
-private enum class SharedFloatingBottomBarIconStyle {
-    MATERIAL,
-    MIUIX
-}
 
 internal data class AndroidNativeIndicatorSpec(
     val usesLens: Boolean,
@@ -2082,7 +2052,7 @@ private fun MaterialBottomBar(
                                         )
                                     } else {
                                         AppIcon(
-                                            imageVector = resolveMaterialBottomBarIcon(item = item, selected = currentItem == item),
+                                            imageVector = resolveHomeNavigationBarIcon(item = item),
                                             contentDescription = itemContentDescription
                                         )
                                     }
@@ -2193,12 +2163,6 @@ private fun MiuixBottomBar(
     val normalizedLabelMode = normalizeBottomBarLabelMode(labelMode)
     val showIcon = shouldShowBottomBarIcon(normalizedLabelMode)
     val showText = shouldShowBottomBarText(normalizedLabelMode)
-    val resolvedIconStyle = rememberResolvedAppIconStyle()
-    val sharedBarIconStyle = if (resolvedIconStyle == AppIconStyle.MD3_STANDARD) {
-        SharedFloatingBottomBarIconStyle.MATERIAL
-    } else {
-        SharedFloatingBottomBarIconStyle.MIUIX
-    }
     val bottomBarVisibleItems = remember(
         visibleItems,
         homeSettings.isBottomBarSearchEnabled,
@@ -2259,7 +2223,6 @@ private fun MiuixBottomBar(
             containerColor = containerColor,
             tuning = tuning,
             glassEnabled = glassEnabled,
-            iconStyle = sharedBarIconStyle,
             haptic = haptic,
             hazeState = hazeState,
             motionTier = motionTier,
@@ -2347,11 +2310,7 @@ private fun MiuixBottomBar(
                     AppPlatformNavigationBarItem(
                         selected = currentItem == item,
                         onClick = onItemTap,
-                        icon = resolveSharedBottomBarIcon(
-                            item = item,
-                            selected = currentItem == item,
-                            iconStyle = sharedBarIconStyle
-                        ),
+                        icon = resolveHomeNavigationBarIcon(item = item),
                         label = itemLabel,
                         badge = reminderBadgeText?.let { badgeText ->
                             {
@@ -2365,11 +2324,7 @@ private fun MiuixBottomBar(
                     MiuixDockedBottomBarItem(
                         selected = currentItem == item,
                         onClick = onItemTap,
-                        icon = resolveSharedBottomBarIcon(
-                            item = item,
-                            selected = currentItem == item,
-                            iconStyle = sharedBarIconStyle
-                        ),
+                        icon = resolveHomeNavigationBarIcon(item = item),
                         label = itemLabel,
                         showIcon = showIcon,
                         showText = showText,
@@ -2394,7 +2349,7 @@ private fun MiuixBottomBar(
                             onClick = onToggleSidebar
                         )
                     },
-                    icon = resolveSharedBottomBarSidebarIcon(sharedBarIconStyle),
+                    icon = resolveMiuixPreferredHomeNavigationIcon(tabId = "PARTITION"),
                     label = sidebarLabel,
                     showIcon = showIcon,
                     showText = showText,
@@ -2568,7 +2523,6 @@ private fun BiliPaiFloatingBottomBar(
     containerColor: Color,
     tuning: AndroidNativeBottomBarTuning,
     glassEnabled: Boolean,
-    iconStyle: SharedFloatingBottomBarIconStyle = SharedFloatingBottomBarIconStyle.MATERIAL,
     haptic: (HapticType) -> Unit,
     hazeState: HazeState? = null,
     motionTier: MotionTier = MotionTier.Normal,
@@ -2607,11 +2561,7 @@ private fun BiliPaiFloatingBottomBar(
     val selectedIndex = visibleItems.indexOf(currentItem).coerceAtLeast(0)
     val isValidSelection = currentItem in visibleItems
     val baseSelectedColor = MaterialTheme.colorScheme.primary
-    val baseUnselectedColor = if (iconStyle == SharedFloatingBottomBarIconStyle.MATERIAL) {
-        MaterialTheme.colorScheme.onSurfaceVariant
-    } else {
-        MaterialTheme.colorScheme.onSurface
-    }
+    val baseUnselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
     val skinContentColors = resolveBottomBarSkinContentColors(
         selectedColor = baseSelectedColor,
         unselectedColor = baseUnselectedColor,
@@ -2876,7 +2826,6 @@ private fun BiliPaiFloatingBottomBar(
                                         selected = selected,
                                         showIcon = showIcon,
                                         showText = showText,
-                                        iconStyle = iconStyle,
                                         skinIconPath = skinIconPath,
                                         dynamicUnreadCount = dynamicUnreadCount,
                                         labelScrimColor = skinContentColors.labelScrimColor,
@@ -2898,7 +2847,6 @@ private fun BiliPaiFloatingBottomBar(
                                         selected = LocalFloatingBottomBarActiveContent.current,
                                         showIcon = showIcon,
                                         showText = showText,
-                                        iconStyle = iconStyle,
                                         skinIconPath = null,
                                         dynamicUnreadCount = 0,
                                         labelScrimColor = skinContentColors.labelScrimColor,
@@ -2964,17 +2912,7 @@ private fun BiliPaiFloatingBottomBar(
                                 )
                             } else {
                                 AppIcon(
-                                    imageVector = if (iconStyle == SharedFloatingBottomBarIconStyle.MIUIX) {
-                                        resolveHomeNavigationBarIcon(
-                                            item = BottomNavItem.HOME,
-                                            selected = currentItem == BottomNavItem.HOME
-                                        )
-                                    } else {
-                                        resolveMaterialBottomBarIcon(
-                                            item = BottomNavItem.HOME,
-                                            selected = currentItem == BottomNavItem.HOME
-                                        )
-                                    },
+                                    imageVector = resolveHomeNavigationBarIcon(item = BottomNavItem.HOME),
                                     contentDescription = null,
                                     tint = if (currentItem == BottomNavItem.HOME) {
                                         selectedColor
@@ -3039,7 +2977,6 @@ private fun BiliPaiFloatingBottomBar(
                     materialScrollProgress = 0f,
                     materialMotionProgress = 0f,
                     materialPressProgress = 0f,
-                    iconStyle = iconStyle
                 )
             }
         }
@@ -3057,7 +2994,6 @@ private fun ColumnScope.FloatingBottomBarTabVisual(
     selected: Boolean,
     showIcon: Boolean,
     showText: Boolean,
-    iconStyle: SharedFloatingBottomBarIconStyle,
     skinIconPath: String?,
     dynamicUnreadCount: Int,
     labelScrimColor: Color,
@@ -3070,7 +3006,6 @@ private fun ColumnScope.FloatingBottomBarTabVisual(
     } else {
         localColor
     }
-    val selectedAlpha = if (selected) 1f else 0f
 
     if (showIcon) {
         if (skinIconPath != null) {
@@ -3085,32 +3020,21 @@ private fun ColumnScope.FloatingBottomBarTabVisual(
             }
         } else if (item == null) {
             AppIcon(
-                imageVector = if (iconStyle == SharedFloatingBottomBarIconStyle.MIUIX) {
-                    resolveMiuixPreferredHomeNavigationIcon(tabId = "PARTITION")
-                } else {
-                    Icons.AutoMirrored.Outlined.MenuOpen
-                },
+                imageVector = resolveMiuixPreferredHomeNavigationIcon(tabId = "PARTITION"),
                 contentDescription = label,
                 tint = contentColor
             )
-        } else if (iconStyle == SharedFloatingBottomBarIconStyle.MIUIX) {
-            BottomBarBlendedMiuixIcon(
-                item = item,
-                unreadCount = dynamicUnreadCount,
-                selectedAlpha = selectedAlpha,
-                contentDescription = label,
-                contentColor = contentColor,
-                floatingCompactBadge = true
-            )
         } else {
-            BottomBarBlendedMaterialIcon(
-                item = item,
-                unreadCount = dynamicUnreadCount,
-                selectedAlpha = selectedAlpha,
-                contentDescription = label,
-                contentColor = contentColor,
-                floatingCompactBadge = true
-            )
+            BottomBarReminderBadgeAnchor(
+                badgeText = reminderBadgeText,
+                floatingCompact = true
+            ) {
+                AppIcon(
+                    imageVector = resolveHomeNavigationBarIcon(item = item),
+                    contentDescription = label,
+                    tint = contentColor
+                )
+            }
         }
     }
     if (showText) {
@@ -3285,8 +3209,7 @@ private fun BiliPaiBottomBarSearchSlot(
     isScrolling: Boolean,
     materialScrollProgress: Float,
     materialMotionProgress: Float,
-    materialPressProgress: Float,
-    iconStyle: SharedFloatingBottomBarIconStyle
+    materialPressProgress: Float
 ) {
     if (!visible) return
     Spacer(modifier = Modifier.width(launchAdjustedSearchGap))
@@ -3319,8 +3242,7 @@ private fun BiliPaiBottomBarSearchSlot(
             isScrolling = isScrolling,
             materialScrollProgress = materialScrollProgress,
             materialMotionProgress = materialMotionProgress,
-            materialPressProgress = materialPressProgress,
-            iconStyle = iconStyle
+            materialPressProgress = materialPressProgress
         )
     }
 }
@@ -3350,8 +3272,7 @@ private fun BiliPaiBottomBarSearchCapsule(
     isScrolling: Boolean,
     materialScrollProgress: Float,
     materialMotionProgress: Float,
-    materialPressProgress: Float,
-    iconStyle: SharedFloatingBottomBarIconStyle
+    materialPressProgress: Float
 ) {
     var searchLongPressHeld by remember { mutableStateOf(false) }
     val currentOnCompactClick by rememberUpdatedState(onCompactClick)
@@ -3444,8 +3365,7 @@ private fun BiliPaiBottomBarSearchCapsule(
             accentColor = accentColor,
             iconScale = iconScale,
             fieldAlpha = fieldAlpha,
-            interactive = true,
-            iconStyle = iconStyle
+            interactive = true
         )
         if (launchSearchFromExpandedBlankQuery) {
             Box(
@@ -3474,8 +3394,7 @@ private fun BiliPaiBottomBarSearchVisualContent(
     accentColor: Color,
     iconScale: Float,
     fieldAlpha: Float,
-    interactive: Boolean,
-    iconStyle: SharedFloatingBottomBarIconStyle
+    interactive: Boolean
 ) {
     Row(
         modifier = Modifier
@@ -3501,11 +3420,7 @@ private fun BiliPaiBottomBarSearchVisualContent(
             contentAlignment = Alignment.Center
         ) {
             AppIcon(
-                imageVector = if (iconStyle == SharedFloatingBottomBarIconStyle.MIUIX) {
-                    MiuixIcons.Search
-                } else {
-                    Icons.Outlined.Search
-                },
+                imageVector = MiuixIcons.Search,
                 contentDescription = "搜索",
                 tint = contentColor,
                 modifier = Modifier
@@ -3611,7 +3526,6 @@ private fun RowScope.AndroidNativeBottomBarItem(
     selectedColor: Color,
     unselectedColor: Color,
     contentColorOverride: Color? = null,
-    iconStyle: SharedFloatingBottomBarIconStyle,
     skinIconPath: String? = null,
     labelScrimColor: Color = Color.Transparent,
     labelScrimAlpha: Float = 0f,
@@ -3725,35 +3639,23 @@ private fun RowScope.AndroidNativeBottomBarItem(
                                     contentDescription = label
                                 )
                             }
-                            item == null && iconStyle == SharedFloatingBottomBarIconStyle.MIUIX -> {
+                            item == null -> {
                                 AppIcon(
                                     imageVector = resolveMiuixPreferredHomeNavigationIcon(tabId = "PARTITION"),
                                     contentDescription = label
                                 )
                             }
-                            item == null -> {
-                                AppIcon(
-                                    imageVector = Icons.AutoMirrored.Outlined.MenuOpen,
-                                    contentDescription = label
-                                )
-                            }
-                            iconStyle == SharedFloatingBottomBarIconStyle.MIUIX -> {
-                                BottomBarBlendedMiuixIcon(
-                                    item = item,
-                                    unreadCount = dynamicUnreadCount,
-                                    selectedAlpha = selectedIconAlpha,
-                                    contentDescription = label,
-                                    contentColor = contentColor
-                                )
-                            }
                             else -> {
-                                BottomBarBlendedMaterialIcon(
+                                BottomBarReminderBadgeAnchor(
                                     item = item,
-                                    unreadCount = dynamicUnreadCount,
-                                    selectedAlpha = selectedIconAlpha,
-                                    contentDescription = label,
-                                    contentColor = contentColor
-                                )
+                                    unreadCount = dynamicUnreadCount
+                                ) {
+                                    AppIcon(
+                                        imageVector = resolveHomeNavigationBarIcon(item = item),
+                                        contentDescription = label,
+                                        tint = contentColor
+                                    )
+                                }
                             }
                         }
                     }
@@ -3785,109 +3687,6 @@ private fun RowScope.AndroidNativeBottomBarItem(
                 )
             }
             }
-        }
-    }
-}
-
-internal fun resolveMaterialBottomBarIcon(
-    item: BottomNavItem,
-    selected: Boolean
-): ImageVector = when (item) {
-    BottomNavItem.HOME -> if (selected) Icons.Filled.Home else Icons.Outlined.Home
-    BottomNavItem.DYNAMIC -> if (selected) Icons.Filled.Notifications else Icons.Outlined.NotificationsNone
-    BottomNavItem.HISTORY -> if (selected) Icons.Filled.History else Icons.Outlined.History
-    BottomNavItem.PROFILE -> if (selected) Icons.Filled.Person else Icons.Outlined.Person
-    BottomNavItem.FAVORITE -> if (selected) Icons.Filled.CollectionsBookmark else Icons.Outlined.CollectionsBookmark
-    BottomNavItem.LIVE -> if (selected) Icons.Filled.LiveTv else Icons.Outlined.LiveTv
-    BottomNavItem.WATCHLATER -> if (selected) Icons.Filled.WatchLater else Icons.Outlined.WatchLater
-    BottomNavItem.SETTINGS -> if (selected) Icons.Filled.Settings else Icons.Outlined.Settings
-    BottomNavItem.PLUGINS -> if (selected) Icons.Filled.Extension else Icons.Outlined.Extension
-}
-
-@Composable
-internal fun resolveHomeNavigationBarIcon(
-    item: BottomNavItem,
-    selected: Boolean
-): ImageVector = resolveMiuixPreferredHomeNavigationIcon(
-    tabId = item.name,
-    selected = selected,
-)
-
-@Composable
-private fun resolveSharedBottomBarIcon(
-    item: BottomNavItem,
-    selected: Boolean,
-    iconStyle: SharedFloatingBottomBarIconStyle
-): ImageVector = when (iconStyle) {
-    SharedFloatingBottomBarIconStyle.MATERIAL -> resolveMaterialBottomBarIcon(item, selected)
-    SharedFloatingBottomBarIconStyle.MIUIX -> resolveHomeNavigationBarIcon(item, selected)
-}
-
-@Composable
-private fun resolveSharedBottomBarSidebarIcon(
-    iconStyle: SharedFloatingBottomBarIconStyle
-): ImageVector = when (iconStyle) {
-    SharedFloatingBottomBarIconStyle.MATERIAL -> Icons.AutoMirrored.Outlined.MenuOpen
-    SharedFloatingBottomBarIconStyle.MIUIX ->
-        resolveMiuixPreferredHomeNavigationIcon(tabId = "PARTITION")
-}
-
-@Composable
-private fun BottomBarBlendedMiuixIcon(
-    item: BottomNavItem,
-    unreadCount: Int = 0,
-    selectedAlpha: Float,
-    contentDescription: String?,
-    contentColor: Color,
-    floatingCompactBadge: Boolean = false
-) {
-    val clampedSelectedAlpha = selectedAlpha.coerceIn(0f, 1f)
-    CompositionLocalProvider(LocalContentColor provides contentColor) {
-        BottomBarReminderBadgeAnchor(
-            item = item,
-            unreadCount = unreadCount,
-            floatingCompact = floatingCompactBadge
-        ) {
-            AppIcon(
-                imageVector = resolveHomeNavigationBarIcon(item, selected = false),
-                contentDescription = contentDescription,
-                modifier = Modifier.alpha(1f - clampedSelectedAlpha)
-            )
-            AppIcon(
-                imageVector = resolveHomeNavigationBarIcon(item, selected = true),
-                contentDescription = null,
-                modifier = Modifier.alpha(clampedSelectedAlpha)
-            )
-        }
-    }
-}
-
-@Composable
-private fun BottomBarBlendedMaterialIcon(
-    item: BottomNavItem,
-    unreadCount: Int = 0,
-    selectedAlpha: Float,
-    contentDescription: String?,
-    contentColor: Color,
-    floatingCompactBadge: Boolean = false
-) {
-    val clampedSelectedAlpha = selectedAlpha.coerceIn(0f, 1f)
-    CompositionLocalProvider(LocalContentColor provides contentColor) {
-        BottomBarReminderBadgeAnchor(
-            item = item,
-            unreadCount = unreadCount,
-            floatingCompact = floatingCompactBadge
-        ) {
-            AppIcon(
-                imageVector = resolveMaterialBottomBarIcon(item, selected = false),
-                contentDescription = contentDescription,
-                modifier = Modifier.alpha(1f - clampedSelectedAlpha)
-            )
-            AppIcon(
-                imageVector = resolveMaterialBottomBarIcon(item, selected = true),
-                contentDescription = null,
-                modifier = Modifier.alpha(clampedSelectedAlpha)
-            )
         }
     }
 }
@@ -4135,3 +3934,12 @@ internal fun resolveIos26BottomIndicatorGrayColor(isDarkTheme: Boolean): Color {
         iOSSystemGray
     }
 }
+
+/**
+ * 底栏条目图标入口：选中/未选中使用同一 Miuix 字形，选中态由主题色与
+ * 移动胶囊指示器承载（Miuix 原生底栏契约），避免字形切换造成的视觉错位。
+ */
+@Composable
+internal fun resolveHomeNavigationBarIcon(
+    item: BottomNavItem,
+): ImageVector = resolveMiuixPreferredHomeNavigationIcon(tabId = item.name)

@@ -1,6 +1,5 @@
 package com.android.purebilibili.feature.settings
 
-import com.android.purebilibili.core.ui.AppIconStyle
 import com.android.purebilibili.core.ui.AppListItemStyle
 import com.android.purebilibili.core.ui.components.AppSegmentOption
 
@@ -13,14 +12,6 @@ internal fun resolveThemeModeSegmentOptions(
         AppSegmentOption(AppThemeMode.FOLLOW_SYSTEM, followSystemLabel),
         AppSegmentOption(AppThemeMode.LIGHT, lightLabel),
         AppSegmentOption(AppThemeMode.DARK, darkLabel)
-    )
-}
-
-internal fun resolveAppIconStyleOptions(): List<AppSegmentOption<AppIconStyle>> {
-    return listOf(
-        AppSegmentOption(AppIconStyle.AUTO, "跟随预设"),
-        AppSegmentOption(AppIconStyle.THEME_CONTAINER, "主题色容器"),
-        AppSegmentOption(AppIconStyle.MD3_STANDARD, "MD3 官方推荐")
     )
 }
 

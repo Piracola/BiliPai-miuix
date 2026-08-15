@@ -6,7 +6,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -54,6 +53,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -64,6 +64,7 @@ import com.android.purebilibili.core.ui.AppDialogAction
 import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.ui.ContainerLevel
+import com.android.purebilibili.core.ui.motion.AppMotionTokens
 import com.android.purebilibili.core.ui.components.AppCheckbox
 import com.android.purebilibili.core.ui.components.AppContentStateAction
 import com.android.purebilibili.core.ui.components.AppContentStatePresentation
@@ -338,14 +339,17 @@ private fun TimelineSection(
                     targetState = selectedDay,
                     transitionSpec = {
                         val direction = if (targetState >= initialState) 1 else -1
+                        // 日切过渡统一使用运动 token（lint：禁止字面 tween）。
+                        val timelineDaySlideSpec = AppMotionTokens.resolveStandardSpec<IntOffset>()
+                        val timelineDayFadeSpec = AppMotionTokens.resolveStandardSpec<Float>()
                         (
-                            slideInHorizontally(animationSpec = tween(220)) { width ->
+                            slideInHorizontally(animationSpec = timelineDaySlideSpec) { width ->
                                 direction * width / 4
-                            } + fadeIn(animationSpec = tween(180))
+                            } + fadeIn(animationSpec = timelineDayFadeSpec)
                         ).togetherWith(
-                            slideOutHorizontally(animationSpec = tween(180)) { width ->
+                            slideOutHorizontally(animationSpec = timelineDaySlideSpec) { width ->
                                 -direction * width / 4
-                            } + fadeOut(animationSpec = tween(140))
+                            } + fadeOut(animationSpec = timelineDayFadeSpec)
                         )
                     },
                     contentAlignment = Alignment.CenterStart,

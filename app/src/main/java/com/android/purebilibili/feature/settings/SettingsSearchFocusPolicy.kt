@@ -64,22 +64,36 @@ object SettingsSearchFocusController {
     }
 }
 
-internal fun resolveAppearanceSettingsScrollIndex(
-    focusId: String,
-    isTablet: Boolean
-): Int? {
-    return when (focusId) {
-        SettingsSearchFocusIds.APPEARANCE_THEME -> 0
-        SettingsSearchFocusIds.APPEARANCE_DISPLAY -> 2
-        SettingsSearchFocusIds.APPEARANCE_SPLASH -> 4
-        SettingsSearchFocusIds.APPEARANCE_PERSONALIZATION -> 6
-        SettingsSearchFocusIds.APPEARANCE_TABLET -> null
-        else -> null
-    }
+/**
+ * 外观页稳定行/组 key（LazyColumn item key）。
+ *
+ * 搜索定位只依赖这些稳定 key，与组顺序、条件项显隐和 840dp 双栏详情面板
+ * 无关——三个场景定位到同一语义目标。
+ */
+internal object AppearanceSettingsGroupKeys {
+    const val UI_AND_DARK = "appearance_group_ui_dark"
+    const val TEXT_AND_DISPLAY = "appearance_group_text_display"
+    const val SPLASH = "appearance_group_splash"
+    const val HOME_OVERVIEW = "appearance_group_home_overview"
 }
 
-internal fun resolveHomeSettingsScrollIndex(focusId: String): Int? = when (focusId) {
-    SettingsSearchFocusIds.HOME_OVERVIEW -> 0
+/**
+ * focusId → 外观页稳定组 key。
+ * 替代固定 LazyColumn 位置索引（不得维护硬编码索引表）；未知 focusId 返回 null（不定位）。
+ */
+internal fun resolveAppearanceSettingsFocusKey(focusId: String): String? = when (focusId) {
+    SettingsSearchFocusIds.APPEARANCE_THEME -> AppearanceSettingsGroupKeys.UI_AND_DARK
+    SettingsSearchFocusIds.APPEARANCE_DISPLAY -> AppearanceSettingsGroupKeys.TEXT_AND_DISPLAY
+    SettingsSearchFocusIds.APPEARANCE_SPLASH -> AppearanceSettingsGroupKeys.SPLASH
+    // 开屏与图标分组已随图标选择器删除，无对应 UI 组，不再定位。
+    SettingsSearchFocusIds.APPEARANCE_PERSONALIZATION -> null
+    SettingsSearchFocusIds.APPEARANCE_TABLET -> null
+    else -> null
+}
+
+/** focusId → 首页设置页稳定组 key（复用外观页组 key 体系）。 */
+internal fun resolveHomeSettingsFocusKey(focusId: String): String? = when (focusId) {
+    SettingsSearchFocusIds.HOME_OVERVIEW -> AppearanceSettingsGroupKeys.HOME_OVERVIEW
     else -> null
 }
 

@@ -144,8 +144,7 @@ class BottomBarMiuixPolicyTest {
         assertTrue(source.contains("resolveAndroidNativeBottomBarTuning("))
         assertTrue(source.contains("resolveAndroidNativeBottomBarContainerColor("))
         assertTrue(source.contains("BiliPaiFloatingBottomBar("))
-        assertTrue(source.contains("iconStyle = sharedBarIconStyle"))
-        assertTrue(source.contains("SharedFloatingBottomBarIconStyle.MATERIAL"))
+        assertTrue(source.contains("resolveHomeNavigationBarIcon("))
     }
 
     @Test

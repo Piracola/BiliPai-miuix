@@ -92,6 +92,9 @@ internal fun resolveMiuixPreferredHomeNavigationIconSource(
 
 /**
  * 首页底栏、侧栏和顶部分区的唯一图标入口。
+ *
+ * 选中/未选中使用同一字形，选中态由主题色与移动胶囊指示器承载
+ * （Miuix 原生底栏契约），避免字形切换造成的视觉错位。
  */
 @Composable
 internal fun resolveMiuixPreferredHomeNavigationIcon(
@@ -100,31 +103,24 @@ internal fun resolveMiuixPreferredHomeNavigationIcon(
 ): ImageVector {
     val role = resolveHomeNavigationIconRole(tabId)
     return when (resolveMiuixPreferredHomeNavigationIconSource(tabId)) {
-        HomeNavigationIconSource.MIUIX -> resolveMiuixHomeNavigationIcon(role, selected)
-        HomeNavigationIconSource.LOCAL_DYNAMIC -> ImageVector.vectorResource(
-            if (selected) R.drawable.ic_home_nav_dynamic_filled else R.drawable.ic_home_nav_dynamic
-        )
-        HomeNavigationIconSource.LOCAL_LIVE -> ImageVector.vectorResource(
-            if (selected) R.drawable.ic_home_nav_live_filled else R.drawable.ic_home_nav_live
-        )
-        HomeNavigationIconSource.LOCAL_GAME -> ImageVector.vectorResource(
-            if (selected) R.drawable.ic_home_nav_game_filled else R.drawable.ic_home_nav_game
-        )
+        HomeNavigationIconSource.MIUIX -> resolveMiuixHomeNavigationIcon(role)
+        HomeNavigationIconSource.LOCAL_DYNAMIC -> ImageVector.vectorResource(R.drawable.ic_home_nav_dynamic)
+        HomeNavigationIconSource.LOCAL_LIVE -> ImageVector.vectorResource(R.drawable.ic_home_nav_live)
+        HomeNavigationIconSource.LOCAL_GAME -> ImageVector.vectorResource(R.drawable.ic_home_nav_game)
     }
 }
 
 private fun resolveMiuixHomeNavigationIcon(
     role: HomeNavigationIconRole,
-    selected: Boolean,
 ): ImageVector = when (role) {
-    HomeNavigationIconRole.HOME -> if (selected) MiuixIcons.Medium.Home else MiuixIcons.Home
+    HomeNavigationIconRole.HOME -> MiuixIcons.Home
     HomeNavigationIconRole.HISTORY,
-    HomeNavigationIconRole.WATCH_LATER -> if (selected) MiuixIcons.Medium.WorldClock else MiuixIcons.WorldClock
-    HomeNavigationIconRole.FAVORITE -> if (selected) MiuixIcons.FavoritesFill else MiuixIcons.Favorites
-    HomeNavigationIconRole.SETTINGS -> if (selected) MiuixIcons.Medium.Settings else MiuixIcons.Settings
-    HomeNavigationIconRole.PARTITION -> if (selected) MiuixIcons.Medium.GridView else MiuixIcons.GridView
+    HomeNavigationIconRole.WATCH_LATER -> MiuixIcons.WorldClock
+    HomeNavigationIconRole.FAVORITE -> MiuixIcons.Favorites
+    HomeNavigationIconRole.SETTINGS -> MiuixIcons.Settings
+    HomeNavigationIconRole.PARTITION -> MiuixIcons.GridView
     HomeNavigationIconRole.PROFILE -> MiuixIcons.ContactsCircle
-    HomeNavigationIconRole.PLUGINS -> if (selected) MiuixIcons.FolderFill else MiuixIcons.Folder
+    HomeNavigationIconRole.PLUGINS -> MiuixIcons.Folder
     HomeNavigationIconRole.FOLLOW -> MiuixIcons.Contacts
     HomeNavigationIconRole.POPULAR -> MiuixIcons.TopDownloads
     HomeNavigationIconRole.ANIME -> MiuixIcons.Play

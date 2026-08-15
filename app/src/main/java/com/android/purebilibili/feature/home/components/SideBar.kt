@@ -217,7 +217,7 @@ private fun MiuixSideBar(
                 AppPlatformNavigationRailItem(
                     selected = isSelected,
                     onClick = onItemTap,
-                    icon = resolveHomeNavigationBarIcon(item, isSelected),
+                    icon = resolveHomeNavigationBarIcon(item),
                     label = itemLabel,
                     modifier = itemModifier
                 )
@@ -477,10 +477,7 @@ private fun FrostedSideBarContent(
                                 )
                             } else {
                                 AppIcon(
-                                    imageVector = resolveHomeNavigationBarIcon(
-                                        item = item,
-                                        selected = isSelected
-                                    ),
+                                    imageVector = resolveHomeNavigationBarIcon(item = item),
                                     contentDescription = itemLabel
                                 )
                             }

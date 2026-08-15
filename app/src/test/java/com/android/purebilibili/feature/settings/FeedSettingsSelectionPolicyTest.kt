@@ -35,15 +35,16 @@ class FeedSettingsSelectionPolicyTest {
     }
 
     @Test
-    fun `settings pages use flat preference groups`() {
+    fun `settings pages use miuix card groups from visual policy`() {
         val source = locate("src/main/java/com/android/purebilibili/feature/settings/ui/SettingsPageScaffold.kt")
             .readText()
 
         assertTrue(
             source.contains(
-                "LocalAppPreferenceGroupPresentation provides AppPreferenceGroupPresentation.FLAT"
+                "LocalAppPreferenceGroupPresentation provides visualPolicy.groupPresentation"
             )
         )
+        assertTrue(source.contains("resolveSettingsVisualPolicy()"))
     }
 
     private fun locate(path: String): File {

@@ -259,34 +259,24 @@ enum class AppTopTabPresentation {
 data class AppTopChromePolicy(
     val tabPresentation: AppTopTabPresentation,
     val iconFamily: AppSemanticIconFamily,
-    val iconStyle: AppIconStyle = AppIconStyle.AUTO,
     val compactChromeSpec: CompactCapsuleChromeSpec,
 ) {
-    /** MD3 官方推荐样式强制 Material 官方字形。 */
+    /** 图标字形固定为 MIUIX（主题色容器 / MD3 官方推荐已删除）。 */
     val effectiveIconFamily: AppSemanticIconFamily
-        get() = if (iconStyle == AppIconStyle.MD3_STANDARD) {
-            AppSemanticIconFamily.MATERIAL
-        } else {
-            iconFamily
-        }
+        get() = iconFamily
 }
 
-fun resolveAppTopChromePolicy(
-    iconStyle: AppIconStyle = AppIconStyle.AUTO,
-): AppTopChromePolicy = AppTopChromePolicy(
-    // Miuix liquid glass uses the same moving dock indicator contract as the
-    // Material renderer. TONAL_CAPSULE is the retired per-item filled capsule.
-    tabPresentation = AppTopTabPresentation.MATERIAL_UNDERLINE,
-    iconFamily = AppSemanticIconFamily.MATERIAL,
-    iconStyle = iconStyle,
+fun resolveAppTopChromePolicy(): AppTopChromePolicy = AppTopChromePolicy(
+    // Miuix 单主题：顶部 tab 走移动胶囊 dock（悬浮于信息流上方），图标固定 Miuix 字形。
+    tabPresentation = AppTopTabPresentation.MOVING_CAPSULE,
+    iconFamily = AppSemanticIconFamily.MIUIX,
     compactChromeSpec = resolveCompactCapsuleChromeSpec(),
 )
 
 @Composable
 fun rememberAppTopChromePolicy(): AppTopChromePolicy {
-    val iconStyle = rememberResolvedAppIconStyle()
-    return remember(iconStyle) {
-        resolveAppTopChromePolicy(iconStyle)
+    return remember {
+        resolveAppTopChromePolicy()
     }
 }
 

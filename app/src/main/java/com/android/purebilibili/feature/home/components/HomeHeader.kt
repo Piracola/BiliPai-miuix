@@ -1664,11 +1664,7 @@ fun HomeHeader(
         animationSpec = AppMotionTokens.standardSpec(),
         label = "tabContentAlpha"
     )
-    val effectiveContinuousSlabRenderMode = if (integratedCollapsedTopBar) {
-        topPanelChromeRenderMode
-    } else {
-        continuousSlabRenderMode
-    }
+    val effectiveContinuousSlabRenderMode = HomeTopChromeRenderMode.PLAIN
     val effectiveTopPanelChromeRenderMode = if (integratedCollapsedTopBar) {
         HomeTopChromeRenderMode.PLAIN
     } else {

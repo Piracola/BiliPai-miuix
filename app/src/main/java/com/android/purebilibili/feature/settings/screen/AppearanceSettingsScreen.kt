@@ -1,7 +1,6 @@
 @file:OptIn(androidx.compose.animation.ExperimentalAnimationApi::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 
 package com.android.purebilibili.feature.settings
-import com.android.purebilibili.core.ui.AppIconStyle
 import com.android.purebilibili.core.ui.AppListItemStyle
 import com.android.purebilibili.core.ui.components.AppIcon
 import com.android.purebilibili.core.ui.components.AppText
@@ -18,6 +17,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.animation.*
 import com.android.purebilibili.core.ui.AppAlertDialog
@@ -215,19 +215,19 @@ fun AppearanceSettingsContent(
     val configuration = LocalConfiguration.current
     val displayMetricsSnapshot = LocalDisplayMetricsSnapshot.current
     val isTablet = configuration.screenWidthDp >= 600 // Material Design 3 中型屏幕断点
-    LaunchedEffect(focusRequest?.token, isTablet) {
+    LaunchedEffect(focusRequest?.token) {
         val request = focusRequest ?: return@LaunchedEffect
         val expectedTarget = when (contentMode) {
             AppearanceSettingsContentMode.APPEARANCE -> SettingsSearchTarget.APPEARANCE
             AppearanceSettingsContentMode.HOME -> SettingsSearchTarget.HOME_FEED
         }
         if (request.target != expectedTarget) return@LaunchedEffect
-        val index = when (contentMode) {
+        val focusKey = when (contentMode) {
             AppearanceSettingsContentMode.APPEARANCE ->
-                resolveAppearanceSettingsScrollIndex(request.focusId, isTablet)
-            AppearanceSettingsContentMode.HOME -> resolveHomeSettingsScrollIndex(request.focusId)
+                resolveAppearanceSettingsFocusKey(request.focusId)
+            AppearanceSettingsContentMode.HOME -> resolveHomeSettingsFocusKey(request.focusId)
         } ?: return@LaunchedEffect
-        listState.animateScrollToItem(index)
+        listState.animateScrollToItemByKey(focusKey)
         SettingsSearchFocusController.clear(request.token)
     }
     val windowSizeClass = LocalWindowSizeClass.current
@@ -428,7 +428,7 @@ fun AppearanceSettingsContent(
         if (contentMode == AppearanceSettingsContentMode.APPEARANCE) {
 
         //  主题与颜色
-        item { 
+        item(key = AppearanceSettingsGroupKeys.UI_AND_DARK) { 
             Box(modifier = Modifier) {
                 AppPreferenceSectionTitle("显示模式")
             }
@@ -453,22 +453,8 @@ fun AppearanceSettingsContent(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         SettingsSingleChoicePreference(
-                            title = "图标样式",
-                            subtitle = "主题色容器：图标置于主题色圆角容器内；MD3 官方推荐：onSurfaceVariant 单色图标（全局生效）",
-                            options = resolveAppIconStyleOptions(),
-                            selectedValue = state.appIconStyle,
-                            onSelectionChange = { style ->
-                                viewModel.setAppIconStyle(style)
-                            }
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-                        AppPreferenceDivider()
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        SettingsSingleChoicePreference(
                             title = "列表条目样式",
-                            subtitle = "自定义条目：圆角图标容器；原生组件：各预设原生条目（MIUIX/MD3 均可选用）",
+                            subtitle = "自定义条目：圆角图标容器；原生组件：Miuix 原生条目",
                             options = resolveAppListItemStyleOptions(),
                             selectedValue = state.appListItemStyle,
                             onSelectionChange = { style ->
@@ -538,7 +524,7 @@ fun AppearanceSettingsContent(
             }
         }
 
-        item {
+        item(key = AppearanceSettingsGroupKeys.TEXT_AND_DISPLAY) {
             Box(modifier = Modifier) {
                 AppPreferenceSectionTitle("字体与密度")
             }
@@ -661,7 +647,7 @@ fun AppearanceSettingsContent(
         }
         
         //  启动画面
-        item { 
+        item(key = AppearanceSettingsGroupKeys.SPLASH) { 
             Box(modifier = Modifier) {
                 AppPreferenceSectionTitle("启动画面")
             }
@@ -863,7 +849,7 @@ fun AppearanceSettingsContent(
         
         if (contentMode == AppearanceSettingsContentMode.HOME) {
             //  首页与列表
-            item { 
+            item(key = AppearanceSettingsGroupKeys.HOME_OVERVIEW) { 
                 Box(modifier = Modifier) {
                     AppPreferenceSectionTitle("首页与列表")
                 }
@@ -1273,5 +1259,26 @@ internal fun resolveDisplayedAppDpiPercent(
         currentOverridePercent
     } else {
         DEFAULT_APP_DPI_OVERRIDE_PERCENT
+    }
+}
+
+private const val APPEARANCE_FOCUS_PROBE_PAGE_LIMIT = 64
+
+/**
+ * 按稳定 item key 定位滚动。搜索定位只依赖外观页组 key，与组顺序、
+ * 条件项显隐和 840dp 双栏详情面板无关（详情面板下 key 不变）。
+ */
+private suspend fun LazyListState.animateScrollToItemByKey(key: Any) {
+    scrollToItem(0)
+    repeat(APPEARANCE_FOCUS_PROBE_PAGE_LIMIT) {
+        val found = layoutInfo.visibleItemsInfo.firstOrNull { it.key == key }
+        if (found != null) {
+            animateScrollToItem(found.index)
+            return
+        }
+        val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull() ?: return
+        val lastIndex = layoutInfo.totalItemsCount - 1
+        if (lastVisible.index >= lastIndex) return
+        scrollToItem((lastVisible.index + 1).coerceAtMost(lastIndex))
     }
 }

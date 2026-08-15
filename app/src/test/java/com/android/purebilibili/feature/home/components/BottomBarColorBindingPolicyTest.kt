@@ -68,26 +68,14 @@ class BottomBarColorBindingPolicyTest {
     }
 
     @Test
-    fun `bottom bar selected icons use filled symbols`() {
+    fun `bottom bar selected state is carried by color not glyph pair`() {
         val source = File("src/main/java/com/android/purebilibili/feature/home/components/BottomBar.kt")
             .readText()
-        val selectedSymbols = listOf(
-            "House",
-            "Bell",
-            "PlayCircle",
-            "Clock",
-            "Person",
-            "Star",
-            "Video",
-            "Gearshape"
-        )
 
-        assertTrue(
-            selectedSymbols.all { symbol ->
-                source.contains("{ AppIcon(CupertinoIcons.Filled.$symbol, contentDescription = null) }")
-            },
-            "Bottom bar selected icons should use filled symbols so the whole selected icon is tinted by the theme color."
-        )
+        // 选中/未选中使用同一 Miuix 字形，选中态由内容色承载。
+        assertTrue(source.contains("internal fun resolveHomeNavigationBarIcon("))
+        assertFalse(source.contains("if (selected) Icons.Filled.Home else Icons.Outlined.Home"))
+        assertFalse(source.contains("CupertinoIcons"))
     }
 
     @Test
@@ -98,10 +86,12 @@ class BottomBarColorBindingPolicyTest {
             .substringAfter("WATCHLATER(")
             .substringBefore("    ),")
 
-        assertTrue(watchLaterBlock.contains("CupertinoIcons.Filled.Clock"))
-        assertTrue(watchLaterBlock.contains("CupertinoIcons.Outlined.Clock"))
         assertFalse(watchLaterBlock.contains("Bookmark"))
+        // 同字形 + 颜色承载选中态：选中切换主题色，不再用 filled/outlined 字形对。
         assertTrue(
+            source.contains("internal fun resolveHomeNavigationBarIcon(")
+        )
+        assertFalse(
             source.contains(
                 "BottomNavItem.WATCHLATER -> if (selected) Icons.Filled.WatchLater else Icons.Outlined.WatchLater"
             )

@@ -8,15 +8,28 @@ import kotlin.test.assertTrue
 class SettingsSearchFocusPolicyTest {
 
     @Test
-    fun appearanceFocusIndex_noLongerHostsTabletNavigationSection() {
+    fun appearanceFocusKey_mapsToStableGroupKeys() {
+        assertNull(resolveAppearanceSettingsFocusKey(SettingsSearchFocusIds.APPEARANCE_TABLET))
+        assertNull(resolveAppearanceSettingsFocusKey(SettingsSearchFocusIds.HOME_OVERVIEW))
         assertNull(
-            resolveAppearanceSettingsScrollIndex(
-                focusId = SettingsSearchFocusIds.APPEARANCE_TABLET,
-                isTablet = true
-            )
+            resolveAppearanceSettingsFocusKey(SettingsSearchFocusIds.APPEARANCE_PERSONALIZATION)
         )
-        assertNull(resolveAppearanceSettingsScrollIndex(SettingsSearchFocusIds.HOME_OVERVIEW, isTablet = true))
-        assertEquals(0, resolveHomeSettingsScrollIndex(SettingsSearchFocusIds.HOME_OVERVIEW))
+        assertEquals(
+            AppearanceSettingsGroupKeys.UI_AND_DARK,
+            resolveAppearanceSettingsFocusKey(SettingsSearchFocusIds.APPEARANCE_THEME)
+        )
+        assertEquals(
+            AppearanceSettingsGroupKeys.TEXT_AND_DISPLAY,
+            resolveAppearanceSettingsFocusKey(SettingsSearchFocusIds.APPEARANCE_DISPLAY)
+        )
+        assertEquals(
+            AppearanceSettingsGroupKeys.SPLASH,
+            resolveAppearanceSettingsFocusKey(SettingsSearchFocusIds.APPEARANCE_SPLASH)
+        )
+        assertEquals(
+            AppearanceSettingsGroupKeys.HOME_OVERVIEW,
+            resolveHomeSettingsFocusKey(SettingsSearchFocusIds.HOME_OVERVIEW)
+        )
     }
 
     @Test

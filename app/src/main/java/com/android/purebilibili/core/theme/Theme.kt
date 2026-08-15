@@ -18,11 +18,8 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
-import com.android.purebilibili.core.ui.AppIconStyle
 import com.android.purebilibili.core.ui.AppListItemStyle
-import com.android.purebilibili.core.ui.LocalAppIconStyle
 import com.android.purebilibili.core.ui.LocalAppListItemStyle
-import com.android.purebilibili.core.ui.resolveAppIconStyle
 import com.android.purebilibili.core.ui.resolveAppListItemStyle
 import com.android.purebilibili.feature.settings.AppThemeMode
 import top.yukonga.miuix.kmp.theme.ColorSchemeMode
@@ -276,7 +273,6 @@ fun PureBiliBiliTheme(
     amoledDarkTheme: Boolean = false,
     fontSizePreset: AppFontSizePreset = AppFontSizePreset.DEFAULT,
     appFontFileName: String = "",
-    appIconStyle: AppIconStyle = AppIconStyle.AUTO,
     appListItemStyle: AppListItemStyle = AppListItemStyle.AUTO,
     content: @Composable () -> Unit
 ) {
@@ -363,9 +359,6 @@ fun PureBiliBiliTheme(
     }
 
     CompositionLocalProvider(
-        LocalAppIconStyle provides resolveAppIconStyle(
-            iconStyle = appIconStyle
-        ),
         LocalAppListItemStyle provides resolveAppListItemStyle(
             style = appListItemStyle
         ),

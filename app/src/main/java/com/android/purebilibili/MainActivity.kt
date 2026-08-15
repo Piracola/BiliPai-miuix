@@ -1208,7 +1208,6 @@ open class MainActivity : AppCompatActivity() {
                 amoledDarkTheme = useAmoledDarkTheme,
                 fontSizePreset = appFontSizePreset,
                 appFontFileName = appFontFileName,
-                appIconStyle = appThemeSettings.appIconStyle,
                 appListItemStyle = appThemeSettings.appListItemStyle,
             ) {
                 ProvideAppThemeConfig(config = appThemeConfig) {

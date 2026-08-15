@@ -30,42 +30,45 @@ class HomeNavigationMiuixStructureTest {
     }
 
     @Test
-    fun `bottom bar keeps Material pairs only for explicit MD3 style`() {
+    fun `bottom bar renders a single Miuix glyph tinted by selection state`() {
         val source = sourceText("BottomBar.kt")
 
         assertTrue(source.contains("enum class BottomNavItem"))
-        assertTrue(source.contains("internal fun resolveMaterialBottomBarIcon("))
-        assertTrue(source.contains("if (selected) Icons.Filled.Home else Icons.Outlined.Home"))
+        // 选中/未选中使用同一字形，颜色由内容色承载（Miuix 原生契约）。
+        assertTrue(source.contains("internal fun resolveHomeNavigationBarIcon("))
+        assertFalse(source.contains("resolveMaterialBottomBarIcon("))
+        assertFalse(source.contains("SharedFloatingBottomBarIconStyle"))
+        assertFalse(source.contains("BottomBarBlendedMiuixIcon("))
+        assertFalse(source.contains("BottomBarBlendedMaterialIcon("))
         assertFalse(source.contains("CupertinoIcons"))
-        assertFalse(source.contains("val selectedIcon:"))
-        assertFalse(source.contains("val unselectedIcon:"))
     }
 
     @Test
-    fun `miuix auto floating bottom bar uses native Miuix icon pairs`() {
+    fun `miuix floating bottom bar uses single Miuix glyphs with color states`() {
         val source = sourceText("BottomBar.kt")
         val floatingSource = sourceText("FloatingBottomBar.kt")
         val iconPolicySource = sourceText("HomeNavigationIconPolicy.kt")
 
-        assertTrue(source.contains("SharedFloatingBottomBarIconStyle.MIUIX"))
-        assertTrue(source.contains("BottomBarBlendedMiuixIcon("))
-        assertTrue(source.contains("resolveHomeNavigationBarIcon(item, selected = false)"))
-        assertTrue(source.contains("resolveHomeNavigationBarIcon(item, selected = true)"))
-        assertTrue(source.contains("resolveMiuixPreferredHomeNavigationIcon(tabId = \"PARTITION\")"))
-        assertFalse(source.contains("SharedFloatingBottomBarIconStyle.CUPERTINO"))
-        assertFalse(source.contains("BottomBarBlendedCupertinoIcon("))
-        assertTrue(source.contains("LocalFloatingBottomBarActiveContent.current"))
-        assertTrue(source.contains("MiuixIcons.Search"))
         assertTrue(source.contains("resolveHomeNavigationBarIcon("))
+        assertTrue(source.contains("resolveMiuixPreferredHomeNavigationIcon(tabId = \"PARTITION\")"))
+        assertTrue(source.contains("MiuixIcons.Search"))
+        assertTrue(source.contains("LocalFloatingBottomBarActiveContent.current"))
+        assertFalse(source.contains("SharedFloatingBottomBarIconStyle"))
+        assertFalse(source.contains("CupertinoIcons"))
+        assertFalse(source.contains("BottomBarBlendedCupertinoIcon("))
         assertTrue(floatingSource.contains("LocalFloatingBottomBarActiveContent provides true"))
+        // 同字形：Miuix 分支不再按 selected 切换 Medium 变体。
         assertTrue(
             iconPolicySource.contains(
-                "HomeNavigationIconRole.PLUGINS -> if (selected) MiuixIcons.FolderFill else MiuixIcons.Folder"
+                "HomeNavigationIconRole.HOME -> MiuixIcons.Home"
             )
         )
-        assertTrue(iconPolicySource.contains("R.drawable.ic_home_nav_dynamic_filled"))
-        assertTrue(iconPolicySource.contains("R.drawable.ic_home_nav_live_filled"))
-        assertTrue(iconPolicySource.contains("R.drawable.ic_home_nav_game_filled"))
+        assertTrue(iconPolicySource.contains("R.drawable.ic_home_nav_dynamic"))
+        assertTrue(iconPolicySource.contains("R.drawable.ic_home_nav_live"))
+        assertTrue(iconPolicySource.contains("R.drawable.ic_home_nav_game"))
+        assertFalse(iconPolicySource.contains("ic_home_nav_dynamic_filled"))
+        assertFalse(iconPolicySource.contains("ic_home_nav_live_filled"))
+        assertFalse(iconPolicySource.contains("ic_home_nav_game_filled"))
     }
 
     @Test

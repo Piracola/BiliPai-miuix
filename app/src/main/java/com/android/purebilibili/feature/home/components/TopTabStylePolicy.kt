@@ -148,10 +148,10 @@ internal fun resolveHomeTopPresetStyle(
                     )
                 ),
                 panel = HomeTopPanelStyle(
-                    useUnified = true,
+                    useUnified = false,
                     showDivider = false,
                     horizontalPadding = 0.dp,
-                    innerPadding = 6.dp,
+                    innerPadding = 3.dp,
                     cornerRadius = 32.dp,
                     reservedContentBottomGap = 5.dp
                 ),
@@ -159,8 +159,8 @@ internal fun resolveHomeTopPresetStyle(
                     edgeControlGap = 6.dp,
                     // Align the category strip with the avatar/search/settings row.
                     embeddedTabHorizontalPadding = 14.dp,
-                    searchToTabs = 6.dp,
-                    tabsToContent = 6.dp,
+                    searchToTabs = 4.dp,
+                    tabsToContent = 4.dp,
                     searchCollapseExtra = 0.dp,
                     continuousSlabOverlap = 0.dp
                 ),

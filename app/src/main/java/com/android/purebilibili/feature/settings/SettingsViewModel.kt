@@ -12,7 +12,6 @@ import com.android.purebilibili.core.store.BottomBarSearchLayoutMode
 import com.android.purebilibili.core.store.HomeFeedCardWidthPreset
 import com.android.purebilibili.core.theme.AppFontSizePreset
 import com.android.purebilibili.core.theme.AppUiScalePreset
-import com.android.purebilibili.core.ui.AppIconStyle
 import com.android.purebilibili.core.ui.AppListItemStyle
 import com.android.purebilibili.core.ui.blur.BlurIntensity
 import com.android.purebilibili.core.ui.transition.VIDEO_SHARED_TRANSITION_CUSTOM_DEFAULT_MILLIS
@@ -57,7 +56,6 @@ data class SettingsUiState(
     val appDpiOverridePercent: Int = 0,
     val bgPlay: Boolean = false,
     val gestureSensitivity: Float = 1.0f,
-    val appIconStyle: AppIconStyle = AppIconStyle.AUTO,
     val appListItemStyle: AppListItemStyle = AppListItemStyle.AUTO,
     val isBottomBarFloating: Boolean = true,
     val bottomBarLabelMode: Int = 1,  // 0=图标+文字, 1=仅图标, 2=仅文字
@@ -111,7 +109,6 @@ private data class CoreSettings(
 
 data class ExtraSettings(
     val gestureSensitivity: Float,
-    val appIconStyle: AppIconStyle,
     val appListItemStyle: AppListItemStyle,
     val appFontSizePreset: AppFontSizePreset,
     val appFontFileName: String,
@@ -165,7 +162,6 @@ private data class BaseSettings(
     val appDpiOverridePercent: Int,
     val bgPlay: Boolean,
     val gestureSensitivity: Float,
-    val appIconStyle: AppIconStyle,
     val appListItemStyle: AppListItemStyle,
     val isBottomBarFloating: Boolean,
     val bottomBarLabelMode: Int,
@@ -202,7 +198,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     private data class UiSettingsGroup1(
         val gestureSensitivity: Float,
-        val appIconStyle: AppIconStyle,
         val appListItemStyle: AppListItemStyle,
         val appFontSizePreset: AppFontSizePreset,
         val appFontFileName: String,
@@ -240,7 +235,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     // 第 2 步：合并界面设置 (分两组，每组最多5个)
     private val uiSettingsFlow1 = combine(
         SettingsManager.getGestureSensitivity(context).asAnyFlow(),
-        SettingsManager.getAppIconStyle(context).asAnyFlow(),
         SettingsManager.getAppListItemStyle(context).asAnyFlow(),
         SettingsManager.getAppFontSizePreset(context).asAnyFlow(),
         SettingsManager.getAppFontFileName(context).asAnyFlow(),
@@ -250,13 +244,12 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     ) { values ->
         UiSettingsGroup1(
             gestureSensitivity = values[0] as Float,
-            appIconStyle = values[1] as AppIconStyle,
-            appListItemStyle = values[2] as AppListItemStyle,
-            appFontSizePreset = values[3] as AppFontSizePreset,
-            appFontFileName = values[4] as String,
-            appFontDisplayName = values[5] as String,
-            appUiScalePreset = values[6] as AppUiScalePreset,
-            appDpiOverridePercent = values[7] as Int
+            appListItemStyle = values[1] as AppListItemStyle,
+            appFontSizePreset = values[2] as AppFontSizePreset,
+            appFontFileName = values[3] as String,
+            appFontDisplayName = values[4] as String,
+            appUiScalePreset = values[5] as AppUiScalePreset,
+            appDpiOverridePercent = values[6] as Int
         )
     }
     
@@ -338,7 +331,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         // ui2: Ui2 class
         ExtraSettings(
             gestureSensitivity = ui1.gestureSensitivity,
-            appIconStyle = ui1.appIconStyle,
             appListItemStyle = ui1.appListItemStyle,
             appFontSizePreset = ui1.appFontSizePreset,
             appFontFileName = ui1.appFontFileName,
@@ -418,7 +410,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             appDpiOverridePercent = extra.appDpiOverridePercent,
             bgPlay = core.bgPlay,
             gestureSensitivity = extra.gestureSensitivity,
-            appIconStyle = extra.appIconStyle,
             appListItemStyle = extra.appListItemStyle,
             isBottomBarFloating = extra.isBottomBarFloating,
             bottomBarLabelMode = extra.bottomBarLabelMode,
@@ -467,7 +458,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             appDpiOverridePercent = settings.appDpiOverridePercent,
             bgPlay = settings.bgPlay,
             gestureSensitivity = settings.gestureSensitivity,
-            appIconStyle = settings.appIconStyle,
             appListItemStyle = settings.appListItemStyle,
             isBottomBarFloating = settings.isBottomBarFloating,
             bottomBarLabelMode = settings.bottomBarLabelMode,
@@ -594,11 +584,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun setAppLanguage(appLanguage: AppLanguage) {
         viewModelScope.launch {
             SettingsManager.setAppLanguage(context, appLanguage)
-        }
-    }
-    fun setAppIconStyle(iconStyle: AppIconStyle) {
-        viewModelScope.launch {
-            SettingsManager.setAppIconStyle(context, iconStyle)
         }
     }
     fun setAppListItemStyle(style: AppListItemStyle) {

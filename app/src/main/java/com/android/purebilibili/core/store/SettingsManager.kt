@@ -11,10 +11,8 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import com.android.purebilibili.core.ui.AppIconStyle
 import com.android.purebilibili.core.ui.AppListItemStyle
 import com.android.purebilibili.core.ui.components.AppSingleChoicePresentation
-import com.android.purebilibili.core.ui.resolveAppIconStylePreference
 import com.android.purebilibili.core.ui.resolveAppListItemStylePreference
 import com.android.purebilibili.core.ui.blur.BlurIntensity
 import com.android.purebilibili.core.ui.transition.VIDEO_SHARED_TRANSITION_CUSTOM_DEFAULT_MILLIS
@@ -397,7 +395,6 @@ data class AppThemeSettings(
         AppScreenshotGestureMode.TOP_RIGHT_TWO_FINGER_LONG_PRESS,
     val appScreenshotCaptureMode: AppScreenshotCaptureMode =
         AppScreenshotCaptureMode.FULL_WINDOW,
-    val appIconStyle: AppIconStyle = AppIconStyle.AUTO,
     val appListItemStyle: AppListItemStyle = AppListItemStyle.AUTO,
     val singleChoicePresentation: AppSingleChoicePresentation =
         AppSingleChoicePresentation.WINDOW_POPUP,
@@ -971,7 +968,6 @@ object SettingsManager {
     private val KEY_APP_FONT_DISPLAY_NAME = stringPreferencesKey("app_font_display_name")
     private val KEY_APP_UI_SCALE_PRESET = intPreferencesKey("app_ui_scale_preset")
     private val KEY_APP_DPI_OVERRIDE_PERCENT = intPreferencesKey("app_dpi_override_percent")
-    private val KEY_APP_ICON_STYLE = stringPreferencesKey("app_icon_style")
     private val KEY_APP_LIST_ITEM_STYLE = stringPreferencesKey("app_list_item_style")
     //  [新增] 底部栏样式 (true=悬浮, false=贴底)
     private val KEY_BOTTOM_BAR_FLOATING = booleanPreferencesKey("bottom_bar_floating")
@@ -1593,7 +1589,6 @@ object SettingsManager {
             singleChoicePresentation = AppSingleChoicePresentation.fromStorageValue(
                 preferences[KEY_SINGLE_CHOICE_PRESENTATION]
             ),
-            appIconStyle = resolveAppIconStylePreference(preferences[KEY_APP_ICON_STYLE]),
             appListItemStyle = resolveAppListItemStylePreference(preferences[KEY_APP_LIST_ITEM_STYLE])
         )
     }
@@ -1670,14 +1665,6 @@ object SettingsManager {
         )
     }
 
-    suspend fun setAppIconStyle(context: Context, style: AppIconStyle) {
-        editSettingsAndCommitPrefs(
-            context, "theme_cache",
-            editSettings = { this[KEY_APP_ICON_STYLE] = style.name },
-            editPrefs = { putString("app_icon_style", style.name) },
-        )
-    }
-
     suspend fun setAppListItemStyle(context: Context, style: AppListItemStyle) {
         editSettingsAndCommitPrefs(
             context, "theme_cache",
@@ -1700,11 +1687,6 @@ object SettingsManager {
             .getInt("app_language", AppLanguage.FOLLOW_SYSTEM.value)
         return resolveAppLanguagePreference(rawValue)
     }
-
-    fun getAppIconStyle(context: Context): Flow<AppIconStyle> =
-        context.settingsDataStore.data.map { preferences ->
-            resolveAppIconStylePreference(preferences[KEY_APP_ICON_STYLE])
-        }
 
     fun getAppListItemStyle(context: Context): Flow<AppListItemStyle> =
         context.settingsDataStore.data.map { preferences ->
@@ -5837,7 +5819,6 @@ object SettingsManager {
                 KEY_SINGLE_CHOICE_PRESENTATION,
                 SettingsShareSection.APPEARANCE,
             ),
-            StringShareablePreferenceDefinition(KEY_APP_ICON_STYLE, SettingsShareSection.APPEARANCE),
             StringShareablePreferenceDefinition(KEY_APP_LIST_ITEM_STYLE, SettingsShareSection.APPEARANCE),
             BooleanShareablePreferenceDefinition(KEY_BOTTOM_BAR_FLOATING, SettingsShareSection.APPEARANCE),
             IntShareablePreferenceDefinition(KEY_BOTTOM_BAR_LABEL_MODE, SettingsShareSection.APPEARANCE),

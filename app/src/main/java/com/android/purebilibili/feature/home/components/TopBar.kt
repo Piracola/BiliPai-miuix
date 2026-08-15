@@ -82,7 +82,6 @@ import androidx.compose.ui.util.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.android.purebilibili.core.ui.AppIconStyle
 import com.android.purebilibili.core.ui.AppSemanticIconFamily
 import com.android.purebilibili.core.ui.AppTopTabPresentation
 import com.android.purebilibili.core.ui.rememberAppTopChromePolicy
@@ -443,12 +442,9 @@ internal fun shouldShowTopTabText(mode: Int): Boolean {
 internal fun resolveTopTabIconFamily(
     chromeIconFamily: AppSemanticIconFamily,
     useBottomBarMatchedChrome: Boolean,
-    iconStyle: AppIconStyle = AppIconStyle.AUTO
 ): AppSemanticIconFamily {
     return when {
-        // MD3 官方推荐样式统一使用 Material 官方字形
-        iconStyle == AppIconStyle.MD3_STANDARD -> AppSemanticIconFamily.MATERIAL
-        useBottomBarMatchedChrome -> AppSemanticIconFamily.MATERIAL
+        useBottomBarMatchedChrome -> chromeIconFamily
         else -> chromeIconFamily
     }
 }
@@ -899,7 +895,6 @@ private fun LightweightHomeTopTabs(
     val topTabIconFamily = resolveTopTabIconFamily(
         chromeIconFamily = chromePolicy.effectiveIconFamily,
         useBottomBarMatchedChrome = isFloatingStyle || hasOuterChromeSurface,
-        iconStyle = chromePolicy.iconStyle
     )
     val showIcon = shouldShowTopTabIcon(normalizedLabelMode)
     val showText = shouldShowTopTabText(normalizedLabelMode)
