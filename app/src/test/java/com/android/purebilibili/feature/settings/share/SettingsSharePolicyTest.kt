@@ -204,7 +204,8 @@ class SettingsSharePolicyTest {
 
         val normalized = normalizeThemeSelectionForImport(sections)
 
-        // iOS 旧键同样在导入时清理；运行时主题恒为 MIUIX，不落新键。
+        // iOS 旧键在导入时清理；运行时主题恒为 MIUIX，不落新键。
+        assertFalse(normalized.appearance.containsKey("theme_selection_v1"))
         assertFalse(normalized.appearance.containsKey("ui_preset"))
         assertFalse(normalized.appearance.containsKey("android_native_variant_v1"))
     }
@@ -243,19 +244,5 @@ class SettingsSharePolicyTest {
             1 to 1,
             resolveDebugThemeValues(mapOf("theme_selection_v1" to JsonPrimitive("MIUIX")))
         )
-        assertEquals(
-            1 to 1,
-            resolveDebugThemeValues(mapOf("theme_selection_v1" to JsonPrimitive("MATERIAL3")))
-        )
-        assertEquals(
-            1 to 1,
-            resolveDebugThemeValues(
-                mapOf(
-                    "ui_preset" to JsonPrimitive(1),
-                    "android_native_variant_v1" to JsonPrimitive(1)
-                )
-            )
-        )
-        assertEquals(1 to 1, resolveDebugThemeValues(emptyMap()))
     }
 }

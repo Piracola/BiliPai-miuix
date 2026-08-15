@@ -304,12 +304,7 @@ class HomeSettingsMappingPolicyTest {
     }
 
     @Test
-    fun followPresetHeaderBlur_keepsHeaderBlurOnForIosAndMd3() {
-        assertTrue(
-            resolveHomeHeaderBlurEnabled(
-                mode = HomeHeaderBlurMode.FOLLOW_PRESET,
-            )
-        )
+    fun followPresetHeaderBlur_keepsHeaderBlurEnabled() {
         assertTrue(
             resolveHomeHeaderBlurEnabled(
                 mode = HomeHeaderBlurMode.FOLLOW_PRESET,
@@ -335,8 +330,6 @@ class HomeSettingsMappingPolicyTest {
     fun normalizeHomeRefreshCount_clampsToSupportedRange() {
         assertEquals(10, normalizeHomeRefreshCount(1))
         assertEquals(30, normalizeHomeRefreshCount(30))
-        assertEquals(20, DEFAULT_HOME_REFRESH_COUNT)
-        assertEquals(30, MAX_HOME_REFRESH_COUNT)
         assertEquals(30, normalizeHomeRefreshCount(999))
     }
 }

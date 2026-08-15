@@ -67,7 +67,6 @@
     <string name="dynamic_detail_load_failed">Failed to load dynamic detail</string>
     <string name="bottom_nav_home">Recommend</string>
     <string name="bottom_nav_dynamic">Dynamic</string>
-    <string name="bottom_nav_story">Shorts</string>
     <string name="bottom_nav_history">History</string>
     <string name="bottom_nav_history_desc">History</string>
     <string name="bottom_nav_profile">Me</string>

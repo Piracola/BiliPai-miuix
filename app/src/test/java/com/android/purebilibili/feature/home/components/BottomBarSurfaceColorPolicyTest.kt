@@ -443,36 +443,6 @@ class BottomBarSurfaceColorPolicyTest {
     }
 
     @Test
-    fun `ios26 idle glass indicator uses same BiliPai overlay in dark mode`() {
-        val tunedDark = resolveBottomBarIdleIndicatorSurfaceColor(
-            darkTheme = true
-        )
-        val ios26Dark = resolveBottomBarIdleIndicatorSurfaceColor(
-            darkTheme = true
-        )
-
-        assertEquals(tunedDark.red, ios26Dark.red, 0.001f)
-        assertEquals(tunedDark.green, ios26Dark.green, 0.001f)
-        assertEquals(tunedDark.blue, ios26Dark.blue, 0.001f)
-        assertEquals(tunedDark.alpha, ios26Dark.alpha, 0.001f)
-    }
-
-    @Test
-    fun `ios26 idle glass indicator keeps BiliPai low alpha overlay in light mode`() {
-        val tunedLight = resolveBottomBarIdleIndicatorSurfaceColor(
-            darkTheme = false
-        )
-        val ios26Light = resolveBottomBarIdleIndicatorSurfaceColor(
-            darkTheme = false
-        )
-
-        assertEquals(tunedLight.red, ios26Light.red, 0.001f)
-        assertEquals(tunedLight.green, ios26Light.green, 0.001f)
-        assertEquals(tunedLight.blue, ios26Light.blue, 0.001f)
-        assertEquals(tunedLight.alpha, ios26Light.alpha, 0.001f)
-    }
-
-    @Test
     fun `moving floating bottom bar staggers shell and indicator refraction offsets`() {
         val profile = resolveBottomBarRefractionMotionProfile(
             position = 1.35f,
