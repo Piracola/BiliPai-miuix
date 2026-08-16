@@ -1,5 +1,7 @@
 package com.android.purebilibili.feature.video.ui.components
 
+import com.android.purebilibili.core.store.collection.CollectionSortMode
+
 import com.android.purebilibili.data.model.response.UgcEpisode
 import com.android.purebilibili.data.model.response.UgcEpisodeArc
 import com.android.purebilibili.data.model.response.UgcSeason

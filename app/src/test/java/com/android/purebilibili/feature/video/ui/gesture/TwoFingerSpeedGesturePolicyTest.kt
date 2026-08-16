@@ -1,5 +1,9 @@
 package com.android.purebilibili.feature.video.ui.gesture
 
+import com.android.purebilibili.core.store.gesture.TwoFingerSpeedToggleState
+import com.android.purebilibili.core.store.gesture.applyVerticalTwoFingerSpeedToggle
+import com.android.purebilibili.core.store.gesture.applyHorizontalTwoFingerSpeedToggle
+
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

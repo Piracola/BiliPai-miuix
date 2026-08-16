@@ -1,28 +1,13 @@
 package com.android.purebilibili.feature.screenshot
 
+import com.android.purebilibili.core.screenshot.AppScreenshotGestureMode
+
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
 private const val DEFAULT_MIN_SELECTION_SIZE_PX = 24f
 
-enum class AppScreenshotCaptureMode(val value: Int, val label: String, val description: String) {
-    FULL_WINDOW(
-        value = 0,
-        label = "全屏",
-        description = "直接保存当前 BiliPai 窗口"
-    ),
-    SELECT_REGION(
-        value = 1,
-        label = "手选区域",
-        description = "先冻结预览，再拖拽选择保存区域"
-    );
-
-    companion object {
-        fun fromValue(value: Int): AppScreenshotCaptureMode =
-            entries.find { it.value == value } ?: FULL_WINDOW
-    }
-}
 
 data class AppScreenshotPoint(
     val x: Float,

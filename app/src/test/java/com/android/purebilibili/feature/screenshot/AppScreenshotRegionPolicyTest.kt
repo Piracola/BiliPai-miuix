@@ -1,5 +1,8 @@
 package com.android.purebilibili.feature.screenshot
 
+import com.android.purebilibili.core.screenshot.AppScreenshotCaptureMode
+import com.android.purebilibili.core.screenshot.AppScreenshotGestureMode
+
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

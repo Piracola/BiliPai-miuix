@@ -1,4 +1,4 @@
-package com.android.purebilibili.feature.settings.share
+package com.android.purebilibili.core.store.settingsshare
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement

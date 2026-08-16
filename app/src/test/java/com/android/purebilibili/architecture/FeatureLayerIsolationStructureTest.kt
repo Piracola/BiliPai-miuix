@@ -112,8 +112,10 @@ class FeatureLayerIsolationStructureTest {
             "article" to 1,
         )
 
+        // 82 → 81：阶段 6 前置下沉（ArticleContentBlockParser→core/article 等）
+        // 使跨 feature 引用集合变化，重算快照。
         val SNAPSHOT_SHA256 =
-            "7045586594e8efdc3e0a75e72d11cd83569943fceb56612987f90492ebe124c9"
+            "a5abb56914d62d200b4d55451b7d92ce2e66729ad7136eae4932cf9d74be1803"
 
         val cachedFeature: List<File> by lazy {
             val roots = listOf(

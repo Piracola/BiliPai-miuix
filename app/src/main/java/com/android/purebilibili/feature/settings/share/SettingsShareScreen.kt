@@ -1,5 +1,16 @@
 package com.android.purebilibili.feature.settings.share
 
+import com.android.purebilibili.core.store.settingsshare.SettingsShareApplyResult
+import com.android.purebilibili.core.store.settingsshare.SettingsShareEntryDefinition
+import com.android.purebilibili.core.store.settingsshare.SettingsShareSection
+import com.android.purebilibili.core.store.settingsshare.SettingsShareProfile
+import com.android.purebilibili.core.store.settingsshare.SettingsShareSections
+import com.android.purebilibili.core.store.settingsshare.SettingsShareImportPreview
+import com.android.purebilibili.core.store.settingsshare.SettingsShareImportSession
+import com.android.purebilibili.core.store.settingsshare.SettingsShareExportArtifact
+import com.android.purebilibili.core.store.settingsshare.SETTINGS_SHARE_SCHEMA_VERSION
+import com.android.purebilibili.core.store.settingsshare.SettingsShareDeviceDebugInfo
+
 import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult

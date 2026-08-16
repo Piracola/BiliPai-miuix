@@ -64,8 +64,8 @@ import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.util.LocalWindowSizeClass
 import com.android.purebilibili.feature.settings.ui.SettingsPageScaffold
 import com.android.purebilibili.core.store.TokenManager
-import com.android.purebilibili.feature.screenshot.AppScreenshotCaptureMode
-import com.android.purebilibili.feature.screenshot.AppScreenshotGestureMode
+import com.android.purebilibili.core.screenshot.AppScreenshotCaptureMode
+import com.android.purebilibili.core.screenshot.AppScreenshotGestureMode
 import com.android.purebilibili.core.video.subtitle.SubtitleAutoPreference
 import com.android.purebilibili.feature.video.subtitle.isSubtitleFeatureEnabledForUser
 import kotlin.math.roundToInt

@@ -1,12 +1,8 @@
 package com.android.purebilibili.feature.video.ui.gesture
 
 import com.android.purebilibili.feature.video.ui.components.PlaybackSpeed
+import com.android.purebilibili.core.store.gesture.TwoFingerSpeedToggleState
 import kotlin.math.abs
-
-data class TwoFingerSpeedToggleState(
-    val verticalEnabled: Boolean = false,
-    val horizontalEnabled: Boolean = false
-)
 
 enum class TwoFingerSpeedGestureMode {
     Off,
@@ -17,34 +13,6 @@ enum class TwoFingerSpeedGestureMode {
 enum class LockedTwoFingerSpeedAxis {
     Vertical,
     Horizontal
-}
-
-internal fun applyVerticalTwoFingerSpeedToggle(
-    current: TwoFingerSpeedToggleState,
-    enabled: Boolean
-): TwoFingerSpeedToggleState {
-    return if (enabled) {
-        TwoFingerSpeedToggleState(
-            verticalEnabled = true,
-            horizontalEnabled = false
-        )
-    } else {
-        current.copy(verticalEnabled = false)
-    }
-}
-
-internal fun applyHorizontalTwoFingerSpeedToggle(
-    current: TwoFingerSpeedToggleState,
-    enabled: Boolean
-): TwoFingerSpeedToggleState {
-    return if (enabled) {
-        TwoFingerSpeedToggleState(
-            verticalEnabled = false,
-            horizontalEnabled = true
-        )
-    } else {
-        current.copy(horizontalEnabled = false)
-    }
 }
 
 internal fun resolveTwoFingerSpeedGestureMode(

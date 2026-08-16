@@ -1,15 +1,12 @@
 package com.android.purebilibili.feature.video.ui.components
 
+import com.android.purebilibili.core.store.collection.CollectionSortMode
+
 import com.android.purebilibili.core.util.FormatUtils
 import com.android.purebilibili.data.model.response.UgcEpisode
 import com.android.purebilibili.data.model.response.UgcSeason
 import com.android.purebilibili.data.model.response.UgcSection
 
-enum class CollectionSortMode(val label: String) {
-    ASCENDING("正序"),
-    DESCENDING("倒序"),
-    RECENT("最近观看")
-}
 
 internal fun resolveCurrentUgcEpisodeIndex(
     episodes: List<UgcEpisode>,

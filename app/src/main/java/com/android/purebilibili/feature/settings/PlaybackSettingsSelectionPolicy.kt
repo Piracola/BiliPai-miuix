@@ -8,8 +8,8 @@ import com.android.purebilibili.core.store.PortraitPlayerCollapseMode
 import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.store.TabletCommentPanelWidthPreset
 import com.android.purebilibili.core.ui.components.AppSegmentOption
-import com.android.purebilibili.feature.screenshot.AppScreenshotCaptureMode
-import com.android.purebilibili.feature.screenshot.AppScreenshotGestureMode
+import com.android.purebilibili.core.screenshot.AppScreenshotCaptureMode
+import com.android.purebilibili.core.screenshot.AppScreenshotGestureMode
 
 internal fun <T> resolveSelectionIndex(
     options: List<AppSegmentOption<T>>,

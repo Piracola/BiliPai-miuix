@@ -7,8 +7,8 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.android.purebilibili.core.ui.AppListItemStyle
 import com.android.purebilibili.core.theme.AppFontSizePreset
 import com.android.purebilibili.core.theme.AppUiScalePreset
-import com.android.purebilibili.feature.screenshot.AppScreenshotCaptureMode
-import com.android.purebilibili.feature.screenshot.AppScreenshotGestureMode
+import com.android.purebilibili.core.screenshot.AppScreenshotCaptureMode
+import com.android.purebilibili.core.screenshot.AppScreenshotGestureMode
 import com.android.purebilibili.core.store.theme.AppLanguage
 import com.android.purebilibili.core.store.theme.AppThemeMode
 import com.android.purebilibili.core.store.theme.DarkThemeStyle

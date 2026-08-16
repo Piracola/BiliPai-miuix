@@ -1,6 +1,6 @@
 package com.android.purebilibili.core.store
 
-import com.android.purebilibili.feature.video.ui.components.CollectionSortMode
+import com.android.purebilibili.core.store.collection.CollectionSortMode
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
