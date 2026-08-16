@@ -61,7 +61,6 @@ internal object ArchitectureAllowlist {
         "src/main/java/com/android/purebilibili/feature/search/SearchScreen.kt",
         "src/main/java/com/android/purebilibili/feature/settings/PlaybackSettingsSelectionPolicy.kt",
         "src/main/java/com/android/purebilibili/feature/settings/screen/PluginsScreen.kt",
-        "src/main/java/com/android/purebilibili/feature/settings/screen/SettingsScreen.kt",
         "src/main/java/com/android/purebilibili/feature/settings/share/SettingsShareService.kt",
         "src/main/java/com/android/purebilibili/feature/settings/ui/SettingsSections.kt",
         "src/main/java/com/android/purebilibili/feature/settings/webdav/WebDavBackupService.kt",

@@ -25,7 +25,11 @@ import com.android.purebilibili.core.store.TabletCommentPanelWidthPreset
 import com.android.purebilibili.core.video.subtitle.SubtitleAutoPreference
 import com.android.purebilibili.core.screenshot.AppScreenshotCaptureMode
 import com.android.purebilibili.core.screenshot.AppScreenshotGestureMode
+import com.android.purebilibili.core.store.DEFAULT_ANALYTICS_ENABLED
+import com.android.purebilibili.core.store.DEFAULT_CRASH_TRACKING_ENABLED
+import com.android.purebilibili.core.store.DEFAULT_HOME_REFRESH_COUNT
 import com.android.purebilibili.data.repository.VideoRepository
+import com.android.purebilibili.feature.dynamic.defaultDynamicTabVisibleIds
 import com.android.purebilibili.core.ui.components.AppSingleChoicePresentation
 import com.android.purebilibili.core.store.BottomBarSearchAutoExpandMode
 import com.android.purebilibili.core.store.BottomBarSearchLayoutMode
@@ -68,6 +72,12 @@ enum class SettingsDiagnosticsLoadState {
     LOADING,
     LOADED,
 }
+
+// 阶段 4 设置页切片：根页嵌套枚举别名（SettingsManager 嵌套枚举对 UI 层可见，
+// 但直接写 SettingsManager.FeedApiType 会命中护栏；经 VM 文件转发为顶层别名）。
+internal typealias SettingsFeedApiType = SettingsManager.FeedApiType
+internal typealias SettingsAppUpdateChannel = SettingsManager.AppUpdateChannel
+internal typealias SettingsDynamicFeedLayoutMode = SettingsManager.DynamicFeedLayoutMode
 
 internal fun shouldStartSettingsDiagnostics(
     loadState: SettingsDiagnosticsLoadState,
@@ -164,7 +174,9 @@ data class SettingsUiState(
     val sidebarAccountSwitcherEnabled: Boolean = true,
     val bottomBarItemColors: Map<String, Int> = emptyMap(),
     // 阶段 4 切片：播放设置页直读收拢（全量收进 PlaybackSettingsGroup）
-    val playback: PlaybackSettingsGroup = PlaybackSettingsGroup()
+    val playback: PlaybackSettingsGroup = PlaybackSettingsGroup(),
+    // 阶段 4 切片：设置根页直读收拢（全量收进 SettingsRootGroup）
+    val settingsRoot: SettingsRootGroup = SettingsRootGroup()
 )
 
 // 内部数据类，用于分批合并流
@@ -392,6 +404,38 @@ data class PlaybackSettingsGroup(
     val fullscreenAspectRatio: FullscreenAspectRatio = FullscreenAspectRatio.FIT,
     val portraitLetterboxAmbientHaze: Boolean = true,
     val autoExitFullscreenMode: AutoExitFullscreenMode = AutoExitFullscreenMode.ALL_PARTS
+)
+
+/**
+ * 阶段 4 设置页切片：设置根页直读收拢分组（18 项）。
+ */
+data class SettingsRootGroup(
+    val privacyModeEnabled: Boolean = false,
+    val privacyContentAuthenticationEnabled: Boolean = false,
+    val crashTrackingEnabled: Boolean = DEFAULT_CRASH_TRACKING_ENABLED,
+    val analyticsEnabled: Boolean = DEFAULT_ANALYTICS_ENABLED,
+    val customDownloadPath: String? = null,
+    val downloadExportTreeUri: String? = null,
+    val imageSaveTreeUri: String? = null,
+    val feedApiType: SettingsFeedApiType = SettingsFeedApiType.WEB,
+    val autoCheckUpdateEnabled: Boolean = true,
+    val appUpdateChannel: SettingsAppUpdateChannel = SettingsAppUpdateChannel.STABLE,
+    val incrementalTimelineRefreshEnabled: Boolean = false,
+    val homeRefreshCount: Int = DEFAULT_HOME_REFRESH_COUNT,
+    val dynamicVisibleTabIds: Set<String> = defaultDynamicTabVisibleIds,
+    val dynamicImagePreviewTextVisible: Boolean = true,
+    val dynamicAllTabHorizontalUserListVisible: Boolean = false,
+    val dynamicTopBarCollapseOnScroll: Boolean = false,
+    val dynamicFeedLayoutMode: SettingsDynamicFeedLayoutMode =
+        SettingsDynamicFeedLayoutMode.WATERFALL,
+    val defaultDownloadPath: String = "",
+)
+
+private data class SettingsGroups(
+    val appearance: AppearanceSettingsGroup,
+    val bottomBar: BottomBarSettingsGroup,
+    val playback: PlaybackSettingsGroup,
+    val settingsRoot: SettingsRootGroup,
 )
 
 private fun <T> Flow<T>.asAnyFlow(): Flow<Any?> = map { it }
@@ -905,11 +949,60 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         )
     }
 
+    // 阶段 4 设置页切片：设置根页直读收拢（18 项，独立 flow）
+    private val settingsRootFlow = combine(
+        SettingsManager.getPrivacyModeEnabled(context).asAnyFlow(),
+        SettingsManager.getPrivacyContentAuthenticationEnabled(context).asAnyFlow(),
+        SettingsManager.getCrashTrackingEnabled(context).asAnyFlow(),
+        SettingsManager.getAnalyticsEnabled(context).asAnyFlow(),
+        SettingsManager.getDownloadPath(context).asAnyFlow(),
+        SettingsManager.getDownloadExportTreeUri(context).asAnyFlow(),
+        SettingsManager.getImageSaveTreeUri(context).asAnyFlow(),
+        SettingsManager.getFeedApiType(context).asAnyFlow(),
+        SettingsManager.getAutoCheckAppUpdate(context).asAnyFlow(),
+        SettingsManager.getAppUpdateChannel(context).asAnyFlow(),
+        SettingsManager.getIncrementalTimelineRefresh(context).asAnyFlow(),
+        SettingsManager.getHomeRefreshCount(context).asAnyFlow(),
+        SettingsManager.getDynamicTabVisibleTabs(context).asAnyFlow(),
+        SettingsManager.getDynamicImagePreviewTextVisible(context).asAnyFlow(),
+        SettingsManager.getDynamicAllTabHorizontalUserListVisible(context).asAnyFlow(),
+        SettingsManager.getDynamicTopBarCollapseOnScroll(context).asAnyFlow(),
+        SettingsManager.getDynamicFeedLayoutMode(context).asAnyFlow(),
+        flowOf(SettingsManager.getDefaultDownloadPath(context)).asAnyFlow(),
+    ) { values ->
+        SettingsRootGroup(
+            privacyModeEnabled = values[0] as Boolean,
+            privacyContentAuthenticationEnabled = values[1] as Boolean,
+            crashTrackingEnabled = values[2] as Boolean,
+            analyticsEnabled = values[3] as Boolean,
+            customDownloadPath = values[4] as String?,
+            downloadExportTreeUri = values[5] as String?,
+            imageSaveTreeUri = values[6] as String?,
+            feedApiType = values[7] as SettingsFeedApiType,
+            autoCheckUpdateEnabled = values[8] as Boolean,
+            appUpdateChannel = values[9] as SettingsAppUpdateChannel,
+            incrementalTimelineRefreshEnabled = values[10] as Boolean,
+            homeRefreshCount = values[11] as Int,
+            dynamicVisibleTabIds = values[12] as Set<String>,
+            dynamicImagePreviewTextVisible = values[13] as Boolean,
+            dynamicAllTabHorizontalUserListVisible = values[14] as Boolean,
+            dynamicTopBarCollapseOnScroll = values[15] as Boolean,
+            dynamicFeedLayoutMode = values[16] as SettingsDynamicFeedLayoutMode,
+            defaultDownloadPath = values[17] as String,
+        )
+    }
+
     private val settingsGroupFlow = combine(
         appearanceSettingsFlow,
         playbackSettingsFlow,
-    ) { appearancePair, playback ->
-        Triple(appearancePair.first, appearancePair.second, playback)
+        settingsRootFlow,
+    ) { appearancePair, playback, settingsRoot ->
+        SettingsGroups(
+            appearance = appearancePair.first,
+            bottomBar = appearancePair.second,
+            playback = playback,
+            settingsRoot = settingsRoot,
+        )
     }
 
     val state: StateFlow<SettingsUiState> = combine(
@@ -919,9 +1012,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         _diagnosticsState,
         settingsGroupFlow,
     ) { settings, cache, experimental, diagnostics, settingsGroups ->
-        val appearance = settingsGroups.first
-        val bottomBar = settingsGroups.second
-        val playback = settingsGroups.third
+        val appearance = settingsGroups.appearance
+        val bottomBar = settingsGroups.bottomBar
+        val playback = settingsGroups.playback
+        val settingsRoot = settingsGroups.settingsRoot
         SettingsUiState(
             hwDecode = settings.hwDecode,
             themeMode = settings.themeMode,
@@ -989,6 +1083,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             sidebarAccountSwitcherEnabled = bottomBar.sidebarAccountSwitcherEnabled,
             bottomBarItemColors = bottomBar.bottomBarItemColors,
             playback = playback,
+            settingsRoot = settingsRoot,
 
             cacheSize = cache.first,
             cacheBreakdown = cache.second,  //  详细缓存统计
@@ -1555,6 +1650,68 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     }
     fun setPortraitLetterboxAmbientHaze(value: Boolean) {
         viewModelScope.launch { SettingsManager.setPortraitLetterboxAmbientHaze(context, value) }
+    }
+
+    // 阶段 4 切片：设置根页写入收拢
+    fun setPrivacyModeEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setPrivacyModeEnabled(context, value) }
+    }
+    fun setPrivacyContentAuthenticationEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setPrivacyContentAuthenticationEnabled(context, value) }
+    }
+    fun setCrashTrackingEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setCrashTrackingEnabled(context, value) }
+    }
+    fun setAnalyticsEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setAnalyticsEnabled(context, value) }
+    }
+    fun setDownloadExportTreeUri(value: String) {
+        viewModelScope.launch {
+            SettingsManager.setDownloadExportTreeUri(context, value)
+            SettingsManager.setDownloadPath(context, null)
+        }
+    }
+    fun clearDownloadExportTreeUri() {
+        viewModelScope.launch {
+            SettingsManager.setDownloadPath(context, null)
+            SettingsManager.setDownloadExportTreeUri(context, null)
+        }
+    }
+    fun setImageSaveTreeUri(value: String) {
+        viewModelScope.launch { SettingsManager.setImageSaveTreeUri(context, value) }
+    }
+    fun clearImageSaveTreeUri() {
+        viewModelScope.launch { SettingsManager.setImageSaveTreeUri(context, null) }
+    }
+    fun setAutoCheckAppUpdate(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setAutoCheckAppUpdate(context, value) }
+    }
+    fun setAppUpdateChannel(value: SettingsAppUpdateChannel) {
+        viewModelScope.launch { SettingsManager.setAppUpdateChannel(context, value) }
+    }
+    fun setFeedApiType(value: SettingsFeedApiType) {
+        viewModelScope.launch { SettingsManager.setFeedApiType(context, value) }
+    }
+    fun setIncrementalTimelineRefresh(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setIncrementalTimelineRefresh(context, value) }
+    }
+    fun setDynamicImagePreviewTextVisible(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setDynamicImagePreviewTextVisible(context, value) }
+    }
+    fun setDynamicAllTabHorizontalUserListVisible(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setDynamicAllTabHorizontalUserListVisible(context, value) }
+    }
+    fun setDynamicTopBarCollapseOnScroll(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setDynamicTopBarCollapseOnScroll(context, value) }
+    }
+    fun setDynamicFeedLayoutMode(value: SettingsDynamicFeedLayoutMode) {
+        viewModelScope.launch { SettingsManager.setDynamicFeedLayoutMode(context, value) }
+    }
+    fun setDynamicTabVisibleTabs(value: Set<String>) {
+        viewModelScope.launch { SettingsManager.setDynamicTabVisibleTabs(context, value) }
+    }
+    fun setHomeRefreshCount(value: Int) {
+        viewModelScope.launch { SettingsManager.setHomeRefreshCount(context, value) }
     }
 
 }

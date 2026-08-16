@@ -44,11 +44,8 @@ import com.android.purebilibili.R
 import com.android.purebilibili.core.ui.blur.rememberRecoverableHazeState
 import com.android.purebilibili.core.util.CacheClearTarget
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.android.purebilibili.core.store.DEFAULT_ANALYTICS_ENABLED
-import com.android.purebilibili.core.store.DEFAULT_CRASH_TRACKING_ENABLED
 import com.android.purebilibili.core.ui.LocalBottomBarVisible
 import com.android.purebilibili.core.ui.LocalAnimatedVisibilityScope
-import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.store.AppNavigationSettings
 import com.android.purebilibili.core.util.AnalyticsHelper
 import com.android.purebilibili.core.util.CacheUtils
@@ -109,40 +106,23 @@ fun SettingsScreen(
     
     // State Collection
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val privacyModeEnabled by SettingsManager.getPrivacyModeEnabled(context).collectAsStateWithLifecycle(initialValue = false)
-    val privacyContentAuthenticationEnabled by SettingsManager
-        .getPrivacyContentAuthenticationEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = false)
-    val crashTrackingEnabled by SettingsManager.getCrashTrackingEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = DEFAULT_CRASH_TRACKING_ENABLED)
-    val analyticsEnabled by SettingsManager.getAnalyticsEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = DEFAULT_ANALYTICS_ENABLED)
-    val customDownloadPath by SettingsManager.getDownloadPath(context).collectAsStateWithLifecycle(initialValue = null)
-    val downloadExportTreeUri by SettingsManager.getDownloadExportTreeUri(context).collectAsStateWithLifecycle(initialValue = null)
-    val imageSaveTreeUri by SettingsManager.getImageSaveTreeUri(context).collectAsStateWithLifecycle(initialValue = null)
-    val feedApiType by SettingsManager.getFeedApiType(context).collectAsStateWithLifecycle(initialValue = SettingsManager.FeedApiType.WEB
-    )
-    val autoCheckUpdateEnabled by SettingsManager.getAutoCheckAppUpdate(context)
-        .collectAsStateWithLifecycle(initialValue = true)
-    val appUpdateChannel by SettingsManager.getAppUpdateChannel(context)
-        .collectAsStateWithLifecycle(initialValue = SettingsManager.AppUpdateChannel.STABLE)
-    val incrementalTimelineRefreshEnabled by SettingsManager.getIncrementalTimelineRefresh(context)
-        .collectAsStateWithLifecycle(initialValue = false)
-    val homeRefreshCount by SettingsManager.getHomeRefreshCount(context)
-        .collectAsStateWithLifecycle(initialValue = com.android.purebilibili.core.store.DEFAULT_HOME_REFRESH_COUNT)
-    val dynamicVisibleTabIds by SettingsManager.getDynamicTabVisibleTabs(context)
-        .collectAsStateWithLifecycle(initialValue = defaultDynamicTabVisibleIds)
-    val dynamicImagePreviewTextVisible by SettingsManager.getDynamicImagePreviewTextVisible(context)
-        .collectAsStateWithLifecycle(initialValue = true)
-    val dynamicAllTabHorizontalUserListVisible by SettingsManager
-        .getDynamicAllTabHorizontalUserListVisible(context)
-        .collectAsStateWithLifecycle(initialValue = false)
-    val dynamicTopBarCollapseOnScroll by SettingsManager
-        .getDynamicTopBarCollapseOnScroll(context)
-        .collectAsStateWithLifecycle(initialValue = false)
-    val dynamicFeedLayoutMode by SettingsManager
-        .getDynamicFeedLayoutMode(context)
-        .collectAsStateWithLifecycle(initialValue = com.android.purebilibili.core.store.SettingsManager.DynamicFeedLayoutMode.WATERFALL)
+    val privacyModeEnabled = state.settingsRoot.privacyModeEnabled
+    val privacyContentAuthenticationEnabled = state.settingsRoot.privacyContentAuthenticationEnabled
+    val crashTrackingEnabled = state.settingsRoot.crashTrackingEnabled
+    val analyticsEnabled = state.settingsRoot.analyticsEnabled
+    val customDownloadPath = state.settingsRoot.customDownloadPath
+    val downloadExportTreeUri = state.settingsRoot.downloadExportTreeUri
+    val imageSaveTreeUri = state.settingsRoot.imageSaveTreeUri
+    val feedApiType = state.settingsRoot.feedApiType
+    val autoCheckUpdateEnabled = state.settingsRoot.autoCheckUpdateEnabled
+    val appUpdateChannel = state.settingsRoot.appUpdateChannel
+    val incrementalTimelineRefreshEnabled = state.settingsRoot.incrementalTimelineRefreshEnabled
+    val homeRefreshCount = state.settingsRoot.homeRefreshCount
+    val dynamicVisibleTabIds = state.settingsRoot.dynamicVisibleTabIds
+    val dynamicImagePreviewTextVisible = state.settingsRoot.dynamicImagePreviewTextVisible
+    val dynamicAllTabHorizontalUserListVisible = state.settingsRoot.dynamicAllTabHorizontalUserListVisible
+    val dynamicTopBarCollapseOnScroll = state.settingsRoot.dynamicTopBarCollapseOnScroll
+    val dynamicFeedLayoutMode = state.settingsRoot.dynamicFeedLayoutMode
     
     // Local UI State
     var showCacheDialog by remember { mutableStateOf(false) }
@@ -243,7 +223,7 @@ fun SettingsScreen(
     val activeHazeState = mainHazeState ?: rememberRecoverableHazeState()
 
     // Directory Picker - 使用文件系统 API
-    val defaultPath = remember { SettingsManager.getDefaultDownloadPath(context) }
+    val defaultPath = state.settingsRoot.defaultDownloadPath
     val downloadFolderPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri ->
@@ -255,8 +235,7 @@ fun SettingsScreen(
         }
 
         scope.launch {
-            SettingsManager.setDownloadExportTreeUri(context, uri.toString())
-            SettingsManager.setDownloadPath(context, null)
+            viewModel.setDownloadExportTreeUri(uri.toString())
         }
         Toast.makeText(context, "已设置导出目录", Toast.LENGTH_SHORT).show()
     }
@@ -271,7 +250,7 @@ fun SettingsScreen(
         }
 
         scope.launch {
-            SettingsManager.setImageSaveTreeUri(context, uri.toString())
+            viewModel.setImageSaveTreeUri(uri.toString())
         }
         Toast.makeText(context, "已设置图片保存目录", Toast.LENGTH_SHORT).show()
     }
@@ -286,28 +265,28 @@ fun SettingsScreen(
     
     // Logic Callbacks
     val onPrivacyModeChange: (Boolean) -> Unit = { enabled ->
-        scope.launch { SettingsManager.setPrivacyModeEnabled(context, enabled) }
+        scope.launch { viewModel.setPrivacyModeEnabled(enabled) }
     }
     val onPrivacyContentAuthenticationChange: (Boolean) -> Unit = { enabled ->
-        scope.launch { SettingsManager.setPrivacyContentAuthenticationEnabled(context, enabled) }
+        scope.launch { viewModel.setPrivacyContentAuthenticationEnabled(enabled) }
     }
     val onCrashTrackingChange: (Boolean) -> Unit = { enabled ->
         scope.launch {
-            SettingsManager.setCrashTrackingEnabled(context, enabled)
+            viewModel.setCrashTrackingEnabled(enabled)
             CrashReporter.setEnabled(enabled)
         }
     }
     val onAnalyticsChange: (Boolean) -> Unit = { enabled ->
         scope.launch {
-            SettingsManager.setAnalyticsEnabled(context, enabled)
+            viewModel.setAnalyticsEnabled(enabled)
             AnalyticsHelper.setEnabled(enabled)
         }
     }
     val onAutoCheckUpdateChange: (Boolean) -> Unit = { enabled ->
-        scope.launch { SettingsManager.setAutoCheckAppUpdate(context, enabled) }
+        scope.launch { viewModel.setAutoCheckAppUpdate(enabled) }
     }
-    val onAppUpdateChannelChange: (SettingsManager.AppUpdateChannel) -> Unit = { channel ->
-        scope.launch { SettingsManager.setAppUpdateChannel(context, channel) }
+    val onAppUpdateChannelChange: (SettingsAppUpdateChannel) -> Unit = { channel ->
+        scope.launch { viewModel.setAppUpdateChannel(channel) }
     }
     
     val onVersionClickAction: () -> Unit = {}
@@ -352,7 +331,7 @@ fun SettingsScreen(
         val result = AppUpdateChecker.check(
             currentVersion = com.android.purebilibili.BuildConfig.VERSION_NAME,
             currentVersionCode = com.android.purebilibili.BuildConfig.VERSION_CODE,
-            includePrerelease = appUpdateChannel == SettingsManager.AppUpdateChannel.BETA
+            includePrerelease = appUpdateChannel == SettingsAppUpdateChannel.BETA
         )
         result.onSuccess { info ->
             viewModel.recordReleaseEvidence(info)
@@ -522,8 +501,7 @@ fun SettingsScreen(
             dismissButton = { 
                 com.android.purebilibili.core.ui.AppDialogAction(onClick = {
                     scope.launch {
-                        SettingsManager.setDownloadPath(context, null)
-                        SettingsManager.setDownloadExportTreeUri(context, null)
+                        viewModel.clearDownloadExportTreeUri()
                     }
                     showPathDialog = false
                     Toast.makeText(context, "已恢复仅应用内存储", Toast.LENGTH_SHORT).show()
@@ -567,7 +545,7 @@ fun SettingsScreen(
             dismissButton = {
                 com.android.purebilibili.core.ui.AppDialogAction(onClick = {
                     scope.launch {
-                        SettingsManager.setImageSaveTreeUri(context, null)
+                        viewModel.clearImageSaveTreeUri()
                     }
                     showImageSavePathDialog = false
                     Toast.makeText(context, "已恢复默认图片保存位置", Toast.LENGTH_SHORT).show()
@@ -990,7 +968,7 @@ fun SettingsScreen(
                     feedApiType = feedApiType,
                     onFeedApiTypeChange = { type ->
                         scope.launch {
-                            SettingsManager.setFeedApiType(context, type)
+                            viewModel.setFeedApiType(type)
                             android.widget.Toast.makeText(
                                 context,
                                 "已切换为${type.label}，下拉刷新生效",
@@ -1001,46 +979,43 @@ fun SettingsScreen(
                     incrementalTimelineRefreshEnabled = incrementalTimelineRefreshEnabled,
                     onIncrementalTimelineRefreshChange = { enabled ->
                         scope.launch {
-                            SettingsManager.setIncrementalTimelineRefresh(context, enabled)
+                            viewModel.setIncrementalTimelineRefresh(enabled)
                         }
                     },
                     dynamicImagePreviewTextVisible = dynamicImagePreviewTextVisible,
                     onDynamicImagePreviewTextVisibleChange = { visible ->
                         scope.launch {
-                            SettingsManager.setDynamicImagePreviewTextVisible(context, visible)
+                            viewModel.setDynamicImagePreviewTextVisible(visible)
                         }
                     },
                     dynamicAllTabHorizontalUserListVisible = dynamicAllTabHorizontalUserListVisible,
                     onDynamicAllTabHorizontalUserListVisibleChange = { visible ->
                         scope.launch {
-                            SettingsManager.setDynamicAllTabHorizontalUserListVisible(context, visible)
+                            viewModel.setDynamicAllTabHorizontalUserListVisible(visible)
                         }
                     },
                     dynamicTopBarCollapseOnScroll = dynamicTopBarCollapseOnScroll,
                     onDynamicTopBarCollapseOnScrollChange = { enabled ->
                         scope.launch {
-                            SettingsManager.setDynamicTopBarCollapseOnScroll(context, enabled)
+                            viewModel.setDynamicTopBarCollapseOnScroll(enabled)
                         }
                     },
                     dynamicFeedLayoutMode = dynamicFeedLayoutMode,
                     onDynamicFeedLayoutModeChange = { mode ->
                         scope.launch {
-                            SettingsManager.setDynamicFeedLayoutMode(context, mode)
+                            viewModel.setDynamicFeedLayoutMode(mode)
                         }
                     },
                     dynamicVisibleTabIds = dynamicVisibleTabIds,
                     onDynamicTabVisibilityChange = { tabId ->
                         scope.launch {
-                            SettingsManager.setDynamicTabVisibleTabs(
-                                context,
-                                resolveDynamicVisibleTabIdsAfterToggle(dynamicVisibleTabIds, tabId)
-                            )
+                            viewModel.setDynamicTabVisibleTabs(resolveDynamicVisibleTabIdsAfterToggle(dynamicVisibleTabIds, tabId))
                         }
                     },
                     homeRefreshCount = homeRefreshCount,
                     onHomeRefreshCountChange = { count ->
                         scope.launch {
-                            SettingsManager.setHomeRefreshCount(context, count)
+                            viewModel.setHomeRefreshCount(count)
                         }
                     },
                 )
@@ -1107,7 +1082,7 @@ private fun MobileSettingsNavLayout(
     onCrashTrackingChange: (Boolean) -> Unit,
     onAnalyticsChange: (Boolean) -> Unit,
     onAutoCheckUpdateChange: (Boolean) -> Unit,
-    onAppUpdateChannelChange: (SettingsManager.AppUpdateChannel) -> Unit,
+    onAppUpdateChannelChange: (SettingsAppUpdateChannel) -> Unit,
     privacyModeEnabled: Boolean,
     privacyContentAuthenticationEnabled: Boolean,
     customDownloadPath: String?,
@@ -1120,7 +1095,7 @@ private fun MobileSettingsNavLayout(
     updateStatusText: String,
     isCheckingUpdate: Boolean,
     autoCheckUpdateEnabled: Boolean,
-    appUpdateChannel: SettingsManager.AppUpdateChannel,
+    appUpdateChannel: SettingsAppUpdateChannel,
     verificationLabel: String,
     verificationSubtitle: String,
     buildSourceValue: String,
@@ -1131,8 +1106,8 @@ private fun MobileSettingsNavLayout(
     cardAnimationEnabled: Boolean,
     isBottomBarFloating: Boolean,
     bottomBarLabelMode: Int,
-    feedApiType: SettingsManager.FeedApiType,
-    onFeedApiTypeChange: (SettingsManager.FeedApiType) -> Unit,
+    feedApiType: SettingsFeedApiType,
+    onFeedApiTypeChange: (SettingsFeedApiType) -> Unit,
     incrementalTimelineRefreshEnabled: Boolean,
     onIncrementalTimelineRefreshChange: (Boolean) -> Unit,
     dynamicImagePreviewTextVisible: Boolean,
@@ -1141,8 +1116,8 @@ private fun MobileSettingsNavLayout(
     onDynamicAllTabHorizontalUserListVisibleChange: (Boolean) -> Unit,
     dynamicTopBarCollapseOnScroll: Boolean,
     onDynamicTopBarCollapseOnScrollChange: (Boolean) -> Unit,
-    dynamicFeedLayoutMode: com.android.purebilibili.core.store.SettingsManager.DynamicFeedLayoutMode,
-    onDynamicFeedLayoutModeChange: (com.android.purebilibili.core.store.SettingsManager.DynamicFeedLayoutMode) -> Unit,
+    dynamicFeedLayoutMode: SettingsDynamicFeedLayoutMode,
+    onDynamicFeedLayoutModeChange: (SettingsDynamicFeedLayoutMode) -> Unit,
     dynamicVisibleTabIds: Set<String>,
     onDynamicTabVisibilityChange: (String) -> Unit,
     homeRefreshCount: Int,

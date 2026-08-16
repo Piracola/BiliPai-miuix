@@ -114,8 +114,10 @@ class FeatureLayerIsolationStructureTest {
 
         // 82 → 81：阶段 6 前置下沉（ArticleContentBlockParser→core/article 等）
         // 使跨 feature 引用集合变化，重算快照。
+        // 81 → 80：SettingsScreen 切片把 dynamic 依赖移入 SettingsViewModel，
+        // 跨 feature 引用集合变化（settings 计数 5→6，仍在冻结上限 6 内），重算快照。
         val SNAPSHOT_SHA256 =
-            "a5abb56914d62d200b4d55451b7d92ce2e66729ad7136eae4932cf9d74be1803"
+            "53f79d398e5f483e57d64342691a824f104374693cb071a981232c86f0b63eba"
 
         val cachedFeature: List<File> by lazy {
             val roots = listOf(
