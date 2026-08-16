@@ -11,9 +11,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.android.purebilibili.core.store.SettingsManager
+import com.android.purebilibili.core.ui.components.AppSingleChoicePresentation
 import com.android.purebilibili.core.store.BottomBarSearchAutoExpandMode
 import com.android.purebilibili.core.store.BottomBarSearchLayoutMode
+import com.android.purebilibili.core.store.CommonListHeaderCollapseMode
+import com.android.purebilibili.core.store.HomeDurationStyle
+import com.android.purebilibili.core.store.HomeFeedCardStyle
 import com.android.purebilibili.core.store.HomeFeedCardWidthPreset
+import com.android.purebilibili.core.store.HomeWallpaperEffectMode
+import com.android.purebilibili.core.store.HomeWallpaperEffectScope
 import com.android.purebilibili.core.theme.AppFontSizePreset
 import com.android.purebilibili.core.theme.AppUiScalePreset
 import com.android.purebilibili.core.ui.AppListItemStyle
@@ -100,10 +106,30 @@ data class SettingsUiState(
     val isHeaderCollapseEnabled: Boolean = true,
     val gridColumnCount: Int = 0, // [New]
     val homeFeedCardWidthPreset: HomeFeedCardWidthPreset = HomeFeedCardWidthPreset.AUTO,
+    val homeFeedCardStyle: HomeFeedCardStyle = HomeFeedCardStyle.CURRENT,
     // 阶段 4 设置页切片：动画/效果页直读收拢到 VM
     val videoTransitionRealtimeBlurEnabled: Boolean = false,
     val liveSurfaceCardTransitionEnabled: Boolean = false,
-    val fullScreenSwipeBackEnabled: Boolean = false
+    val fullScreenSwipeBackEnabled: Boolean = false,
+    // 阶段 4 设置页切片：外观页直读收拢到 VM
+    val singleChoicePresentation: AppSingleChoicePresentation = AppSingleChoicePresentation.WINDOW_POPUP,
+    val compactVideoStatsOnCover: Boolean = true,
+    val homeWallpaperUri: String = "",
+    val homeWallpaperEffectMode: HomeWallpaperEffectMode = HomeWallpaperEffectMode.SOFT_BLUR,
+    val homeWallpaperEffectScope: HomeWallpaperEffectScope = HomeWallpaperEffectScope.HOME_ONLY,
+    val homeUpBadgesVisible: Boolean = false,
+    val homeUpAvatarsVisible: Boolean = false,
+    val homeDurationStyle: HomeDurationStyle = HomeDurationStyle.OUTSIDE_COVER,
+    val homeHeroCarouselEnabled: Boolean = true,
+    val homeHeroCarouselAutoplayEnabled: Boolean = false,
+    val commonListHeaderCollapseMode: CommonListHeaderCollapseMode =
+        CommonListHeaderCollapseMode.SHOW_ON_REVERSE_SCROLL,
+    val showOnlineCount: Boolean = false,
+    val splashEnabled: Boolean = false,
+    val splashRandomEnabled: Boolean = false,
+    val splashWallpaperUri: String = "",
+    val splashRandomPoolUris: List<String> = emptyList(),
+    val splashIconAnimationEnabled: Boolean = true
 )
 
 // 内部数据类，用于分批合并流
@@ -193,7 +219,35 @@ private data class BaseSettings(
     val tabletUseSidebar: Boolean, // [New]
     val isHeaderCollapseEnabled: Boolean,
     val gridColumnCount: Int, // [New]
-    val homeFeedCardWidthPreset: HomeFeedCardWidthPreset
+    val homeFeedCardWidthPreset: HomeFeedCardWidthPreset,
+    // 阶段 4 设置页切片：动画/效果页直读收拢
+    val videoTransitionRealtimeBlurEnabled: Boolean,
+    val liveSurfaceCardTransitionEnabled: Boolean,
+    val fullScreenSwipeBackEnabled: Boolean
+)
+
+/**
+ * 阶段 4 设置页切片：外观页直读收拢分组（15 项）。
+ */
+private data class AppearanceSettingsGroup(
+    val singleChoicePresentation: AppSingleChoicePresentation,
+    val compactVideoStatsOnCover: Boolean,
+    val homeWallpaperUri: String,
+    val homeWallpaperEffectMode: HomeWallpaperEffectMode,
+    val homeWallpaperEffectScope: HomeWallpaperEffectScope,
+    val homeUpBadgesVisible: Boolean,
+    val homeUpAvatarsVisible: Boolean,
+    val homeDurationStyle: HomeDurationStyle,
+    val homeHeroCarouselEnabled: Boolean,
+    val homeHeroCarouselAutoplayEnabled: Boolean,
+    val commonListHeaderCollapseMode: CommonListHeaderCollapseMode,
+    val homeFeedCardStyle: HomeFeedCardStyle,
+    val showOnlineCount: Boolean,
+    val splashEnabled: Boolean,
+    val splashRandomEnabled: Boolean,
+    val splashWallpaperUri: String,
+    val splashRandomPoolUris: List<String>,
+    val splashIconAnimationEnabled: Boolean
 )
 
 private fun <T> Flow<T>.asAnyFlow(): Flow<Any?> = map { it }
@@ -458,7 +512,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             tabletUseSidebar = extra.tabletUseSidebar, // [New]
             isHeaderCollapseEnabled = extra.isHeaderCollapseEnabled,
             gridColumnCount = extra.gridColumnCount, // [New]
-            homeFeedCardWidthPreset = extra.homeFeedCardWidthPreset
+            homeFeedCardWidthPreset = extra.homeFeedCardWidthPreset,
+            videoTransitionRealtimeBlurEnabled = extra.videoTransitionRealtimeBlurEnabled,
+            liveSurfaceCardTransitionEnabled = extra.liveSurfaceCardTransitionEnabled,
+            fullScreenSwipeBackEnabled = extra.fullScreenSwipeBackEnabled
         )
 
     }
@@ -468,12 +525,56 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         Pair(size, breakdown)
     }
     
+    // 阶段 4 设置页切片：外观页直读收拢（13+ 项）
+    private val appearanceSettingsFlow = combine(
+        SettingsManager.getSingleChoicePresentation(context).asAnyFlow(),
+        SettingsManager.getCompactVideoStatsOnCover(context).asAnyFlow(),
+        SettingsManager.getHomeWallpaperUri(context).asAnyFlow(),
+        SettingsManager.getHomeWallpaperEffectMode(context).asAnyFlow(),
+        SettingsManager.getHomeWallpaperEffectScope(context).asAnyFlow(),
+        SettingsManager.getHomeUpBadgesVisible(context).asAnyFlow(),
+        SettingsManager.getHomeUpAvatarsVisible(context).asAnyFlow(),
+        SettingsManager.getHomeDurationStyle(context).asAnyFlow(),
+        SettingsManager.getHomeHeroCarouselEnabled(context).asAnyFlow(),
+        SettingsManager.getHomeHeroCarouselAutoplayEnabled(context).asAnyFlow(),
+        SettingsManager.getCommonListHeaderCollapseMode(context).asAnyFlow(),
+        SettingsManager.getHomeFeedCardStyle(context).asAnyFlow(),
+        SettingsManager.getShowOnlineCount(context).asAnyFlow(),
+        SettingsManager.isSplashEnabled(context).asAnyFlow(),
+        SettingsManager.getSplashRandomEnabled(context).asAnyFlow(),
+        SettingsManager.getSplashWallpaperUri(context).asAnyFlow(),
+        SettingsManager.getSplashRandomPoolUris(context).asAnyFlow(),
+        SettingsManager.getSplashIconAnimationEnabled(context).asAnyFlow()
+    ) { values ->
+        AppearanceSettingsGroup(
+            singleChoicePresentation = values[0] as AppSingleChoicePresentation,
+            compactVideoStatsOnCover = values[1] as Boolean,
+            homeWallpaperUri = values[2] as String,
+            homeWallpaperEffectMode = values[3] as HomeWallpaperEffectMode,
+            homeWallpaperEffectScope = values[4] as HomeWallpaperEffectScope,
+            homeUpBadgesVisible = values[5] as Boolean,
+            homeUpAvatarsVisible = values[6] as Boolean,
+            homeDurationStyle = values[7] as HomeDurationStyle,
+            homeHeroCarouselEnabled = values[8] as Boolean,
+            homeHeroCarouselAutoplayEnabled = values[9] as Boolean,
+            commonListHeaderCollapseMode = values[10] as CommonListHeaderCollapseMode,
+            homeFeedCardStyle = values[11] as HomeFeedCardStyle,
+            showOnlineCount = values[12] as Boolean,
+            splashEnabled = values[13] as Boolean,
+            splashRandomEnabled = values[13] as Boolean,
+            splashWallpaperUri = values[14] as String,
+            splashRandomPoolUris = values[15] as List<String>,
+            splashIconAnimationEnabled = values[16] as Boolean
+        )
+    }
+
     val state: StateFlow<SettingsUiState> = combine(
         baseSettingsFlow,
         cacheFlow,
         experimentalSettingsFlow,
         _diagnosticsState,
-    ) { settings, cache, experimental, diagnostics ->
+        appearanceSettingsFlow,
+    ) { settings, cache, experimental, diagnostics, appearance ->
         SettingsUiState(
             hwDecode = settings.hwDecode,
             themeMode = settings.themeMode,
@@ -507,6 +608,27 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             isHeaderCollapseEnabled = settings.isHeaderCollapseEnabled,
             gridColumnCount = settings.gridColumnCount, // [New]
             homeFeedCardWidthPreset = settings.homeFeedCardWidthPreset,
+            videoTransitionRealtimeBlurEnabled = settings.videoTransitionRealtimeBlurEnabled,
+            liveSurfaceCardTransitionEnabled = settings.liveSurfaceCardTransitionEnabled,
+            fullScreenSwipeBackEnabled = settings.fullScreenSwipeBackEnabled,
+            singleChoicePresentation = appearance.singleChoicePresentation,
+            compactVideoStatsOnCover = appearance.compactVideoStatsOnCover,
+            homeWallpaperUri = appearance.homeWallpaperUri,
+            homeWallpaperEffectMode = appearance.homeWallpaperEffectMode,
+            homeWallpaperEffectScope = appearance.homeWallpaperEffectScope,
+            homeUpBadgesVisible = appearance.homeUpBadgesVisible,
+            homeUpAvatarsVisible = appearance.homeUpAvatarsVisible,
+            homeDurationStyle = appearance.homeDurationStyle,
+            homeHeroCarouselEnabled = appearance.homeHeroCarouselEnabled,
+            homeHeroCarouselAutoplayEnabled = appearance.homeHeroCarouselAutoplayEnabled,
+            commonListHeaderCollapseMode = appearance.commonListHeaderCollapseMode,
+            homeFeedCardStyle = appearance.homeFeedCardStyle,
+            showOnlineCount = appearance.showOnlineCount,
+            splashEnabled = appearance.splashEnabled,
+            splashRandomEnabled = appearance.splashRandomEnabled,
+            splashWallpaperUri = appearance.splashWallpaperUri,
+            splashRandomPoolUris = appearance.splashRandomPoolUris,
+            splashIconAnimationEnabled = appearance.splashIconAnimationEnabled,
 
             cacheSize = cache.first,
             cacheBreakdown = cache.second,  //  详细缓存统计
@@ -742,6 +864,20 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun toggleSponsorBlockAutoSkip(value: Boolean) { viewModelScope.launch { SettingsManager.setSponsorBlockAutoSkip(context, value) } }
     
     // [New] Splash Screen
+    // 阶段 4 切片：外观页写入收拢
+    fun setSingleChoicePresentation(presentation: AppSingleChoicePresentation) { viewModelScope.launch { SettingsManager.setSingleChoicePresentation(context, presentation) } }
+    // 阶段 4 切片：外观页写入收拢
+    fun setCommonListHeaderCollapseMode(mode: CommonListHeaderCollapseMode) { viewModelScope.launch { SettingsManager.setCommonListHeaderCollapseMode(context, mode) } }
+    fun setCompactVideoStatsOnCover(value: Boolean) { viewModelScope.launch { SettingsManager.setCompactVideoStatsOnCover(context, value) } }
+    fun setHomeHeroCarouselEnabled(value: Boolean) { viewModelScope.launch { SettingsManager.setHomeHeroCarouselEnabled(context, value) } }
+    fun setHomeHeroCarouselAutoplayEnabled(value: Boolean) { viewModelScope.launch { SettingsManager.setHomeHeroCarouselAutoplayEnabled(context, value) } }
+    fun setHomeFeedCardStyle(style: HomeFeedCardStyle) { viewModelScope.launch { SettingsManager.setHomeFeedCardStyle(context, style) } }
+    fun setHomeDurationStyle(style: HomeDurationStyle) { viewModelScope.launch { SettingsManager.setHomeDurationStyle(context, style) } }
+    fun setHomeWallpaperEffectMode(mode: HomeWallpaperEffectMode) { viewModelScope.launch { SettingsManager.setHomeWallpaperEffectMode(context, mode) } }
+    fun setHomeWallpaperEffectScope(scope: HomeWallpaperEffectScope) { viewModelScope.launch { SettingsManager.setHomeWallpaperEffectScope(context, scope) } }
+    fun setHomeUpBadgesVisible(value: Boolean) { viewModelScope.launch { SettingsManager.setHomeUpBadgesVisible(context, value) } }
+    fun setHomeUpAvatarsVisible(value: Boolean) { viewModelScope.launch { SettingsManager.setHomeUpAvatarsVisible(context, value) } }
+    fun setShowOnlineCount(value: Boolean) { viewModelScope.launch { SettingsManager.setShowOnlineCount(context, value) } }
     fun toggleSplashEnabled(value: Boolean) { viewModelScope.launch { SettingsManager.setSplashEnabled(context, value) } }
     fun toggleSplashRandomEnabled(value: Boolean) { viewModelScope.launch { SettingsManager.setSplashRandomEnabled(context, value) } }
     fun toggleSplashIconAnimationEnabled(value: Boolean) {

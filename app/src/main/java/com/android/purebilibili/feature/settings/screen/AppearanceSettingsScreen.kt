@@ -57,7 +57,6 @@ import com.android.purebilibili.core.store.HomeDurationStyle
 import com.android.purebilibili.core.store.HomeFeedCardStyle
 import com.android.purebilibili.core.store.HomeWallpaperEffectMode
 import com.android.purebilibili.core.store.HomeWallpaperEffectScope
-import com.android.purebilibili.core.store.SettingsManager
 import coil.compose.AsyncImage
 import com.android.purebilibili.core.theme.deleteStoredAppFont
 import com.android.purebilibili.core.theme.importAppFontFromUri
@@ -167,7 +166,7 @@ fun AppearanceSettingsScreen(
                             persistAndApplyAppLanguageBeforeRestart(
                                 apply = ::applyAppLanguage,
                                 appLanguage = pendingLanguage,
-                                persist = { SettingsManager.setAppLanguage(context, it) },
+                                persist = viewModel::setAppLanguage,
                                 restart = { restartApp(context) }
                             )
                         }
@@ -206,9 +205,8 @@ fun AppearanceSettingsContent(
     context: android.content.Context,
     onAppLanguageChange: (AppLanguage) -> Unit
 ) {
-    val singleChoicePresentation by SettingsManager
-        .getSingleChoicePresentation(context)
-        .collectAsStateWithLifecycle(AppSingleChoicePresentation.WINDOW_POPUP)
+    // 阶段 4 切片：外观页直读收拢到 SettingsViewModel.state
+    val singleChoicePresentation = state.singleChoicePresentation
     val singleChoicePresentationOptions = remember {
         listOf(
             AppSegmentOption(AppSingleChoicePresentation.WINDOW_POPUP, "跟随选项弹出"),
@@ -344,25 +342,15 @@ fun AppearanceSettingsContent(
         navigationBarsBottom = navigationBarBottomPadding,
         expandableSectionEnabled = true
     )
-    val compactVideoStatsOnCover by SettingsManager
-        .getCompactVideoStatsOnCover(context)
-        .collectAsStateWithLifecycle(initialValue = true)
-    val dedicatedHomeWallpaperUri by SettingsManager
-        .getHomeWallpaperUri(context)
-        .collectAsStateWithLifecycle(initialValue = "")
-    val splashWallpaperFallbackUri by SettingsManager
-        .getSplashWallpaperUri(context)
-        .collectAsStateWithLifecycle(initialValue = "")
+    val compactVideoStatsOnCover = state.compactVideoStatsOnCover
+    val dedicatedHomeWallpaperUri = state.homeWallpaperUri
+    val splashWallpaperFallbackUri = state.splashWallpaperUri
     val resolvedHomeWallpaperUri = remember(dedicatedHomeWallpaperUri, splashWallpaperFallbackUri) {
         dedicatedHomeWallpaperUri.ifBlank { splashWallpaperFallbackUri }.trim()
     }
     val homeWallpaperFollowsSplash = dedicatedHomeWallpaperUri.isBlank() && splashWallpaperFallbackUri.isNotBlank()
-    val homeWallpaperEffectMode by SettingsManager
-        .getHomeWallpaperEffectMode(context)
-        .collectAsStateWithLifecycle(initialValue = HomeWallpaperEffectMode.SOFT_BLUR)
-    val homeWallpaperEffectScope by SettingsManager
-        .getHomeWallpaperEffectScope(context)
-        .collectAsStateWithLifecycle(initialValue = HomeWallpaperEffectScope.HOME_ONLY)
+    val homeWallpaperEffectMode = state.homeWallpaperEffectMode
+    val homeWallpaperEffectScope = state.homeWallpaperEffectScope
     val homeWallpaperEffectOptions = remember {
         listOf(
             AppSegmentOption(HomeWallpaperEffectMode.OFF, "关闭"),
@@ -377,37 +365,19 @@ fun AppearanceSettingsContent(
             AppSegmentOption(HomeWallpaperEffectScope.GLOBAL, "全局")
         )
     }
-    val homeUpBadgesVisible by SettingsManager
-        .getHomeUpBadgesVisible(context)
-        .collectAsStateWithLifecycle(initialValue = true)
-    val homeUpAvatarsVisible by SettingsManager
-        .getHomeUpAvatarsVisible(context)
-        .collectAsStateWithLifecycle(initialValue = true)
-    val homeDurationStyle by SettingsManager
-        .getHomeDurationStyle(context)
-        .collectAsStateWithLifecycle(initialValue = HomeDurationStyle.OUTSIDE_COVER)
-    val homeFeedCardStyle by SettingsManager
-        .getHomeFeedCardStyle(context)
-        .collectAsStateWithLifecycle(initialValue = HomeFeedCardStyle.CURRENT)
-    val homeHeroCarouselEnabled by SettingsManager
-        .getHomeHeroCarouselEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = true)
-    val homeHeroCarouselAutoplayEnabled by SettingsManager
-        .getHomeHeroCarouselAutoplayEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = false)
-    val commonListHeaderCollapseMode by SettingsManager
-        .getCommonListHeaderCollapseMode(context)
-        .collectAsStateWithLifecycle(
-            initialValue = CommonListHeaderCollapseMode.SHOW_ON_REVERSE_SCROLL
-        )
+    val homeUpBadgesVisible = state.homeUpBadgesVisible
+    val homeUpAvatarsVisible = state.homeUpAvatarsVisible
+    val homeDurationStyle = state.homeDurationStyle
+    val homeFeedCardStyle = state.homeFeedCardStyle
+    val homeHeroCarouselEnabled = state.homeHeroCarouselEnabled
+    val homeHeroCarouselAutoplayEnabled = state.homeHeroCarouselAutoplayEnabled
+    val commonListHeaderCollapseMode = state.commonListHeaderCollapseMode
     val commonListHeaderCollapseOptions = remember {
         CommonListHeaderCollapseMode.entries.map { mode ->
             AppSegmentOption(mode, mode.label)
         }
     }
-    val showOnlineCount by SettingsManager
-        .getShowOnlineCount(context)
-        .collectAsStateWithLifecycle(initialValue = false)
+    val showOnlineCount = state.showOnlineCount
     val fontPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
@@ -479,14 +449,7 @@ fun AppearanceSettingsContent(
                             subtitle = "跟随选项弹出与截图一致；也可切回居中弹窗",
                             options = singleChoicePresentationOptions,
                             selectedValue = singleChoicePresentation,
-                            onSelectionChange = { presentation ->
-                                scope.launch {
-                                    SettingsManager.setSingleChoicePresentation(
-                                        context = context,
-                                        presentation = presentation,
-                                    )
-                                }
-                            },
+                            onSelectionChange = viewModel::setSingleChoicePresentation,
                         )
 
                         androidx.compose.animation.AnimatedVisibility(
@@ -663,11 +626,12 @@ fun AppearanceSettingsContent(
         item {
             Box(modifier = Modifier) {
                 AppPreferenceGroup {
-                    val isSplashEnabled by com.android.purebilibili.core.store.SettingsManager.isSplashEnabled(context).collectAsStateWithLifecycle(initialValue = false)
-                    val splashRandomEnabled by com.android.purebilibili.core.store.SettingsManager.getSplashRandomEnabled(context).collectAsStateWithLifecycle(initialValue = false)
-                    val splashRandomPoolUris by com.android.purebilibili.core.store.SettingsManager.getSplashRandomPoolUris(context).collectAsStateWithLifecycle(initialValue = emptyList())
-                    val splashIconAnimationEnabled by com.android.purebilibili.core.store.SettingsManager.getSplashIconAnimationEnabled(context).collectAsStateWithLifecycle(initialValue = true)
-                    val splashWallpaperUri by com.android.purebilibili.core.store.SettingsManager.getSplashWallpaperUri(context).collectAsStateWithLifecycle(initialValue = null)
+                    // 阶段 4 切片：splash 状态收拢到 VM
+                    val isSplashEnabled = state.splashEnabled
+                    val splashRandomEnabled = state.splashRandomEnabled
+                    val splashRandomPoolUris = state.splashRandomPoolUris
+                    val splashIconAnimationEnabled = state.splashIconAnimationEnabled
+                    val splashWallpaperUri = state.splashWallpaperUri.takeIf { it.isNotBlank() }
                     val hasSplashWallpaper = !splashWallpaperUri.isNullOrBlank()
                     val splashRandomPoolPreview = remember(splashRandomPoolUris) {
                         resolveSplashRandomPoolPreviewState(poolUris = splashRandomPoolUris)
@@ -886,11 +850,7 @@ fun AppearanceSettingsContent(
                             subtitle = commonListHeaderCollapseMode.description,
                             options = commonListHeaderCollapseOptions,
                             selectedValue = commonListHeaderCollapseMode,
-                            onSelectionChange = { mode ->
-                                scope.launch {
-                                    SettingsManager.setCommonListHeaderCollapseMode(context, mode)
-                                }
-                            }
+                            onSelectionChange = viewModel::setCommonListHeaderCollapseMode
                         )
 
                         AppPreferenceDivider(modifier = Modifier.padding(start = 16.dp))
@@ -903,11 +863,7 @@ fun AppearanceSettingsContent(
                                 "播放量和评论数显示在封面外部"
                             },
                             checked = compactVideoStatsOnCover,
-                            onCheckedChange = {
-                                scope.launch {
-                                    SettingsManager.setCompactVideoStatsOnCover(context, it)
-                                }
-                            },
+                            onCheckedChange = viewModel::setCompactVideoStatsOnCover,
                             iconTint = iOSTeal
                         )
 
@@ -921,11 +877,7 @@ fun AppearanceSettingsContent(
                                 "推荐页直接显示普通视频流"
                             },
                             checked = homeHeroCarouselEnabled,
-                            onCheckedChange = {
-                                scope.launch {
-                                    SettingsManager.setHomeHeroCarouselEnabled(context, it)
-                                }
-                            },
+                            onCheckedChange = viewModel::setHomeHeroCarouselEnabled,
                             iconTint = iOSBlue
                         )
 
@@ -941,11 +893,7 @@ fun AppearanceSettingsContent(
                                         "默认只展示封面，点开后进入视频详情"
                                     },
                                     checked = homeHeroCarouselAutoplayEnabled,
-                                    onCheckedChange = {
-                                        scope.launch {
-                                            SettingsManager.setHomeHeroCarouselAutoplayEnabled(context, it)
-                                        }
-                                    },
+                                    onCheckedChange = viewModel::setHomeHeroCarouselAutoplayEnabled,
                                     iconTint = iOSBlue
                                 )
                             }
@@ -959,11 +907,7 @@ fun AppearanceSettingsContent(
                                 AppSegmentOption(it, it.label)
                             },
                             selectedValue = homeFeedCardStyle,
-                            onSelectionChange = {
-                                scope.launch {
-                                    SettingsManager.setHomeFeedCardStyle(context, it)
-                                }
-                            }
+                            onSelectionChange = viewModel::setHomeFeedCardStyle
                         )
                         AppPreferenceDivider(modifier = Modifier.padding(start = 16.dp))
                         SettingsSingleChoicePreference(
@@ -973,11 +917,7 @@ fun AppearanceSettingsContent(
                                 AppSegmentOption(it, it.label)
                             },
                             selectedValue = homeDurationStyle,
-                            onSelectionChange = {
-                                scope.launch {
-                                    SettingsManager.setHomeDurationStyle(context, it)
-                                }
-                            }
+                            onSelectionChange = viewModel::setHomeDurationStyle
                         )
 
                         AppPreferenceDivider(modifier = Modifier.padding(start = 16.dp))
@@ -1065,11 +1005,7 @@ fun AppearanceSettingsContent(
                             },
                             options = homeWallpaperEffectOptions,
                             selectedValue = homeWallpaperEffectMode,
-                            onSelectionChange = { mode ->
-                                scope.launch {
-                                    SettingsManager.setHomeWallpaperEffectMode(context, mode)
-                                }
-                            }
+                            onSelectionChange = viewModel::setHomeWallpaperEffectMode
                         )
 
                         AnimatedVisibility(
@@ -1087,11 +1023,7 @@ fun AppearanceSettingsContent(
                                     },
                                     options = homeWallpaperEffectScopeOptions,
                                     selectedValue = homeWallpaperEffectScope,
-                                    onSelectionChange = { scopeValue ->
-                                        scope.launch {
-                                            SettingsManager.setHomeWallpaperEffectScope(context, scopeValue)
-                                        }
-                                    }
+                                    onSelectionChange = viewModel::setHomeWallpaperEffectScope
                                 )
                             }
                         }
@@ -1118,11 +1050,7 @@ fun AppearanceSettingsContent(
                                 "首页和相关推荐隐藏 UP 标识"
                             },
                             checked = homeUpBadgesVisible,
-                            onCheckedChange = {
-                                scope.launch {
-                                    SettingsManager.setHomeUpBadgesVisible(context, it)
-                                }
-                            },
+                            onCheckedChange = viewModel::setHomeUpBadgesVisible,
                             iconTint = com.android.purebilibili.core.theme.iOSBlue
                         )
 
@@ -1136,11 +1064,7 @@ fun AppearanceSettingsContent(
                                 "隐藏头像，为 UP 主名称留出更多空间"
                             },
                             checked = homeUpAvatarsVisible,
-                            onCheckedChange = {
-                                scope.launch {
-                                    SettingsManager.setHomeUpAvatarsVisible(context, it)
-                                }
-                            },
+                            onCheckedChange = viewModel::setHomeUpAvatarsVisible,
                             iconTint = com.android.purebilibili.core.theme.iOSPurple
                         )
 
@@ -1154,11 +1078,7 @@ fun AppearanceSettingsContent(
                                 "关闭后隐藏卡片和视频页的同时观看人数"
                             },
                             checked = showOnlineCount,
-                            onCheckedChange = {
-                                scope.launch {
-                                    SettingsManager.setShowOnlineCount(context, it)
-                                }
-                            },
+                            onCheckedChange = viewModel::setShowOnlineCount,
                             iconTint = com.android.purebilibili.core.theme.iOSPurple
                         )
                         
