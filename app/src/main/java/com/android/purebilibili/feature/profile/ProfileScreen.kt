@@ -124,7 +124,6 @@ import com.android.purebilibili.core.ui.components.AppPreference
 import com.android.purebilibili.core.ui.components.AppPreferenceGridItem
 import com.android.purebilibili.core.store.StoredAccountSession
 import com.android.purebilibili.core.store.HomeSettings
-import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.ui.rememberAppChromeLiquidGlassEnabled
 import com.android.purebilibili.data.model.response.FavFolder
 import com.android.purebilibili.data.model.response.FollowBangumiItem
@@ -276,26 +275,18 @@ fun ProfileScreen(
     val windowSizeClass = LocalWindowSizeClass.current
     val isDarkTheme = MaterialTheme.colorScheme.surface.luminance() < 0.5f
     val isLoggedOut = state is ProfileUiState.LoggedOut
-    val privacyModeEnabled by SettingsManager.getPrivacyModeEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = SettingsManager.isPrivacyModeEnabledSync(context))
-    val profileActionScope = androidx.compose.runtime.rememberCoroutineScope()
+    val privacyModeEnabled by viewModel.privacyModeEnabled.collectAsStateWithLifecycle()
     val togglePrivacyMode: () -> Unit = {
-        profileActionScope.launch {
-            SettingsManager.setPrivacyModeEnabled(context, !privacyModeEnabled)
+        viewModel.togglePrivacyMode(currentEnabled = privacyModeEnabled) { enabled ->
             Toast.makeText(
                 context,
-                if (privacyModeEnabled) "已关闭无痕模式" else "已开启无痕模式",
+                if (enabled) "已开启无痕模式" else "已关闭无痕模式",
                 Toast.LENGTH_SHORT,
             ).show()
         }
     }
     val toggleThemeMode: () -> Unit = {
-        profileActionScope.launch {
-            SettingsManager.setThemeMode(
-                context,
-                if (isDarkTheme) AppThemeMode.LIGHT else AppThemeMode.DARK,
-            )
-        }
+        viewModel.toggleThemeMode(isDarkTheme)
     }
     val isImmersiveMobileProfile = !windowSizeClass.shouldUseSplitLayout &&
         (state as? ProfileUiState.Success)?.user?.topPhoto?.isNotEmpty() == true
@@ -831,6 +822,7 @@ private fun ProfileSpaceContent(
     var showEditDialog by remember { mutableStateOf(false) }
     var showAdjustmentSheet by remember { mutableStateOf(false) }
     var tempSelectedUri by remember { mutableStateOf<Uri?>(null) }
+    val dynamicPreviewTextVisible by viewModel.dynamicPreviewTextVisible.collectAsStateWithLifecycle()
     val customBackgroundUri by viewModel.getProfileBgUri().collectAsStateWithLifecycle(initialValue = null
         )
     val photoPickerLauncher = rememberLauncherForActivityResult(
@@ -1000,7 +992,8 @@ private fun ProfileSpaceContent(
                     onDynamicDeleteClick = onDynamicDeleteClick,
                     contentChrome = contentChrome,
                     modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(bottom = 48.dp)
+                    contentPadding = PaddingValues(bottom = 48.dp),
+                    dynamicPreviewTextVisible = dynamicPreviewTextVisible
                 )
             }
         } else {
@@ -1061,7 +1054,8 @@ private fun ProfileSpaceContent(
                             onLogout = onLogout,
                             onDynamicDeleteClick = onDynamicDeleteClick,
                             contentChrome = contentChrome,
-                            embeddedInPanel = true
+                            embeddedInPanel = true,
+                            dynamicPreviewTextVisible = dynamicPreviewTextVisible
                         )
                     }
                 }
@@ -1119,7 +1113,8 @@ private fun ProfileSpaceFeedColumn(
     onDynamicDeleteClick: (DynamicDeleteAction) -> Unit,
     contentChrome: ProfileContentChrome,
     modifier: Modifier,
-    contentPadding: PaddingValues
+    contentPadding: PaddingValues,
+    dynamicPreviewTextVisible: Boolean = true
 ) {
     LazyColumn(modifier = modifier.fillMaxHeight(), contentPadding = contentPadding) {
         item {
@@ -1149,7 +1144,8 @@ private fun ProfileSpaceFeedColumn(
                 onAccountManageClick = onAccountManageClick,
                 onLogout = onLogout,
                 onDynamicDeleteClick = onDynamicDeleteClick,
-                contentChrome = contentChrome
+                contentChrome = contentChrome,
+                dynamicPreviewTextVisible = dynamicPreviewTextVisible
             )
         }
     }
@@ -1662,9 +1658,6 @@ private fun ProfileSpaceTabs(
     val rowContainerShape = remember(chromeSpec.rowCornerRadiusDp) {
         RoundedCornerShape(chromeSpec.rowCornerRadiusDp.dp)
     }
-    val homeSettings by SettingsManager
-        .getHomeSettings(context)
-        .collectAsStateWithLifecycle(initialValue = HomeSettings())
     val selectedIndex = tabs.indexOfFirst { it.tab == selectedTab }.coerceAtLeast(0)
     val tabModifier = Modifier
         .fillMaxWidth()
@@ -1710,7 +1703,8 @@ private fun ProfileSpaceTabBody(
     onLogout: () -> Unit,
     onDynamicDeleteClick: (DynamicDeleteAction) -> Unit,
     contentChrome: ProfileContentChrome,
-    embeddedInPanel: Boolean = false
+    embeddedInPanel: Boolean = false,
+    dynamicPreviewTextVisible: Boolean = true
 ) {
     when (space.selectedTab) {
         ProfileSpaceMainTab.HOME -> ProfileSpaceHome(
@@ -1736,7 +1730,8 @@ private fun ProfileSpaceTabBody(
         ProfileSpaceMainTab.DYNAMIC -> ProfileDynamicList(
             items = space.dynamicItems,
             onVideoClick = onVideoClick,
-            onDeleteClick = onDynamicDeleteClick
+            onDeleteClick = onDynamicDeleteClick,
+            dynamicPreviewTextVisible = dynamicPreviewTextVisible
         )
         ProfileSpaceMainTab.CONTRIBUTION -> ProfileVideoList(
             videos = space.contributionVideos,
@@ -2196,7 +2191,8 @@ private fun ProfileVideoList(
 private fun ProfileDynamicList(
     items: List<SpaceDynamicItem>,
     onVideoClick: (String) -> Unit,
-    onDeleteClick: (DynamicDeleteAction) -> Unit
+    onDeleteClick: (DynamicDeleteAction) -> Unit,
+    dynamicPreviewTextVisible: Boolean = true
 ) {
     if (items.isEmpty()) {
         ProfileSpaceEmpty("暂无动态")
@@ -2207,7 +2203,8 @@ private fun ProfileDynamicList(
             ProfileDynamicCard(
                 item = item,
                 onVideoClick = onVideoClick,
-                onDeleteClick = onDeleteClick
+                onDeleteClick = onDeleteClick,
+                dynamicPreviewTextVisible = dynamicPreviewTextVisible
             )
             if (index != items.lastIndex) {
                 AppHorizontalDivider(
@@ -2224,7 +2221,8 @@ private fun ProfileDynamicList(
 private fun ProfileDynamicCard(
     item: SpaceDynamicItem,
     onVideoClick: (String) -> Unit,
-    onDeleteClick: (DynamicDeleteAction) -> Unit
+    onDeleteClick: (DynamicDeleteAction) -> Unit,
+    dynamicPreviewTextVisible: Boolean = true
 ) {
     val author = item.modules.module_author
     val authorName = resolveProfileDynamicAuthorName(item)
@@ -2364,9 +2362,17 @@ private fun ProfileDynamicCard(
         }
 
         if (orig != null) {
-            ProfileDynamicOriginalContent(item = orig, onVideoClick = onVideoClick)
+            ProfileDynamicOriginalContent(
+                item = orig,
+                onVideoClick = onVideoClick,
+                dynamicPreviewTextVisible = dynamicPreviewTextVisible
+            )
         } else {
-            ProfileDynamicMajorContent(item = item, onVideoClick = onVideoClick)
+            ProfileDynamicMajorContent(
+                item = item,
+                onVideoClick = onVideoClick,
+                dynamicPreviewTextVisible = dynamicPreviewTextVisible
+            )
         }
 
         ProfileDynamicActionRow(item = item)
@@ -2374,7 +2380,11 @@ private fun ProfileDynamicCard(
 }
 
 @Composable
-private fun ProfileDynamicOriginalContent(item: SpaceDynamicItem, onVideoClick: (String) -> Unit) {
+private fun ProfileDynamicOriginalContent(
+    item: SpaceDynamicItem,
+    onVideoClick: (String) -> Unit,
+    dynamicPreviewTextVisible: Boolean = true
+) {
     val authorName = resolveProfileDynamicAuthorName(item)
     val text = resolveProfileDynamicText(item)
 
@@ -2408,13 +2418,21 @@ private fun ProfileDynamicOriginalContent(item: SpaceDynamicItem, onVideoClick: 
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            ProfileDynamicMajorContent(item = item, onVideoClick = onVideoClick)
+            ProfileDynamicMajorContent(
+                item = item,
+                onVideoClick = onVideoClick,
+                dynamicPreviewTextVisible = dynamicPreviewTextVisible
+            )
         }
     }
 }
 
 @Composable
-private fun ProfileDynamicMajorContent(item: SpaceDynamicItem, onVideoClick: (String) -> Unit) {
+private fun ProfileDynamicMajorContent(
+    item: SpaceDynamicItem,
+    onVideoClick: (String) -> Unit,
+    dynamicPreviewTextVisible: Boolean = true
+) {
     val dynamic = item.modules.module_dynamic
     val major = dynamic?.major
     val cover = resolveProfileDynamicCover(item)
@@ -2427,8 +2445,6 @@ private fun ProfileDynamicMajorContent(item: SpaceDynamicItem, onVideoClick: (St
     var selectedImageIndex by remember(item.id_str, imageUrls) { mutableIntStateOf(-1) }
     var sourceRect by remember(item.id_str, imageUrls) { mutableStateOf<Rect?>(null) }
     val context = LocalContext.current
-    val dynamicPreviewTextVisible by SettingsManager.getDynamicImagePreviewTextVisible(context)
-        .collectAsStateWithLifecycle(initialValue = true)
     val previewText = remember(item, title) {
         ImagePreviewTextContent(
             headline = resolveProfileDynamicAuthorName(item),
@@ -3344,132 +3360,6 @@ private fun ProfileWallpaperSheetActionRow(
     }
 }
 
-@Composable
-private fun ProfileWallpaperActionCard(
-    isImmersive: Boolean,
-    hazeState: HazeState? = null,
-    onOfficialWallpaperClick: () -> Unit,
-    onLocalAlbumClick: () -> Unit,
-    onResetWallpaperClick: () -> Unit,
-    isResetEnabled: Boolean
-) {
-    val context = LocalContext.current
-    val configuration = LocalConfiguration.current
-    val columnCount = remember(configuration.screenWidthDp) {
-        resolveProfileWallpaperActionColumnCount(configuration.screenWidthDp)
-    }
-    val labelMode = remember(configuration.screenWidthDp, columnCount) {
-        resolveProfileWallpaperActionLabelMode(
-            screenWidthDp = configuration.screenWidthDp,
-            columnCount = columnCount
-        )
-    }
-    val headerBlurEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getHeaderBlurEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = true
-        )
-    val bottomBarBlurEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getBottomBarBlurEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = false
-        )
-    val blurEnabled = remember(headerBlurEnabled, bottomBarBlurEnabled) {
-        resolveProfileWallpaperActionBlurEnabled(
-            headerBlurEnabled = headerBlurEnabled,
-            bottomBarBlurEnabled = bottomBarBlurEnabled
-        )
-    }
-    val sectionLabelColor = if (isImmersive) {
-        Color.White.copy(alpha = 0.76f)
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
-    }
-    val buttonColor = if (isImmersive) {
-        if (blurEnabled) Color.White.copy(alpha = 0.10f) else Color.White.copy(alpha = 0.16f)
-    } else {
-        MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
-    }
-    val contentColor = if (isImmersive) Color.White else MaterialTheme.colorScheme.onSurface
-    val buttonBorderColor = if (isImmersive) {
-        Color.White.copy(alpha = if (blurEnabled) 0.16f else 0.10f)
-    } else {
-        MaterialTheme.colorScheme.outline.copy(alpha = 0.12f)
-    }
-    val showSectionLabel = !isImmersive
-    val actionRows = listOf(
-        ProfileWallpaperActionItem(
-            title = "官方壁纸",
-            icon = rememberAppPhotoIcon(),
-            onClick = onOfficialWallpaperClick
-        ),
-        ProfileWallpaperActionItem(
-            title = "本地相册",
-            icon = rememberAppFolderIcon(),
-            onClick = onLocalAlbumClick
-        ),
-        ProfileWallpaperActionItem(
-            title = "恢复默认",
-            icon = rememberAppRestoreIcon(),
-            enabled = isResetEnabled,
-            onClick = onResetWallpaperClick
-        )
-    ).chunked(columnCount)
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                start = 24.dp,
-                end = 24.dp,
-                top = if (isImmersive) 2.dp else 10.dp,
-                bottom = if (isImmersive) 4.dp else 10.dp
-            )
-    ) {
-        if (showSectionLabel) {
-            AppText(
-                text = "背景装扮",
-                style = MaterialTheme.typography.labelMedium,
-                color = sectionLabelColor,
-                modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
-            )
-        }
-
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            actionRows.forEach { rowActions ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    rowActions.forEach { action ->
-                        ProfileWallpaperActionButton(
-                            modifier = Modifier.weight(1f),
-                            title = action.title,
-                            titleLines = resolveProfileWallpaperActionTitleLines(
-                                title = action.title,
-                                labelMode = labelMode
-                            ),
-                            subtitle = "",
-                            icon = action.icon,
-                            containerColor = buttonColor,
-                            contentColor = contentColor,
-                            secondaryColor = Color.Transparent,
-                            enabled = action.enabled,
-                            blurEnabled = blurEnabled,
-                            hazeState = hazeState,
-                            borderColor = buttonBorderColor,
-                            onClick = action.onClick
-                        )
-                    }
-                    repeat(columnCount - rowActions.size) {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
-                }
-            }
-        }
-    }
-}
 
 @Composable
 private fun ProfileWallpaperActionButton(

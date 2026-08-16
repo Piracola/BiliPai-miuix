@@ -126,23 +126,29 @@ class SpaceViewModel(
 ) : AndroidViewModel(application) {
 
     // 阶段 4 切片：空间页设置直读收拢到 VM（UI 层不得直接访问 SettingsManager）
-    val homeSettings: kotlinx.coroutines.flow.StateFlow<HomeSettings> =
+    // lazy：设置流依赖 Application 的 DataStore 上下文，构造 VM 时无需立即订阅
+    //（单元测试用裸 Application 构造时不触发 DataStore）。
+    val homeSettings: kotlinx.coroutines.flow.StateFlow<HomeSettings> by lazy {
         SettingsManager.getHomeSettings(application)
             .stateIn(
                 scope = viewModelScope,
                 started = kotlinx.coroutines.flow.SharingStarted.Eagerly,
                 initialValue = HomeSettings(),
             )
-    val playedVideoLocatePromptEnabled: kotlinx.coroutines.flow.StateFlow<Boolean> =
+    }
+    val playedVideoLocatePromptEnabled: kotlinx.coroutines.flow.StateFlow<Boolean> by lazy {
         SettingsManager.getSpacePlayedVideoLocatePromptEnabled(application)
             .stateIn(
                 scope = viewModelScope,
                 started = kotlinx.coroutines.flow.SharingStarted.Eagerly,
                 initialValue = true,
             )
+    }
 
     // 阶段 4 切片：屏蔽 UP 状态收拢到 VM（UI 层不得直接访问 BlockedUpRepository）
-    private val blockedUpRepository = BlockedUpRepository(application)
+    private val blockedUpRepository: BlockedUpRepository by lazy {
+        BlockedUpRepository(application)
+    }
 
     fun isBlocked(mid: Long): kotlinx.coroutines.flow.Flow<Boolean> =
         blockedUpRepository.isBlocked(mid)

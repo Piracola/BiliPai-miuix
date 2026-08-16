@@ -145,8 +145,11 @@ class SpaceScreenStructureTest {
     @Test
     fun `played video locate prompt is configurable and scoped to each space visit`() {
         val source = loadSource("app/src/main/java/com/android/purebilibili/feature/space/SpaceScreen.kt")
+        val viewModelSource = loadSource("app/src/main/java/com/android/purebilibili/feature/space/SpaceViewModel.kt")
 
-        assertTrue(source.contains("getSpacePlayedVideoLocatePromptEnabled(context)"))
+        // 阶段 4 切片后：设置直读收拢到 VM，屏幕只消费 VM 暴露的状态流。
+        assertTrue(viewModelSource.contains("getSpacePlayedVideoLocatePromptEnabled(application)"))
+        assertTrue(source.contains("viewModel.playedVideoLocatePromptEnabled.collectAsStateWithLifecycle()"))
         assertTrue(source.contains("var playedVideoLocatePromptHandled by remember(mid, playedVideoBvid)"))
         assertFalse(source.contains("var playedVideoLocatePromptHandled by rememberSaveable"))
     }

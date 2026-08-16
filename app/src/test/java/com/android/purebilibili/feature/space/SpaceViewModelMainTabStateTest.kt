@@ -1,5 +1,6 @@
 package com.android.purebilibili.feature.space
 
+import android.app.Application
 import androidx.lifecycle.SavedStateHandle
 import com.android.purebilibili.data.model.response.SpaceUserInfo
 import com.android.purebilibili.feature.space.SpaceMainTab
@@ -11,10 +12,13 @@ import kotlin.test.assertTrue
 
 class SpaceViewModelMainTabStateTest {
 
+    private fun createViewModel(savedStateHandle: SavedStateHandle): SpaceViewModel =
+        SpaceViewModel(Application(), savedStateHandle)
+
     @Test
     fun `selectMainTab updates selectedMainTab state`() {
         val savedStateHandle = SavedStateHandle()
-        val viewModel = SpaceViewModel(savedStateHandle)
+        val viewModel = createViewModel(savedStateHandle)
         assertEquals(2, viewModel.selectedMainTab.value)
 
         viewModel.selectMainTab(3)
@@ -25,7 +29,7 @@ class SpaceViewModelMainTabStateTest {
     @Test
     fun `selectedMainTab restores from saved state`() {
         val savedStateHandle = SavedStateHandle(mapOf("space_selected_main_tab" to 3))
-        val viewModel = SpaceViewModel(savedStateHandle)
+        val viewModel = createViewModel(savedStateHandle)
 
         assertEquals(3, viewModel.selectedMainTab.value)
     }
@@ -40,7 +44,7 @@ class SpaceViewModelMainTabStateTest {
 
     @Test
     fun `selectMainTab keeps tab shell selected state in sync`() {
-        val viewModel = SpaceViewModel(SavedStateHandle())
+        val viewModel = createViewModel(SavedStateHandle())
         val field = SpaceViewModel::class.java.getDeclaredField("_uiState").apply { isAccessible = true }
         @Suppress("UNCHECKED_CAST")
         val flow = field.get(viewModel) as MutableStateFlow<SpaceUiState>

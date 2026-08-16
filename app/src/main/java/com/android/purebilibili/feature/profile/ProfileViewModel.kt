@@ -7,8 +7,10 @@ import com.android.purebilibili.core.network.NetworkModule
 import com.android.purebilibili.core.network.WbiUtils
 import com.android.purebilibili.core.network.DynamicDeleteRequest
 import com.android.purebilibili.core.store.AccountSessionStore
+import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.store.StoredAccountSession
 import com.android.purebilibili.core.store.TokenManager
+import com.android.purebilibili.core.store.theme.AppThemeMode
 import com.android.purebilibili.data.model.response.FavFolder
 import com.android.purebilibili.data.model.response.NavData
 import com.android.purebilibili.data.model.response.SpaceUserInfo
@@ -32,7 +34,6 @@ import java.net.SocketTimeoutException
 import android.net.Uri
 import android.content.Context
 import com.android.purebilibili.core.ui.wallpaper.ProfileWallpaperTransform
-import com.android.purebilibili.core.store.SettingsManager
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
@@ -86,6 +87,54 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     val activeAccountMid = _activeAccountMid.asStateFlow()
     private val _playbackAccountMid = MutableStateFlow<Long?>(null)
     val playbackAccountMid = _playbackAccountMid.asStateFlow()
+
+    // 阶段 4 切片：个人中心页设置直读收拢到 VM（UI 层不得直接访问 SettingsManager）
+    val privacyModeEnabled: kotlinx.coroutines.flow.StateFlow<Boolean> =
+        SettingsManager.getPrivacyModeEnabled(application)
+            .stateIn(
+                scope = viewModelScope,
+                started = kotlinx.coroutines.flow.SharingStarted.Eagerly,
+                initialValue = SettingsManager.isPrivacyModeEnabledSync(application),
+            )
+    val dynamicPreviewTextVisible: kotlinx.coroutines.flow.StateFlow<Boolean> =
+        SettingsManager.getDynamicImagePreviewTextVisible(application)
+            .stateIn(
+                scope = viewModelScope,
+                started = kotlinx.coroutines.flow.SharingStarted.Eagerly,
+                initialValue = true,
+            )
+    val headerBlurEnabled: kotlinx.coroutines.flow.StateFlow<Boolean> =
+        SettingsManager.getHeaderBlurEnabled(application)
+            .stateIn(
+                scope = viewModelScope,
+                started = kotlinx.coroutines.flow.SharingStarted.Eagerly,
+                initialValue = true,
+            )
+    val bottomBarBlurEnabled: kotlinx.coroutines.flow.StateFlow<Boolean> =
+        SettingsManager.getBottomBarBlurEnabled(application)
+            .stateIn(
+                scope = viewModelScope,
+                started = kotlinx.coroutines.flow.SharingStarted.Eagerly,
+                initialValue = false,
+            )
+
+    fun togglePrivacyMode(currentEnabled: Boolean, onToggled: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val enabled = !currentEnabled
+            SettingsManager.setPrivacyModeEnabled(getApplication(), enabled)
+            onToggled(enabled)
+        }
+    }
+
+    fun toggleThemeMode(isDarkTheme: Boolean) {
+        viewModelScope.launch {
+            SettingsManager.setThemeMode(
+                getApplication(),
+                if (isDarkTheme) AppThemeMode.LIGHT else AppThemeMode.DARK,
+            )
+        }
+    }
+
     private var hasLoadedProfileOnce = false
     private var isProfileLoadInFlight = false
     private var profileLoadGeneration = 0L

@@ -61,9 +61,12 @@ class ArchitectureAllowlistRatchetTest {
         // 84 → 83：DynamicScreen 动态页直读收拢到 DynamicViewModel（4 项 + 布局别名）。
         // 83 → 77：直播系 6 屏收拢——LiveList/LiveArea/LiveAreaDetail/LiveFollowing/
         // LiveSearch 逻辑收拢到独立 VM，LivePlayer 直读收拢到 LivePlayerViewModel。
-        const val MAX_CORE_GLOBAL_OBJECT_FILES = 77
+        // 77 → 75：SpaceScreen 空间页直读收拢到 SpaceViewModel（AndroidViewModel，
+        // homeSettings + 拉黑开关 + 定位提示），ProfileScreen 个人中心页直读收拢到
+        // ProfileViewModel（隐私模式/主题/动态预览文本可见性 + 4 设置 StateFlow）。
+        const val MAX_CORE_GLOBAL_OBJECT_FILES = 75
 
         const val CORE_GLOBAL_OBJECT_FILES_SHA256 =
-            "5b65f53a19729caca7baf0d05bf4305b124e21d4e95d121848769d0433191cd2"
+            "af637974542ed794ca460aaf1d06020e476a5c1b269814f2d8688890d327c263"
     }
 }

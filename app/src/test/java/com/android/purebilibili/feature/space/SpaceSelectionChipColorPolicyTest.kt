@@ -2,8 +2,11 @@ package com.android.purebilibili.feature.space
 
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.ui.graphics.Color
+import com.android.purebilibili.core.theme.calculateContrastRatio
+import com.android.purebilibili.core.theme.resolveAdaptivePrimaryAccentColors
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class SpaceSelectionChipColorPolicyTest {
 
@@ -29,7 +32,7 @@ class SpaceSelectionChipColorPolicyTest {
     }
 
     @Test
-    fun `selected chip keeps primary when contrast is healthy`() {
+    fun `selected chip on dark surface uses soft primaryContainer fill`() {
         val scheme = darkColorScheme(
             primary = Color(0xFF0057D8),
             onPrimary = Color.White,
@@ -45,8 +48,9 @@ class SpaceSelectionChipColorPolicyTest {
             colorScheme = scheme
         )
 
-        assertEquals(scheme.primary, colors.backgroundColor)
-        assertEquals(scheme.onPrimary, colors.textColor)
+        // Dark filled selection prefers tonal container (not neon solid primary).
+        assertEquals(scheme.primaryContainer, colors.backgroundColor)
+        assertEquals(scheme.onPrimaryContainer, colors.textColor)
     }
 
     @Test
@@ -76,11 +80,14 @@ class SpaceSelectionChipColorPolicyTest {
 
         val followed = resolveSpaceFollowButtonColors(isFollowed = true, colorScheme = scheme)
         val unfollowed = resolveSpaceFollowButtonColors(isFollowed = false, colorScheme = scheme)
+        val cta = resolveAdaptivePrimaryAccentColors(scheme)
 
         assertEquals(scheme.surfaceVariant, followed.backgroundColor)
         assertEquals(scheme.onSurfaceVariant, followed.textColor)
-        assertEquals(scheme.primary, unfollowed.backgroundColor)
-        assertEquals(scheme.onPrimary, unfollowed.textColor)
+        // CTA 委托给共享的自适应主色强调对（深色面上保持可读的浅色标签）。
+        assertEquals(cta.backgroundColor, unfollowed.backgroundColor)
+        assertEquals(cta.contentColor, unfollowed.textColor)
+        assertTrue(calculateContrastRatio(unfollowed.textColor, unfollowed.backgroundColor) >= 3.0f)
     }
 
 }
