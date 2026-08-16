@@ -8,12 +8,14 @@ import android.webkit.WebViewClient
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import com.android.purebilibili.core.ui.AppScaffold
+import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.ui.AppTopBar
 import com.android.purebilibili.core.ui.rememberAppBackIcon
 import com.android.purebilibili.core.ui.components.AppIconButton
@@ -58,8 +60,8 @@ fun WebViewScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                    containerColor = AppSurfaceTokens.surface(),
+                    titleContentColor = AppSurfaceTokens.onSurface()
                 )
             )
         }

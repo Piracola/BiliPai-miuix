@@ -31,7 +31,9 @@ class PartitionScreenStructureTest {
         assertTrue(source.contains("resolveHomeFeedCardLayout(homeFeedCardStyle)"))
         assertTrue(source.contains("coverAspectRatio = cardLayout.coverAspectRatio"))
         assertTrue(source.contains("modifier = Modifier.fillMaxWidth()"))
-        assertTrue(source.contains("SettingsManager.getHomeSettings(context)"))
+        // 阶段 4 切片：设置读取移入 PartitionFeedViewModel，UI 不再直读 SettingsManager。
+        assertFalse(source.contains("SettingsManager"))
+        assertTrue(viewModelSource().contains("getHomeSettings(getApplication())"))
         assertFalse(source.contains("resolveSharedLiquidGlassChromeEnabled("))
         assertTrue(source.contains("BottomBarMatchedLiquidIndicator("))
         assertTrue(source.contains("liquidGlassIndicatorEnabled = liquidGlassIndicatorEnabled"))
@@ -44,15 +46,18 @@ class PartitionScreenStructureTest {
         assertFalse(source.contains("videoTitleSharedElementKey("))
         assertTrue(source.contains("sourceRoute = sharedElementSourceRoute"))
         assertTrue(source.contains("LocalVideoCardSharedElementSourceRoute.current"))
-        assertTrue(source.contains("VideoRepository.getPopularVideos(page = pageToFetch)"))
-        assertTrue(source.contains("VideoRepository.getRegionVideos(tid = partition.id, page = pageToFetch)"))
+        // 数据获取在 Coordinator 层：VideoRepository 调用位于 ViewModel 文件。
+        assertFalse(source.contains("VideoRepository"))
+        assertTrue(viewModelSource().contains("VideoRepository.getPopularVideos(page = pageToFetch)"))
+        assertTrue(viewModelSource().contains("VideoRepository.getRegionVideos(tid = partition.id, page = pageToFetch)"))
         assertTrue(source.contains("resolvePartitionBangumiType(partition.id)"))
         assertTrue(source.contains("onBangumiClick(bangumiType)"))
         assertFalse(source.contains("LazyVerticalGrid("))
         assertTrue(source.contains("AdaptivePullToRefreshBox("))
         assertTrue(source.contains("onRefresh = viewModel::refresh"))
-        assertTrue(source.contains("fun refresh()"))
-        assertTrue(source.contains("resolveReplaceRefreshPage("))
+        // 阶段 4 切片：refresh/loadSelectedPartition 移入 PartitionFeedViewModel。
+        assertTrue(viewModelSource().contains("fun refresh()"))
+        assertTrue(viewModelSource().contains("resolveReplaceRefreshPage("))
     }
 
     @Test
@@ -241,6 +246,10 @@ class PartitionScreenStructureTest {
         require(sourceFile != null) { "Cannot locate $path from ${File(".").absolutePath}" }
         return sourceFile.readText()
     }
+
+    private fun viewModelSource(): String = loadSource(
+        "app/src/main/java/com/android/purebilibili/feature/partition/PartitionFeedViewModel.kt"
+    )
 
     private fun assertSameVectorAsset(expected: ImageVector, actual: ImageVector) {
         assertEquals(expected.name, actual.name)

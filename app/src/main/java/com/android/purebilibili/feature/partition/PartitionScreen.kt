@@ -74,7 +74,6 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.util.VelocityTracker
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
@@ -83,33 +82,27 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.purebilibili.core.ui.AdaptivePullToRefreshBox
 import com.android.purebilibili.core.ui.AppScaffold
+import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.ui.AppTopBar
 import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.AppSemanticIconFamily
-import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.ui.ContainerLevel
 import com.android.purebilibili.core.ui.AdaptiveLoadingIndicator
 import com.android.purebilibili.core.ui.skeleton.ContentMediaListSkeleton
-import com.android.purebilibili.core.util.resolveReplaceRefreshPage
 import com.android.purebilibili.core.ui.animation.DampedDragAnimationState
 import com.android.purebilibili.core.ui.LocalSharedTransitionEnabled
 import com.android.purebilibili.core.ui.globalWallpaperAwareBackground
 import com.android.purebilibili.core.util.responsiveContentWidth
 import com.android.purebilibili.core.ui.rememberAppBackIcon
 import com.android.purebilibili.core.ui.components.AppIconButton
-import com.android.purebilibili.core.store.HomeSettings
 import com.android.purebilibili.core.store.HomeFeedCardStyle
-import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.ui.rememberAppTopChromePolicy
 import com.android.purebilibili.core.ui.transition.LocalVideoCardSharedElementSourceRoute
 import com.android.purebilibili.data.model.response.BangumiType
 import com.android.purebilibili.data.model.response.VideoItem
-import com.android.purebilibili.data.repository.VideoRepository
 import com.android.purebilibili.feature.common.resolveIndexedVideoLazyKey
 import com.android.purebilibili.feature.home.components.cards.HomeStyleSingleColumnVideoCard
 import com.android.purebilibili.feature.home.resolveHomeFeedCardLayout
@@ -134,61 +127,10 @@ import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
 import com.android.purebilibili.core.ui.blur.unifiedBlur
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.roundToInt
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-
-/**
- *  分区数据类
- */
-data class PartitionCategory(
-    val id: Int,
-    val name: String
-)
-
-/**
- *  所有分区列表 (参考官方 Bilibili API)
- * tid 是 Bilibili 官方的分区 ID，用于 x/web-interface/newlist 接口
- * 注意：番剧/国创/电影/电视剧/纪录片是特殊分区，使用不同的 API
- */
-val allPartitions = listOf(
-    // === 视频分区（支持 newlist API）===
-    PartitionCategory(1, "动画"),
-    PartitionCategory(13, "番剧"),      // 特殊分区
-    PartitionCategory(167, "国创"),     // 特殊分区
-    PartitionCategory(3, "音乐"),
-    PartitionCategory(129, "舞蹈"),
-    PartitionCategory(4, "游戏"),
-    PartitionCategory(36, "知识"),
-    PartitionCategory(188, "科技"),
-    PartitionCategory(234, "运动"),
-    PartitionCategory(223, "汽车"),
-    PartitionCategory(160, "生活"),
-    PartitionCategory(211, "美食"),
-    PartitionCategory(217, "动物圈"),
-    PartitionCategory(119, "鬼畜"),
-    PartitionCategory(155, "时尚"),
-    PartitionCategory(202, "资讯"),
-    PartitionCategory(5, "娱乐"),
-    // === 特殊分区（番剧/电影等使用不同 API）===
-    PartitionCategory(23, "电影"),      // 特殊分区
-    PartitionCategory(11, "电视剧"),    // 特殊分区
-    PartitionCategory(177, "纪录片"),   // 特殊分区
-    PartitionCategory(181, "影视")      // 特殊分区
-)
-
-private val partitionTabs = listOf(
-    PartitionCategory(0, "全站")
-) + allPartitions
-
-private val PartitionSideRailItemHeight = 48.dp
-private val PartitionSideRailItemSpacing = 4.dp
-private val PartitionVideoListMaxPush = 20.dp
 
 internal fun resolvePartitionBangumiType(partitionId: Int): Int? = when (partitionId) {
     13 -> BangumiType.ANIME.value
@@ -198,6 +140,10 @@ internal fun resolvePartitionBangumiType(partitionId: Int): Int? = when (partiti
     177 -> BangumiType.DOCUMENTARY.value
     else -> null
 }
+
+private val PartitionSideRailItemHeight = 48.dp
+private val PartitionSideRailItemSpacing = 4.dp
+private val PartitionVideoListMaxPush = 20.dp
 
 internal data class PartitionSideRailIndicatorHorizontalPadding(
     val start: androidx.compose.ui.unit.Dp,
@@ -253,134 +199,6 @@ internal fun resolvePartitionSideRailIndicatorHorizontalPadding(
         start = contentPadding.calculateStartPadding(layoutDirection),
         end = contentPadding.calculateEndPadding(layoutDirection)
     )
-}
-
-data class PartitionFeedUiState(
-    val selectedPartition: PartitionCategory = partitionTabs.first(),
-    val videos: List<VideoItem> = emptyList(),
-    val isLoading: Boolean = false,
-    val isRefreshing: Boolean = false,
-    val error: String? = null
-)
-
-class PartitionFeedViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow(PartitionFeedUiState())
-    val uiState = _uiState.asStateFlow()
-
-    private var currentPage = 1
-    private var hasMore = true
-    private var requestGeneration = 0
-
-    init {
-        loadSelectedPartition(mode = PartitionLoadMode.RESET)
-    }
-
-    fun selectPartition(partition: PartitionCategory) {
-        if (_uiState.value.selectedPartition.id == partition.id) return
-        _uiState.update {
-            it.copy(
-                selectedPartition = partition,
-                videos = emptyList(),
-                error = null
-            )
-        }
-        loadSelectedPartition(mode = PartitionLoadMode.RESET)
-    }
-
-    fun loadMore() {
-        loadSelectedPartition(mode = PartitionLoadMode.APPEND)
-    }
-
-    fun refresh() {
-        if (_uiState.value.isRefreshing) return
-        loadSelectedPartition(mode = PartitionLoadMode.REPLACE_REFRESH)
-    }
-
-    private fun loadSelectedPartition(mode: PartitionLoadMode) {
-        val isRefresh = mode == PartitionLoadMode.REPLACE_REFRESH
-        val isReset = mode == PartitionLoadMode.RESET
-        if (_uiState.value.isLoading && !isReset && !isRefresh) return
-        if (mode == PartitionLoadMode.APPEND && !hasMore) return
-
-        val pageToFetch = when (mode) {
-            PartitionLoadMode.RESET -> 1
-            PartitionLoadMode.APPEND -> currentPage
-            PartitionLoadMode.REPLACE_REFRESH -> resolveReplaceRefreshPage(
-                nextLoadPage = currentPage,
-                hasMore = hasMore
-            )
-        }
-        if (isReset || isRefresh) {
-            if (isReset) {
-                currentPage = 1
-                hasMore = true
-            }
-            requestGeneration++
-        }
-        val generation = requestGeneration
-        val partition = _uiState.value.selectedPartition
-        val replaceList = isReset || isRefresh
-
-        viewModelScope.launch {
-            _uiState.update {
-                it.copy(
-                    isLoading = !isRefresh,
-                    isRefreshing = isRefresh,
-                    error = null
-                )
-            }
-            val result = if (partition.id == 0) {
-                VideoRepository.getPopularVideos(page = pageToFetch)
-            } else {
-                VideoRepository.getRegionVideos(tid = partition.id, page = pageToFetch)
-            }
-            if (generation != requestGeneration) return@launch
-
-            result
-                .onSuccess { newVideos ->
-                    hasMore = newVideos.isNotEmpty()
-                    currentPage = if (newVideos.isNotEmpty()) {
-                        pageToFetch + 1
-                    } else if (isRefresh) {
-                        1
-                    } else {
-                        currentPage
-                    }
-                    _uiState.update { state ->
-                        val nextVideos = when {
-                            isRefresh && newVideos.isEmpty() -> state.videos
-                            replaceList -> newVideos
-                            else -> state.videos + newVideos
-                        }
-                        state.copy(
-                            videos = nextVideos,
-                            isLoading = false,
-                            isRefreshing = false,
-                            error = if (nextVideos.isEmpty()) {
-                                if (isRefresh || isReset) "没有更多内容了" else state.error
-                            } else {
-                                null
-                            }
-                        )
-                    }
-                }
-                .onFailure { error ->
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            isRefreshing = false,
-                            error = error.message ?: "加载失败"
-                        )
-                    }
-                }
-        }
-    }
-}
-
-private enum class PartitionLoadMode {
-    RESET,
-    APPEND,
-    REPLACE_REFRESH
 }
 
 /**
@@ -447,8 +265,8 @@ fun PartitionContent(
     onBangumiClick: (Int) -> Unit = {},
     viewModel: PartitionFeedViewModel = viewModel()
 ) {
-    val context = LocalContext.current
-    val homeSettings by SettingsManager.getHomeSettings(context).collectAsStateWithLifecycle(initialValue = HomeSettings())
+    val topTabLabelMode by viewModel.topTabLabelMode.collectAsStateWithLifecycle()
+    val homeFeedCardStyle by viewModel.homeFeedCardStyle.collectAsStateWithLifecycle()
     val topChromeIconFamily = rememberAppTopChromePolicy().effectiveIconFamily
     val liquidGlassIndicatorEnabled = false
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -500,7 +318,7 @@ fun PartitionContent(
             PartitionSideRail(
                 partitions = partitionTabs,
                 selectedId = state.selectedPartition.id,
-                labelMode = homeSettings.topTabLabelMode,
+                labelMode = topTabLabelMode,
                 iconFamily = topChromeIconFamily,
                 modifier = Modifier.width(92.dp),
                 contentPadding = PaddingValues(
@@ -534,6 +352,7 @@ fun PartitionContent(
                 PartitionVideoList(
                     state = state,
                     listState = listState,
+                    homeFeedCardStyle = homeFeedCardStyle,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(
                         start = 8.dp,
@@ -731,8 +550,8 @@ private fun PartitionSideRailItem(
     iconFamily: AppSemanticIconFamily,
     onClick: () -> Unit
 ) {
-    val selectedColor = MaterialTheme.colorScheme.primary
-    val unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val selectedColor = AppSurfaceTokens.primary()
+    val unselectedColor = AppSurfaceTokens.onSurfaceVariantSummary()
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     val clampedSelectionProgress = selectionProgress.coerceIn(0f, 1f)
@@ -760,7 +579,7 @@ private fun PartitionSideRailItem(
                     selectedColor,
                     clampedSelectionProgress
                 )
-                pressed -> MaterialTheme.colorScheme.onSurface
+                pressed -> AppSurfaceTokens.onSurface()
                 else -> unselectedColor
             }
             if (showIcon) {
@@ -897,14 +716,11 @@ private fun Modifier.partitionSideRailIndicatorLongPressDrag(
 private fun PartitionVideoList(
     state: PartitionFeedUiState,
     listState: androidx.compose.foundation.lazy.LazyListState,
+    homeFeedCardStyle: HomeFeedCardStyle,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues,
     onVideoClick: (VideoItem) -> Unit
 ) {
-    val context = LocalContext.current
-    val homeFeedCardStyle by SettingsManager
-        .getHomeFeedCardStyle(context)
-        .collectAsStateWithLifecycle(initialValue = HomeFeedCardStyle.CURRENT)
     val cardLayout = remember(homeFeedCardStyle) {
         resolveHomeFeedCardLayout(homeFeedCardStyle)
     }

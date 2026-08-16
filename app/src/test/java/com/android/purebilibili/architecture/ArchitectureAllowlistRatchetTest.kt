@@ -45,10 +45,13 @@ class ArchitectureAllowlistRatchetTest {
     }
 
     private companion object {
-        // 冻结于接入护栏时的实测值（116 个 feature 文件引用 Core 全局对象），只能调小。
-        const val MAX_CORE_GLOBAL_OBJECT_FILES = 116
+        // 116 → 115：阶段 4 首个垂直切片 PartitionScreen 完成（设置读取移入
+        // ViewModel、M3 颜色换 AppSurfaceTokens），从白名单移除。
+        // 115 → 95：护栏规则修正——*ViewModel.kt 属 Coordinator 层（依赖 Core
+        // 合法），由规则豁免，20 个 ViewModel 文件移出白名单。
+        const val MAX_CORE_GLOBAL_OBJECT_FILES = 95
 
         const val CORE_GLOBAL_OBJECT_FILES_SHA256 =
-            "8c765f955b091d1eb50cf56ceef92eb448e549f7e9c3bc063c23a83f4d6aebc2"
+            "6c8cb8a16f2c35c7c734bd1e97ded5c7087f63bbb3ed70b1220cad61cb7ca968"
     }
 }
