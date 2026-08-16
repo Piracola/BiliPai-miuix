@@ -34,7 +34,6 @@ import androidx.compose.ui.platform.LocalDensity // [New]
 import androidx.compose.ui.zIndex // [New]
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned // [New]
-import com.android.purebilibili.core.store.SettingsManager // [New]
 import com.android.purebilibili.core.store.CommonListHeaderCollapseMode
 import com.android.purebilibili.core.store.HomeDurationStyle
 import com.android.purebilibili.core.store.HomeFeedCardStyle
@@ -224,11 +223,9 @@ fun CommonListScreen(
     // Fix: 手机端(Compact)使用较小的最小宽度以保证2列显示 (360dp / 170dp = 2.1 -> 2列)
     // 平板端(Expanded)使用较大的最小宽度以避免卡片过小
     val context = LocalContext.current
-    val showOnlineCount by SettingsManager.getShowOnlineCount(context).collectAsStateWithLifecycle(initialValue = false
-        )
-    val homeSettings by SettingsManager.getHomeSettings(context).collectAsStateWithLifecycle(initialValue = com.android.purebilibili.core.store.HomeSettings(),
-        context = kotlin.coroutines.EmptyCoroutineContext
-    )
+    val showOnlineCount by viewModel.showOnlineCount.collectAsStateWithLifecycle()
+    val homeSettings by viewModel.homeSettings.collectAsStateWithLifecycle()
+    val homeFeedCardStyle by viewModel.homeFeedCardStyle.collectAsStateWithLifecycle()
     val topChromePolicy = rememberAppTopChromePolicy()
     val liquidGlassEnabled = false
     val windowSizeClass = LocalWindowSizeClass.current
@@ -879,6 +876,7 @@ fun CommonListScreen(
                         cardTransitionEnabled = homeSettings.cardTransitionEnabled,
                         cardMotionTier = cardMotionTier,
                         showOnlineCount = showOnlineCount,
+                        homeFeedCardStyle = homeFeedCardStyle,
                         videoCardAppearance = videoCardAppearance,
                         onVideoClick = { bvid, cid, coverUrl, isVertical ->
                             onVideoClick(bvid, cid, coverUrl, isVertical)
@@ -977,6 +975,7 @@ fun CommonListScreen(
                                 cardTransitionEnabled = homeSettings.cardTransitionEnabled,
                                 cardMotionTier = cardMotionTier,
                                 showOnlineCount = showOnlineCount,
+                                homeFeedCardStyle = homeFeedCardStyle,
                                 videoCardAppearance = videoCardAppearance,
                                 onVideoClick = { bvid, cid, coverUrl, isVertical ->
                                     playFavoriteVideo(folderUiState.items, bvid, cid, coverUrl, page, false)
@@ -1021,6 +1020,7 @@ fun CommonListScreen(
                             cardTransitionEnabled = homeSettings.cardTransitionEnabled,
                             cardMotionTier = cardMotionTier,
                             showOnlineCount = showOnlineCount,
+                            homeFeedCardStyle = homeFeedCardStyle,
                             videoCardAppearance = videoCardAppearance,
                             onVideoClick = { bvid, cid, coverUrl, _ ->
                                 playFavoriteVideo(folderUiState.items, bvid, cid, coverUrl, 0, false)
@@ -1060,6 +1060,7 @@ fun CommonListScreen(
                         cardTransitionEnabled = homeSettings.cardTransitionEnabled,
                         cardMotionTier = cardMotionTier,
                         showOnlineCount = showOnlineCount,
+                        homeFeedCardStyle = homeFeedCardStyle,
                         videoCardAppearance = videoCardAppearance,
                         homeDurationStyle = homeSettings.homeDurationStyle,
                         onVideoClick = { bvid, cid, coverUrl, isVertical ->
@@ -2174,6 +2175,7 @@ private fun CommonListContent(
     cardTransitionEnabled: Boolean,
     cardMotionTier: MotionTier,
     showOnlineCount: Boolean,
+    homeFeedCardStyle: HomeFeedCardStyle,
     videoCardAppearance: CommonListVideoCardAppearance,
     homeDurationStyle: HomeDurationStyle = HomeDurationStyle.OUTSIDE_COVER,
     onVideoClick: (String, Long, String, Boolean) -> Unit,
@@ -2203,16 +2205,9 @@ private fun CommonListContent(
     val context = LocalContext.current
     val isHistoryPersonalList = resolveHistoryItem != null
     val isPersonalList = isHistoryPersonalList || isFavoritePersonalList
-    val homeFeedCardStyle = if (isPersonalList) {
-        HomeFeedCardStyle.CURRENT
-    } else {
-        SettingsManager
-            .getHomeFeedCardStyle(context)
-            .collectAsStateWithLifecycle(initialValue = HomeFeedCardStyle.CURRENT)
-            .value
-    }
-    val cardLayout = remember(homeFeedCardStyle) {
-        com.android.purebilibili.feature.home.resolveHomeFeedCardLayout(homeFeedCardStyle)
+    val effectiveHomeFeedCardStyle = if (isPersonalList) HomeFeedCardStyle.CURRENT else homeFeedCardStyle
+    val cardLayout = remember(effectiveHomeFeedCardStyle) {
+        com.android.purebilibili.feature.home.resolveHomeFeedCardLayout(effectiveHomeFeedCardStyle)
     }
     val gridOuterPaddingDp = if (isPersonalList) 12 else cardLayout.outerPaddingDp
     val gridItemSpacingDp = if (isPersonalList) 12 else cardLayout.itemSpacingDp

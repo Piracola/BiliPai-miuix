@@ -13,7 +13,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
@@ -35,6 +38,29 @@ data class ListUiState(
 abstract class BaseListViewModel(application: Application, private val pageTitle: String) : AndroidViewModel(application) {
     protected val _uiState = MutableStateFlow(ListUiState(title = pageTitle, isLoading = true))
     val uiState = _uiState.asStateFlow()
+
+    // 阶段 4 切片：列表页设置直读收拢到 VM（UI 层不得直接访问 SettingsManager）
+    val homeSettings = settingsStateFlow(
+        com.android.purebilibili.core.store.SettingsManager.getHomeSettings(getApplication()),
+        com.android.purebilibili.core.store.HomeSettings(),
+    )
+    val showOnlineCount = settingsStateFlow(
+        com.android.purebilibili.core.store.SettingsManager.getShowOnlineCount(getApplication()),
+        false,
+    )
+    val homeFeedCardStyle = settingsStateFlow(
+        com.android.purebilibili.core.store.SettingsManager.getHomeFeedCardStyle(getApplication()),
+        com.android.purebilibili.core.store.HomeFeedCardStyle.CURRENT,
+    )
+
+    private fun <T> settingsStateFlow(
+        flow: kotlinx.coroutines.flow.Flow<T>,
+        initialValue: T,
+    ): kotlinx.coroutines.flow.StateFlow<T> = flow.stateIn(
+        scope = viewModelScope,
+        started = kotlinx.coroutines.flow.SharingStarted.Eagerly,
+        initialValue = initialValue,
+    )
 
     // 应当在子类初始化完成后调用
     fun loadData(showLoading: Boolean = true) {
