@@ -58,9 +58,10 @@ class ArchitectureAllowlistRatchetTest {
         // 为独立 *ViewModel.kt（设置直读一并收拢）。
         // 86 → 84：FavoriteCategoryScreen / FollowingListScreen 内嵌 VM 提取为
         // 独立 *ViewModel.kt 文件。
-        const val MAX_CORE_GLOBAL_OBJECT_FILES = 84
+        // 84 → 83：DynamicScreen 动态页直读收拢到 DynamicViewModel（4 项 + 布局别名）。
+        const val MAX_CORE_GLOBAL_OBJECT_FILES = 83
 
         const val CORE_GLOBAL_OBJECT_FILES_SHA256 =
-            "cad37530e0aebc51d962172a7cae4f7aa6023a8a8a6e2225ac96776bbd75229f"
+            "c0875ee9746a6d313dc0b07d5ab819628b1874e9c8fd255305db81c2b8bfe270"
     }
 }

@@ -76,7 +76,6 @@ import com.android.purebilibili.core.ui.globalWallpaperAwareBackground
 import com.android.purebilibili.core.ui.rememberAppChevronUpIcon
 import com.android.purebilibili.core.ui.rememberAppDynamicIcon
 import com.android.purebilibili.core.ui.resolveGlobalWallpaperChromeColor
-import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.util.responsiveContentWidth
 import com.android.purebilibili.feature.dynamic.resolveDynamicHorizontalUserListHorizontalPadding
 import com.android.purebilibili.feature.dynamic.resolveDynamicHorizontalUserListSpacing
@@ -174,17 +173,11 @@ fun DynamicScreen(
     var showRepostDialog by remember { mutableStateOf<String?>(null) }  // 存储要转发的动态ID
     var showPublishDialog by remember { mutableStateOf(false) }  // [新增] 发布动态弹窗
     //  [新增] 动态 Feed 布局模式（瀑布流 / 列表）
-    val dynamicFeedLayoutMode by SettingsManager.getDynamicFeedLayoutMode(context)
-        .collectAsStateWithLifecycle(initialValue = SettingsManager.DynamicFeedLayoutMode.WATERFALL)
+    val dynamicFeedLayoutMode by viewModel.dynamicFeedLayoutMode.collectAsStateWithLifecycle()
 
-    val dynamicVisibleTabIds by SettingsManager.getDynamicTabVisibleTabs(context)
-        .collectAsStateWithLifecycle(initialValue = defaultDynamicTabVisibleIds)
-    val dynamicAllTabHorizontalUserListVisible by SettingsManager
-        .getDynamicAllTabHorizontalUserListVisible(context)
-        .collectAsStateWithLifecycle(initialValue = false)
-    val dynamicTopBarCollapseOnScroll by SettingsManager
-        .getDynamicTopBarCollapseOnScroll(context)
-        .collectAsStateWithLifecycle(initialValue = false)
+    val dynamicVisibleTabIds by viewModel.dynamicVisibleTabIds.collectAsStateWithLifecycle()
+    val dynamicAllTabHorizontalUserListVisible by viewModel.dynamicAllTabHorizontalUserListVisible.collectAsStateWithLifecycle()
+    val dynamicTopBarCollapseOnScroll by viewModel.dynamicTopBarCollapseOnScroll.collectAsStateWithLifecycle()
     val visibleTabs = remember(dynamicVisibleTabIds) {
         resolveDynamicVisibleTabs(dynamicVisibleTabIds)
     }
@@ -1042,7 +1035,7 @@ private fun DynamicList(
     onManageAction: (com.android.purebilibili.feature.dynamic.components.DynamicManageAction) -> Unit = {},
     onLoadReplyInteractionStatus: ((oid: Long, type: Int, onLoaded: (com.android.purebilibili.data.model.response.ReplyInteractionData?) -> Unit) -> Unit)? = null,
     likedDynamics: Set<String> = emptySet(),
-    feedLayoutMode: SettingsManager.DynamicFeedLayoutMode = SettingsManager.DynamicFeedLayoutMode.WATERFALL,
+    feedLayoutMode: DynamicFeedLayoutModeAlias = DynamicFeedLayoutModeAlias.WATERFALL,
     modifier: Modifier = Modifier
 ) {
     val dynamicCard: @Composable (com.android.purebilibili.data.model.response.DynamicItem) -> Unit = { item ->
@@ -1072,7 +1065,7 @@ private fun DynamicList(
     }
 
     LazyVerticalStaggeredGrid(
-        columns = if (feedLayoutMode == SettingsManager.DynamicFeedLayoutMode.LIST) {
+        columns = if (feedLayoutMode == DynamicFeedLayoutModeAlias.LIST) {
             //  [新增] 列表模式：单列居中（对齐 BiliPai dynamicsWaterfallFlow 的列表布局）
             StaggeredGridCells.Fixed(1)
         } else {

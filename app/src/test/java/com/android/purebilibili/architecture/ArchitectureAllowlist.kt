@@ -23,7 +23,6 @@ internal object ArchitectureAllowlist {
         "src/main/java/com/android/purebilibili/feature/download/DownloadManager.kt",
         "src/main/java/com/android/purebilibili/feature/download/DownloadRequestHeaders.kt",
         "src/main/java/com/android/purebilibili/feature/dynamic/DynamicDetailScreen.kt",
-        "src/main/java/com/android/purebilibili/feature/dynamic/DynamicScreen.kt",
         "src/main/java/com/android/purebilibili/feature/dynamic/components/DynamicCard.kt",
         "src/main/java/com/android/purebilibili/feature/dynamic/components/DynamicEmoteCatalog.kt",
         "src/main/java/com/android/purebilibili/feature/dynamic/components/ImagePreviewDialog.kt",

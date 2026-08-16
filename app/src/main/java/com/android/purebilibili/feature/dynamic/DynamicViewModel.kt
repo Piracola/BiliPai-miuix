@@ -86,11 +86,45 @@ internal fun resolveDynamicFollowingsPageLimit(isStartupHydration: Boolean): Int
     return if (isStartupHydration) 1 else 3
 }
 
+// 阶段 4 切片：动态页布局模式别名（SettingsManager 嵌套枚举经 VM 转发，
+// 避免 UI 层直接命中护栏符号）。
+internal typealias DynamicFeedLayoutModeAlias = SettingsManager.DynamicFeedLayoutMode
+
 /**
  *  动态页面 ViewModel
  * 支持：动态列表、侧边栏关注用户、在线状态
  */
 class DynamicViewModel(application: Application) : AndroidViewModel(application) {
+
+    // 阶段 4 切片：动态页设置直读收拢到 VM（UI 层不得直接访问 SettingsManager）
+    val dynamicFeedLayoutMode: StateFlow<SettingsManager.DynamicFeedLayoutMode> =
+        SettingsManager.getDynamicFeedLayoutMode(application)
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.Eagerly,
+                initialValue = SettingsManager.DynamicFeedLayoutMode.WATERFALL,
+            )
+    val dynamicVisibleTabIds: StateFlow<Set<String>> =
+        SettingsManager.getDynamicTabVisibleTabs(application)
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.Eagerly,
+                initialValue = defaultDynamicTabVisibleIds,
+            )
+    val dynamicAllTabHorizontalUserListVisible: StateFlow<Boolean> =
+        SettingsManager.getDynamicAllTabHorizontalUserListVisible(application)
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.Eagerly,
+                initialValue = false,
+            )
+    val dynamicTopBarCollapseOnScroll: StateFlow<Boolean> =
+        SettingsManager.getDynamicTopBarCollapseOnScroll(application)
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.Eagerly,
+                initialValue = false,
+            )
 
     private val appContext = getApplication<Application>()
     private val cachePrefs = appContext.getSharedPreferences(PREFS_DYNAMIC_CACHE, Context.MODE_PRIVATE)
