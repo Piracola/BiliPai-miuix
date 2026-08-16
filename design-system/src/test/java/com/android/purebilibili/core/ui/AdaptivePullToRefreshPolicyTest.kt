@@ -6,14 +6,6 @@ import kotlin.test.assertEquals
 class AdaptivePullToRefreshPolicyTest {
 
     @Test
-    fun `single miuix style routes to miuix bridged renderer`() {
-        assertEquals(
-            PresetPrimitiveRenderer.MIUIX_BRIDGED,
-            resolveAdaptivePullToRefreshRenderer()
-        )
-    }
-
-    @Test
     fun `miuix refresh texts use localized home hints`() {
         assertEquals(
             listOf("下拉刷新...", "松手刷新", "正在刷新...", "刷新完成"),

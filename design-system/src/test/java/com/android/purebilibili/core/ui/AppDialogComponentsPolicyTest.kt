@@ -15,14 +15,6 @@ class AppDialogComponentsPolicyTest {
     }
 
     @Test
-    fun singleMiuixAlertDialogUsesWindowDialogWhenOutsideScaffoldHost() {
-        assertEquals(
-            AppAlertDialogRenderer.LOCAL_DIALOG,
-            resolveAppAlertDialogRenderer()
-        )
-    }
-
-    @Test
     fun contentDialogLayout_disablesPlatformDefaultWidthAndCapsMaxWidth() {
         val compact = resolveAppCompactContentDialogLayoutPolicy()
         val standard = resolveAppContentDialogLayoutPolicy()

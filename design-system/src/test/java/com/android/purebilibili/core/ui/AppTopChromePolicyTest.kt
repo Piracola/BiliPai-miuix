@@ -8,7 +8,7 @@ class AppTopChromePolicyTest {
     fun singleMiuixStyleMapsToSemanticTopChromeTreatment() {
         val policy = resolveAppTopChromePolicy()
 
-        assertEquals(AppTopTabPresentation.MATERIAL_UNDERLINE, policy.tabPresentation)
-        assertEquals(AppSemanticIconFamily.MATERIAL, policy.iconFamily)
+        assertEquals(AppTopTabPresentation.MOVING_CAPSULE, policy.tabPresentation)
+        assertEquals(AppSemanticIconFamily.MIUIX, policy.iconFamily)
     }
 }

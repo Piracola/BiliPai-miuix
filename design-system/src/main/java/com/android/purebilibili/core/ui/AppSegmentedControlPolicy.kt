@@ -29,10 +29,7 @@ fun resolveHeightCappedCornerRadius(
 }
 
 data class AppSegmentedControlPolicy(
-    val usesEmphasizedTitle: Boolean,
-    val usesMaterialFallback: Boolean,
     val usesNativeTabRow: Boolean,
-    val usesMaterialColorTokens: Boolean,
     /** Preferred item corner; still height-capped at render time. */
     val pillCornerRadius: Dp,
     val nativeTabRowHeight: Dp,
@@ -47,10 +44,7 @@ internal fun resolveAppSegmentedControlPolicy(): AppSegmentedControlPolicy {
     val tabHeight = AppNativeTabRowHeightDp.dp
     val segmentHeight = AppMiuixSegmentedItemHeightDp.dp
     return AppSegmentedControlPolicy(
-        usesEmphasizedTitle = true,
-        usesMaterialFallback = true,
         usesNativeTabRow = true,
-        usesMaterialColorTokens = false,
         pillCornerRadius = resolveHeightCappedCornerRadius(tabHeight, preferred),
         nativeTabRowHeight = tabHeight,
         segmentedItemHeight = segmentHeight,

@@ -1,9 +1,8 @@
 package com.android.purebilibili.feature.settings
 
 import com.android.purebilibili.core.ui.components.AppSegmentOption
-import com.android.purebilibili.core.ui.components.AppSegmentedChrome
-import com.android.purebilibili.core.ui.components.resolveAppSegmentedChrome
 import com.android.purebilibili.core.ui.components.resolveAppSegmentedLabelFontSizeSp
+import com.android.purebilibili.core.ui.components.resolveAppSegmentedLiquidGlassRequest
 import com.android.purebilibili.core.store.FullscreenAspectRatio
 import com.android.purebilibili.core.store.FullscreenMode
 import com.android.purebilibili.core.store.player.DEFAULT_AUDIO_QUALITY_FOLLOW_LAST
@@ -173,38 +172,31 @@ class PlaybackSettingsSelectionPolicyTest {
     }
 
     @Test
-    fun `material md3 segmented control drops outer capsule shell`() {
-        val source = loadSource("design-system/src/main/java/com/android/purebilibili/core/ui/renderer/material3/AppMaterial3SegmentedControl.kt")
-        val materialBlock = source
-            .substringAfter("internal fun <T> AppMaterial3SegmentedControl(")
-
-        assertTrue(materialBlock.contains("SingleChoiceSegmentedButtonRow("))
-        assertTrue(materialBlock.contains("SegmentedButtonDefaults.borderStroke("))
-        assertFalse(materialBlock.contains("adaptiveSquircleBackground("))
-        assertFalse(materialBlock.contains("outerContainerColor"))
+    fun `material md3 segmented control is removed after renderer convergence`() {
+        // renderer/material3 目录已随阶段 3 收敛删除，M3 分段控件不再存在。
+        val sourceFiles = listOf(
+            "design-system/src/main/java/com/android/purebilibili/core/ui/renderer/material3/AppMaterial3SegmentedControl.kt",
+            "src/main/java/com/android/purebilibili/core/ui/renderer/material3/AppMaterial3SegmentedControl.kt"
+        )
+        assertTrue(sourceFiles.none { runCatching { loadSource(it) }.isSuccess })
     }
 
     @Test
     fun `android native liquid glass opt in makes shared ios segmented control use liquid indicator`() {
+        // 收敛后 M3/NATIVE 分段控件渲染已删除，liquid chrome 决策由
+        // resolveAppSegmentedLiquidGlassRequest 表达。
         assertEquals(
-            AppSegmentedChrome.NATIVE,
-            resolveAppSegmentedChrome(
-                usesMaterialFallback = true,
-                nativeLiquidGlassEnabled = false
+            true,
+            resolveAppSegmentedLiquidGlassRequest(
+                forceLiquidIndicator = true,
+                hasExternalBackdrop = true
             )
         )
         assertEquals(
-            AppSegmentedChrome.LIQUID,
-            resolveAppSegmentedChrome(
-                usesMaterialFallback = true,
-                nativeLiquidGlassEnabled = true
-            )
-        )
-        assertEquals(
-            AppSegmentedChrome.LIQUID,
-            resolveAppSegmentedChrome(
-                usesMaterialFallback = false,
-                nativeLiquidGlassEnabled = false
+            null,
+            resolveAppSegmentedLiquidGlassRequest(
+                forceLiquidIndicator = false,
+                hasExternalBackdrop = true
             )
         )
     }

@@ -30,10 +30,10 @@ class MiuixV2MigrationStructureTest {
 
     @Test
     fun appAlertDialog_routesToWindowDialog() {
-        // 单主题迁移：对话框统一路由到窗口级 LOCAL_DIALOG。
+        // 单主题迁移：对话框统一路由到窗口级 Dialog；renderer 枚举已随收敛删除。
         val source = loadSource("design-system/src/main/java/com/android/purebilibili/core/ui/AdaptiveDialogComponents.kt")
-        assertTrue(source.contains("AppAlertDialogRenderer.LOCAL_DIALOG"))
         assertTrue(source.contains("Dialog("))
+        assertFalse(source.contains("AppAlertDialogRenderer"))
     }
 
     @Test
@@ -45,15 +45,27 @@ class MiuixV2MigrationStructureTest {
     }
 
     @Test
-    fun buildGradle_pinsMiuixVersionTo093() {
-        val source = loadSource("app/build.gradle.kts")
-        assertTrue(source.contains("val miuixVersion = \"0.9.3\""))
+    fun gradleCatalog_pinsMiuixVersionTo093Snapshot() {
+        val source = loadSource("gradle/libs.versions.toml")
+        assertTrue(source.contains("miuix = \"0.9.3-a370b370-SNAPSHOT\""))
     }
 
     @Test
-    fun buildGradle_includesMiuixShaderArtifact() {
-        val source = loadSource("app/build.gradle.kts")
+    fun gradleCatalog_includesMiuixShaderArtifact() {
+        val source = loadSource("gradle/libs.versions.toml")
         assertTrue(source.contains("miuix-shader-android"))
+    }
+
+    @Test
+    fun gradleCatalog_includesMiuixSquircleArtifact() {
+        val source = loadSource("gradle/libs.versions.toml")
+        assertTrue(source.contains("miuix-squircle-android"))
+    }
+
+    @Test
+    fun gradleCatalog_includesMiuixIconsArtifact() {
+        val source = loadSource("gradle/libs.versions.toml")
+        assertTrue(source.contains("miuix-icons-android"))
     }
 
     @Test
@@ -83,13 +95,13 @@ class MiuixV2MigrationStructureTest {
 
     @Test
     fun buildGradle_includesMiuixSquircleArtifact() {
-        val source = loadSource("app/build.gradle.kts")
+        val source = loadSource("gradle/libs.versions.toml")
         assertTrue(source.contains("miuix-squircle-android"))
     }
 
     @Test
     fun buildGradle_includesMiuixIconsArtifact() {
-        val source = loadSource("app/build.gradle.kts")
+        val source = loadSource("gradle/libs.versions.toml")
         assertTrue(source.contains("miuix-icons-android"))
     }
 
@@ -97,9 +109,10 @@ class MiuixV2MigrationStructureTest {
     fun md3SegmentedControl_routesToMiuixTabRow() {
         val source = loadSource("design-system/src/main/java/com/android/purebilibili/core/ui/renderer/miuix/AppMiuixSegmentedControl.kt")
         val componentSource = loadSource("design-system/src/main/java/com/android/purebilibili/core/ui/components/AppSegmentedControl.kt")
-        // 单主题政策：分段控件统一走 Miuix TabRow。
-        assertTrue(componentSource.contains("resolveAppSegmentedRenderer()"))
-        assertTrue(componentSource.contains("AppMiuixSegmentedControl("))
+        // 单主题政策：分段控件统一走 Miuix TabRow；renderer/chrome 枚举已随收敛删除。
+        assertTrue(componentSource.contains("AppNativeTabRow("))
+        assertFalse(componentSource.contains("resolveAppSegmentedRenderer()"))
+        assertFalse(componentSource.contains("AppMiuixSegmentedControl("))
         assertTrue(source.contains("TabRow("))
     }
 
@@ -130,9 +143,6 @@ class MiuixV2MigrationStructureTest {
         val source = loadSource("design-system/src/main/java/com/android/purebilibili/core/ui/components/AdaptivePreferenceComponents.kt")
         assertTrue(source.contains("resolveAppClickableItemRenderer("))
         assertTrue(source.contains("AppClickableItemRenderer.MIUIX_ARROW"))
-        assertTrue(source.contains("AppClickableItemRenderer.MIUIX_BASIC"))
-        assertTrue(source.contains("shouldRouteSwitchItemToMiuixSwitchPreference("))
-        assertTrue(source.contains("shouldRouteSliderPreferenceToMiuixSliderPreference("))
         assertTrue(source.contains("MiuixSliderPreference("))
     }
 
@@ -177,13 +187,6 @@ class MiuixV2MigrationStructureTest {
     }
 
     @Test
-    fun adaptiveScaffoldPolicy_requiresMiuixPopupHostOnMiuixVariant() {
-        val source = loadSource("design-system/src/main/java/com/android/purebilibili/core/ui/AdaptiveScaffoldPolicy.kt")
-        assertTrue(source.contains("shouldMountMiuixPopupHostOnAdaptiveScaffold("))
-        assertTrue(source.contains("MIUIX_SCAFFOLD_WITH_POPUP_HOST"))
-    }
-
-    @Test
     fun featureLayer_doesNotCallIosLargeTitleBarDirectly() {
         val featureRoot = File("app/src/main/java/com/android/purebilibili/feature")
         val offenders = featureRoot.walkTopDown()
@@ -205,11 +208,12 @@ class MiuixV2MigrationStructureTest {
     }
 
     @Test
-    fun md3SegmentedControl_usesAdaptiveSquircleBackground() {
+    fun md3SegmentedControl_usesMiuixTabRowRenderer() {
         val source = loadSource(
             "design-system/src/main/java/com/android/purebilibili/core/ui/renderer/miuix/AppMiuixSegmentedControl.kt"
         )
-        assertTrue(source.contains("adaptiveSquircleBackground("))
+        assertTrue(source.contains("TabRow("))
+        assertTrue(source.contains("Miuix"))
     }
 
     @Test

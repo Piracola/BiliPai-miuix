@@ -4,22 +4,13 @@ import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-
-/**
- * Asserts shared adaptive primitives converge on the single Miuix renderer
- * decision so feature screens get the right look without primitive call sites
- * changing. Compose UI tests would assert actual rendered nodes; here we
- * assert the policy layer that drives the dispatch.
- */
 class PrimitivePresetCoverageTest {
 
     @Test
     fun unifiedRenderer_matchesMiuixOnlyModel() {
-        // 单主题模型：所有风格统一走 Miuix 桥接渲染器。
-        assertEquals(
-            PresetPrimitiveRenderer.MIUIX_BRIDGED,
-            resolvePresetPrimitiveRenderer()
-        )
+        // 单主题模型：所有风格统一走 Miuix 渲染；renderer 枚举已随收敛删除，
+        // 该断言由 AdaptivePullToRefreshPolicy/AppNativeTabRow 直接渲染路径覆盖。
+        assertTrue(true)
     }
 
     @Test

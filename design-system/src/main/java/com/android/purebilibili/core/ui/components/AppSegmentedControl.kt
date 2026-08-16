@@ -1,6 +1,5 @@
 package com.android.purebilibili.core.ui.components
 
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -8,22 +7,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.ui.rememberAppSegmentedControlPolicy
-import com.android.purebilibili.core.ui.renderer.miuix.AppMiuixSegmentedControl
 import com.android.purebilibili.core.ui.renderer.miuix.AppMiuixTabRow
 
 data class AppSegmentOption<T>(
     val value: T,
     val label: String,
 )
-
-enum class AppSegmentedChrome {
-    LIQUID,
-    NATIVE,
-}
-
-enum class AppSegmentedRenderer {
-    MIUIX,
-}
 
 data class AppSegmentedControlColors(
     val outerContainerColor: Color,
@@ -47,17 +36,6 @@ data class AppLiquidSegmentedControlSpec(
     val liquidGlassEffectsEnabled: Boolean,
     val tapPressRefractionEnabled: Boolean,
 )
-
-fun resolveAppSegmentedChrome(
-    usesMaterialFallback: Boolean,
-    nativeLiquidGlassEnabled: Boolean,
-): AppSegmentedChrome = if (usesMaterialFallback && !nativeLiquidGlassEnabled) {
-    AppSegmentedChrome.NATIVE
-} else {
-    AppSegmentedChrome.LIQUID
-}
-
-fun resolveAppSegmentedRenderer(): AppSegmentedRenderer = AppSegmentedRenderer.MIUIX
 
 fun resolveAppSegmentedLabelFontSizeSp(
     optionCount: Int,
@@ -103,30 +81,16 @@ fun resolveAppSegmentedLiquidGlassRequest(
 ): Boolean? = if (forceLiquidIndicator && hasExternalBackdrop) true else null
 
 fun resolveAppSegmentedControlColors(
-    usesMaterialColorTokens: Boolean,
-    materialPrimaryContainer: Color,
-    materialOnPrimaryContainer: Color,
-    materialSurfaceContainerHigh: Color,
-    materialOnSurfaceVariant: Color,
     miuixSecondaryContainer: Color,
     miuixOnSecondaryContainer: Color,
     miuixSurfaceContainerHigh: Color,
     miuixOnSurfaceVariantSummary: Color,
-): AppSegmentedControlColors = if (usesMaterialColorTokens) {
-    AppSegmentedControlColors(
-        outerContainerColor = materialSurfaceContainerHigh,
-        activeContainerColor = materialPrimaryContainer,
-        activeContentColor = materialOnPrimaryContainer,
-        inactiveContentColor = materialOnSurfaceVariant,
-    )
-} else {
-    AppSegmentedControlColors(
-        outerContainerColor = miuixSurfaceContainerHigh,
-        activeContainerColor = miuixSecondaryContainer,
-        activeContentColor = miuixOnSecondaryContainer,
-        inactiveContentColor = miuixOnSurfaceVariantSummary,
-    )
-}
+): AppSegmentedControlColors = AppSegmentedControlColors(
+    outerContainerColor = miuixSurfaceContainerHigh,
+    activeContainerColor = miuixSecondaryContainer,
+    activeContentColor = miuixOnSecondaryContainer,
+    inactiveContentColor = miuixOnSurfaceVariantSummary,
+)
 
 fun resolveAppMiuixSegmentedColors(
     colors: AppSegmentedControlColors,
@@ -146,44 +110,6 @@ fun <T> resolveAppSegmentedSelectionIndex(
 }
 
 @Composable
-fun <T> AppNativeSegmentedControl(
-    options: List<AppSegmentOption<T>>,
-    selectedValue: T,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    onSelectionChange: (T) -> Unit,
-) {
-    if (options.isEmpty()) return
-    val policy = rememberAppSegmentedControlPolicy()
-    val materialColors = MaterialTheme.colorScheme
-    val colors = resolveAppSegmentedControlColors(
-        usesMaterialColorTokens = policy.usesMaterialColorTokens,
-        materialPrimaryContainer = materialColors.primaryContainer,
-        materialOnPrimaryContainer = materialColors.onPrimaryContainer,
-        materialSurfaceContainerHigh = materialColors.surfaceContainerHigh,
-        materialOnSurfaceVariant = materialColors.onSurfaceVariant,
-        miuixSecondaryContainer = AppSurfaceTokens.secondaryContainer(),
-        miuixOnSecondaryContainer = AppSurfaceTokens.onSecondaryContainer(),
-        miuixSurfaceContainerHigh = AppSurfaceTokens.surfaceContainerHigh(),
-        miuixOnSurfaceVariantSummary = AppSurfaceTokens.onSurfaceVariantSummary(),
-    )
-    AppMiuixSegmentedControl(
-        options = options,
-        selectedValue = selectedValue,
-        enabled = enabled,
-        colors = colors,
-        pillCornerRadius = policy.pillCornerRadius,
-        modifier = modifier,
-        onSelectionChange = onSelectionChange,
-    )
-}
-
-/**
- * Theme-adaptive page tabs. Material 3 renders a primary tab row; MIUIX renders
- * its native TabRow. Use this for sibling pages, and segmented buttons for
- * compact option selection inside a page.
- */
-@Composable
 fun <T> AppNativeTabRow(
     options: List<AppSegmentOption<T>>,
     selectedValue: T,
@@ -195,13 +121,7 @@ fun <T> AppNativeTabRow(
 ) {
     if (options.isEmpty()) return
     val policy = rememberAppSegmentedControlPolicy()
-    val materialColors = MaterialTheme.colorScheme
     val colors = resolveAppSegmentedControlColors(
-        usesMaterialColorTokens = policy.usesMaterialColorTokens,
-        materialPrimaryContainer = materialColors.primaryContainer,
-        materialOnPrimaryContainer = materialColors.onPrimaryContainer,
-        materialSurfaceContainerHigh = materialColors.surfaceContainerHigh,
-        materialOnSurfaceVariant = materialColors.onSurfaceVariant,
         miuixSecondaryContainer = AppSurfaceTokens.secondaryContainer(),
         miuixOnSecondaryContainer = AppSurfaceTokens.onSecondaryContainer(),
         miuixSurfaceContainerHigh = AppSurfaceTokens.surfaceContainerHigh(),

@@ -2,21 +2,11 @@ package com.android.purebilibili.feature.settings
 
 import androidx.compose.ui.graphics.Color
 import com.android.purebilibili.core.ui.components.AppSegmentedControlColors
-import com.android.purebilibili.core.ui.components.AppSegmentedRenderer
 import com.android.purebilibili.core.ui.components.resolveAppMiuixSegmentedColors
-import com.android.purebilibili.core.ui.components.resolveAppSegmentedRenderer
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class SegmentedControlRendererPolicyTest {
-
-    @Test
-    fun `single miuix renderer routes segmented chrome to tab row`() {
-        assertEquals(
-            AppSegmentedRenderer.MIUIX,
-            resolveAppSegmentedRenderer()
-        )
-    }
 
     @Test
     fun `miuix segmented tab row colors map secondary container roles`() {

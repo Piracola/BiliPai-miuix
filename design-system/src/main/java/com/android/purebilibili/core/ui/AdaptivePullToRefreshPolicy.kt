@@ -1,9 +1,5 @@
 package com.android.purebilibili.core.ui
 
-fun resolveAdaptivePullToRefreshRenderer(): PresetPrimitiveRenderer {
-    return resolvePresetPrimitiveRenderer()
-}
-
 fun resolveMiuixPullToRefreshTexts(): List<String> = listOf(
     "下拉刷新...",
     "松手刷新",

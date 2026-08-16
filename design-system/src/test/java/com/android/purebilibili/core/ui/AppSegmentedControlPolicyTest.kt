@@ -12,10 +12,7 @@ class AppSegmentedControlPolicyTest {
     fun `single miuix exposes native tab row capability`() {
         val policy = resolveAppSegmentedControlPolicy()
 
-        assertTrue(policy.usesEmphasizedTitle)
-        assertTrue(policy.usesMaterialFallback)
         assertTrue(policy.usesNativeTabRow)
-        assertFalse(policy.usesMaterialColorTokens)
     }
 
     @Test

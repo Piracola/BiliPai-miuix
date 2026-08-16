@@ -26,13 +26,6 @@ import top.yukonga.miuix.kmp.basic.SmallTopAppBar as MiuixSmallTopAppBar
 import top.yukonga.miuix.kmp.basic.TopAppBar as MiuixTopAppBar
 import top.yukonga.miuix.kmp.utils.MiuixPopupUtils
 
-fun isNativeMiuixEnabled(): Boolean = true
-
-@Composable
-fun rememberIsNativeMiuixEnabled(): Boolean {
-    return isNativeMiuixEnabled()
-}
-
 enum class AdaptiveTopAppBarStyle {
     SMALL,
     CENTERED,

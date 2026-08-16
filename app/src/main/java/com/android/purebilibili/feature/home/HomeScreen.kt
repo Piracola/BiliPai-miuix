@@ -1627,9 +1627,7 @@ fun HomeScreen(
                                         AppPullRefreshLoadingIndicator(
                                             modifier = Modifier
                                                 .align(Alignment.TopCenter)
-                                                .padding(top = homeRefreshIndicatorTopInset),
-                                            isRefreshing = isPageRefreshing,
-                                            state = pullRefreshState
+                                                .padding(top = homeRefreshIndicatorTopInset)
                                         )
                                     }
                                     AppPullRefreshIndicatorStyle.MIUIX_NATIVE -> Unit

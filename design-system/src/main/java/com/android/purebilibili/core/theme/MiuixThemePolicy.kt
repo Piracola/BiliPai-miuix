@@ -34,8 +34,6 @@ fun resolveAndroidNativeChromeTokens(): AndroidNativeChromeTokens = AndroidNativ
 
 fun resolveCornerRadiusScale(): Float = MIUIX_CORNER_RADIUS_SCALE
 
-fun shouldUseMiuixSmoothRounding(): Boolean = true
-
 fun resolveMaterialTypography(): Typography = BiliMiuixTypography
 
 fun resolveMaterialMotionScheme(): MotionScheme = MotionScheme.standard()

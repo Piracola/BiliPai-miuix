@@ -17,8 +17,7 @@ class MiuixThemePolicyTest {
     }
 
     @Test
-    fun singleMiuixTheme_enablesSmoothRoundingAndLargerCornerScale() {
-        assertTrue(shouldUseMiuixSmoothRounding())
+    fun singleMiuixTheme_usesLargerCornerScale() {
         assertEquals(
             MIUIX_CORNER_RADIUS_SCALE,
             resolveCornerRadiusScale()

@@ -25,13 +25,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
-enum class AppAlertDialogRenderer {
-    LOCAL_DIALOG
-}
-
-fun resolveAppAlertDialogRenderer(): AppAlertDialogRenderer =
-    AppAlertDialogRenderer.LOCAL_DIALOG
-
 data class DialogActionLayoutPolicy(
     val expandToContainer: Boolean
 )
