@@ -25,8 +25,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.android.purebilibili.feature.video.ui.pager.PORTRAIT_PLAYBACK_TARGET_QUALITY
-import com.android.purebilibili.feature.video.ui.pager.shouldUsePortraitParallelPlaybackBootstrap
+import com.android.purebilibili.core.video.pager.PORTRAIT_PLAYBACK_TARGET_QUALITY
+import com.android.purebilibili.core.video.pager.shouldUsePortraitParallelPlaybackBootstrap
 import kotlinx.coroutines.flow.first
 import okhttp3.CacheControl
 import okhttp3.Request

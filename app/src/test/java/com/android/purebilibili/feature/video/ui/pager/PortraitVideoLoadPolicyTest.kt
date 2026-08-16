@@ -1,5 +1,9 @@
 package com.android.purebilibili.feature.video.ui.pager
 
+import com.android.purebilibili.core.video.pager.PORTRAIT_PLAYBACK_TARGET_QUALITY
+import com.android.purebilibili.core.video.pager.resolvePortraitPlaybackTargetQuality
+import com.android.purebilibili.core.video.pager.shouldUsePortraitParallelPlaybackBootstrap
+
 import com.android.purebilibili.data.model.response.Dash
 import com.android.purebilibili.data.model.response.DashAudio
 import com.android.purebilibili.data.model.response.DashVideo

@@ -18,13 +18,10 @@ import com.android.purebilibili.feature.plugin.PlaybackCdnPlugin
 import com.android.purebilibili.feature.video.playback.audio.AudioSelectionDecision
 import com.android.purebilibili.feature.video.playback.audio.resolveAudioStreamSelection
 import com.android.purebilibili.feature.video.viewmodel.buildPlaybackAudioUrlCandidates
+import com.android.purebilibili.core.video.pager.PORTRAIT_PLAYBACK_TARGET_QUALITY
+import com.android.purebilibili.core.video.pager.resolvePortraitPlaybackTargetQuality
 import kotlin.math.min
 
-/**
- * Fallback when no user preference is available (e.g. unit tests / cold path).
- * Live portrait playback should pass the detail-page playable default quality instead.
- */
-internal const val PORTRAIT_PLAYBACK_TARGET_QUALITY = 64
 internal const val PORTRAIT_SWIPE_PREFETCH_OFFSET_THRESHOLD = 0.25f
 internal const val PORTRAIT_EARLY_PLAYBACK_OFFSET_THRESHOLD = 0.58f
 
@@ -39,19 +36,6 @@ internal data class PortraitPlaybackStreamUrls(
     val audioUrl: String?,
     val audioSelection: AudioSelectionDecision? = null
 )
-
-/**
- * Resolve the playurl qn for portrait pager / Story.
- *
- * Prefer the same playable default used by video detail so Wi‑Fi 1080P / VIP 4K-HDR
- * settings are honored. Cap invalid values to the safe fallback.
- */
-internal fun resolvePortraitPlaybackTargetQuality(
-    preferredQuality: Int? = null
-): Int {
-    val quality = preferredQuality ?: return PORTRAIT_PLAYBACK_TARGET_QUALITY
-    return quality.takeIf { it > 0 } ?: PORTRAIT_PLAYBACK_TARGET_QUALITY
-}
 
 /**
  * Short label for the portrait chrome quality chip.
@@ -104,11 +88,6 @@ internal fun resolvePortraitDisplayedQualityId(
     if (returnedQuality > 0) return returnedQuality
     return dashVideoIds.maxOrNull() ?: requestedQuality.takeIf { it > 0 } ?: PORTRAIT_PLAYBACK_TARGET_QUALITY
 }
-
-internal fun shouldUsePortraitParallelPlaybackBootstrap(
-    bvid: String,
-    requestedCid: Long
-): Boolean = bvid.trim().startsWith("BV", ignoreCase = true) && requestedCid > 0L
 
 internal fun resolvePortraitPagePlaybackIdentity(item: Any): PortraitPagePlaybackIdentity? {
     return when (item) {
