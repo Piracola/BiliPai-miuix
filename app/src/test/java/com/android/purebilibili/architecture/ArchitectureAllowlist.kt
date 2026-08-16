@@ -37,7 +37,6 @@ internal object ArchitectureAllowlist {
         "src/main/java/com/android/purebilibili/feature/home/components/cards/VideoCardOnlineCountStore.kt",
         "src/main/java/com/android/purebilibili/feature/home/policy/HomeBottomBarModePolicy.kt",
         "src/main/java/com/android/purebilibili/feature/home/policy/HomeFeedScrollRestorePolicy.kt",
-        "src/main/java/com/android/purebilibili/feature/list/CommonListScreen.kt",
         "src/main/java/com/android/purebilibili/feature/list/FavoriteCategoryScreen.kt",
         "src/main/java/com/android/purebilibili/feature/live/LiveAreaDetailScreen.kt",
         "src/main/java/com/android/purebilibili/feature/live/LiveAreaScreen.kt",
@@ -100,6 +99,5 @@ internal object ArchitectureAllowlist {
         "src/main/java/com/android/purebilibili/feature/video/usecase/SponsorBlockUseCase.kt",
         "src/main/java/com/android/purebilibili/feature/video/usecase/VideoInteractionUseCase.kt",
         "src/main/java/com/android/purebilibili/feature/video/usecase/VideoPlaybackUseCase.kt",
-        "src/main/java/com/android/purebilibili/feature/watchlater/WatchLaterScreen.kt",
     )
 }
