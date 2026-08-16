@@ -32,12 +32,8 @@ import androidx.compose.material3.MaterialTheme
 import com.android.purebilibili.core.ui.components.AppSurface
 import com.android.purebilibili.core.ui.components.AppText
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,17 +43,17 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.android.purebilibili.core.util.LocalWindowSizeClass
 import com.android.purebilibili.core.util.responsiveContentWidth
-import com.android.purebilibili.data.model.response.LiveRoom
-import com.android.purebilibili.data.repository.LiveRepository
-import kotlinx.coroutines.launch
 
 @Composable
 fun LiveFollowingScreen(
     onBack: () -> Unit,
-    onLiveClick: (Long, String, String) -> Unit
+    onLiveClick: (Long, String, String) -> Unit,
+    viewModel: LiveFollowingViewModel = viewModel(),
 ) {
     val topChromePolicy = rememberAppTopChromePolicy()
     val visualSpec = remember(topChromePolicy.tabPresentation) {
@@ -77,36 +73,13 @@ fun LiveFollowingScreen(
         )
     }
     val colorScheme = MaterialTheme.colorScheme
-    var isLoading by remember { mutableStateOf(true) }
-    var isLoadingMore by remember { mutableStateOf(false) }
-    var isRefreshing by remember { mutableStateOf(false) }
-    var hasMore by remember { mutableStateOf(false) }
-    var nextPage by remember { mutableIntStateOf(1) }
-    var error by remember { mutableStateOf<String?>(null) }
-    var items by remember { mutableStateOf<List<LiveRoom>>(emptyList()) }
-    val coroutineScope = rememberCoroutineScope()
-
-    fun mergeRooms(current: List<LiveRoom>, next: List<LiveRoom>, refresh: Boolean): List<LiveRoom> {
-        return if (refresh) {
-            next.distinctBy { it.roomid }
-        } else {
-            (current + next).distinctBy { it.roomid }
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        LiveRepository.getFollowedLivePage(page = 1)
-            .onSuccess { page ->
-                items = mergeRooms(emptyList(), page.items, refresh = true)
-                hasMore = page.hasMore
-                nextPage = page.nextPage
-                isLoading = false
-            }
-            .onFailure {
-                error = it.message ?: "加载关注直播失败"
-                isLoading = false
-            }
-    }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val isLoading = uiState.isLoading
+    val isLoadingMore = uiState.isLoadingMore
+    val isRefreshing = uiState.isRefreshing
+    val hasMore = uiState.hasMore
+    val error = uiState.error
+    val items = uiState.items
 
     AppScaffold(
         modifier = Modifier.fillMaxSize(),
@@ -124,20 +97,7 @@ fun LiveFollowingScreen(
                 actions = {
                     AppIconButton(
                         enabled = !isLoading && !isRefreshing,
-                        onClick = {
-                            coroutineScope.launch {
-                                isRefreshing = true
-                                error = null
-                                LiveRepository.getFollowedLivePage(page = 1)
-                                    .onSuccess { page ->
-                                        items = mergeRooms(emptyList(), page.items, refresh = true)
-                                        hasMore = page.hasMore
-                                        nextPage = page.nextPage
-                                    }
-                                    .onFailure { error = it.message ?: "刷新关注直播失败" }
-                                isRefreshing = false
-                            }
-                        },
+                        onClick = { viewModel.refresh() },
                     ) {
                         AppIcon(
                             imageVector = Icons.Outlined.Refresh,
@@ -200,19 +160,7 @@ fun LiveFollowingScreen(
                             AppButton(
                                 enabled = !isLoadingMore,
                                 modifier = Modifier.fillMaxWidth(),
-                                onClick = {
-                                    coroutineScope.launch {
-                                        isLoadingMore = true
-                                        LiveRepository.getFollowedLivePage(page = nextPage)
-                                            .onSuccess { page ->
-                                                items = mergeRooms(items, page.items, refresh = false)
-                                                hasMore = page.hasMore
-                                                nextPage = page.nextPage
-                                            }
-                                            .onFailure { error = it.message ?: "加载更多失败" }
-                                        isLoadingMore = false
-                                    }
-                                },
+                                onClick = { viewModel.loadMore() },
                             ) {
                                 AppText(if (isLoadingMore) "加载中" else "加载更多")
                             }
