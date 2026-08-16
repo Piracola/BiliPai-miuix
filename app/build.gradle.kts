@@ -357,8 +357,6 @@ dependencies {
     val roomVersion = "2.8.4"
     val hazeVersion = "2.0.0-alpha03"
 
-    implementation(project(":settings-core"))
-    implementation(project(":network-core"))
     implementation(project(":plugin-sdk"))
     implementation(project(":design-system"))
 

@@ -73,8 +73,6 @@ dependencyResolutionManagement {
 rootProject.name = "BiliPai"
 include(":app")
 include(":baselineprofile")
-include(":settings-core")
-include(":network-core")
 include(":plugin-sdk")
 include(":design-system")
 include(":dolby-ffmpeg-decoder")

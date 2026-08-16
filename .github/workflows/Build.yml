@@ -64,6 +64,7 @@ jobs:
             --tests 'com.android.purebilibili.architecture.ArchitectureAllowlistRatchetTest' \
             --tests 'com.android.purebilibili.core.store.SettingsPersistenceCompatibilityTest' \
             --tests 'com.android.purebilibili.architecture.ModuleBoundaryReadinessStructureTest' \
+            --tests 'com.android.purebilibili.architecture.SplitPackageGuardStructureTest' \
             --no-daemon \
             --console=plain
 
