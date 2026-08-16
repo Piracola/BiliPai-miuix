@@ -75,7 +75,6 @@ import com.android.purebilibili.core.ui.rememberAppSemanticVisualPolicy
 import com.android.purebilibili.core.ui.rememberAppTopChromePolicy
 import com.android.purebilibili.core.theme.BiliPink
 import com.android.purebilibili.feature.settings.GITHUB_URL
-import com.android.purebilibili.core.store.SettingsManager //  引入 SettingsManager
 import com.android.purebilibili.core.store.AppNavigationSettings
 
 import com.android.purebilibili.core.store.resolveHomeHeaderBlurEnabled
@@ -377,9 +376,7 @@ fun HomeScreen(
         }
     }
 
-    val homeTopTabSettings by SettingsManager.getHomeTopTabSettings(context).collectAsStateWithLifecycle(initialValue = com.android.purebilibili.core.store.HomeTopTabSettings(),
-        context = kotlin.coroutines.EmptyCoroutineContext
-    )
+    val homeTopTabSettings by viewModel.homeTopTabSettings.collectAsStateWithLifecycle()
     // 顶部标签顺序和可见项交给设置页控制；默认仍是六项。
     // [Refactor] Hoist PagerState to be available for both Content and Header
     // 确保 pagerState 在所有作用域均可见，以便传给 HomeHeader
@@ -672,9 +669,7 @@ fun HomeScreen(
     // Create the state here and provide it
 
     //  [性能优化] 合并首页设置为单一 Flow，减少 6 个 collectAsState → 1 个
-    val homeSettings by SettingsManager.getHomeSettings(context).collectAsStateWithLifecycle(initialValue = com.android.purebilibili.core.store.HomeSettings(),
-        context = kotlin.coroutines.EmptyCoroutineContext
-    )
+    val homeSettings by viewModel.homeSettings.collectAsStateWithLifecycle()
     val videoCardTransitionBackgroundState = LocalVideoCardTransitionBackgroundState.current
     val videoCardReturnGestureInProgress =
         videoCardTransitionBackgroundState.isReturnGestureInProgressProvider()
@@ -695,13 +690,8 @@ fun HomeScreen(
     }
     val dissolvingVideos by viewModel.dissolvingVideos.collectAsStateWithLifecycle()
     val followingMids by viewModel.followingMids.collectAsStateWithLifecycle()
-    val showOnlineCount by SettingsManager
-        .getShowOnlineCount(context)
-        .collectAsStateWithLifecycle(initialValue = false)
-    val homeFeedCardStyle by SettingsManager
-        .getHomeFeedCardStyle(context)
-        .collectAsStateWithLifecycle(initialValue = com.android.purebilibili.core.store.HomeFeedCardStyle.CURRENT,
-            context = kotlin.coroutines.EmptyCoroutineContext)
+    val showOnlineCount by viewModel.showOnlineCount.collectAsStateWithLifecycle()
+    val homeFeedCardStyle by viewModel.homeFeedCardStyle.collectAsStateWithLifecycle()
     val homeFeedCardLayout = remember(homeFeedCardStyle) {
         resolveHomeFeedCardLayout(homeFeedCardStyle)
     }
@@ -797,9 +787,7 @@ fun HomeScreen(
     val crashTrackingConsentShown = homeSettings.crashTrackingConsentShown
     val baseCardAnimationEnabled = homeSettings.cardAnimationEnabled      //  卡片进场动画开关
     val baseCardTransitionEnabled = homeSettings.cardTransitionEnabled
-    val baseIsDataSaverActive = remember(context) {
-        com.android.purebilibili.core.store.SettingsManager.isDataSaverActive(context)
-    }
+    val baseIsDataSaverActive = viewModel.isDataSaverActiveSnapshot
     val homePerformanceConfig = remember(
         baseIsHeaderBlurEnabled,
         baseIsBottomBarBlurEnabled,
@@ -826,10 +814,8 @@ fun HomeScreen(
     val cardTransitionEnabled = homePerformanceConfig.cardTransitionEnabled && !systemReduceMotion
     val isDataSaverActive = homePerformanceConfig.isDataSaverActive
     val preloadAheadCount = homePerformanceConfig.preloadAheadCount
-    val configuredHomeWallpaperUri by SettingsManager.getHomeWallpaperUri(context).collectAsStateWithLifecycle(initialValue = ""
-        )
-    val splashWallpaperUri by SettingsManager.getSplashWallpaperUri(context).collectAsStateWithLifecycle(initialValue = ""
-        )
+    val configuredHomeWallpaperUri by viewModel.configuredHomeWallpaperUri.collectAsStateWithLifecycle()
+    val splashWallpaperUri by viewModel.splashWallpaperUri.collectAsStateWithLifecycle()
     val homeWallpaperUri = remember(configuredHomeWallpaperUri, splashWallpaperUri) {
         resolveHomeWallpaperUri(
             homeWallpaperUri = configuredHomeWallpaperUri,
@@ -837,9 +823,7 @@ fun HomeScreen(
         )
     }
 
-    val appNavigationSettings by SettingsManager.getAppNavigationSettings(context).collectAsStateWithLifecycle(initialValue = AppNavigationSettings(),
-        context = kotlin.coroutines.EmptyCoroutineContext
-    )
+    val appNavigationSettings by viewModel.appNavigationSettings.collectAsStateWithLifecycle()
     // 将字符串 ID 转换为 BottomNavItem 枚举
     val visibleBottomBarItems = remember(appNavigationSettings.orderedVisibleTabIds) {
         appNavigationSettings.orderedVisibleTabIds.mapNotNull { id ->
@@ -987,7 +971,7 @@ fun HomeScreen(
     //  📱 [切换导航模式] 处理函数
     val onToggleNavigationMode: () -> Unit = {
         coroutineScope.launch {
-            SettingsManager.setTabletUseSidebar(context, !tabletUseSidebar)
+            viewModel.setTabletUseSidebar(!tabletUseSidebar)
         }
     }
 
@@ -1312,7 +1296,7 @@ fun HomeScreen(
     }
     
     // [Feature] Bottom Bar Auto-Hide (based on scroll hide mode)
-    val isBottomBarAutoHideEnabled = bottomBarVisibilityMode == SettingsManager.BottomBarVisibilityMode.SCROLL_HIDE
+    val isBottomBarAutoHideEnabled = bottomBarVisibilityMode == HomeBottomBarVisibilityMode.SCROLL_HIDE
     val bottomBarVisibleState = LocalSetBottomBarVisible.current
     
     // [Feature] Global Scroll Offset for Liquid Glass

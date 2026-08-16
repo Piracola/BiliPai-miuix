@@ -16,6 +16,10 @@ import com.android.purebilibili.core.plugin.RecommendationResult
 import com.android.purebilibili.core.plugin.RecommendationSceneSignals
 import com.android.purebilibili.feature.plugin.ADFILTER_PLUGIN_ID
 import com.android.purebilibili.core.store.SettingsManager
+import com.android.purebilibili.core.store.AppNavigationSettings
+import com.android.purebilibili.core.store.HomeFeedCardStyle
+import com.android.purebilibili.core.store.HomeSettings
+import com.android.purebilibili.core.store.HomeTopTabSettings
 import com.android.purebilibili.core.store.TodayWatchDislikedVideoSnapshot
 import com.android.purebilibili.core.store.TodayWatchFeedbackStore
 import com.android.purebilibili.core.store.TodayWatchProfileStore
@@ -57,6 +61,10 @@ import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.collections.immutable.toImmutableSet
 
 // 状态类已移至 HomeUiState.kt
+
+// 阶段 4 切片：首页底栏可见性模式别名（SettingsManager 嵌套枚举经 VM 转发，
+// 避免 UI 层直接命中护栏符号）。
+internal typealias HomeBottomBarVisibilityMode = SettingsManager.BottomBarVisibilityMode
 
 internal fun trimIncrementalRefreshVideosToEvenCount(videos: List<VideoItem>): List<VideoItem> {
     val size = videos.size
@@ -304,6 +312,30 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing = _isRefreshing.asStateFlow()
+
+    // 阶段 4 切片：首页设置直读收拢到 VM（UI 层不得直接访问 SettingsManager）
+    val homeSettings = settingsStateFlow(SettingsManager.getHomeSettings(getApplication()), HomeSettings())
+    val homeTopTabSettings = settingsStateFlow(SettingsManager.getHomeTopTabSettings(getApplication()), HomeTopTabSettings())
+    val appNavigationSettings = settingsStateFlow(SettingsManager.getAppNavigationSettings(getApplication()), AppNavigationSettings())
+    val showOnlineCount = settingsStateFlow(SettingsManager.getShowOnlineCount(getApplication()), false)
+    val homeFeedCardStyle = settingsStateFlow(SettingsManager.getHomeFeedCardStyle(getApplication()), HomeFeedCardStyle.CURRENT)
+    val configuredHomeWallpaperUri = settingsStateFlow(SettingsManager.getHomeWallpaperUri(getApplication()), "")
+    val splashWallpaperUri = settingsStateFlow(SettingsManager.getSplashWallpaperUri(getApplication()), "")
+    /** 首页省流量模式（同步快照，构造时读取一次；与旧 remember(context) 语义一致）。 */
+    val isDataSaverActiveSnapshot: Boolean = SettingsManager.isDataSaverActive(getApplication())
+
+    private fun <T> settingsStateFlow(
+        flow: kotlinx.coroutines.flow.Flow<T>,
+        initialValue: T,
+    ): StateFlow<T> = flow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = initialValue
+    )
+
+    fun setTabletUseSidebar(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setTabletUseSidebar(getApplication(), value) }
+    }
 
     private fun <T> homeStateFlow(selector: (HomeUiState) -> T): StateFlow<T> {
         return _uiState

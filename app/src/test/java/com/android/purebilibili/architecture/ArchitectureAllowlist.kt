@@ -30,7 +30,6 @@ internal object ArchitectureAllowlist {
         "src/main/java/com/android/purebilibili/feature/dynamic/components/ImageSaveLocationPolicy.kt",
         "src/main/java/com/android/purebilibili/feature/dynamic/components/VideoCards.kt",
         "src/main/java/com/android/purebilibili/feature/following/FollowingListScreen.kt",
-        "src/main/java/com/android/purebilibili/feature/home/HomeScreen.kt",
         "src/main/java/com/android/purebilibili/feature/home/components/CrashTrackingConsentDialog.kt",
         "src/main/java/com/android/purebilibili/feature/home/components/HomeHeader.kt",
         "src/main/java/com/android/purebilibili/feature/home/components/TopBar.kt",
