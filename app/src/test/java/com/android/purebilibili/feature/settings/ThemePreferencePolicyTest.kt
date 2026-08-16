@@ -1,5 +1,14 @@
 package com.android.purebilibili.feature.settings
 
+import com.android.purebilibili.core.store.theme.AppLanguage
+import com.android.purebilibili.core.store.theme.AppThemeMode
+import com.android.purebilibili.core.store.theme.DarkThemeStyle
+import com.android.purebilibili.core.store.theme.ThemePreferenceState
+import com.android.purebilibili.core.store.theme.resolveThemePreferenceState
+import com.android.purebilibili.core.store.theme.resolveAppLanguagePreference
+import com.android.purebilibili.core.store.theme.resolveThemeModePreference
+import com.android.purebilibili.core.store.theme.resolveDarkThemeStylePreference
+
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

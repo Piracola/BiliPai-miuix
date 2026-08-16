@@ -9,9 +9,9 @@ import com.android.purebilibili.core.theme.AppFontSizePreset
 import com.android.purebilibili.core.theme.AppUiScalePreset
 import com.android.purebilibili.feature.screenshot.AppScreenshotCaptureMode
 import com.android.purebilibili.feature.screenshot.AppScreenshotGestureMode
-import com.android.purebilibili.feature.settings.AppLanguage
-import com.android.purebilibili.feature.settings.AppThemeMode
-import com.android.purebilibili.feature.settings.DarkThemeStyle
+import com.android.purebilibili.core.store.theme.AppLanguage
+import com.android.purebilibili.core.store.theme.AppThemeMode
+import com.android.purebilibili.core.store.theme.DarkThemeStyle
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

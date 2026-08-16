@@ -21,7 +21,7 @@ import androidx.core.view.WindowCompat
 import com.android.purebilibili.core.ui.AppListItemStyle
 import com.android.purebilibili.core.ui.LocalAppListItemStyle
 import com.android.purebilibili.core.ui.resolveAppListItemStyle
-import com.android.purebilibili.feature.settings.AppThemeMode
+import com.android.purebilibili.core.store.theme.AppThemeMode
 import top.yukonga.miuix.kmp.theme.ColorSchemeMode
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.theme.ThemeController

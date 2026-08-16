@@ -1,5 +1,9 @@
 package com.android.purebilibili.feature.settings
 
+import com.android.purebilibili.core.store.theme.AppLanguage
+import com.android.purebilibili.core.store.theme.AppThemeMode
+import com.android.purebilibili.core.store.theme.DarkThemeStyle
+
 import com.android.purebilibili.core.ui.AppListItemStyle
 import com.android.purebilibili.core.ui.components.AppSegmentOption
 

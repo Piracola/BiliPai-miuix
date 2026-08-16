@@ -1,4 +1,4 @@
-package com.android.purebilibili.feature.settings
+package com.android.purebilibili.core.store.theme
 
 internal const val LEGACY_THEME_MODE_AMOLED = 3
 

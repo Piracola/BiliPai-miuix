@@ -1,4 +1,4 @@
-package com.android.purebilibili.feature.settings
+package com.android.purebilibili.core.store.theme
 
 enum class AppThemeMode(val value: Int, val label: String) {
     FOLLOW_SYSTEM(0, "跟随系统"),

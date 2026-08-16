@@ -1,9 +1,9 @@
 package com.android.purebilibili.core.store
 
 import android.content.Context
-import com.android.purebilibili.feature.settings.AppLanguage
-import com.android.purebilibili.feature.settings.AppThemeMode
-import com.android.purebilibili.feature.settings.DarkThemeStyle
+import com.android.purebilibili.core.store.theme.AppLanguage
+import com.android.purebilibili.core.store.theme.AppThemeMode
+import com.android.purebilibili.core.store.theme.DarkThemeStyle
 import kotlinx.coroutines.flow.Flow
 
 /**

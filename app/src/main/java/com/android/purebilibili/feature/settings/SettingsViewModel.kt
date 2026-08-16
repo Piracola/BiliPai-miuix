@@ -1,6 +1,10 @@
 // 文件路径: feature/settings/SettingsViewModel.kt
 package com.android.purebilibili.feature.settings
 
+import com.android.purebilibili.core.store.theme.AppLanguage
+import com.android.purebilibili.core.store.theme.AppThemeMode
+import com.android.purebilibili.core.store.theme.DarkThemeStyle
+
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel

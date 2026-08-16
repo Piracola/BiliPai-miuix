@@ -1,4 +1,4 @@
-package com.android.purebilibili.feature.settings
+package com.android.purebilibili.core.store.theme
 
 enum class AppLanguage(val value: Int) {
     FOLLOW_SYSTEM(0),
@@ -32,7 +32,7 @@ internal fun shouldPromptAppRestartForLanguageChange(
 internal suspend fun persistAndApplyAppLanguageBeforeRestart(
     appLanguage: AppLanguage,
     persist: suspend (AppLanguage) -> Unit,
-    apply: (AppLanguage) -> Unit = ::applyAppLanguage,
+    apply: (AppLanguage) -> Unit,
     restart: () -> Unit
 ) {
     persist(appLanguage)

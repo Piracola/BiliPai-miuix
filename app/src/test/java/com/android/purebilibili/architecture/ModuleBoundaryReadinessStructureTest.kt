@@ -111,7 +111,6 @@ class ModuleBoundaryReadinessStructureTest {
 
         val FROZEN_STORE_FEATURE_DEPENDENCIES: Set<String> = setOf(
             "src/main/java/com/android/purebilibili/core/store/SettingsManager.kt",
-            "src/main/java/com/android/purebilibili/core/store/SettingsReader.kt",
         )
 
         val cachedMain: List<File> by lazy {

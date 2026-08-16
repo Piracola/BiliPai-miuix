@@ -7,11 +7,11 @@ import androidx.datastore.preferences.core.mutablePreferencesOf
 import com.android.purebilibili.core.theme.AppFontSizePreset
 import com.android.purebilibili.core.theme.AppUiScalePreset
 import com.android.purebilibili.core.ui.AppListItemStyle
-import com.android.purebilibili.feature.settings.AppLanguage
-import com.android.purebilibili.feature.settings.AppThemeMode
-import com.android.purebilibili.feature.settings.DarkThemeStyle
-import com.android.purebilibili.feature.settings.resolveDarkThemeStylePreference
-import com.android.purebilibili.feature.settings.resolveThemeModePreference
+import com.android.purebilibili.core.store.theme.AppLanguage
+import com.android.purebilibili.core.store.theme.AppThemeMode
+import com.android.purebilibili.core.store.theme.DarkThemeStyle
+import com.android.purebilibili.core.store.theme.resolveDarkThemeStylePreference
+import com.android.purebilibili.core.store.theme.resolveThemeModePreference
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

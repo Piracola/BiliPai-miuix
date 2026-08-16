@@ -1,6 +1,13 @@
 @file:OptIn(androidx.compose.animation.ExperimentalAnimationApi::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 
 package com.android.purebilibili.feature.settings
+
+import com.android.purebilibili.core.store.theme.AppLanguage
+import com.android.purebilibili.core.store.theme.AppThemeMode
+import com.android.purebilibili.core.store.theme.DarkThemeStyle
+import com.android.purebilibili.core.store.theme.persistAndApplyAppLanguageBeforeRestart
+import com.android.purebilibili.core.store.theme.resolveAppLanguageLocaleTags
+import com.android.purebilibili.core.store.theme.shouldPromptAppRestartForLanguageChange
 import com.android.purebilibili.core.ui.AppListItemStyle
 import com.android.purebilibili.core.ui.components.AppIcon
 import com.android.purebilibili.core.ui.components.AppText
@@ -158,6 +165,7 @@ fun AppearanceSettingsScreen(
                         pendingLanguageRestart = null
                         coroutineScope.launch {
                             persistAndApplyAppLanguageBeforeRestart(
+                                apply = ::applyAppLanguage,
                                 appLanguage = pendingLanguage,
                                 persist = { SettingsManager.setAppLanguage(context, it) },
                                 restart = { restartApp(context) }

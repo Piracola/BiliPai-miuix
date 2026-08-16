@@ -96,7 +96,7 @@ import com.android.purebilibili.feature.settings.AppUpdateDialogHost
 import com.android.purebilibili.feature.settings.AppUpdateDownloadState
 import com.android.purebilibili.feature.settings.AppUpdateDownloadStatus
 import com.android.purebilibili.feature.settings.AppUpdateInstallAction
-import com.android.purebilibili.feature.settings.AppLanguage
+import com.android.purebilibili.core.store.theme.AppLanguage
 import com.android.purebilibili.feature.settings.applyAppLanguage
 import com.android.purebilibili.core.theme.buildDisplayMetricsSnapshot
 import com.android.purebilibili.core.ui.AppAlertDialog
@@ -124,7 +124,7 @@ import com.android.purebilibili.feature.settings.resolveBuildSourceValue
 import com.android.purebilibili.feature.settings.resolveUpdateReleaseNotesText
 import com.android.purebilibili.feature.settings.selectPreferredAppUpdateAsset
 import com.android.purebilibili.feature.settings.shouldRunAppEntryAutoCheck
-import com.android.purebilibili.feature.settings.resolveThemePreferenceState
+import com.android.purebilibili.core.store.theme.resolveThemePreferenceState
 import com.android.purebilibili.feature.screenshot.AppScreenshotCaptureMode
 import com.android.purebilibili.feature.screenshot.AppScreenshotGestureBlockState
 import com.android.purebilibili.feature.screenshot.AppScreenshotResult

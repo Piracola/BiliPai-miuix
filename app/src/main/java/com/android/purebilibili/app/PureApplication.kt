@@ -33,8 +33,8 @@ import com.android.purebilibili.core.util.AnalyticsHelper
 import com.android.purebilibili.core.util.CrashReporter
 import com.android.purebilibili.core.util.Logger
 import com.android.purebilibili.feature.settings.applyAppLanguage
-import com.android.purebilibili.feature.settings.AppThemeMode
-import com.android.purebilibili.feature.settings.resolveThemeModePreference
+import com.android.purebilibili.core.store.theme.AppThemeMode
+import com.android.purebilibili.core.store.theme.resolveThemeModePreference
 import com.android.purebilibili.feature.plugin.AdFilterPlugin
 import com.android.purebilibili.feature.plugin.CdnRegionPlugin
 import com.android.purebilibili.feature.plugin.DanmakuEnhancePlugin
