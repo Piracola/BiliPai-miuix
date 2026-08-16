@@ -197,6 +197,7 @@ fun SpaceScreen(
     }
     val dynamicInteractionViewModel: DynamicViewModel = viewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val homeSettingsValue by viewModel.homeSettings.collectAsStateWithLifecycle()
     val likedDynamics by dynamicInteractionViewModel.likedDynamics.collectAsStateWithLifecycle()
     val forwardCountDeltas = remember { mutableStateMapOf<String, Int>() }
     val followGroupDialogVisible by viewModel.followGroupDialogVisible.collectAsStateWithLifecycle()
@@ -204,8 +205,7 @@ fun SpaceScreen(
     val followGroupSelectedTagIds by viewModel.followGroupSelectedTagIds.collectAsStateWithLifecycle()
     val isFollowGroupsLoading by viewModel.isFollowGroupsLoading.collectAsStateWithLifecycle()
     val isSavingFollowGroups by viewModel.isSavingFollowGroups.collectAsStateWithLifecycle()
-    val blockedUpRepository = remember { com.android.purebilibili.data.repository.BlockedUpRepository(context) }
-    val isBlocked by blockedUpRepository.isBlocked(mid).collectAsStateWithLifecycle(initialValue = false)
+    val isBlocked by viewModel.isBlocked(mid).collectAsStateWithLifecycle(initialValue = false)
     val coroutineScope = rememberCoroutineScope()
 
     var showMenu by remember { mutableStateOf(false) }
@@ -226,9 +226,7 @@ fun SpaceScreen(
 
     val currentSuccessState = uiState as? SpaceUiState.Success
     val playedVideoBvid = targetBvid?.trim().orEmpty()
-    val playedVideoLocatePromptEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getSpacePlayedVideoLocatePromptEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = true)
+    val playedVideoLocatePromptEnabled by viewModel.playedVideoLocatePromptEnabled.collectAsStateWithLifecycle()
     // The prompt is deliberately scoped to this visit. Persisting the dismissal made a second
     // visit to the same UP silently lose its locate entry.
     var playedVideoLocatePromptHandled by remember(mid, playedVideoBvid) {
@@ -502,7 +500,8 @@ fun SpaceScreen(
                                 }
                             },
                             sharedTransitionScope = sharedTransitionScope,
-                            animatedVisibilityScope = animatedVisibilityScope
+                            animatedVisibilityScope = animatedVisibilityScope,
+                            homeSettings = homeSettingsValue
                         )
 
                         DynamicCommentOverlayHost(
@@ -586,24 +585,19 @@ fun SpaceScreen(
             confirmButton = {
                 AppTextButton(
                     onClick = {
-                        coroutineScope.launch {
-                            if (isBlocked) {
-                                val result = blockedUpRepository.unblockUpWithBilibiliSync(mid)
-                                android.widget.Toast.makeText(
-                                    context,
-                                    result.message,
-                                    android.widget.Toast.LENGTH_SHORT
-                                ).show()
-                            } else {
-                                val result = blockedUpRepository.blockUpWithBilibiliSync(mid, userName, userFace)
-                                android.widget.Toast.makeText(
-                                    context,
-                                    result.message,
-                                    android.widget.Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                            showBlockConfirmDialog = false
+                        viewModel.toggleBlockedUp(
+                            mid = mid,
+                            userName = userName,
+                            userFace = userFace,
+                            blocked = isBlocked,
+                        ) { message ->
+                            android.widget.Toast.makeText(
+                                context,
+                                message,
+                                android.widget.Toast.LENGTH_SHORT
+                            ).show()
                         }
+                        showBlockConfirmDialog = false
                     }
                 ) {
                     AppText(if (isBlocked) "解除屏蔽" else "屏蔽")
@@ -810,13 +804,11 @@ private fun SpaceContent(
     onSpaceDynamicDeleteClick: (DynamicDeleteAction) -> Unit,
     sharedTransitionScope: SharedTransitionScope?,
     animatedVisibilityScope: AnimatedVisibilityScope?,
+    homeSettings: com.android.purebilibili.core.store.HomeSettings = com.android.purebilibili.core.store.HomeSettings(),
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     // 投稿网格跟随首页信息流设置（固定列数 / 卡宽预设 / 卡片风格），保证排版与首页 feed 一致。
-    val homeSettings by com.android.purebilibili.core.store.SettingsManager
-        .getHomeSettings(context)
-        .collectAsStateWithLifecycle(initialValue = com.android.purebilibili.core.store.HomeSettings())
     val selectedMainTab = state.tabShellState.selectedTab
     val displayedMainTabs = remember(state.mainTabs, selectedMainTab) {
         resolveSpaceDisplayedMainTabs(

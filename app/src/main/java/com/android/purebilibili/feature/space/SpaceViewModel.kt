@@ -1,11 +1,15 @@
 package com.android.purebilibili.feature.space
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.android.purebilibili.core.network.NetworkModule
 import com.android.purebilibili.core.network.WbiUtils
+import com.android.purebilibili.core.store.HomeSettings
+import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.data.model.response.*
+import com.android.purebilibili.data.repository.BlockedUpRepository
 import com.android.purebilibili.data.repository.BangumiRepository
 import com.android.purebilibili.data.repository.ActionRepository
 import com.android.purebilibili.data.repository.FavoriteRepository
@@ -18,7 +22,10 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -114,8 +121,42 @@ sealed class SpaceUiState {
 }
 
 class SpaceViewModel(
+    application: Application,
     private val savedStateHandle: SavedStateHandle = SavedStateHandle()
-) : ViewModel() {
+) : AndroidViewModel(application) {
+
+    // 阶段 4 切片：空间页设置直读收拢到 VM（UI 层不得直接访问 SettingsManager）
+    val homeSettings: kotlinx.coroutines.flow.StateFlow<HomeSettings> =
+        SettingsManager.getHomeSettings(application)
+            .stateIn(
+                scope = viewModelScope,
+                started = kotlinx.coroutines.flow.SharingStarted.Eagerly,
+                initialValue = HomeSettings(),
+            )
+    val playedVideoLocatePromptEnabled: kotlinx.coroutines.flow.StateFlow<Boolean> =
+        SettingsManager.getSpacePlayedVideoLocatePromptEnabled(application)
+            .stateIn(
+                scope = viewModelScope,
+                started = kotlinx.coroutines.flow.SharingStarted.Eagerly,
+                initialValue = true,
+            )
+
+    // 阶段 4 切片：屏蔽 UP 状态收拢到 VM（UI 层不得直接访问 BlockedUpRepository）
+    private val blockedUpRepository = BlockedUpRepository(application)
+
+    fun isBlocked(mid: Long): kotlinx.coroutines.flow.Flow<Boolean> =
+        blockedUpRepository.isBlocked(mid)
+
+    fun toggleBlockedUp(mid: Long, userName: String, userFace: String, blocked: Boolean, onResult: (String) -> Unit) {
+        viewModelScope.launch {
+            val result = if (blocked) {
+                blockedUpRepository.unblockUpWithBilibiliSync(mid)
+            } else {
+                blockedUpRepository.blockUpWithBilibiliSync(mid, userName, userFace)
+            }
+            onResult(result.message)
+        }
+    }
 
     private data class SpaceVideoLoadResult(
         val data: SpaceVideoData,
