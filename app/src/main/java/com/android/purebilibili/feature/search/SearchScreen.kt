@@ -126,9 +126,6 @@ import com.android.purebilibili.core.ui.components.UpBadgeName
 import com.android.purebilibili.feature.home.components.cards.ElegantVideoCard  //  使用首页卡片
 import com.android.purebilibili.feature.home.resolveHomeFeedCardLayout
 import com.android.purebilibili.feature.home.resolveReturnAnimationSuppressionDurationMs
-import com.android.purebilibili.core.store.HomeDurationStyle
-import com.android.purebilibili.core.store.HomeFeedCardStyle
-import com.android.purebilibili.core.store.SettingsManager  //  读取动画设置
 import com.android.purebilibili.data.repository.SearchOrder
 import com.android.purebilibili.data.repository.SearchDuration
 import com.android.purebilibili.data.repository.SearchLiveOrder
@@ -667,15 +664,13 @@ fun SearchScreen(
             widthSizeClass = windowSizeClass.widthSizeClass
         )
     }
-    val cardAnimationEnabled by SettingsManager.getCardAnimationEnabled(context).collectAsStateWithLifecycle(initialValue = true)
-    val homeDurationStyle by SettingsManager
-        .getHomeDurationStyle(context)
-        .collectAsStateWithLifecycle(initialValue = HomeDurationStyle.OUTSIDE_COVER)
-    val hotSearchEnabled by SettingsManager.getSearchHotSectionEnabled(context).collectAsStateWithLifecycle(initialValue = true)
-    val discoverSectionEnabled by SettingsManager.getSearchDiscoverSectionEnabled(context).collectAsStateWithLifecycle(initialValue = true)
+    val cardAnimationEnabled by viewModel.cardAnimationEnabled.collectAsStateWithLifecycle()
+    val homeDurationStyle by viewModel.homeDurationStyle.collectAsStateWithLifecycle()
+    val hotSearchEnabled by viewModel.hotSearchEnabled.collectAsStateWithLifecycle()
+    val discoverSectionEnabled by viewModel.discoverSectionEnabled.collectAsStateWithLifecycle()
     val effectiveLiquidGlassEnabled = false
-    val headerBlurEnabled by SettingsManager.getHeaderBlurEnabled(context).collectAsStateWithLifecycle(initialValue = true)
-    val bottomBarBlurEnabled by SettingsManager.getBottomBarBlurEnabled(context).collectAsStateWithLifecycle(initialValue = false)
+    val headerBlurEnabled by viewModel.headerBlurEnabled.collectAsStateWithLifecycle()
+    val bottomBarBlurEnabled by viewModel.bottomBarBlurEnabled.collectAsStateWithLifecycle()
     val cardMotionTier = resolveEffectiveMotionTier(
         baseTier = deviceUiProfile.motionTier,
         animationEnabled = cardAnimationEnabled
@@ -706,11 +701,9 @@ fun SearchScreen(
             tonalElevationDp = contentCardSurfaceSpec.tonalElevationDp.toInt(),
         )
     }
-    val cardTransitionEnabled by SettingsManager.getCardTransitionEnabled(context).collectAsStateWithLifecycle(initialValue = false)
-    val showOnlineCount by SettingsManager.getShowOnlineCount(context).collectAsStateWithLifecycle(initialValue = false)
-    val homeFeedCardStyle by SettingsManager
-        .getHomeFeedCardStyle(context)
-        .collectAsStateWithLifecycle(initialValue = HomeFeedCardStyle.CURRENT)
+    val cardTransitionEnabled by viewModel.cardTransitionEnabled.collectAsStateWithLifecycle()
+    val showOnlineCount by viewModel.showOnlineCount.collectAsStateWithLifecycle()
+    val homeFeedCardStyle by viewModel.homeFeedCardStyle.collectAsStateWithLifecycle()
     val cardLayout = remember(homeFeedCardStyle) {
         resolveHomeFeedCardLayout(homeFeedCardStyle)
     }
@@ -1701,15 +1694,12 @@ fun SearchScreen(
                     discoverSectionEnabled = discoverSectionEnabled,
                     onToggleHotSearch = {
                         scope.launch {
-                            SettingsManager.setSearchHotSectionEnabled(context, !hotSearchEnabled)
+                            viewModel.toggleHotSearch(!hotSearchEnabled)
                         }
                     },
                     onToggleDiscoverSection = {
                         scope.launch {
-                            SettingsManager.setSearchDiscoverSectionEnabled(
-                                context,
-                                !discoverSectionEnabled
-                            )
+                            viewModel.toggleDiscoverSection(!discoverSectionEnabled)
                         }
                     },
                     onRefreshHot = viewModel::refreshHotSearch,

@@ -53,9 +53,10 @@ class ArchitectureAllowlistRatchetTest {
         // 92 → 91：PlaybackSettingsScreen 直读收拢到 VM（78 项，4 个 composable）。
         // 91 → 90：SettingsScreen 根页直读收拢到 VM（18 项 + 嵌套枚举别名）。
         // 90 → 89：HomeScreen 首页直读收拢到 HomeViewModel（9 项 + 底栏可见性别名）。
-        const val MAX_CORE_GLOBAL_OBJECT_FILES = 89
+        // 89 → 88：SearchScreen 搜索页直读收拢到 SearchViewModel（9 项 + 2 setter）。
+        const val MAX_CORE_GLOBAL_OBJECT_FILES = 88
 
         const val CORE_GLOBAL_OBJECT_FILES_SHA256 =
-            "548d385eb90d1f1773541b1d4dd83db38a2d73974f6f996f921f679a7c509c94"
+            "6f995d9ee261961358d1ee149ade6a27933c6f16912de0f261df94def762a384"
     }
 }

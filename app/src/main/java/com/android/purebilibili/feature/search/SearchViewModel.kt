@@ -25,12 +25,18 @@ import com.android.purebilibili.data.repository.SearchUpOrder
 import com.android.purebilibili.data.repository.SearchUserType
 import com.android.purebilibili.data.repository.shouldApplySearchResult
 import com.android.purebilibili.data.repository.toggleSearchDurationSelection
+import com.android.purebilibili.core.store.SettingsManager
+import com.android.purebilibili.core.store.HomeDurationStyle
+import com.android.purebilibili.core.store.HomeFeedCardStyle
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -189,6 +195,33 @@ internal fun SearchUiState.withSearchResultPageMirrored(
 class SearchViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow(SearchUiState())
     val uiState = _uiState.asStateFlow()
+
+    // 阶段 4 切片：搜索页设置直读收拢到 VM（UI 层不得直接访问 SettingsManager）
+    val cardAnimationEnabled = settingsStateFlow(SettingsManager.getCardAnimationEnabled(getApplication()), true)
+    val homeDurationStyle = settingsStateFlow(SettingsManager.getHomeDurationStyle(getApplication()), HomeDurationStyle.OUTSIDE_COVER)
+    val hotSearchEnabled = settingsStateFlow(SettingsManager.getSearchHotSectionEnabled(getApplication()), true)
+    val discoverSectionEnabled = settingsStateFlow(SettingsManager.getSearchDiscoverSectionEnabled(getApplication()), true)
+    val headerBlurEnabled = settingsStateFlow(SettingsManager.getHeaderBlurEnabled(getApplication()), true)
+    val bottomBarBlurEnabled = settingsStateFlow(SettingsManager.getBottomBarBlurEnabled(getApplication()), false)
+    val cardTransitionEnabled = settingsStateFlow(SettingsManager.getCardTransitionEnabled(getApplication()), false)
+    val showOnlineCount = settingsStateFlow(SettingsManager.getShowOnlineCount(getApplication()), false)
+    val homeFeedCardStyle = settingsStateFlow(SettingsManager.getHomeFeedCardStyle(getApplication()), HomeFeedCardStyle.CURRENT)
+
+    private fun <T> settingsStateFlow(
+        flow: kotlinx.coroutines.flow.Flow<T>,
+        initialValue: T,
+    ): StateFlow<T> = flow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = initialValue,
+    )
+
+    fun toggleHotSearch(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setSearchHotSectionEnabled(getApplication(), value) }
+    }
+    fun toggleDiscoverSection(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setSearchDiscoverSectionEnabled(getApplication(), value) }
+    }
 
     private val searchDao = AppDatabase.getDatabase(application).searchHistoryDao()
     
