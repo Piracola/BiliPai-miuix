@@ -56,9 +56,11 @@ class ArchitectureAllowlistRatchetTest {
         // 89 → 88：SearchScreen 搜索页直读收拢到 SearchViewModel（9 项 + 2 setter）。
         // 88 → 86：CommonListScreen 收拢到 BaseListViewModel + WatchLaterViewModel 提取
         // 为独立 *ViewModel.kt（设置直读一并收拢）。
-        const val MAX_CORE_GLOBAL_OBJECT_FILES = 86
+        // 86 → 84：FavoriteCategoryScreen / FollowingListScreen 内嵌 VM 提取为
+        // 独立 *ViewModel.kt 文件。
+        const val MAX_CORE_GLOBAL_OBJECT_FILES = 84
 
         const val CORE_GLOBAL_OBJECT_FILES_SHA256 =
-            "96af1be92271928dbb3fcc66edfcffc4fb782be48ec0ec9052b44f175b8e5e68"
+            "cad37530e0aebc51d962172a7cae4f7aa6023a8a8a6e2225ac96776bbd75229f"
     }
 }
