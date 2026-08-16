@@ -1,5 +1,7 @@
 package com.android.purebilibili.feature.video.danmaku
 
+import com.android.purebilibili.core.danmaku.compileDanmakuBlockRules
+
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue

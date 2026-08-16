@@ -7,6 +7,9 @@ import com.android.purebilibili.core.danmaku.WeightedTextData
 
 import com.android.purebilibili.core.danmaku.DanmakuParser
 import com.android.purebilibili.core.danmaku.DanmakuProto
+import com.android.purebilibili.core.danmaku.DanmakuBlockRuleMatcher
+import com.android.purebilibili.core.danmaku.compileDanmakuBlockRules
+import com.android.purebilibili.core.danmaku.shouldBlockDanmakuByMatchers
 
 import android.content.Context
 import android.graphics.Typeface

@@ -1,5 +1,8 @@
 package com.android.purebilibili.feature.video.danmaku
 
+import com.android.purebilibili.core.danmaku.DanmakuBlockRuleMatcher
+import com.android.purebilibili.core.danmaku.shouldBlockDanmakuByMatchers
+
 private const val DANMAKU_WHITE_RGB = 0x00FFFFFF
 
 data class DanmakuTypeFilterSettings(

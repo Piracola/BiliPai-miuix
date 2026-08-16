@@ -1,4 +1,19 @@
 package com.android.purebilibili.feature.video.screen
+
+import com.android.purebilibili.core.danmaku.DanmakuBlockRuleMatcher
+import com.android.purebilibili.core.danmaku.DanmakuBlockRuleSections
+import com.android.purebilibili.core.danmaku.DanmakuBlockRuleImportResult
+import com.android.purebilibili.core.danmaku.compileDanmakuBlockRules
+import com.android.purebilibili.core.danmaku.shouldBlockDanmakuByMatchers
+import com.android.purebilibili.core.danmaku.shouldBlockDanmakuByRules
+import com.android.purebilibili.core.danmaku.mergeDanmakuBlockRuleSections
+import com.android.purebilibili.core.danmaku.appendDanmakuBlockRule
+import com.android.purebilibili.core.danmaku.appendDanmakuKeywordBlockRule
+import com.android.purebilibili.core.danmaku.appendDanmakuUserHashBlockRule
+import com.android.purebilibili.core.danmaku.partitionDanmakuBlockRules
+import com.android.purebilibili.core.danmaku.parseDanmakuBlockRuleImport
+import com.android.purebilibili.core.danmaku.matchesDanmakuBlockRule
+
 import com.android.purebilibili.core.ui.resolveFilledButtonContainerColor
 import com.android.purebilibili.core.ui.resolveFilledButtonContentColor
 import com.android.purebilibili.core.ui.components.AppHorizontalDivider
@@ -225,8 +240,6 @@ import dev.chrisbanes.haze.blur.materials.HazeMaterials
 import com.android.purebilibili.feature.video.ui.components.DanmakuContextMenu
 import com.android.purebilibili.feature.video.ui.components.DanmakuBlockActionTarget
 import com.android.purebilibili.feature.video.ui.components.resolveDanmakuBlockActionFeedbackMessage
-import com.android.purebilibili.feature.video.danmaku.appendDanmakuKeywordBlockRule
-import com.android.purebilibili.feature.video.danmaku.appendDanmakuUserHashBlockRule
 import com.android.purebilibili.feature.video.ui.components.InteractiveChoiceOverlay
 import com.android.purebilibili.feature.video.ui.feedback.VideoFeedbackAnchor
 import com.android.purebilibili.feature.video.ui.feedback.TripleCelebrationPlacement

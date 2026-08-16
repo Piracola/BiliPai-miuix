@@ -1,4 +1,4 @@
-package com.android.purebilibili.feature.video.danmaku
+package com.android.purebilibili.core.danmaku
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -16,8 +16,8 @@ private const val SHORT_REGEX_RULE_PREFIX = "re:"
 private const val USER_HASH_RULE_PREFIX = "uid:"
 private const val USER_RULE_PREFIX = "user:"
 private const val HASH_RULE_PREFIX = "hash:"
-private val DANMAKU_RULE_SPLITTER = Regex("[\\n,，]+")
-private val DANMAKU_BLOCK_RULE_JSON = Json { ignoreUnknownKeys = true }
+internal val DANMAKU_RULE_SPLITTER = Regex("[\\n,，]+")
+internal val DANMAKU_BLOCK_RULE_JSON = Json { ignoreUnknownKeys = true }
 
 enum class DanmakuBlockRuleGroup {
     KEYWORD,
@@ -220,7 +220,7 @@ private fun JsonArray.toRuleStrings(): List<String> {
     }
 }
 
-private fun normalizeDanmakuRegexImportRule(rule: String): String? {
+internal fun normalizeDanmakuRegexImportRule(rule: String): String? {
     val normalized = rule.trim()
     if (normalized.isEmpty()) return null
     return if (isDanmakuRegexRule(normalized)) normalized else "$REGEX_RULE_PREFIX$normalized"
@@ -302,7 +302,7 @@ fun appendDanmakuUserHashBlockRule(
     return appendDanmakuBlockRule(rawRules = rawRules, rule = normalizedUserHash)
 }
 
-private fun resolveDanmakuBlockRuleMatcher(rule: String): DanmakuBlockRuleMatcher? {
+internal fun resolveDanmakuBlockRuleMatcher(rule: String): DanmakuBlockRuleMatcher? {
     val normalized = rule.trim()
     if (normalized.isEmpty()) return null
 
@@ -336,7 +336,7 @@ private fun resolveDanmakuBlockRuleMatcher(rule: String): DanmakuBlockRuleMatche
     return DanmakuKeywordMatcher(normalized)
 }
 
-private fun resolveDanmakuBlockRuleGroup(rule: String): DanmakuBlockRuleGroup {
+internal fun resolveDanmakuBlockRuleGroup(rule: String): DanmakuBlockRuleGroup {
     val normalized = rule.trim()
     return when {
         normalizeDanmakuUserHashRule(normalized) != null -> DanmakuBlockRuleGroup.USER_HASH
@@ -345,19 +345,19 @@ private fun resolveDanmakuBlockRuleGroup(rule: String): DanmakuBlockRuleGroup {
     }
 }
 
-private fun normalizeDanmakuBlockRuleForAppend(rule: String): String? {
+internal fun normalizeDanmakuBlockRuleForAppend(rule: String): String? {
     val normalized = rule.trim()
     if (normalized.isEmpty()) return null
     return normalizeDanmakuUserHashRule(normalized) ?: normalized
 }
 
-private fun isDanmakuRegexRule(rule: String): Boolean {
+internal fun isDanmakuRegexRule(rule: String): Boolean {
     return rule.startsWith(REGEX_RULE_PREFIX, ignoreCase = true) ||
         rule.startsWith(SHORT_REGEX_RULE_PREFIX, ignoreCase = true) ||
         (rule.length >= 2 && rule.startsWith("/") && rule.endsWith("/"))
 }
 
-private fun normalizeDanmakuUserHashRule(rule: String): String? {
+internal fun normalizeDanmakuUserHashRule(rule: String): String? {
     val normalized = rule.trim()
     val body = when {
         normalized.startsWith(USER_HASH_RULE_PREFIX, ignoreCase = true) ->
@@ -371,7 +371,7 @@ private fun normalizeDanmakuUserHashRule(rule: String): String? {
     return "$USER_HASH_RULE_PREFIX$body"
 }
 
-private fun normalizeDanmakuUserHashManagerInput(rule: String): String? {
+internal fun normalizeDanmakuUserHashManagerInput(rule: String): String? {
     val normalized = rule.trim()
     if (normalized.isEmpty()) return null
     return normalizeDanmakuUserHashRule(normalized) ?: "$USER_HASH_RULE_PREFIX$normalized"

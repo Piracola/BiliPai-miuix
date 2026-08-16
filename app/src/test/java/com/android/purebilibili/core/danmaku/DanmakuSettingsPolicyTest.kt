@@ -1,4 +1,4 @@
-package com.android.purebilibili.feature.video.danmaku
+package com.android.purebilibili.core.danmaku
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

@@ -1,4 +1,6 @@
 package com.android.purebilibili.feature.video.ui.overlay
+import com.android.purebilibili.core.danmaku.shouldBlockDanmakuByRules
+
 
 import android.graphics.Color as AndroidColor
 import android.os.SystemClock

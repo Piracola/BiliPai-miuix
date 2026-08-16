@@ -37,9 +37,9 @@ import com.android.purebilibili.core.store.theme.resolveThemeModePreference
 import com.android.purebilibili.feature.screenshot.AppScreenshotCaptureMode
 import com.android.purebilibili.feature.screenshot.AppScreenshotGestureMode
 import com.android.purebilibili.feature.video.ui.components.CollectionSortMode
-import com.android.purebilibili.feature.video.danmaku.DANMAKU_DEFAULT_OPACITY
-import com.android.purebilibili.feature.video.danmaku.normalizeDanmakuOpacity
-import com.android.purebilibili.feature.video.danmaku.parseDanmakuBlockRules
+import com.android.purebilibili.core.danmaku.DANMAKU_DEFAULT_OPACITY
+import com.android.purebilibili.core.danmaku.normalizeDanmakuOpacity
+import com.android.purebilibili.core.danmaku.parseDanmakuBlockRules
 import com.android.purebilibili.core.video.subtitle.SubtitleAutoPreference
 import com.android.purebilibili.core.video.subtitle.normalizeSubtitleVerticalOffsetFraction
 import com.android.purebilibili.feature.video.ui.gesture.TwoFingerSpeedToggleState
