@@ -1,5 +1,8 @@
 package com.android.purebilibili.feature.article
 
+import com.android.purebilibili.core.article.ArticleContentBlock
+import com.android.purebilibili.core.article.parseArticleContentBlocks
+
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

@@ -4,8 +4,8 @@ import com.android.purebilibili.core.network.NetworkModule
 import com.android.purebilibili.core.network.WbiUtils
 import com.android.purebilibili.core.util.FormatUtils
 import com.android.purebilibili.data.model.response.ArticleViewData
-import com.android.purebilibili.feature.article.ArticleContentBlock
-import com.android.purebilibili.feature.article.parseArticleContentBlocks
+import com.android.purebilibili.core.article.ArticleContentBlock
+import com.android.purebilibili.core.article.parseArticleContentBlocks
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

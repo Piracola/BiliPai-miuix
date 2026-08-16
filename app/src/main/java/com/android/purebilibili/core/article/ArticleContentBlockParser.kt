@@ -1,4 +1,4 @@
-package com.android.purebilibili.feature.article
+package com.android.purebilibili.core.article
 
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject

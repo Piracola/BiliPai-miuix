@@ -1,5 +1,8 @@
 package com.android.purebilibili.feature.article
 
+import com.android.purebilibili.core.article.ArticleContentBlock
+import com.android.purebilibili.core.article.parseArticleContentBlocks
+
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.spring
 import androidx.activity.compose.BackHandler

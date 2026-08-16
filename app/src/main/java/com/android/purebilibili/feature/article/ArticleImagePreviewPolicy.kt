@@ -1,5 +1,8 @@
 package com.android.purebilibili.feature.article
 
+import com.android.purebilibili.core.article.ArticleContentBlock
+import com.android.purebilibili.core.article.parseArticleContentBlocks
+
 internal data class ArticleImagePreviewPayload(
     val images: List<String>,
     val initialIndex: Int
