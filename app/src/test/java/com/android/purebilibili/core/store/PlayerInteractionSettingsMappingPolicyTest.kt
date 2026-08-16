@@ -4,7 +4,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.mutablePreferencesOf
-import com.android.purebilibili.feature.video.subtitle.SubtitleAutoPreference
+import com.android.purebilibili.core.video.subtitle.SubtitleAutoPreference
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals

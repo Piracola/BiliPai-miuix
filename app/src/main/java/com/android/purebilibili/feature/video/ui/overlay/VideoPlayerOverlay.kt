@@ -75,7 +75,7 @@ import com.android.purebilibili.feature.video.playback.dash.buildLocalDashManife
 import com.android.purebilibili.feature.video.playback.audio.AudioQualityOption
 import com.android.purebilibili.feature.video.playback.audio.resolveAudioQualityControlPresentation
 import com.android.purebilibili.feature.common.resolveIndexedVideoLazyKey
-import com.android.purebilibili.feature.video.progress.PbpRidgeSample
+import com.android.purebilibili.core.video.progress.PbpRidgeSample
 import com.android.purebilibili.core.ui.AdaptiveLoadingIndicator
 import com.android.purebilibili.core.ui.components.AppButton
 import com.android.purebilibili.core.ui.components.AppIconButton

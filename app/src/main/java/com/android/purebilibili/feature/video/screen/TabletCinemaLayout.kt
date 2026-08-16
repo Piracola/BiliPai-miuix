@@ -105,7 +105,7 @@ import com.android.purebilibili.feature.video.state.VideoPlayerState
 import com.android.purebilibili.feature.video.note.VideoNoteEditorDocument
 import com.android.purebilibili.feature.video.note.buildVideoNoteShareText
 import com.android.purebilibili.feature.video.note.shouldShowVideoNoteCard
-import com.android.purebilibili.feature.video.progress.PbpProgressData
+import com.android.purebilibili.core.video.progress.PbpProgressData
 import com.android.purebilibili.feature.video.ui.components.CommentSortHeader
 import com.android.purebilibili.feature.video.ui.components.CollectionRow
 import com.android.purebilibili.feature.video.ui.components.CollectionSheet

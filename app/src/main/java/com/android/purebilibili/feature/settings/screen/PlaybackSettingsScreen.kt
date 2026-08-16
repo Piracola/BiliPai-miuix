@@ -66,7 +66,7 @@ import com.android.purebilibili.feature.settings.ui.SettingsPageScaffold
 import com.android.purebilibili.core.store.TokenManager
 import com.android.purebilibili.feature.screenshot.AppScreenshotCaptureMode
 import com.android.purebilibili.feature.screenshot.AppScreenshotGestureMode
-import com.android.purebilibili.feature.video.subtitle.SubtitleAutoPreference
+import com.android.purebilibili.core.video.subtitle.SubtitleAutoPreference
 import com.android.purebilibili.feature.video.subtitle.isSubtitleFeatureEnabledForUser
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch

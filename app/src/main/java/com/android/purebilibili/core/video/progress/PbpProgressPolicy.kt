@@ -1,4 +1,4 @@
-package com.android.purebilibili.feature.video.progress
+package com.android.purebilibili.core.video.progress
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray

@@ -1,4 +1,4 @@
-package com.android.purebilibili.feature.home
+package com.android.purebilibili.core.policy
 
 import com.android.purebilibili.data.model.response.VideoItem
 

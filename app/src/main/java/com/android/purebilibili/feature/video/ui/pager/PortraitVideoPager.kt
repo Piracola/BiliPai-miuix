@@ -178,7 +178,7 @@ import com.android.purebilibili.feature.video.ui.overlay.resolveFullscreenDouble
 import com.android.purebilibili.feature.video.ui.overlay.resolvePortraitLetterboxBarHeightPx
 import com.android.purebilibili.feature.video.ui.overlay.shouldShowPortraitSubtitleChip
 import com.android.purebilibili.feature.video.util.captureVideoAmbientFrame
-import com.android.purebilibili.feature.video.subtitle.SubtitleAutoPreference
+import com.android.purebilibili.core.video.subtitle.SubtitleAutoPreference
 import com.android.purebilibili.feature.video.subtitle.isSubtitleFeatureEnabledForUser
 import com.android.purebilibili.feature.video.player.resolveHandleAudioFocusByPolicy
 import com.android.purebilibili.feature.video.ui.section.FOREGROUND_SURFACE_RECOVERY_DELAY_MS

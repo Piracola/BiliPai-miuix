@@ -11,11 +11,11 @@ import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.store.TokenManager
 import com.android.purebilibili.core.util.NetworkUtils
 import com.android.purebilibili.data.model.response.*
-import com.android.purebilibili.feature.video.progress.PbpProgressData
-import com.android.purebilibili.feature.video.progress.parsePbpProgressData
-import com.android.purebilibili.feature.video.subtitle.SubtitleCue
-import com.android.purebilibili.feature.video.subtitle.normalizeBilibiliSubtitleUrl
-import com.android.purebilibili.feature.video.subtitle.parseBiliSubtitleBody
+import com.android.purebilibili.core.video.progress.PbpProgressData
+import com.android.purebilibili.core.video.progress.parsePbpProgressData
+import com.android.purebilibili.core.video.subtitle.SubtitleCue
+import com.android.purebilibili.core.video.subtitle.normalizeBilibiliSubtitleUrl
+import com.android.purebilibili.core.video.subtitle.parseBiliSubtitleBody
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -605,7 +605,7 @@ object VideoRepository {
                                 "VideoRepo",
                                 " Merged feed: web=${webList.size}, mobile=${mobileList.size}"
                             )
-                            Result.success(com.android.purebilibili.feature.home.HomeFeedMergePolicy.mergeFeeds(web = webList, app = mobileList))
+                            Result.success(com.android.purebilibili.core.policy.HomeFeedMergePolicy.mergeFeeds(web = webList, app = mobileList))
                         }
                     }
                 }

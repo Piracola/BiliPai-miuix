@@ -157,10 +157,10 @@ import com.android.purebilibili.feature.video.ui.components.LikeBurstAnimation
 import com.android.purebilibili.feature.video.ui.components.TripleSuccessAnimation
 import com.android.purebilibili.feature.video.ui.components.VideoDetailSkeleton
 import com.android.purebilibili.feature.video.ui.components.VideoActionFeedbackHost
-import com.android.purebilibili.feature.video.subtitle.SubtitleAutoPreference
-import com.android.purebilibili.feature.video.subtitle.SubtitleDisplayMode
-import com.android.purebilibili.feature.video.subtitle.resolveSubtitleDisplayModePreference
-import com.android.purebilibili.feature.video.progress.PbpProgressData
+import com.android.purebilibili.core.video.subtitle.SubtitleAutoPreference
+import com.android.purebilibili.core.video.subtitle.SubtitleDisplayMode
+import com.android.purebilibili.core.video.subtitle.resolveSubtitleDisplayModePreference
+import com.android.purebilibili.core.video.progress.PbpProgressData
 import com.android.purebilibili.feature.video.usecase.playPlayerFromUserAction
 import com.android.purebilibili.feature.video.usecase.seekPlayerFromUserAction
 import com.android.purebilibili.feature.video.policy.reduceVideoDetailPostScroll
@@ -168,7 +168,7 @@ import com.android.purebilibili.feature.video.policy.reduceVideoDetailPreScroll
 import com.android.purebilibili.feature.video.policy.resolveVideoDetailCollapseProgress
 import com.android.purebilibili.feature.video.policy.shouldSkipGesturePlayerCollapseForLayout
 import com.android.purebilibili.feature.video.policy.shouldTrackVideoDetailCollapseMotion
-import com.android.purebilibili.feature.video.subtitle.resolveSubtitlePreferenceSession
+import com.android.purebilibili.core.video.subtitle.resolveSubtitlePreferenceSession
 import com.android.purebilibili.core.ui.AdaptiveLoadingIndicator
 import com.android.purebilibili.core.ui.components.AppButton
 import io.github.alexzhirkevich.cupertino.icons.CupertinoIcons

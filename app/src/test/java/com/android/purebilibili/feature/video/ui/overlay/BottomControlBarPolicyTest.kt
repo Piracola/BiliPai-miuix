@@ -1,6 +1,6 @@
 package com.android.purebilibili.feature.video.ui.overlay
 
-import com.android.purebilibili.feature.video.subtitle.SubtitleTrackOption
+import com.android.purebilibili.core.video.subtitle.SubtitleTrackOption
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

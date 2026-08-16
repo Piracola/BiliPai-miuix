@@ -953,21 +953,21 @@ class VideoLoadRequestPolicyTest {
             subtitlePrimaryLanguage = "zh-CN",
             subtitleSecondaryLanguage = "en-US",
             subtitleTracks = listOf(
-                com.android.purebilibili.feature.video.subtitle.SubtitleTrackMeta(
+                com.android.purebilibili.core.video.subtitle.SubtitleTrackMeta(
                     lan = "zh-CN",
                     lanDoc = "中文",
                     subtitleUrl = "https://aisubtitle.hdslb.com/bfs/subtitle/zh.json"
                 )
             ),
             subtitlePrimaryCues = listOf(
-                com.android.purebilibili.feature.video.subtitle.SubtitleCue(
+                com.android.purebilibili.core.video.subtitle.SubtitleCue(
                     startMs = 0L,
                     endMs = 1000L,
                     content = "你好"
                 )
             ),
             subtitleSecondaryCues = listOf(
-                com.android.purebilibili.feature.video.subtitle.SubtitleCue(
+                com.android.purebilibili.core.video.subtitle.SubtitleCue(
                     startMs = 0L,
                     endMs = 1000L,
                     content = "hello"
@@ -1056,14 +1056,14 @@ class VideoLoadRequestPolicyTest {
     @Test
     fun `subtitle decision promotes secondary when primary is low quality sparse track`() {
         val primary = listOf(
-            com.android.purebilibili.feature.video.subtitle.SubtitleCue(
+            com.android.purebilibili.core.video.subtitle.SubtitleCue(
                 startMs = 0L,
                 endMs = 27_000L,
                 content = "敲重点 ↓↓↓敲重点 投降 包村 拥 威信 扫"
             )
         )
         val secondary = (1..20).map { i ->
-            com.android.purebilibili.feature.video.subtitle.SubtitleCue(
+            com.android.purebilibili.core.video.subtitle.SubtitleCue(
                 startMs = i * 1000L,
                 endMs = i * 1000L + 800L,
                 content = "line-$i"
@@ -1086,14 +1086,14 @@ class VideoLoadRequestPolicyTest {
     @Test
     fun `subtitle decision keeps bilingual when both tracks look healthy`() {
         val primary = (1..12).map { i ->
-            com.android.purebilibili.feature.video.subtitle.SubtitleCue(
+            com.android.purebilibili.core.video.subtitle.SubtitleCue(
                 startMs = i * 1200L,
                 endMs = i * 1200L + 900L,
                 content = "zh-$i"
             )
         }
         val secondary = (1..12).map { i ->
-            com.android.purebilibili.feature.video.subtitle.SubtitleCue(
+            com.android.purebilibili.core.video.subtitle.SubtitleCue(
                 startMs = i * 1200L,
                 endMs = i * 1200L + 900L,
                 content = "en-$i"
@@ -1116,14 +1116,14 @@ class VideoLoadRequestPolicyTest {
     @Test
     fun `subtitle decision removes low quality secondary track`() {
         val primary = (1..14).map { i ->
-            com.android.purebilibili.feature.video.subtitle.SubtitleCue(
+            com.android.purebilibili.core.video.subtitle.SubtitleCue(
                 startMs = i * 1000L,
                 endMs = i * 1000L + 700L,
                 content = "zh-$i"
             )
         }
         val secondary = listOf(
-            com.android.purebilibili.feature.video.subtitle.SubtitleCue(
+            com.android.purebilibili.core.video.subtitle.SubtitleCue(
                 startMs = 0L,
                 endMs = 30_000L,
                 content = "广告联系方式"

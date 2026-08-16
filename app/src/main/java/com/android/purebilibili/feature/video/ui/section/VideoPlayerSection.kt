@@ -60,8 +60,8 @@ import com.android.purebilibili.core.ui.components.AppSurface
 import com.android.purebilibili.core.ui.components.AppIconButton
 import com.android.purebilibili.core.ui.components.AppTextButton
 import com.android.purebilibili.data.model.response.ViewPoint
-import com.android.purebilibili.feature.video.progress.PbpProgressData
-import com.android.purebilibili.feature.video.progress.buildPbpRidgeSamples
+import com.android.purebilibili.core.video.progress.PbpProgressData
+import com.android.purebilibili.core.video.progress.buildPbpRidgeSamples
 import com.bytedance.danmaku.render.engine.DanmakuView
 
 import android.app.Activity
@@ -165,19 +165,19 @@ import com.android.purebilibili.core.util.HapticType
 import com.android.purebilibili.core.util.Logger
 import com.android.purebilibili.core.util.rememberHapticFeedback
 import com.android.purebilibili.feature.screenshot.AppScreenshotGestureBlockState
-import com.android.purebilibili.feature.video.subtitle.SubtitleDisplayMode
-import com.android.purebilibili.feature.video.subtitle.SubtitleAutoPreference
-import com.android.purebilibili.feature.video.subtitle.buildSubtitleTrackOptions
+import com.android.purebilibili.core.video.subtitle.SubtitleDisplayMode
+import com.android.purebilibili.core.video.subtitle.SubtitleAutoPreference
+import com.android.purebilibili.core.video.subtitle.buildSubtitleTrackOptions
 import com.android.purebilibili.feature.video.subtitle.isSubtitleFeatureEnabledForUser
-import com.android.purebilibili.feature.video.subtitle.normalizeSubtitleDisplayMode
-import com.android.purebilibili.feature.video.subtitle.normalizeSubtitleVerticalOffsetFraction
-import com.android.purebilibili.feature.video.subtitle.resolveDefaultSubtitleDisplayMode
-import com.android.purebilibili.feature.video.subtitle.resolveSubtitleControlAvailability
-import com.android.purebilibili.feature.video.subtitle.resolveSubtitleDisplayModeByAutoPreference
-import com.android.purebilibili.feature.video.subtitle.resolveSubtitleTextAt
-import com.android.purebilibili.feature.video.subtitle.resolveSubtitleTrackDisplayLabel
-import com.android.purebilibili.feature.video.subtitle.shouldRenderPrimarySubtitle
-import com.android.purebilibili.feature.video.subtitle.shouldRenderSecondarySubtitle
+import com.android.purebilibili.core.video.subtitle.normalizeSubtitleDisplayMode
+import com.android.purebilibili.core.video.subtitle.normalizeSubtitleVerticalOffsetFraction
+import com.android.purebilibili.core.video.subtitle.resolveDefaultSubtitleDisplayMode
+import com.android.purebilibili.core.video.subtitle.resolveSubtitleControlAvailability
+import com.android.purebilibili.core.video.subtitle.resolveSubtitleDisplayModeByAutoPreference
+import com.android.purebilibili.core.video.subtitle.resolveSubtitleTextAt
+import com.android.purebilibili.core.video.subtitle.resolveSubtitleTrackDisplayLabel
+import com.android.purebilibili.core.video.subtitle.shouldRenderPrimarySubtitle
+import com.android.purebilibili.core.video.subtitle.shouldRenderSecondarySubtitle
 import com.android.purebilibili.feature.video.usecase.playPlayerFromUserAction
 import com.android.purebilibili.feature.video.usecase.seekPlayerFromUserAction
 import com.android.purebilibili.feature.video.usecase.togglePlayerPlaybackFromUserAction
@@ -3772,7 +3772,7 @@ fun VideoPlayerSection(
             subtitleSecondaryAvailable
         ) {
             if (!subtitleFeatureEnabled) {
-                com.android.purebilibili.feature.video.subtitle.SubtitleControlAvailability(
+                com.android.purebilibili.core.video.subtitle.SubtitleControlAvailability(
                     trackAvailable = false,
                     primarySelectable = false,
                     secondarySelectable = false
@@ -3817,7 +3817,7 @@ fun VideoPlayerSection(
             mutableStateOf(false)
         }
         val subtitleTextSizeSpec = remember(uiLayoutWidthDp, subtitleLargeTextByUser) {
-            com.android.purebilibili.feature.video.subtitle.resolveSubtitleTextSizeSpec(
+            com.android.purebilibili.core.video.subtitle.resolveSubtitleTextSizeSpec(
                 playerWidthDp = uiLayoutWidthDp,
                 largeTextEnabled = subtitleLargeTextByUser
             )
@@ -3894,7 +3894,7 @@ fun VideoPlayerSection(
 
         val subtitlePollingIdentity = remember(uiState) {
             val success = uiState as? VideoPlaybackUiState.Success
-            com.android.purebilibili.feature.video.subtitle.resolveSubtitlePositionPollingIdentity(
+            com.android.purebilibili.core.video.subtitle.resolveSubtitlePositionPollingIdentity(
                 bvid = success?.info?.bvid,
                 cid = success?.info?.cid ?: 0L,
             )
@@ -3951,7 +3951,7 @@ fun VideoPlayerSection(
             } else {
                 0L
             }
-            com.android.purebilibili.feature.video.subtitle.resolveStickySubtitleText(
+            com.android.purebilibili.core.video.subtitle.resolveStickySubtitleText(
                 currentText = subtitlePrimaryRawText,
                 previousText = stickyPrimaryText,
                 blankGapMs = blankGap,
@@ -3963,7 +3963,7 @@ fun VideoPlayerSection(
             } else {
                 0L
             }
-            com.android.purebilibili.feature.video.subtitle.resolveStickySubtitleText(
+            com.android.purebilibili.core.video.subtitle.resolveStickySubtitleText(
                 currentText = subtitleSecondaryRawText,
                 previousText = stickySecondaryText,
                 blankGapMs = blankGap,
@@ -3985,7 +3985,7 @@ fun VideoPlayerSection(
         }
         val keepSubtitleOverlayMounted =
             uiState is VideoPlaybackUiState.Success &&
-                com.android.purebilibili.feature.video.subtitle.shouldKeepSubtitleOverlayMounted(
+                com.android.purebilibili.core.video.subtitle.shouldKeepSubtitleOverlayMounted(
                     overlayEnabled = subtitleOverlayEnabled,
                     isInPipMode = isInPipMode,
                     isAudioOnly = false,

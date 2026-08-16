@@ -12,9 +12,9 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.android.purebilibili.data.model.response.ViewPoint
-import com.android.purebilibili.feature.video.progress.PbpProgressData
+import com.android.purebilibili.core.video.progress.PbpProgressData
 import com.android.purebilibili.feature.video.state.VideoPlayerState
-import com.android.purebilibili.feature.video.subtitle.SubtitleDisplayMode
+import com.android.purebilibili.core.video.subtitle.SubtitleDisplayMode
 import com.android.purebilibili.feature.video.ui.section.VideoPlayerSection
 import com.android.purebilibili.feature.video.viewmodel.VideoPlaybackUiState
 import kotlin.math.roundToInt

@@ -1,4 +1,4 @@
-package com.android.purebilibili.feature.video.progress
+package com.android.purebilibili.core.video.progress
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

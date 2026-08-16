@@ -56,8 +56,8 @@ import com.android.purebilibili.core.ui.components.AppSurface
 import com.android.purebilibili.core.ui.components.AppSwitch
 import com.android.purebilibili.core.util.FormatUtils
 import com.android.purebilibili.data.model.response.SponsorProgressMarker
-import com.android.purebilibili.feature.video.progress.PbpRidgeDensity
-import com.android.purebilibili.feature.video.progress.PbpRidgeSample
+import com.android.purebilibili.core.video.progress.PbpRidgeDensity
+import com.android.purebilibili.core.video.progress.PbpRidgeSample
 import com.android.purebilibili.feature.video.ui.components.SeekPreviewBubble
 import com.android.purebilibili.feature.video.ui.components.SeekPreviewBubblePlacement
 import com.android.purebilibili.feature.video.ui.components.SeekPreviewBubbleSimple
@@ -65,9 +65,9 @@ import com.android.purebilibili.feature.video.ui.components.VideoAspectRatio
 import com.android.purebilibili.feature.video.ui.components.DolbyBadge
 import com.android.purebilibili.feature.video.ui.components.HiResBadge
 import androidx.compose.ui.draw.clip
-import com.android.purebilibili.feature.video.subtitle.SubtitleDisplayMode
-import com.android.purebilibili.feature.video.subtitle.SubtitleTrackOption
-import com.android.purebilibili.feature.video.subtitle.resolveSubtitleDisplayOptions
+import com.android.purebilibili.core.video.subtitle.SubtitleDisplayMode
+import com.android.purebilibili.core.video.subtitle.SubtitleTrackOption
+import com.android.purebilibili.core.video.subtitle.resolveSubtitleDisplayOptions
 import com.android.purebilibili.feature.video.playback.policy.resolveDisplayedPlaybackTransitionPosition
 import com.android.purebilibili.core.store.PlayerProgressPlacement
 import kotlin.math.roundToInt

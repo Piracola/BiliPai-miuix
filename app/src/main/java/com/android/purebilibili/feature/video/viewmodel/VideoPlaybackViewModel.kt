@@ -131,16 +131,16 @@ import com.android.purebilibili.feature.video.interaction.applyInteractiveNative
 import com.android.purebilibili.feature.video.interaction.evaluateInteractiveChoiceCondition
 import com.android.purebilibili.feature.video.interaction.shouldTriggerInteractiveQuestion
 import com.android.purebilibili.feature.video.policy.resolveFavoriteFolderMediaId
-import com.android.purebilibili.feature.video.progress.PbpProgressData
+import com.android.purebilibili.core.video.progress.PbpProgressData
 import com.android.purebilibili.feature.video.ui.feedback.resolveTripleActionFeedbackMessage
 import com.android.purebilibili.feature.video.ui.feedback.resolveTripleActionVisualState
-import com.android.purebilibili.feature.video.subtitle.SubtitleCue
-import com.android.purebilibili.feature.video.subtitle.SubtitleTrackMeta
+import com.android.purebilibili.core.video.subtitle.SubtitleCue
+import com.android.purebilibili.core.video.subtitle.SubtitleTrackMeta
 import com.android.purebilibili.feature.video.subtitle.isSubtitleFeatureEnabledForUser
-import com.android.purebilibili.feature.video.subtitle.isLikelyAiSubtitleTrack
-import com.android.purebilibili.feature.video.subtitle.mapPlayerInfoSubtitleTracks
-import com.android.purebilibili.feature.video.subtitle.normalizeBilibiliSubtitleUrl
-import com.android.purebilibili.feature.video.subtitle.resolveDefaultSubtitleLanguages
+import com.android.purebilibili.core.video.subtitle.isLikelyAiSubtitleTrack
+import com.android.purebilibili.core.video.subtitle.mapPlayerInfoSubtitleTracks
+import com.android.purebilibili.core.video.subtitle.normalizeBilibiliSubtitleUrl
+import com.android.purebilibili.core.video.subtitle.resolveDefaultSubtitleLanguages
 
 private const val PLAYBACK_CDN_FIRST_FRAME_FALLBACK_TIMEOUT_MS = 2_500L
 private const val PLAYBACK_STALL_RECOVERY_TIMEOUT_MS = 10_000L

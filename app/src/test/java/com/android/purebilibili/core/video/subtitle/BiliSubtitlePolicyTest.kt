@@ -1,4 +1,4 @@
-package com.android.purebilibili.feature.video.subtitle
+package com.android.purebilibili.core.video.subtitle
 
 import com.android.purebilibili.data.model.response.PlayerInfoResponse
 import com.android.purebilibili.data.model.response.SubtitleItem

@@ -1,4 +1,4 @@
-package com.android.purebilibili.feature.video.subtitle
+package com.android.purebilibili.core.video.subtitle
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

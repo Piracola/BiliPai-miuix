@@ -1,7 +1,7 @@
 package com.android.purebilibili.feature.video.ui.overlay
 
-import com.android.purebilibili.feature.video.subtitle.SubtitleDisplayMode
-import com.android.purebilibili.feature.video.subtitle.SubtitleTrackOption
+import com.android.purebilibili.core.video.subtitle.SubtitleDisplayMode
+import com.android.purebilibili.core.video.subtitle.SubtitleTrackOption
 
 data class SubtitleControlUiState(
     val trackAvailable: Boolean = false,
