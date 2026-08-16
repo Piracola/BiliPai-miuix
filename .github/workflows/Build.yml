@@ -63,6 +63,7 @@ jobs:
             --tests 'com.android.purebilibili.architecture.FeatureLayerIsolationStructureTest' \
             --tests 'com.android.purebilibili.architecture.ArchitectureAllowlistRatchetTest' \
             --tests 'com.android.purebilibili.core.store.SettingsPersistenceCompatibilityTest' \
+            --tests 'com.android.purebilibili.architecture.ModuleBoundaryReadinessStructureTest' \
             --no-daemon \
             --console=plain
 
