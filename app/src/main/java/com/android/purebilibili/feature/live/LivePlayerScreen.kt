@@ -76,9 +76,6 @@ import androidx.media3.ui.PlayerView
 import com.android.purebilibili.core.util.Logger
 import com.android.purebilibili.core.util.AnalyticsHelper
 import com.android.purebilibili.core.util.CrashReporter
-import com.android.purebilibili.core.store.DanmakuSettings
-import com.android.purebilibili.core.store.DanmakuSettingsScope
-import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.store.resolveDanmakuSettingsScope
 import com.android.purebilibili.core.util.LocalWindowSizeClass
 import com.android.purebilibili.data.model.response.LiveQuality
@@ -128,7 +125,6 @@ import com.android.purebilibili.core.ui.components.AppSurface
 import com.android.purebilibili.core.ui.components.AppSwitch
 import com.android.purebilibili.core.ui.components.AppTextButton
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -187,9 +183,7 @@ fun LivePlayerScreen(
     var playerViewRef by remember { mutableStateOf<PlayerView?>(null) }
     var trackSelectionBeforeAudioOnly by remember { mutableStateOf<TrackSelectionParameters?>(null) }
     var videoAspectRatio by remember { mutableStateOf(VideoAspectRatio.FIT) }
-    var backgroundPlaybackEnabled by remember {
-        mutableStateOf(SettingsManager.getBackgroundPlaybackEnabledSync(context))
-    }
+    val backgroundPlaybackEnabled by viewModel.backgroundPlaybackEnabled.collectAsStateWithLifecycle()
     var shutdownAtMillis by remember { mutableStateOf<Long?>(null) }
     val showLivePipButton = remember { shouldShowLivePipButton(android.os.Build.VERSION.SDK_INT) }
     var showRoomMenu by remember { mutableStateOf(false) }
@@ -244,9 +238,10 @@ fun LivePlayerScreen(
     val liveDanmakuSettingsScope = remember(isLandscape) {
         resolveDanmakuSettingsScope(isLandscape = isLandscape)
     }
-    val liveDanmakuSettings by SettingsManager
-        .getDanmakuSettings(context, liveDanmakuSettingsScope)
-        .collectAsStateWithLifecycle(initialValue = DanmakuSettings())
+    LaunchedEffect(liveDanmakuSettingsScope) {
+        viewModel.setDanmakuSettingsScope(liveDanmakuSettingsScope)
+    }
+    val liveDanmakuSettings by viewModel.danmakuSettings.collectAsStateWithLifecycle()
     val liveDanmakuDisplayArea = liveDanmakuSettings.displayArea
     val portraitOverlayMetrics = remember(configuration.screenHeightDp) {
         resolveLivePortraitOverlayMetrics(configuration.screenHeightDp)
@@ -358,10 +353,7 @@ fun LivePlayerScreen(
 
     fun toggleBackgroundPlayback() {
         val newValue = !backgroundPlaybackEnabled
-        backgroundPlaybackEnabled = newValue
-        coroutineScope.launch {
-            SettingsManager.setBackgroundPlaybackEnabled(context, newValue)
-        }
+        viewModel.setBackgroundPlaybackEnabled(newValue)
         Toast.makeText(
             context,
             if (newValue) "已开启后台播放" else "已关闭后台播放",
@@ -372,15 +364,8 @@ fun LivePlayerScreen(
     fun addLiveBlockKeyword(keyword: String) {
         val trimmed = keyword.trim()
         if (trimmed.isBlank()) return
-        coroutineScope.launch {
-            val scope = if (isLandscape) DanmakuSettingsScope.LANDSCAPE else DanmakuSettingsScope.PORTRAIT
-            val currentRaw = SettingsManager.getDanmakuBlockRulesRaw(context, scope).first()
-            val nextRaw = listOf(currentRaw, trimmed)
-                .filter { it.isNotBlank() }
-                .joinToString(separator = "\n")
-            SettingsManager.setDanmakuBlockRulesRaw(context, nextRaw, scope)
-            Toast.makeText(context, "已加入屏蔽词", Toast.LENGTH_SHORT).show()
-        }
+        viewModel.addLiveBlockKeyword(trimmed)
+        Toast.makeText(context, "已加入屏蔽词", Toast.LENGTH_SHORT).show()
     }
 
     fun enterLivePip() {
@@ -433,9 +418,7 @@ fun LivePlayerScreen(
     // 播放器相关逻辑
     // ... (保持不变)
     val dataSourceFactory = remember(roomId) {
-        val sessData = com.android.purebilibili.core.store.TokenManager.sessDataCache ?: ""
-        val buvid3 = com.android.purebilibili.core.store.TokenManager.buvid3Cache ?: ""
-        val cookies = "SESSDATA=$sessData; buvid3=$buvid3"
+        val cookies = viewModel.playbackStreamCookie
         
         DefaultHttpDataSource.Factory()
             .setDefaultRequestProperties(mapOf(
@@ -1268,60 +1251,40 @@ fun LivePlayerScreen(
             onToggleDanmaku = { viewModel.toggleDanmaku() },
             onToggleChat = { isInteractionPanelVisible = !isInteractionPanelVisible },
             onDisplayAreaSelected = { area ->
-                coroutineScope.launch {
-                    SettingsManager.setDanmakuArea(context, area, liveDanmakuSettingsScope)
-                }
+                viewModel.setDanmakuArea(area, liveDanmakuSettingsScope)
             },
             onFontScaleChanged = { value ->
-                coroutineScope.launch {
-                    SettingsManager.setDanmakuFontScale(context, value, liveDanmakuSettingsScope)
-                }
+                viewModel.setDanmakuFontScale(value, liveDanmakuSettingsScope)
             },
             onOpacityChanged = { value ->
-                coroutineScope.launch {
-                    SettingsManager.setDanmakuOpacity(context, value, liveDanmakuSettingsScope)
-                }
+                viewModel.setDanmakuOpacity(value, liveDanmakuSettingsScope)
             },
             onSpeedChanged = { value ->
-                coroutineScope.launch {
-                    SettingsManager.setDanmakuSpeed(context, value, liveDanmakuSettingsScope)
-                }
+                viewModel.setDanmakuSpeed(value, liveDanmakuSettingsScope)
             },
             onToggleAllowScroll = {
-                coroutineScope.launch {
-                    SettingsManager.setDanmakuAllowScroll(
-                        context,
-                        !liveDanmakuSettings.allowScroll,
-                        liveDanmakuSettingsScope
-                    )
-                }
+                viewModel.setDanmakuAllowScroll(
+                    !liveDanmakuSettings.allowScroll,
+                    liveDanmakuSettingsScope
+                )
             },
             onToggleAllowTop = {
-                coroutineScope.launch {
-                    SettingsManager.setDanmakuAllowTop(
-                        context,
-                        !liveDanmakuSettings.allowTop,
-                        liveDanmakuSettingsScope
-                    )
-                }
+                viewModel.setDanmakuAllowTop(
+                    !liveDanmakuSettings.allowTop,
+                    liveDanmakuSettingsScope
+                )
             },
             onToggleAllowBottom = {
-                coroutineScope.launch {
-                    SettingsManager.setDanmakuAllowBottom(
-                        context,
-                        !liveDanmakuSettings.allowBottom,
-                        liveDanmakuSettingsScope
-                    )
-                }
+                viewModel.setDanmakuAllowBottom(
+                    !liveDanmakuSettings.allowBottom,
+                    liveDanmakuSettingsScope
+                )
             },
             onToggleAllowColorful = {
-                coroutineScope.launch {
-                    SettingsManager.setDanmakuAllowColorful(
-                        context,
-                        !liveDanmakuSettings.allowColorful,
-                        liveDanmakuSettingsScope
-                    )
-                }
+                viewModel.setDanmakuAllowColorful(
+                    !liveDanmakuSettings.allowColorful,
+                    liveDanmakuSettingsScope
+                )
             },
             onOpenBlock = {
                 showDanmakuSettingsDialog = false
@@ -1334,7 +1297,7 @@ fun LivePlayerScreen(
     if (showBlockDialog) {
         LiveDmBlockSheet(
             shieldInfo = shieldInfo,
-            isLoggedIn = com.android.purebilibili.core.store.TokenManager.midCache != null,
+            isLoggedIn = viewModel.isPlaybackLoggedIn,
             onAddKeyword = { keyword -> viewModel.addShieldKeyword(keyword) },
             onDeleteKeyword = { keyword -> viewModel.deleteShieldKeyword(keyword) },
             onUnblockUser = { user -> viewModel.unshieldUser(user.uid) },

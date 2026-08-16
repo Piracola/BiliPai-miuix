@@ -1,10 +1,14 @@
 // 文件路径: feature/live/LivePlayerViewModel.kt
 package com.android.purebilibili.feature.live
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.purebilibili.core.network.NetworkModule
 import com.android.purebilibili.core.plugin.PluginManager
+import com.android.purebilibili.core.store.DanmakuSettings
+import com.android.purebilibili.core.store.DanmakuSettingsScope
+import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.store.TokenManager
 import com.android.purebilibili.core.util.CrashReporter
 import com.android.purebilibili.data.model.response.LiveQuality
@@ -19,11 +23,16 @@ import com.android.purebilibili.data.repository.LiveRepository
 import com.android.purebilibili.data.repository.LiveShieldInfo
 import com.android.purebilibili.data.repository.LiveSuperChatReportRequest
 import com.android.purebilibili.feature.plugin.PlaybackCdnPlugin
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import com.android.purebilibili.core.network.socket.DanmakuProtocol
 import com.android.purebilibili.data.repository.DanmakuRepository
@@ -132,9 +141,93 @@ sealed interface LivePlayerEvent {
 /**
  * 直播播放器 ViewModel - 增强版
  */
-class LivePlayerViewModel : ViewModel() {
+class LivePlayerViewModel(application: Application) : AndroidViewModel(application) {
     companion object {
         private const val MAX_PLAYBACK_RELOAD_ATTEMPTS = 1
+    }
+
+    // 阶段 4 切片：直播弹幕设置/后台播放直读收拢到 VM（UI 层不得直接访问 SettingsManager）
+    val backgroundPlaybackEnabled: kotlinx.coroutines.flow.StateFlow<Boolean> =
+        SettingsManager.getBackgroundPlaybackEnabled(application)
+            .stateIn(
+                scope = viewModelScope,
+                started = kotlinx.coroutines.flow.SharingStarted.Eagerly,
+                initialValue = SettingsManager.getBackgroundPlaybackEnabledSync(application),
+            )
+
+    /** 播放流 Cookie（SESSDATA/buvid3），供 HttpDataSource 构建请求头。 */
+    val playbackStreamCookie: String
+        get() {
+            val sessData = TokenManager.sessDataCache ?: ""
+            val buvid3 = TokenManager.buvid3Cache ?: ""
+            return "SESSDATA=$sessData; buvid3=$buvid3"
+        }
+
+    val isPlaybackLoggedIn: Boolean
+        get() = TokenManager.midCache != null
+
+    // 弹幕设置的 scope 随横竖屏切换，用状态流驱动 SettingsManager 读取。
+    private val _danmakuSettingsScope = MutableStateFlow(DanmakuSettingsScope.PORTRAIT)
+    val danmakuSettingsScope: StateFlow<DanmakuSettingsScope> = _danmakuSettingsScope.asStateFlow()
+
+    val danmakuSettings: StateFlow<DanmakuSettings> = _danmakuSettingsScope
+        .flatMapLatest { scope -> SettingsManager.getDanmakuSettings(getApplication(), scope) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = DanmakuSettings(),
+        )
+
+    fun setDanmakuSettingsScope(scope: DanmakuSettingsScope) {
+        _danmakuSettingsScope.value = scope
+    }
+
+    fun setBackgroundPlaybackEnabled(enabled: Boolean) {
+        viewModelScope.launch { SettingsManager.setBackgroundPlaybackEnabled(getApplication(), enabled) }
+    }
+
+    fun setDanmakuArea(value: Float, scope: DanmakuSettingsScope) {
+        viewModelScope.launch { SettingsManager.setDanmakuArea(getApplication(), value, scope) }
+    }
+
+    fun setDanmakuFontScale(value: Float, scope: DanmakuSettingsScope) {
+        viewModelScope.launch { SettingsManager.setDanmakuFontScale(getApplication(), value, scope) }
+    }
+
+    fun setDanmakuOpacity(value: Float, scope: DanmakuSettingsScope) {
+        viewModelScope.launch { SettingsManager.setDanmakuOpacity(getApplication(), value, scope) }
+    }
+
+    fun setDanmakuSpeed(value: Float, scope: DanmakuSettingsScope) {
+        viewModelScope.launch { SettingsManager.setDanmakuSpeed(getApplication(), value, scope) }
+    }
+
+    fun setDanmakuAllowScroll(enabled: Boolean, scope: DanmakuSettingsScope) {
+        viewModelScope.launch { SettingsManager.setDanmakuAllowScroll(getApplication(), enabled, scope) }
+    }
+
+    fun setDanmakuAllowTop(enabled: Boolean, scope: DanmakuSettingsScope) {
+        viewModelScope.launch { SettingsManager.setDanmakuAllowTop(getApplication(), enabled, scope) }
+    }
+
+    fun setDanmakuAllowBottom(enabled: Boolean, scope: DanmakuSettingsScope) {
+        viewModelScope.launch { SettingsManager.setDanmakuAllowBottom(getApplication(), enabled, scope) }
+    }
+
+    fun setDanmakuAllowColorful(enabled: Boolean, scope: DanmakuSettingsScope) {
+        viewModelScope.launch { SettingsManager.setDanmakuAllowColorful(getApplication(), enabled, scope) }
+    }
+
+    fun addLiveBlockKeyword(keyword: String) {
+        val trimmed = keyword.trim()
+        if (trimmed.isBlank()) return
+        viewModelScope.launch {
+            val currentRaw = SettingsManager.getDanmakuBlockRulesRaw(getApplication()).first()
+            val nextRaw = listOf(currentRaw, trimmed)
+                .filter { it.isNotBlank() }
+                .joinToString(separator = "\n")
+            SettingsManager.setDanmakuBlockRulesRaw(getApplication(), nextRaw)
+        }
     }
     
     private val _uiState = MutableStateFlow<LivePlayerState>(LivePlayerState.Loading)
