@@ -46,6 +46,7 @@ import com.android.purebilibili.R
 import com.android.purebilibili.core.network.NetworkModule
 import com.android.purebilibili.core.player.HiResCompatibleRenderersFactory
 import com.android.purebilibili.core.player.PlaybackMediaCache
+import com.android.purebilibili.core.player.PlaybackSession
 import com.android.purebilibili.core.player.PlayerVolumeController
 import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.store.TokenManager
@@ -1128,6 +1129,21 @@ class MiniPlayerManager private constructor(private val context: Context) :
     // --- 当前视频信息 ---
     var currentBvid by mutableStateOf<String?>(null)
         private set
+
+    /**
+     * 播放会话只读视图（阶段 5 接缝）：把本宿主的状态暴露为 Core 层
+     * [PlaybackSession] 接口，供导航/UI 读取当前播放状态而不依赖具体实现。
+     * 非活跃会话返回 null。
+     */
+    fun sessionOrNull(): PlaybackSession? = if (isActive) SessionView() else null
+
+    private inner class SessionView : PlaybackSession {
+        override val isActive: Boolean get() = this@MiniPlayerManager.isActive
+        override val currentBvid: String? get() = this@MiniPlayerManager.currentBvid
+        override val currentPosition: Long get() = this@MiniPlayerManager.currentPosition
+        override val duration: Long get() = this@MiniPlayerManager.duration
+        override val isPlaying: Boolean get() = this@MiniPlayerManager.isPlaying
+    }
 
     var currentAudioMediaId by mutableStateOf<String?>(null)
         private set
