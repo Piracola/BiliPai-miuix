@@ -50,7 +50,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,23 +59,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.android.purebilibili.data.model.response.LiveAreaChild
 import com.android.purebilibili.data.model.response.LiveFavoriteTagEntry
 import com.android.purebilibili.data.model.response.LiveAreaParent
-import com.android.purebilibili.core.store.SettingsManager
-import com.android.purebilibili.data.repository.LiveRepository
 import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
-import kotlinx.coroutines.launch
 
 @Composable
 fun LiveAreaScreen(
     onBack: () -> Unit,
-    onAreaClick: (Int, Int, String) -> Unit
+    onAreaClick: (Int, Int, String) -> Unit,
+    viewModel: LiveAreaViewModel = viewModel(),
 ) {
     val topChromePolicy = rememberAppTopChromePolicy()
     val visualSpec = remember(topChromePolicy.tabPresentation) {
@@ -91,29 +88,14 @@ fun LiveAreaScreen(
         )
     }
     val colorScheme = MaterialTheme.colorScheme
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    var isLoading by remember { mutableStateOf(true) }
-    var error by remember { mutableStateOf<String?>(null) }
-    var areas by remember { mutableStateOf<List<LiveAreaParent>>(emptyList()) }
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
+    val areas by viewModel.areas.collectAsStateWithLifecycle()
     var selectedTab by remember { mutableIntStateOf(0) }
     var isEditing by remember { mutableStateOf(false) }
-    var reloadKey by remember { mutableIntStateOf(0) }
-    val favoriteTags by SettingsManager.getLiveFavoriteTags(context).collectAsStateWithLifecycle(emptyList())
+    val favoriteTags by viewModel.favoriteTags.collectAsStateWithLifecycle()
     val pagerState = rememberPagerState(pageCount = { areas.size })
     val selectionBackdrop = rememberLayerBackdrop()
-
-    LaunchedEffect(reloadKey) {
-        LiveRepository.getLiveAreaIndex()
-            .onSuccess {
-                areas = it
-                isLoading = false
-            }
-            .onFailure {
-                error = it.message ?: "加载标签失败"
-                isLoading = false
-            }
-    }
 
     AppScaffold(
         modifier = Modifier.fillMaxSize(),
@@ -153,11 +135,7 @@ fun LiveAreaScreen(
                     AppText(text = error ?: "", color = colorScheme.onSurfaceVariant)
                     Spacer(Modifier.height(AppSpacingTokens.Small))
                     AppTextButton(
-                        onClick = {
-                            isLoading = true
-                            error = null
-                            reloadKey += 1
-                        }
+                        onClick = { viewModel.reload() }
                     ) {
                         AppText("重试")
                     }
@@ -191,14 +169,7 @@ fun LiveAreaScreen(
                         onAreaClick(child.parentAreaId, child.areaId, child.title)
                     },
                     onRemove = { child ->
-                        scope.launch {
-                            SettingsManager.setLiveFavoriteTags(
-                                context,
-                                favoriteTags.filterNot {
-                                    it.parentAreaId == child.parentAreaId && it.areaId == child.areaId
-                                }
-                            )
-                        }
+                        viewModel.removeFavoriteTag(child)
                     }
                 )
                 LiveAreaParentTabRow(
@@ -251,13 +222,9 @@ fun LiveAreaScreen(
                                     isFavorite = isFavorite,
                                     onClick = {
                                         if (isEditing && childAreaId != 0) {
-                                            scope.launch {
-                                                val next = toggleLiveFavoriteTag(
-                                                    current = favoriteTags,
-                                                    entry = child.toLiveFavoriteTagEntry(selectedArea)
-                                                )
-                                                SettingsManager.setLiveFavoriteTags(context, next)
-                                            }
+                                            viewModel.toggleFavoriteTag(
+                                                child.toLiveFavoriteTagEntry(selectedArea)
+                                            )
                                         } else {
                                             onAreaClick(childParentId, childAreaId, child.name)
                                         }

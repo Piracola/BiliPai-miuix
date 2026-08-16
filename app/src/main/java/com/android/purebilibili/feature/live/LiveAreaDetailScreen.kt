@@ -49,7 +49,8 @@ import com.android.purebilibili.core.util.LocalWindowSizeClass
 import com.android.purebilibili.core.util.responsiveContentWidth
 import com.android.purebilibili.data.model.response.LiveAreaChild
 import com.android.purebilibili.data.model.response.LiveRoom
-import com.android.purebilibili.data.repository.LiveRepository
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
@@ -60,16 +61,17 @@ fun LiveAreaDetailScreen(
     onBack: () -> Unit,
     onAreaClick: (Int, Int, String) -> Unit,
     onLiveClick: (Long, String, String) -> Unit,
+    viewModel: LiveAreaDetailViewModel = viewModel(),
 ) {
-    var isLoading by remember { mutableStateOf(true) }
-    var error by remember { mutableStateOf<String?>(null) }
-    var rooms by remember { mutableStateOf<List<LiveRoom>>(emptyList()) }
-    var siblings by remember { mutableStateOf<List<LiveAreaChild>>(emptyList()) }
-    var sortType by remember { mutableStateOf("online") }
-    var page by remember { mutableIntStateOf(1) }
-    var hasMore by remember { mutableStateOf(false) }
-    var totalCount by remember { mutableIntStateOf(0) }
-    var isLoadingMore by remember { mutableStateOf(false) }
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val isLoading = state.isLoading
+    val error = state.error
+    val rooms = state.rooms
+    val siblings = state.siblings
+    val sortType = state.sortType
+    val hasMore = state.hasMore
+    val totalCount = state.totalCount
+    val isLoadingMore = state.isLoadingMore
     val gridState = rememberLazyGridState()
     val topChromePolicy = rememberAppTopChromePolicy()
     val visualSpec = remember(topChromePolicy.tabPresentation) {
@@ -93,48 +95,9 @@ fun LiveAreaDetailScreen(
         append(" · $totalCount 个直播间")
     }
 
-    suspend fun loadPage(reset: Boolean) {
-        if (reset) {
-            isLoading = true
-            error = null
-            page = 1
-            rooms = emptyList()
-            hasMore = false
-            totalCount = 0
-        } else {
-            if (isLoadingMore || !hasMore) return
-            isLoadingMore = true
-        }
-        val nextPage = if (reset) 1 else page + 1
-        LiveRepository.getAreaRoomsPage(
-            parentAreaId = parentAreaId,
-            areaId = areaId,
-            page = nextPage,
-            sortType = sortType,
-            areaTitle = title,
-        ).onSuccess { result ->
-            rooms = if (reset) result.rooms else rooms + result.rooms
-            page = nextPage
-            hasMore = result.hasMore
-            totalCount = result.totalCount
-            isLoading = false
-            isLoadingMore = false
-        }.onFailure {
-            error = it.message ?: "加载分区直播失败"
-            isLoading = false
-            isLoadingMore = false
-        }
-    }
-
-    suspend fun loadSiblings() {
-        LiveRepository.getLiveAreaIndex().onSuccess { list ->
-            siblings = list.firstOrNull { it.id == parentAreaId }?.list.orEmpty()
-        }
-    }
-
     LaunchedEffect(parentAreaId, areaId, sortType) {
-        loadPage(reset = true)
-        loadSiblings()
+        viewModel.load(parentAreaId, areaId, title, reset = true)
+        viewModel.loadSiblings(parentAreaId)
     }
 
     LaunchedEffect(gridState, rooms.size, hasMore, isLoading, isLoadingMore) {
@@ -148,7 +111,7 @@ fun LiveAreaDetailScreen(
                     !isLoadingMore &&
                     lastVisible >= rooms.lastIndex - 4
                 ) {
-                    loadPage(reset = false)
+                    viewModel.load(parentAreaId, areaId, title, reset = false)
                 }
             }
     }
@@ -201,14 +164,14 @@ fun LiveAreaDetailScreen(
                     LiveSortChip(
                         text = "最热",
                         selected = sortType == "online",
-                        onClick = { sortType = "online" },
+                        onClick = { viewModel.selectSortType("online") },
                     )
                 }
                 item {
                     LiveSortChip(
                         text = "最新",
                         selected = sortType == "live_time",
-                        onClick = { sortType = "live_time" },
+                        onClick = { viewModel.selectSortType("live_time") },
                     )
                 }
                 items(siblings, key = { it.id }) { child ->
