@@ -59,9 +59,11 @@ class ArchitectureAllowlistRatchetTest {
         // 86 → 84：FavoriteCategoryScreen / FollowingListScreen 内嵌 VM 提取为
         // 独立 *ViewModel.kt 文件。
         // 84 → 83：DynamicScreen 动态页直读收拢到 DynamicViewModel（4 项 + 布局别名）。
-        const val MAX_CORE_GLOBAL_OBJECT_FILES = 83
+        // 83 → 77：直播系 6 屏收拢——LiveList/LiveArea/LiveAreaDetail/LiveFollowing/
+        // LiveSearch 逻辑收拢到独立 VM，LivePlayer 直读收拢到 LivePlayerViewModel。
+        const val MAX_CORE_GLOBAL_OBJECT_FILES = 77
 
         const val CORE_GLOBAL_OBJECT_FILES_SHA256 =
-            "c0875ee9746a6d313dc0b07d5ab819628b1874e9c8fd255305db81c2b8bfe270"
+            "5b65f53a19729caca7baf0d05bf4305b124e21d4e95d121848769d0433191cd2"
     }
 }
