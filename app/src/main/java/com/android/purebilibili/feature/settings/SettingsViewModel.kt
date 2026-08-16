@@ -11,6 +11,21 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.android.purebilibili.core.store.SettingsManager
+import com.android.purebilibili.core.store.player.DEFAULT_AUDIO_QUALITY_FOLLOW_LAST
+import com.android.purebilibili.core.store.player.PlayerSettingsStore
+import com.android.purebilibili.core.store.AutoExitFullscreenMode
+import com.android.purebilibili.core.store.BottomProgressBehavior
+import com.android.purebilibili.core.store.FullscreenAspectRatio
+import com.android.purebilibili.core.store.FullscreenMode
+import com.android.purebilibili.core.store.PlaybackCompletionBehavior
+import com.android.purebilibili.core.store.PlayerProgressPlacement
+import com.android.purebilibili.core.store.PlayerControlVisibilitySettings
+import com.android.purebilibili.core.store.PortraitPlayerCollapseMode
+import com.android.purebilibili.core.store.TabletCommentPanelWidthPreset
+import com.android.purebilibili.core.video.subtitle.SubtitleAutoPreference
+import com.android.purebilibili.core.screenshot.AppScreenshotCaptureMode
+import com.android.purebilibili.core.screenshot.AppScreenshotGestureMode
+import com.android.purebilibili.data.repository.VideoRepository
 import com.android.purebilibili.core.ui.components.AppSingleChoicePresentation
 import com.android.purebilibili.core.store.BottomBarSearchAutoExpandMode
 import com.android.purebilibili.core.store.BottomBarSearchLayoutMode
@@ -37,6 +52,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
@@ -146,7 +162,9 @@ data class SettingsUiState(
     val homeTopRightAction: HomeTopRightAction = HomeTopRightAction.SETTINGS,
     val bottomBarVisibilityMode: SettingsManager.BottomBarVisibilityMode = SettingsManager.BottomBarVisibilityMode.ALWAYS_VISIBLE,
     val sidebarAccountSwitcherEnabled: Boolean = true,
-    val bottomBarItemColors: Map<String, Int> = emptyMap()
+    val bottomBarItemColors: Map<String, Int> = emptyMap(),
+    // 阶段 4 切片：播放设置页直读收拢（全量收进 PlaybackSettingsGroup）
+    val playback: PlaybackSettingsGroup = PlaybackSettingsGroup()
 )
 
 // 内部数据类，用于分批合并流
@@ -283,6 +301,97 @@ private data class BottomBarSettingsGroup(
     val bottomBarVisibilityMode: SettingsManager.BottomBarVisibilityMode,
     val sidebarAccountSwitcherEnabled: Boolean,
     val bottomBarItemColors: Map<String, Int>
+)
+
+/**
+ * 阶段 4 设置页切片：播放设置页直读收拢分组（约 78 项，含 4 个 composable）。
+ */
+data class PlaybackSettingsGroup(
+    val miniPlayerMode: SettingsManager.MiniPlayerMode = SettingsManager.MiniPlayerMode.OFF,
+    val stopPlaybackOnExit: Boolean = false,
+    val backgroundPlaybackEnabled: Boolean = true,
+    val audioFocusEnabled: Boolean = true,
+    val playerDiagnosticLoggingEnabled: Boolean = true,
+    val dashSegmentRequestsEnabled: Boolean = false,
+    val qualitySwitchFailureDialogEnabled: Boolean = true,
+    val qualitySwitchFailureDialogOnceEnabled: Boolean = false,
+    val defaultPlaybackSpeed: Float = 1.0f,
+    val rememberLastPlaybackSpeed: Boolean = false,
+    val longPressSpeedHintHidden: Boolean = false,
+    val longPressSpeedHintScale: Float = 1.0f,
+    val longPressSpeedHintAlpha: Float = 0.5f,
+    val videoCodecPreference: String = "hev1",
+    val videoSecondCodecPreference: String = "avc1",
+    val playerInsightMode: PlayerSettingsStore.PlayerInsightMode =
+        PlayerSettingsStore.PlayerInsightMode.OFF,
+    val defaultAudioQuality: Int = DEFAULT_AUDIO_QUALITY_FOLLOW_LAST,
+    val wifiQuality: Int = 80,
+    val mobileQuality: Int = 64,
+    val autoHighestQualityEnabled: Boolean = false,
+    val directedTrafficEnabled: Boolean = false,
+    val dataSaverMode: SettingsManager.DataSaverMode =
+        SettingsManager.DataSaverMode.MOBILE_ONLY,
+    val lowQualityHomeCoverInDataSaver: Boolean = false,
+    val pipNoDanmakuEnabled: Boolean = false,
+    val isPlaybackLoggedIn: Boolean = false,
+    val isPlaybackVip: Boolean = false,
+    val autoPlayEnabled: Boolean = true,
+    val externalPlaylistAutoContinueEnabled: Boolean = true,
+    val resumePlaybackPromptEnabled: Boolean = true,
+    val spacePlayedVideoLocatePromptEnabled: Boolean = true,
+    val playbackCompletionBehavior: PlaybackCompletionBehavior =
+        PlaybackCompletionBehavior.CONTINUE_CURRENT_LOGIC,
+    val subtitleAutoPreference: SubtitleAutoPreference = SubtitleAutoPreference.OFF,
+    val videoAiSummaryEntryEnabled: Boolean = true,
+    val videoNoteEnabled: Boolean = true,
+    val videoNoteDefaultCollapsed: Boolean = false,
+    val videoInfoDefaultExpanded: Boolean = true,
+    val commentFraudDetectionEnabled: Boolean = true,
+    val commentMemberDecorationsEnabled: Boolean = false,
+    val imagePreviewLongPressSaveEnabled: Boolean = true,
+    val commentCollapsedReplyPreviewLimit: Int = 3,
+    val clickToPlayEnabled: Boolean = true,
+    val portraitPlayerCollapseMode: PortraitPlayerCollapseMode =
+        PortraitPlayerCollapseMode.INTRO_ONLY,
+    val portraitSwipeToFullscreenEnabled: Boolean = true,
+    val centerSwipeToFullscreenEnabled: Boolean = true,
+    val slideVolumeBrightnessEnabled: Boolean = true,
+    val setSystemBrightnessEnabled: Boolean = false,
+    val inlineSwipeSeekSeconds: Int = 30,
+    val fullscreenSwipeSeekEnabled: Boolean = true,
+    val fullscreenSwipeSeekSeconds: Int = 15,
+    val doubleTapSeekEnabled: Boolean = false,
+    val seekForwardSeconds: Int = 10,
+    val seekBackwardSeconds: Int = 10,
+    val hideInteractiveCommandDanmaku: Boolean = false,
+    val danmakuCloudSyncEnabled: Boolean = true,
+    val pauseOnPlayerCollapseEnabled: Boolean = true,
+    val autoRotateEnabled: Boolean = false,
+    val fullscreenGestureReverse: Boolean = false,
+    val autoEnterFullscreen: Boolean = false,
+    val showFullscreenLockButton: Boolean = true,
+    val showFullscreenScreenshotButton: Boolean = true,
+    val appGestureScreenshotEnabled: Boolean = false,
+    val appScreenshotGestureMode: AppScreenshotGestureMode =
+        AppScreenshotGestureMode.TOP_RIGHT_TWO_FINGER_LONG_PRESS,
+    val appScreenshotCaptureMode: AppScreenshotCaptureMode =
+        AppScreenshotCaptureMode.FULL_WINDOW,
+    val showFullscreenBatteryLevel: Boolean = true,
+    val showFullscreenTime: Boolean = true,
+    val showFullscreenActionItems: Boolean = true,
+    val bottomProgressBehavior: BottomProgressBehavior = BottomProgressBehavior.ALWAYS_HIDE,
+    val progressPeakDanmakuEnabled: Boolean = false,
+    val showPlayerCastButton: Boolean = true,
+    val showVideoFollowButton: Boolean = true,
+    val playerProgressPlacement: PlayerProgressPlacement = PlayerProgressPlacement.ABOVE_CONTROLS,
+    val horizontalAdaptationEnabled: Boolean = false,
+    val immersiveVideoPageStatusBar: Boolean = false,
+    val tabletCommentPanelWidthPreset: TabletCommentPanelWidthPreset =
+        TabletCommentPanelWidthPreset.STANDARD,
+    val fullscreenMode: FullscreenMode = FullscreenMode.AUTO,
+    val fullscreenAspectRatio: FullscreenAspectRatio = FullscreenAspectRatio.FIT,
+    val portraitLetterboxAmbientHaze: Boolean = true,
+    val autoExitFullscreenMode: AutoExitFullscreenMode = AutoExitFullscreenMode.ALL_PARTS
 )
 
 private fun <T> Flow<T>.asAnyFlow(): Flow<Any?> = map { it }
@@ -592,7 +701,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         SettingsManager.getHomeTopRightAction(context).asAnyFlow(),
         SettingsManager.getBottomBarVisibilityMode(context).asAnyFlow(),
         SettingsManager.getSidebarAccountSwitcherEnabled(context).asAnyFlow(),
-        SettingsManager.getBottomBarItemColors(context).asAnyFlow()
+        SettingsManager.getBottomBarItemColors(context).asAnyFlow(),
     ) { values ->
         val appearance = AppearanceSettingsGroup(
             singleChoicePresentation = values[0] as AppSingleChoicePresentation,
@@ -631,15 +740,188 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         appearance to bottomBar
     }
 
+    // 阶段 4 设置页切片：播放设置页直读收拢（78 项，独立 flow 避免撑大外观 combine）
+    private val playbackSettingsFlow = combine(
+        SettingsManager.getMiniPlayerMode(context).asAnyFlow(),
+        SettingsManager.getStopPlaybackOnExit(context).asAnyFlow(),
+        SettingsManager.getBackgroundPlaybackEnabled(context).asAnyFlow(),
+        SettingsManager.getAudioFocusEnabled(context).asAnyFlow(),
+        SettingsManager.getPlayerDiagnosticLoggingEnabled(context).asAnyFlow(),
+        SettingsManager.getDashSegmentRequestsEnabled(context).asAnyFlow(),
+        SettingsManager.getQualitySwitchFailureDialogEnabled(context).asAnyFlow(),
+        SettingsManager.getQualitySwitchFailureDialogOnceEnabled(context).asAnyFlow(),
+        SettingsManager.getDefaultPlaybackSpeed(context).asAnyFlow(),
+        SettingsManager.getRememberLastPlaybackSpeed(context).asAnyFlow(),
+        SettingsManager.getLongPressSpeedHintHidden(context).asAnyFlow(),
+        SettingsManager.getLongPressSpeedHintScale(context).asAnyFlow(),
+        SettingsManager.getLongPressSpeedHintAlpha(context).asAnyFlow(),
+        SettingsManager.getVideoCodec(context).asAnyFlow(),
+        SettingsManager.getVideoSecondCodec(context).asAnyFlow(),
+        SettingsManager.getPlayerInsightMode(context).asAnyFlow(),
+        PlayerSettingsStore.getDefaultAudioQuality(context).asAnyFlow(),
+        SettingsManager.getWifiQuality(context).asAnyFlow(),
+        SettingsManager.getMobileQuality(context).asAnyFlow(),
+        SettingsManager.getAutoHighestQuality(context).asAnyFlow(),
+        SettingsManager.getBiliDirectedTrafficEnabled(context).asAnyFlow(),
+        SettingsManager.getDataSaverMode(context).asAnyFlow(),
+        SettingsManager.getHomeSettings(context)
+            .map { it.lowQualityHomeCoverInDataSaver }.asAnyFlow(),
+        SettingsManager.getPipNoDanmakuEnabled(context).asAnyFlow(),
+        flowOf(VideoRepository.isPlaybackLoggedIn()).asAnyFlow(),
+        flowOf(VideoRepository.isPlaybackVip()).asAnyFlow(),
+        SettingsManager.getAutoPlay(context).asAnyFlow(),
+        SettingsManager.getExternalPlaylistAutoContinue(context).asAnyFlow(),
+        SettingsManager.getResumePlaybackPromptEnabled(context).asAnyFlow(),
+        SettingsManager.getSpacePlayedVideoLocatePromptEnabled(context).asAnyFlow(),
+        SettingsManager.getPlaybackCompletionBehavior(context).asAnyFlow(),
+        SettingsManager.getSubtitleAutoPreference(context).asAnyFlow(),
+        SettingsManager.getVideoAiSummaryEntryEnabled(context).asAnyFlow(),
+        SettingsManager.getVideoNoteEnabled(context).asAnyFlow(),
+        SettingsManager.getVideoNoteDefaultCollapsed(context).asAnyFlow(),
+        SettingsManager.getVideoInfoDefaultExpanded(context).asAnyFlow(),
+        SettingsManager.getCommentFraudDetectionEnabled(context).asAnyFlow(),
+        SettingsManager.getCommentMemberDecorationsEnabled(context).asAnyFlow(),
+        SettingsManager.getImagePreviewLongPressSaveEnabled(context).asAnyFlow(),
+        SettingsManager.getCommentCollapsedReplyPreviewLimit(context).asAnyFlow(),
+        SettingsManager.getClickToPlay(context).asAnyFlow(),
+        SettingsManager.getPortraitPlayerCollapseMode(context).asAnyFlow(),
+        SettingsManager.getPortraitSwipeToFullscreenEnabled(context).asAnyFlow(),
+        SettingsManager.getCenterSwipeToFullscreenEnabled(context).asAnyFlow(),
+        SettingsManager.getSlideVolumeBrightnessEnabled(context).asAnyFlow(),
+        SettingsManager.getSetSystemBrightnessEnabled(context).asAnyFlow(),
+        SettingsManager.getInlineSwipeSeekSeconds(context).asAnyFlow(),
+        SettingsManager.getFullscreenSwipeSeekEnabled(context).asAnyFlow(),
+        SettingsManager.getFullscreenSwipeSeekSeconds(context).asAnyFlow(),
+        SettingsManager.getDoubleTapSeekEnabled(context).asAnyFlow(),
+        SettingsManager.getSeekForwardSeconds(context).asAnyFlow(),
+        SettingsManager.getSeekBackwardSeconds(context).asAnyFlow(),
+        SettingsManager.getDanmakuHideInteractiveCommands(context).asAnyFlow(),
+        SettingsManager.getDanmakuCloudSyncEnabled(context).asAnyFlow(),
+        SettingsManager.getPauseOnPlayerCollapseEnabled(context).asAnyFlow(),
+        SettingsManager.getAutoRotateEnabled(context).asAnyFlow(),
+        SettingsManager.getFullscreenGestureReverse(context).asAnyFlow(),
+        SettingsManager.getAutoEnterFullscreen(context).asAnyFlow(),
+        SettingsManager.getShowFullscreenLockButton(context).asAnyFlow(),
+        SettingsManager.getShowFullscreenScreenshotButton(context).asAnyFlow(),
+        SettingsManager.getAppGestureScreenshotEnabled(context).asAnyFlow(),
+        SettingsManager.getAppScreenshotGestureMode(context).asAnyFlow(),
+        SettingsManager.getAppScreenshotCaptureMode(context).asAnyFlow(),
+        SettingsManager.getShowFullscreenBatteryLevel(context).asAnyFlow(),
+        SettingsManager.getShowFullscreenTime(context).asAnyFlow(),
+        SettingsManager.getShowFullscreenActionItems(context).asAnyFlow(),
+        SettingsManager.getBottomProgressBehavior(context).asAnyFlow(),
+        SettingsManager.getProgressPeakDanmakuEnabled(context).asAnyFlow(),
+        SettingsManager.getPlayerControlVisibilitySettings(context).asAnyFlow(),
+        SettingsManager.getPlayerProgressPlacement(context).asAnyFlow(),
+        SettingsManager.getHorizontalAdaptationEnabled(context).asAnyFlow(),
+        SettingsManager.getHideVideoPageStatusBar(context).asAnyFlow(),
+        SettingsManager.getTabletCommentPanelWidthPreset(context).asAnyFlow(),
+        SettingsManager.getFullscreenMode(context).asAnyFlow(),
+        SettingsManager.getFullscreenAspectRatio(context).asAnyFlow(),
+        SettingsManager.getPortraitLetterboxAmbientHaze(context).asAnyFlow(),
+        SettingsManager.getAutoExitFullscreenMode(context).asAnyFlow()
+    ) { values ->
+        PlaybackSettingsGroup(
+            miniPlayerMode = values[0] as SettingsManager.MiniPlayerMode,
+            stopPlaybackOnExit = values[1] as Boolean,
+            backgroundPlaybackEnabled = values[2] as Boolean,
+            audioFocusEnabled = values[3] as Boolean,
+            playerDiagnosticLoggingEnabled = values[4] as Boolean,
+            dashSegmentRequestsEnabled = values[5] as Boolean,
+            qualitySwitchFailureDialogEnabled = values[6] as Boolean,
+            qualitySwitchFailureDialogOnceEnabled = values[7] as Boolean,
+            defaultPlaybackSpeed = values[8] as Float,
+            rememberLastPlaybackSpeed = values[9] as Boolean,
+            longPressSpeedHintHidden = values[10] as Boolean,
+            longPressSpeedHintScale = values[11] as Float,
+            longPressSpeedHintAlpha = values[12] as Float,
+            videoCodecPreference = values[13] as String,
+            videoSecondCodecPreference = values[14] as String,
+            playerInsightMode = values[15] as PlayerSettingsStore.PlayerInsightMode,
+            defaultAudioQuality = values[16] as Int,
+            wifiQuality = values[17] as Int,
+            mobileQuality = values[18] as Int,
+            autoHighestQualityEnabled = values[19] as Boolean,
+            directedTrafficEnabled = values[20] as Boolean,
+            dataSaverMode = values[21] as SettingsManager.DataSaverMode,
+            lowQualityHomeCoverInDataSaver = values[22] as Boolean,
+            pipNoDanmakuEnabled = values[23] as Boolean,
+            isPlaybackLoggedIn = values[24] as Boolean,
+            isPlaybackVip = values[25] as Boolean,
+            autoPlayEnabled = values[26] as Boolean,
+            externalPlaylistAutoContinueEnabled = values[27] as Boolean,
+            resumePlaybackPromptEnabled = values[28] as Boolean,
+            spacePlayedVideoLocatePromptEnabled = values[29] as Boolean,
+            playbackCompletionBehavior = values[30] as PlaybackCompletionBehavior,
+            subtitleAutoPreference = values[31] as SubtitleAutoPreference,
+            videoAiSummaryEntryEnabled = values[32] as Boolean,
+            videoNoteEnabled = values[33] as Boolean,
+            videoNoteDefaultCollapsed = values[34] as Boolean,
+            videoInfoDefaultExpanded = values[35] as Boolean,
+            commentFraudDetectionEnabled = values[36] as Boolean,
+            commentMemberDecorationsEnabled = values[37] as Boolean,
+            imagePreviewLongPressSaveEnabled = values[38] as Boolean,
+            commentCollapsedReplyPreviewLimit = values[39] as Int,
+            clickToPlayEnabled = values[40] as Boolean,
+            portraitPlayerCollapseMode = values[41] as PortraitPlayerCollapseMode,
+            portraitSwipeToFullscreenEnabled = values[42] as Boolean,
+            centerSwipeToFullscreenEnabled = values[43] as Boolean,
+            slideVolumeBrightnessEnabled = values[44] as Boolean,
+            setSystemBrightnessEnabled = values[45] as Boolean,
+            inlineSwipeSeekSeconds = values[46] as Int,
+            fullscreenSwipeSeekEnabled = values[47] as Boolean,
+            fullscreenSwipeSeekSeconds = values[48] as Int,
+            doubleTapSeekEnabled = values[49] as Boolean,
+            seekForwardSeconds = values[50] as Int,
+            seekBackwardSeconds = values[51] as Int,
+            hideInteractiveCommandDanmaku = values[52] as Boolean,
+            danmakuCloudSyncEnabled = values[53] as Boolean,
+            pauseOnPlayerCollapseEnabled = values[54] as Boolean,
+            autoRotateEnabled = values[55] as Boolean,
+            fullscreenGestureReverse = values[56] as Boolean,
+            autoEnterFullscreen = values[57] as Boolean,
+            showFullscreenLockButton = values[58] as Boolean,
+            showFullscreenScreenshotButton = values[59] as Boolean,
+            appGestureScreenshotEnabled = values[60] as Boolean,
+            appScreenshotGestureMode = values[61] as AppScreenshotGestureMode,
+            appScreenshotCaptureMode = values[62] as AppScreenshotCaptureMode,
+            showFullscreenBatteryLevel = values[63] as Boolean,
+            showFullscreenTime = values[64] as Boolean,
+            showFullscreenActionItems = values[65] as Boolean,
+            bottomProgressBehavior = values[66] as BottomProgressBehavior,
+            progressPeakDanmakuEnabled = values[67] as Boolean,
+            showPlayerCastButton =
+                (values[68] as PlayerControlVisibilitySettings).showCastButton,
+            showVideoFollowButton =
+                (values[68] as PlayerControlVisibilitySettings).showFollowButton,
+            playerProgressPlacement = values[69] as PlayerProgressPlacement,
+            horizontalAdaptationEnabled = values[70] as Boolean,
+            immersiveVideoPageStatusBar = values[71] as Boolean,
+            tabletCommentPanelWidthPreset = values[72] as TabletCommentPanelWidthPreset,
+            fullscreenMode = values[73] as FullscreenMode,
+            fullscreenAspectRatio = values[74] as FullscreenAspectRatio,
+            portraitLetterboxAmbientHaze = values[75] as Boolean,
+            autoExitFullscreenMode = values[76] as AutoExitFullscreenMode
+        )
+    }
+
+    private val settingsGroupFlow = combine(
+        appearanceSettingsFlow,
+        playbackSettingsFlow,
+    ) { appearancePair, playback ->
+        Triple(appearancePair.first, appearancePair.second, playback)
+    }
+
     val state: StateFlow<SettingsUiState> = combine(
         baseSettingsFlow,
         cacheFlow,
         experimentalSettingsFlow,
         _diagnosticsState,
-        appearanceSettingsFlow,
-    ) { settings, cache, experimental, diagnostics, appearancePair ->
-        val appearance = appearancePair.first
-        val bottomBar = appearancePair.second
+        settingsGroupFlow,
+    ) { settings, cache, experimental, diagnostics, settingsGroups ->
+        val appearance = settingsGroups.first
+        val bottomBar = settingsGroups.second
+        val playback = settingsGroups.third
         SettingsUiState(
             hwDecode = settings.hwDecode,
             themeMode = settings.themeMode,
@@ -706,6 +988,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             bottomBarVisibilityMode = bottomBar.bottomBarVisibilityMode,
             sidebarAccountSwitcherEnabled = bottomBar.sidebarAccountSwitcherEnabled,
             bottomBarItemColors = bottomBar.bottomBarItemColors,
+            playback = playback,
 
             cacheSize = cache.first,
             cacheBreakdown = cache.second,  //  详细缓存统计
@@ -1023,7 +1306,256 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             SettingsManager.setHomeFeedCardWidthPreset(context, preset)
         }
     }
-    
+
+    // 阶段 4 切片：播放设置页选项（避开 UI 层直接引用 SettingsManager 嵌套枚举）
+    val miniPlayerModeOptions: List<SettingsManager.MiniPlayerMode> =
+        SettingsManager.MiniPlayerMode.entries
+    val dataSaverModeOptions: List<SettingsManager.DataSaverMode> =
+        SettingsManager.DataSaverMode.entries
+    val playerInsightModeOptions: List<PlayerSettingsStore.PlayerInsightMode> =
+        PlayerSettingsStore.PlayerInsightMode.entries
+
+    val playerInsightModeLabels: Map<PlayerSettingsStore.PlayerInsightMode, String> = mapOf(
+        PlayerSettingsStore.PlayerInsightMode.OFF to "关闭",
+        PlayerSettingsStore.PlayerInsightMode.SMART to "智能显示",
+        PlayerSettingsStore.PlayerInsightMode.ALWAYS to "始终显示",
+    )
+
+    val playerInsightModeSubtitle: Map<PlayerSettingsStore.PlayerInsightMode, String> = mapOf(
+        PlayerSettingsStore.PlayerInsightMode.OFF to "不显示播放状态信息",
+        PlayerSettingsStore.PlayerInsightMode.SMART to "打开控制栏时显示；发生掉帧或软件解码时保持可见",
+        PlayerSettingsStore.PlayerInsightMode.ALWAYS to "始终显示编码、码率、掉帧等播放信息",
+    )
+
+    // 阶段 4 切片：播放设置页写入收拢
+    fun setMiniPlayerMode(mode: SettingsManager.MiniPlayerMode) {
+        viewModelScope.launch { SettingsManager.setMiniPlayerMode(context, mode) }
+    }
+    fun setStopPlaybackOnExit(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setStopPlaybackOnExit(context, value) }
+    }
+    fun setBackgroundPlaybackEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setBackgroundPlaybackEnabled(context, value) }
+    }
+    fun setAudioFocusEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setAudioFocusEnabled(context, value) }
+    }
+    fun setPipNoDanmakuEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setPipNoDanmakuEnabled(context, value) }
+    }
+    fun setPlayerInsightMode(mode: PlayerSettingsStore.PlayerInsightMode) {
+        viewModelScope.launch { SettingsManager.setPlayerInsightMode(context, mode) }
+    }
+    fun setPlayerDiagnosticLoggingEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setPlayerDiagnosticLoggingEnabled(context, value) }
+    }
+    fun setDashSegmentRequestsEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setDashSegmentRequestsEnabled(context, value) }
+    }
+    fun setQualitySwitchFailureDialogEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setQualitySwitchFailureDialogEnabled(context, value) }
+    }
+    fun setQualitySwitchFailureDialogOnceEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setQualitySwitchFailureDialogOnceEnabled(context, value) }
+    }
+    fun setVideoCodec(codec: String) {
+        viewModelScope.launch { SettingsManager.setVideoCodec(context, codec) }
+    }
+    fun setVideoSecondCodec(codec: String) {
+        viewModelScope.launch { SettingsManager.setVideoSecondCodec(context, codec) }
+    }
+    fun setRememberLastPlaybackSpeed(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setRememberLastPlaybackSpeed(context, value) }
+    }
+    fun setLongPressSpeedHintHidden(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setLongPressSpeedHintHidden(context, value) }
+    }
+    fun setLongPressSpeedHintScale(value: Float) {
+        viewModelScope.launch { SettingsManager.setLongPressSpeedHintScale(context, value) }
+    }
+    fun setLongPressSpeedHintAlpha(value: Float) {
+        viewModelScope.launch { SettingsManager.setLongPressSpeedHintAlpha(context, value) }
+    }
+    fun setDefaultPlaybackSpeed(value: Float) {
+        viewModelScope.launch { SettingsManager.setDefaultPlaybackSpeed(context, value) }
+    }
+    fun setBiliDirectedTrafficEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setBiliDirectedTrafficEnabled(context, value) }
+    }
+    fun setAutoHighestQuality(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setAutoHighestQuality(context, value) }
+    }
+    fun setWifiQuality(value: Int) {
+        viewModelScope.launch { SettingsManager.setWifiQuality(context, value) }
+    }
+    fun setMobileQuality(value: Int) {
+        viewModelScope.launch { SettingsManager.setMobileQuality(context, value) }
+    }
+    fun setDefaultAudioQuality(value: Int) {
+        viewModelScope.launch { PlayerSettingsStore.setDefaultAudioQuality(context, value) }
+    }
+    fun setDataSaverMode(mode: SettingsManager.DataSaverMode) {
+        viewModelScope.launch { SettingsManager.setDataSaverMode(context, mode) }
+    }
+    fun setLowQualityHomeCoverInDataSaver(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setLowQualityHomeCoverInDataSaver(context, value) }
+    }
+    fun setAutoPlay(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setAutoPlay(context, value) }
+    }
+    fun setExternalPlaylistAutoContinue(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setExternalPlaylistAutoContinue(context, value) }
+    }
+    fun setResumePlaybackPromptEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setResumePlaybackPromptEnabled(context, value) }
+    }
+    fun setSpacePlayedVideoLocatePromptEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setSpacePlayedVideoLocatePromptEnabled(context, value) }
+    }
+    fun setPlaybackCompletionBehavior(value: PlaybackCompletionBehavior) {
+        viewModelScope.launch { SettingsManager.setPlaybackCompletionBehavior(context, value) }
+    }
+    fun setSubtitleAutoPreference(value: SubtitleAutoPreference) {
+        viewModelScope.launch { SettingsManager.setSubtitleAutoPreference(context, value) }
+    }
+    fun setVideoAiSummaryEntryEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setVideoAiSummaryEntryEnabled(context, value) }
+    }
+    fun setVideoNoteEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setVideoNoteEnabled(context, value) }
+    }
+    fun setVideoNoteDefaultCollapsed(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setVideoNoteDefaultCollapsed(context, value) }
+    }
+    fun setVideoInfoDefaultExpanded(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setVideoInfoDefaultExpanded(context, value) }
+    }
+    fun setCommentFraudDetectionEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setCommentFraudDetectionEnabled(context, value) }
+    }
+    fun setCommentMemberDecorationsEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setCommentMemberDecorationsEnabled(context, value) }
+    }
+    fun setImagePreviewLongPressSaveEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setImagePreviewLongPressSaveEnabled(context, value) }
+    }
+    fun setCommentCollapsedReplyPreviewLimit(value: Int) {
+        viewModelScope.launch { SettingsManager.setCommentCollapsedReplyPreviewLimit(context, value) }
+    }
+    fun setClickToPlay(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setClickToPlay(context, value) }
+    }
+    fun setPortraitPlayerCollapseMode(value: PortraitPlayerCollapseMode) {
+        viewModelScope.launch { SettingsManager.setPortraitPlayerCollapseMode(context, value) }
+    }
+    fun setPortraitSwipeToFullscreenEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setPortraitSwipeToFullscreenEnabled(context, value) }
+    }
+    fun setCenterSwipeToFullscreenEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setCenterSwipeToFullscreenEnabled(context, value) }
+    }
+    fun setSlideVolumeBrightnessEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setSlideVolumeBrightnessEnabled(context, value) }
+    }
+    fun setSetSystemBrightnessEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setSetSystemBrightnessEnabled(context, value) }
+    }
+    fun setInlineSwipeSeekSeconds(value: Int) {
+        viewModelScope.launch { SettingsManager.setInlineSwipeSeekSeconds(context, value) }
+    }
+    fun setFullscreenSwipeSeekEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setFullscreenSwipeSeekEnabled(context, value) }
+    }
+    fun setFullscreenSwipeSeekSeconds(value: Int) {
+        viewModelScope.launch { SettingsManager.setFullscreenSwipeSeekSeconds(context, value) }
+    }
+    fun setDoubleTapSeekEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setDoubleTapSeekEnabled(context, value) }
+    }
+    fun setSeekForwardSeconds(value: Int) {
+        viewModelScope.launch { SettingsManager.setSeekForwardSeconds(context, value) }
+    }
+    fun setSeekBackwardSeconds(value: Int) {
+        viewModelScope.launch { SettingsManager.setSeekBackwardSeconds(context, value) }
+    }
+    fun setDanmakuHideInteractiveCommands(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setDanmakuHideInteractiveCommands(context, value) }
+    }
+    fun setDanmakuCloudSyncEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setDanmakuCloudSyncEnabled(context, value) }
+    }
+    fun setPauseOnPlayerCollapseEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setPauseOnPlayerCollapseEnabled(context, value) }
+    }
+    fun setAutoRotateEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setAutoRotateEnabled(context, value) }
+    }
+    fun setFullscreenGestureReverse(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setFullscreenGestureReverse(context, value) }
+    }
+    fun setAutoEnterFullscreen(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setAutoEnterFullscreen(context, value) }
+    }
+    fun setAutoExitFullscreenMode(value: AutoExitFullscreenMode) {
+        viewModelScope.launch { SettingsManager.setAutoExitFullscreenMode(context, value) }
+    }
+    fun setShowFullscreenLockButton(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setShowFullscreenLockButton(context, value) }
+    }
+    fun setShowFullscreenScreenshotButton(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setShowFullscreenScreenshotButton(context, value) }
+    }
+    fun setAppGestureScreenshotEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setAppGestureScreenshotEnabled(context, value) }
+    }
+    fun setAppScreenshotGestureMode(value: AppScreenshotGestureMode) {
+        viewModelScope.launch { SettingsManager.setAppScreenshotGestureMode(context, value) }
+    }
+    fun setAppScreenshotCaptureMode(value: AppScreenshotCaptureMode) {
+        viewModelScope.launch { SettingsManager.setAppScreenshotCaptureMode(context, value) }
+    }
+    fun setShowFullscreenBatteryLevel(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setShowFullscreenBatteryLevel(context, value) }
+    }
+    fun setShowFullscreenTime(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setShowFullscreenTime(context, value) }
+    }
+    fun setShowFullscreenActionItems(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setShowFullscreenActionItems(context, value) }
+    }
+    fun setShowPlayerCastButton(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setShowPlayerCastButton(context, value) }
+    }
+    fun setShowVideoFollowButton(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setShowVideoFollowButton(context, value) }
+    }
+    fun setBottomProgressBehavior(value: BottomProgressBehavior) {
+        viewModelScope.launch { SettingsManager.setBottomProgressBehavior(context, value) }
+    }
+    fun setProgressPeakDanmakuEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setProgressPeakDanmakuEnabled(context, value) }
+    }
+    fun setPlayerProgressPlacement(value: PlayerProgressPlacement) {
+        viewModelScope.launch { SettingsManager.setPlayerProgressPlacement(context, value) }
+    }
+    fun setHorizontalAdaptationEnabled(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setHorizontalAdaptationEnabled(context, value) }
+    }
+    fun setHideVideoPageStatusBar(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setHideVideoPageStatusBar(context, value) }
+    }
+    fun setTabletCommentPanelWidthPreset(value: TabletCommentPanelWidthPreset) {
+        viewModelScope.launch { SettingsManager.setTabletCommentPanelWidthPreset(context, value) }
+    }
+    fun setFullscreenMode(value: FullscreenMode) {
+        viewModelScope.launch { SettingsManager.setFullscreenMode(context, value) }
+    }
+    fun setFullscreenAspectRatio(value: FullscreenAspectRatio) {
+        viewModelScope.launch { SettingsManager.setFullscreenAspectRatio(context, value) }
+    }
+    fun setPortraitLetterboxAmbientHaze(value: Boolean) {
+        viewModelScope.launch { SettingsManager.setPortraitLetterboxAmbientHaze(context, value) }
+    }
 
 }
 

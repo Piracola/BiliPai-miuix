@@ -39,18 +39,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.android.purebilibili.R
-import com.android.purebilibili.core.store.DEFAULT_DASH_SEGMENT_REQUESTS_ENABLED
-import com.android.purebilibili.core.store.DEFAULT_PLAYER_DIAGNOSTIC_LOGGING_ENABLED
-import com.android.purebilibili.core.store.DEFAULT_QUALITY_SWITCH_FAILURE_DIALOG_ENABLED
-import com.android.purebilibili.core.store.DEFAULT_QUALITY_SWITCH_FAILURE_DIALOG_ONCE_ENABLED
-import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.store.LONG_PRESS_SPEED_HINT_ALPHA_MAX
 import com.android.purebilibili.core.store.LONG_PRESS_SPEED_HINT_ALPHA_MIN
 import com.android.purebilibili.core.store.LONG_PRESS_SPEED_HINT_SCALE_MAX
 import com.android.purebilibili.core.store.LONG_PRESS_SPEED_HINT_SCALE_MIN
 import com.android.purebilibili.core.store.LONG_PRESS_SPEED_HINT_STEP
 import com.android.purebilibili.core.store.player.DEFAULT_AUDIO_QUALITY_FOLLOW_LAST
-import com.android.purebilibili.core.store.player.PlayerSettingsStore
 import com.android.purebilibili.core.ui.adaptive.resolveDeviceUiProfile
 import com.android.purebilibili.core.store.BottomProgressBehavior
 import com.android.purebilibili.core.store.FullscreenAspectRatio
@@ -63,7 +57,6 @@ import com.android.purebilibili.core.theme.iOSSystemGray
 import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.util.LocalWindowSizeClass
 import com.android.purebilibili.feature.settings.ui.SettingsPageScaffold
-import com.android.purebilibili.core.store.TokenManager
 import com.android.purebilibili.core.screenshot.AppScreenshotCaptureMode
 import com.android.purebilibili.core.screenshot.AppScreenshotGestureMode
 import com.android.purebilibili.core.video.subtitle.SubtitleAutoPreference
@@ -145,53 +138,22 @@ fun PlaybackSettingsContent(
     // 为了稳妥，这里先检查导入。原文件没有导入这些。
     // 但为了保持原样，我先不做动态圆角修改，或者之后再做。
 
-    val miniPlayerMode by com.android.purebilibili.core.store.SettingsManager
-        .getMiniPlayerMode(context).collectAsStateWithLifecycle(initialValue = com.android.purebilibili.core.store.SettingsManager.MiniPlayerMode.OFF
-        )
-    val stopPlaybackOnExit by com.android.purebilibili.core.store.SettingsManager
-        .getStopPlaybackOnExit(context).collectAsStateWithLifecycle(initialValue = false)
-    val backgroundPlaybackEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getBackgroundPlaybackEnabled(context).collectAsStateWithLifecycle(initialValue = true)
-    val audioFocusEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getAudioFocusEnabled(context).collectAsStateWithLifecycle(initialValue = true)
-    val playerDiagnosticLoggingEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getPlayerDiagnosticLoggingEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = DEFAULT_PLAYER_DIAGNOSTIC_LOGGING_ENABLED)
-    val playerInsightMode by SettingsManager
-        .getPlayerInsightMode(context)
-        .collectAsStateWithLifecycle(initialValue = SettingsManager.getPlayerInsightModeSync(context))
-    val dashSegmentRequestsEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getDashSegmentRequestsEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = DEFAULT_DASH_SEGMENT_REQUESTS_ENABLED)
-    val qualitySwitchFailureDialogEnabled by SettingsManager
-        .getQualitySwitchFailureDialogEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = DEFAULT_QUALITY_SWITCH_FAILURE_DIALOG_ENABLED)
-    val qualitySwitchFailureDialogOnceEnabled by SettingsManager
-        .getQualitySwitchFailureDialogOnceEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = DEFAULT_QUALITY_SWITCH_FAILURE_DIALOG_ONCE_ENABLED)
-    val defaultPlaybackSpeed by com.android.purebilibili.core.store.SettingsManager
-        .getDefaultPlaybackSpeed(context).collectAsStateWithLifecycle(initialValue = 1.0f)
-    val rememberLastPlaybackSpeed by com.android.purebilibili.core.store.SettingsManager
-        .getRememberLastPlaybackSpeed(context).collectAsStateWithLifecycle(initialValue = false)
-    val longPressSpeedHintHidden by SettingsManager
-        .getLongPressSpeedHintHidden(context)
-        .collectAsStateWithLifecycle(
-            initialValue = SettingsManager.getLongPressSpeedHintHiddenSync(context)
-        )
-    val longPressSpeedHintScale by SettingsManager
-        .getLongPressSpeedHintScale(context)
-        .collectAsStateWithLifecycle(
-            initialValue = SettingsManager.getLongPressSpeedHintScaleSync(context)
-        )
-    val longPressSpeedHintAlpha by SettingsManager
-        .getLongPressSpeedHintAlpha(context)
-        .collectAsStateWithLifecycle(
-            initialValue = SettingsManager.getLongPressSpeedHintAlphaSync(context)
-        )
-    val videoCodecPreference by com.android.purebilibili.core.store.SettingsManager
-        .getVideoCodec(context).collectAsStateWithLifecycle(initialValue = "hev1")
-    val videoSecondCodecPreference by com.android.purebilibili.core.store.SettingsManager
-        .getVideoSecondCodec(context).collectAsStateWithLifecycle(initialValue = "avc1")
+    val miniPlayerMode = state.playback.miniPlayerMode
+    val stopPlaybackOnExit = state.playback.stopPlaybackOnExit
+    val backgroundPlaybackEnabled = state.playback.backgroundPlaybackEnabled
+    val audioFocusEnabled = state.playback.audioFocusEnabled
+    val playerDiagnosticLoggingEnabled = state.playback.playerDiagnosticLoggingEnabled
+    val playerInsightMode = state.playback.playerInsightMode
+    val dashSegmentRequestsEnabled = state.playback.dashSegmentRequestsEnabled
+    val qualitySwitchFailureDialogEnabled = state.playback.qualitySwitchFailureDialogEnabled
+    val qualitySwitchFailureDialogOnceEnabled = state.playback.qualitySwitchFailureDialogOnceEnabled
+    val defaultPlaybackSpeed = state.playback.defaultPlaybackSpeed
+    val rememberLastPlaybackSpeed = state.playback.rememberLastPlaybackSpeed
+    val longPressSpeedHintHidden = state.playback.longPressSpeedHintHidden
+    val longPressSpeedHintScale = state.playback.longPressSpeedHintScale
+    val longPressSpeedHintAlpha = state.playback.longPressSpeedHintAlpha
+    val videoCodecPreference = state.playback.videoCodecPreference
+    val videoSecondCodecPreference = state.playback.videoSecondCodecPreference
 
     // ... [保留原有逻辑: checkPipPermission, gotoPipSettings] ...
 
@@ -296,8 +258,7 @@ fun PlaybackSettingsContent(
                             selectedValue = videoCodecPreference,
                             onSelectionChange = { codec ->
                                 scope.launch {
-                                    com.android.purebilibili.core.store.SettingsManager
-                                        .setVideoCodec(context, codec)
+                                    viewModel.setVideoCodec(codec)
                                 }
                             }
                         )
@@ -309,8 +270,7 @@ fun PlaybackSettingsContent(
                             selectedValue = videoSecondCodecPreference,
                             onSelectionChange = { codec ->
                                 scope.launch {
-                                    com.android.purebilibili.core.store.SettingsManager
-                                        .setVideoSecondCodec(context, codec)
+                                    viewModel.setVideoSecondCodec(codec)
                                 }
                             }
                         )
@@ -338,8 +298,7 @@ fun PlaybackSettingsContent(
                             checked = rememberLastPlaybackSpeed,
                             onCheckedChange = {
                                 scope.launch {
-                                    com.android.purebilibili.core.store.SettingsManager
-                                        .setRememberLastPlaybackSpeed(context, it)
+                                    viewModel.setRememberLastPlaybackSpeed(it)
                                 }
                             },
                             iconTint = com.android.purebilibili.core.theme.iOSBlue
@@ -356,7 +315,7 @@ fun PlaybackSettingsContent(
                             checked = longPressSpeedHintHidden,
                             onCheckedChange = { hidden ->
                                 scope.launch {
-                                    SettingsManager.setLongPressSpeedHintHidden(context, hidden)
+                                    viewModel.setLongPressSpeedHintHidden(hidden)
                                 }
                             },
                             iconTint = com.android.purebilibili.core.theme.iOSBlue,
@@ -407,7 +366,7 @@ fun PlaybackSettingsContent(
                                 onValueChange = { hintScale = it },
                                 onValueChangeFinished = {
                                     scope.launch {
-                                        SettingsManager.setLongPressSpeedHintScale(context, hintScale)
+                                        viewModel.setLongPressSpeedHintScale(hintScale)
                                     }
                                 },
                                 valueRange = LONG_PRESS_SPEED_HINT_SCALE_MIN..LONG_PRESS_SPEED_HINT_SCALE_MAX,
@@ -453,7 +412,7 @@ fun PlaybackSettingsContent(
                                 onValueChange = { hintAlpha = it },
                                 onValueChangeFinished = {
                                     scope.launch {
-                                        SettingsManager.setLongPressSpeedHintAlpha(context, hintAlpha)
+                                        viewModel.setLongPressSpeedHintAlpha(hintAlpha)
                                     }
                                 },
                                 valueRange = LONG_PRESS_SPEED_HINT_ALPHA_MIN..LONG_PRESS_SPEED_HINT_ALPHA_MAX,
@@ -471,8 +430,7 @@ fun PlaybackSettingsContent(
                                 currentSpeed = defaultPlaybackSpeed,
                                 onSpeedChange = { speed ->
                                     scope.launch {
-                                        com.android.purebilibili.core.store.SettingsManager
-                                            .setDefaultPlaybackSpeed(context, speed)
+                                        viewModel.setDefaultPlaybackSpeed(speed)
                                     }
                                 },
                                 title = "默认播放速度",
@@ -493,21 +451,19 @@ fun PlaybackSettingsContent(
             item {
                 Box(modifier = Modifier) {
                     val scope = rememberCoroutineScope()
-                    val pipNoDanmakuEnabled by com.android.purebilibili.core.store.SettingsManager
-                        .getPipNoDanmakuEnabled(context)
-                        .collectAsStateWithLifecycle(initialValue = false)
+                    val pipNoDanmakuEnabled = state.playback.pipNoDanmakuEnabled
                     val modeControlsEnabled = remember(stopPlaybackOnExit, backgroundPlaybackEnabled) {
                         !stopPlaybackOnExit && backgroundPlaybackEnabled
                     }
                     val pipDanmakuToggleEnabled = remember(miniPlayerMode, backgroundPlaybackEnabled) {
                         backgroundPlaybackEnabled &&
-                            miniPlayerMode != com.android.purebilibili.core.store.SettingsManager.MiniPlayerMode.OFF
+                            miniPlayerMode != viewModel.miniPlayerModeOptions.first()
                     }
                     val miniPlayerOptions = listOf(
-                        AppSegmentOption(com.android.purebilibili.core.store.SettingsManager.MiniPlayerMode.OFF, "默认"),
-                        AppSegmentOption(com.android.purebilibili.core.store.SettingsManager.MiniPlayerMode.IN_APP_ONLY, "小窗"),
-                        AppSegmentOption(com.android.purebilibili.core.store.SettingsManager.MiniPlayerMode.SYSTEM_PIP, "画中画"),
-                        AppSegmentOption(com.android.purebilibili.core.store.SettingsManager.MiniPlayerMode.IN_APP_AND_SYSTEM_PIP, "小窗+PiP")
+                        AppSegmentOption(viewModel.miniPlayerModeOptions[0], "默认"),
+                        AppSegmentOption(viewModel.miniPlayerModeOptions[1], "小窗"),
+                        AppSegmentOption(viewModel.miniPlayerModeOptions[2], "画中画"),
+                        AppSegmentOption(viewModel.miniPlayerModeOptions[3], "小窗+PiP")
                     )
 
                     AppPreferenceGroup {
@@ -518,8 +474,7 @@ fun PlaybackSettingsContent(
                             checked = stopPlaybackOnExit,
                             onCheckedChange = {
                                 scope.launch {
-                                    com.android.purebilibili.core.store.SettingsManager
-                                        .setStopPlaybackOnExit(context, it)
+                                    viewModel.setStopPlaybackOnExit(it)
                                 }
                             },
                             iconTint = iOSOrange
@@ -536,8 +491,7 @@ fun PlaybackSettingsContent(
                             checked = backgroundPlaybackEnabled,
                             onCheckedChange = {
                                 scope.launch {
-                                    com.android.purebilibili.core.store.SettingsManager
-                                        .setBackgroundPlaybackEnabled(context, it)
+                                    viewModel.setBackgroundPlaybackEnabled(it)
                                 }
                             },
                             iconTint = iOSGreen
@@ -554,8 +508,7 @@ fun PlaybackSettingsContent(
                             checked = audioFocusEnabled,
                             onCheckedChange = {
                                 scope.launch {
-                                    com.android.purebilibili.core.store.SettingsManager
-                                        .setAudioFocusEnabled(context, it)
+                                    viewModel.setAudioFocusEnabled(it)
                                 }
                             },
                             iconTint = iOSTeal
@@ -575,8 +528,7 @@ fun PlaybackSettingsContent(
                             enabled = modeControlsEnabled,
                             onSelectionChange = { mode ->
                                 scope.launch {
-                                    com.android.purebilibili.core.store.SettingsManager
-                                        .setMiniPlayerMode(context, mode)
+                                    viewModel.setMiniPlayerMode(mode)
                                 }
                                 if (mode.supportsSystemPip &&
                                     !checkPipPermission()
@@ -631,7 +583,7 @@ fun PlaybackSettingsContent(
                             title = "小窗/画中画不加载弹幕",
                             subtitle = if (!backgroundPlaybackEnabled) {
                                 "开启后台播放后，小窗和画中画相关设置才会生效"
-                            } else if (miniPlayerMode != com.android.purebilibili.core.store.SettingsManager.MiniPlayerMode.OFF) {
+                            } else if (miniPlayerMode != viewModel.miniPlayerModeOptions.first()) {
                                 if (pipNoDanmakuEnabled) "已开启：小窗/画中画中不显示弹幕" else "关闭后：小窗/画中画中也会显示弹幕"
                             } else {
                                 "选择小窗或画中画模式后生效"
@@ -642,8 +594,7 @@ fun PlaybackSettingsContent(
                                     return@AppSwitchPreference
                                 }
                                 scope.launch {
-                                    com.android.purebilibili.core.store.SettingsManager
-                                        .setPipNoDanmakuEnabled(context, it)
+                                    viewModel.setPipNoDanmakuEnabled(it)
                                 }
                             },
                             iconTint = com.android.purebilibili.core.theme.iOSPurple
@@ -689,20 +640,12 @@ fun PlaybackSettingsContent(
 	                        SettingsSingleChoicePreference(
                             icon = rememberSettingsSemanticIcon(SettingsIconRole.PLAYER_STATS),
                             title = "屏幕显示播放状态",
-                            subtitle = when (playerInsightMode) {
-                                PlayerSettingsStore.PlayerInsightMode.OFF -> "不显示播放状态信息"
-                                PlayerSettingsStore.PlayerInsightMode.SMART -> "打开控制栏时显示；发生掉帧或软件解码时保持可见"
-                                PlayerSettingsStore.PlayerInsightMode.ALWAYS -> "始终显示编码、码率、掉帧等播放信息"
-                            },
-                            options = listOf(
-                                AppSegmentOption(PlayerSettingsStore.PlayerInsightMode.OFF, "关闭"),
-                                AppSegmentOption(PlayerSettingsStore.PlayerInsightMode.SMART, "智能显示"),
-                                AppSegmentOption(PlayerSettingsStore.PlayerInsightMode.ALWAYS, "始终显示"),
-                            ),
+                            subtitle = viewModel.playerInsightModeSubtitle[playerInsightMode] ?: "",
+                            options = viewModel.playerInsightModeOptions.map { mode -> AppSegmentOption(mode, viewModel.playerInsightModeLabels[mode] ?: "") },
                             selectedValue = playerInsightMode,
                             onSelectionChange = { mode ->
                                 playbackInsightScope.launch {
-                                    SettingsManager.setPlayerInsightMode(context, mode)
+                                    viewModel.setPlayerInsightMode(mode)
                                 }
                             },
                             iconTint = iOSSystemGray,
@@ -715,7 +658,7 @@ fun PlaybackSettingsContent(
                             checked = playerDiagnosticLoggingEnabled,
                             onCheckedChange = {
                                 scope.launch {
-                                    SettingsManager.setPlayerDiagnosticLoggingEnabled(context, it)
+                                    viewModel.setPlayerDiagnosticLoggingEnabled(it)
                                 }
                             },
                             iconTint = iOSOrange
@@ -732,7 +675,7 @@ fun PlaybackSettingsContent(
                             checked = dashSegmentRequestsEnabled,
                             onCheckedChange = {
                                 scope.launch {
-                                    SettingsManager.setDashSegmentRequestsEnabled(context, it)
+                                    viewModel.setDashSegmentRequestsEnabled(it)
                                 }
                             },
                             iconTint = iOSTeal
@@ -745,7 +688,7 @@ fun PlaybackSettingsContent(
                             checked = qualitySwitchFailureDialogEnabled,
                             onCheckedChange = { enabled ->
                                 scope.launch {
-                                    SettingsManager.setQualitySwitchFailureDialogEnabled(context, enabled)
+                                    viewModel.setQualitySwitchFailureDialogEnabled(enabled)
                                 }
                             },
                             iconTint = iOSOrange
@@ -762,7 +705,7 @@ fun PlaybackSettingsContent(
                             checked = qualitySwitchFailureDialogOnceEnabled,
                             onCheckedChange = { enabled ->
                                 scope.launch {
-                                    SettingsManager.setQualitySwitchFailureDialogOnceEnabled(context, enabled)
+                                    viewModel.setQualitySwitchFailureDialogOnceEnabled(enabled)
                                 }
                             },
                             iconTint = iOSTeal
@@ -780,21 +723,13 @@ fun PlaybackSettingsContent(
             item {
                 Box(modifier = Modifier) {
                     val scope = rememberCoroutineScope()
-                    val wifiQuality by com.android.purebilibili.core.store.SettingsManager
-                        .getWifiQuality(context).collectAsStateWithLifecycle(initialValue = 80)
-                    val mobileQuality by com.android.purebilibili.core.store.SettingsManager
-                        .getMobileQuality(context).collectAsStateWithLifecycle(initialValue = 64)
-                    val defaultAudioQuality by PlayerSettingsStore
-                        .getDefaultAudioQuality(context)
-                        .collectAsStateWithLifecycle(
-                            initialValue = DEFAULT_AUDIO_QUALITY_FOLLOW_LAST
-                        )
-                    val autoHighestQualityEnabled by com.android.purebilibili.core.store.SettingsManager
-                        .getAutoHighestQuality(context).collectAsStateWithLifecycle(initialValue = false)
-                    val directedTrafficEnabled by com.android.purebilibili.core.store.SettingsManager
-                        .getBiliDirectedTrafficEnabled(context).collectAsStateWithLifecycle(initialValue = false)
-                    val isLoggedIn = com.android.purebilibili.data.repository.VideoRepository.isPlaybackLoggedIn()
-                    val isVip = com.android.purebilibili.data.repository.VideoRepository.isPlaybackVip()
+                    val wifiQuality = state.playback.wifiQuality
+                    val mobileQuality = state.playback.mobileQuality
+                    val defaultAudioQuality = state.playback.defaultAudioQuality
+                    val autoHighestQualityEnabled = state.playback.autoHighestQualityEnabled
+                    val directedTrafficEnabled = state.playback.directedTrafficEnabled
+                    val isLoggedIn = state.playback.isPlaybackLoggedIn
+                    val isVip = state.playback.isPlaybackVip
 
                     val qualityOptions = resolveDefaultPlaybackQualityOptions()
                     val audioQualityOptions = resolveDefaultAudioQualityOptions()
@@ -825,8 +760,7 @@ fun PlaybackSettingsContent(
                             checked = directedTrafficEnabled,
                             onCheckedChange = {
                                 scope.launch {
-                                    com.android.purebilibili.core.store.SettingsManager
-                                        .setBiliDirectedTrafficEnabled(context, it)
+                                    viewModel.setBiliDirectedTrafficEnabled(it)
                                 }
                             },
                             iconTint = iOSTeal
@@ -845,8 +779,7 @@ fun PlaybackSettingsContent(
                             checked = autoHighestQualityEnabled,
                             onCheckedChange = {
                                 scope.launch {
-                                    com.android.purebilibili.core.store.SettingsManager
-                                        .setAutoHighestQuality(context, it)
+                                    viewModel.setAutoHighestQuality(it)
                                 }
                             },
                             iconTint = iOSOrange
@@ -871,8 +804,7 @@ fun PlaybackSettingsContent(
                             enabled = !autoHighestQualityEnabled,
                             onSelectionChange = { qualityId ->
                                 scope.launch {
-                                    com.android.purebilibili.core.store.SettingsManager
-                                        .setWifiQuality(context, qualityId)
+                                    viewModel.setWifiQuality(qualityId)
                                 }
                             }
                         )
@@ -880,10 +812,8 @@ fun PlaybackSettingsContent(
                         AppPreferenceDivider()
 
                         // 📉 读取省流量模式，用于显示提示
-                        val dataSaverModeForHint by com.android.purebilibili.core.store.SettingsManager
-                            .getDataSaverMode(context).collectAsStateWithLifecycle(initialValue = com.android.purebilibili.core.store.SettingsManager.DataSaverMode.MOBILE_ONLY
-                            )
-                        val isDataSaverActive = dataSaverModeForHint != com.android.purebilibili.core.store.SettingsManager.DataSaverMode.OFF
+                        val dataSaverModeForHint = state.playback.dataSaverMode
+                        val isDataSaverActive = dataSaverModeForHint != viewModel.dataSaverModeOptions.first()
                         val effectiveQuality = resolveEffectiveMobileQuality(
                             rawMobileQuality = mobileQuality,
                             isDataSaverActive = isDataSaverActive
@@ -909,8 +839,7 @@ fun PlaybackSettingsContent(
                             enabled = !autoHighestQualityEnabled,
                             onSelectionChange = { qualityId ->
                                 scope.launch {
-                                    com.android.purebilibili.core.store.SettingsManager
-                                        .setMobileQuality(context, qualityId)
+                                    viewModel.setMobileQuality(qualityId)
                                 }
                             }
                         )
@@ -931,8 +860,7 @@ fun PlaybackSettingsContent(
                             selectedValue = normalizedDefaultAudioQuality,
                             onSelectionChange = { audioQuality ->
                                 scope.launch {
-                                    PlayerSettingsStore
-                                        .setDefaultAudioQuality(context, audioQuality)
+                                    viewModel.setDefaultAudioQuality(audioQuality)
                                 }
                             }
                         )
@@ -964,16 +892,11 @@ fun PlaybackSettingsContent(
             item {
                 Box(modifier = Modifier) {
                     val scope = rememberCoroutineScope()
-                    val dataSaverMode by com.android.purebilibili.core.store.SettingsManager
-                        .getDataSaverMode(context).collectAsStateWithLifecycle(initialValue = com.android.purebilibili.core.store.SettingsManager.DataSaverMode.MOBILE_ONLY
-                        )
-                    val homeSettings by com.android.purebilibili.core.store.SettingsManager
-                        .getHomeSettings(context).collectAsStateWithLifecycle(initialValue = com.android.purebilibili.core.store.HomeSettings()
-                        )
+                    val dataSaverMode = state.playback.dataSaverMode
                     val dataSaverModeOptions = listOf(
-                        AppSegmentOption(com.android.purebilibili.core.store.SettingsManager.DataSaverMode.OFF, "关闭"),
-                        AppSegmentOption(com.android.purebilibili.core.store.SettingsManager.DataSaverMode.MOBILE_ONLY, "仅移动数据"),
-                        AppSegmentOption(com.android.purebilibili.core.store.SettingsManager.DataSaverMode.ALWAYS, "始终开启")
+                        AppSegmentOption(viewModel.dataSaverModeOptions[0], "关闭"),
+                        AppSegmentOption(viewModel.dataSaverModeOptions[1], "仅移动数据"),
+                        AppSegmentOption(viewModel.dataSaverModeOptions[2], "始终开启")
                     )
 
                     AppPreferenceGroup {
@@ -984,8 +907,7 @@ fun PlaybackSettingsContent(
                             selectedValue = dataSaverMode,
                             onSelectionChange = { mode ->
                                 scope.launch {
-                                    com.android.purebilibili.core.store.SettingsManager
-                                        .setDataSaverMode(context, mode)
+                                    viewModel.setDataSaverMode(mode)
                                 }
                             }
                         )
@@ -995,16 +917,15 @@ fun PlaybackSettingsContent(
 	                        AppSwitchPreference(
 	                            icon = rememberSettingsSemanticIcon(SettingsIconRole.HOME_COVER_GLASS),
                             title = "省流量时降低首页封面清晰度",
-                            subtitle = if (homeSettings.lowQualityHomeCoverInDataSaver) {
+                            subtitle = if (state.playback.lowQualityHomeCoverInDataSaver) {
                                 "开启后仅在省流量模式生效时加载低清晰度首页封面"
                             } else {
                                 "默认始终加载高清首页封面"
                             },
-                            checked = homeSettings.lowQualityHomeCoverInDataSaver,
+                            checked = state.playback.lowQualityHomeCoverInDataSaver,
                             onCheckedChange = { enabled ->
                                 scope.launch {
-                                    com.android.purebilibili.core.store.SettingsManager
-                                        .setLowQualityHomeCoverInDataSaver(context, enabled)
+                                    viewModel.setLowQualityHomeCoverInDataSaver(enabled)
                                 }
                             },
                             iconTint = com.android.purebilibili.core.theme.iOSBlue
@@ -1058,7 +979,11 @@ fun PlaybackSettingsContent(
             }
             item {
                 Box(modifier = Modifier) {
-                    PlaybackFullscreenGestureSettingsSection(context = context)
+                    PlaybackFullscreenGestureSettingsSection(
+                        context = context,
+                        state = state,
+                        viewModel = viewModel,
+                    )
                 }
             }
 
@@ -1074,47 +999,21 @@ private fun PlaybackInteractionSettingsSection(
 ) {
     val scope = rememberCoroutineScope()
     //  [新增] 自动播放下一个
-    val autoPlayEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getAutoPlay(context).collectAsStateWithLifecycle(initialValue = true)
-    val externalPlaylistAutoContinueEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getExternalPlaylistAutoContinue(context).collectAsStateWithLifecycle(initialValue = true)
-    val resumePlaybackPromptEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getResumePlaybackPromptEnabled(context).collectAsStateWithLifecycle(initialValue = true)
-    val spacePlayedVideoLocatePromptEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getSpacePlayedVideoLocatePromptEnabled(context).collectAsStateWithLifecycle(initialValue = true)
-    val playbackCompletionBehavior by com.android.purebilibili.core.store.SettingsManager
-        .getPlaybackCompletionBehavior(context)
-        .collectAsStateWithLifecycle(initialValue = PlaybackCompletionBehavior.CONTINUE_CURRENT_LOGIC)
+    val autoPlayEnabled = state.playback.autoPlayEnabled
+    val externalPlaylistAutoContinueEnabled = state.playback.externalPlaylistAutoContinueEnabled
+    val resumePlaybackPromptEnabled = state.playback.resumePlaybackPromptEnabled
+    val spacePlayedVideoLocatePromptEnabled = state.playback.spacePlayedVideoLocatePromptEnabled
+    val playbackCompletionBehavior = state.playback.playbackCompletionBehavior
     val subtitleFeatureEnabled = isSubtitleFeatureEnabledForUser()
-    val subtitleAutoPreference by com.android.purebilibili.core.store.SettingsManager
-        .getSubtitleAutoPreference(context)
-        .collectAsStateWithLifecycle(initialValue = SubtitleAutoPreference.OFF)
-    val videoAiSummaryEntryEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getVideoAiSummaryEntryEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = true)
-    val videoNoteEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getVideoNoteEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = true)
-    val videoNoteDefaultCollapsed by com.android.purebilibili.core.store.SettingsManager
-        .getVideoNoteDefaultCollapsed(context)
-        .collectAsStateWithLifecycle(initialValue = false)
-    val videoInfoDefaultExpanded by com.android.purebilibili.core.store.SettingsManager
-        .getVideoInfoDefaultExpanded(context)
-        .collectAsStateWithLifecycle(initialValue = true)
-    val commentFraudDetectionEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getCommentFraudDetectionEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = true)
-    val commentMemberDecorationsEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getCommentMemberDecorationsEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = false)
-    val imagePreviewLongPressSaveEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getImagePreviewLongPressSaveEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = true)
-    val commentCollapsedReplyPreviewLimit by com.android.purebilibili.core.store.SettingsManager
-        .getCommentCollapsedReplyPreviewLimit(context)
-        .collectAsStateWithLifecycle(initialValue = com.android.purebilibili.core.store.SettingsManager
-                .DEFAULT_COMMENT_COLLAPSED_REPLY_PREVIEW_LIMIT
-        )
+    val subtitleAutoPreference = state.playback.subtitleAutoPreference
+    val videoAiSummaryEntryEnabled = state.playback.videoAiSummaryEntryEnabled
+    val videoNoteEnabled = state.playback.videoNoteEnabled
+    val videoNoteDefaultCollapsed = state.playback.videoNoteDefaultCollapsed
+    val videoInfoDefaultExpanded = state.playback.videoInfoDefaultExpanded
+    val commentFraudDetectionEnabled = state.playback.commentFraudDetectionEnabled
+    val commentMemberDecorationsEnabled = state.playback.commentMemberDecorationsEnabled
+    val imagePreviewLongPressSaveEnabled = state.playback.imagePreviewLongPressSaveEnabled
+    val commentCollapsedReplyPreviewLimit = state.playback.commentCollapsedReplyPreviewLimit
     val subtitlePreferenceDescription = when (subtitleAutoPreference) {
         SubtitleAutoPreference.OFF -> "默认关闭字幕"
         SubtitleAutoPreference.ON -> "默认开启（优先当前可用轨道）"
@@ -1124,8 +1023,7 @@ private fun PlaybackInteractionSettingsSection(
 
     AppPreferenceGroup {
         // --- Click to Play ---
-        val clickToPlayEnabled by com.android.purebilibili.core.store.SettingsManager
-            .getClickToPlay(context).collectAsStateWithLifecycle(initialValue = true)
+        val clickToPlayEnabled = state.playback.clickToPlayEnabled
 
 	        AppSwitchPreference(
 	            icon = rememberSettingsSemanticIcon(SettingsIconRole.AUTO_PLAY_ON_OPEN),
@@ -1138,8 +1036,7 @@ private fun PlaybackInteractionSettingsSection(
             checked = clickToPlayEnabled,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setClickToPlay(context, it)
+                    viewModel.setClickToPlay(it)
                 }
             },
             iconTint = com.android.purebilibili.core.theme.iOSBlue
@@ -1156,8 +1053,7 @@ private fun PlaybackInteractionSettingsSection(
             checked = resumePlaybackPromptEnabled,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setResumePlaybackPromptEnabled(context, it)
+                    viewModel.setResumePlaybackPromptEnabled(it)
                 }
             },
             iconTint = iOSTeal
@@ -1174,8 +1070,7 @@ private fun PlaybackInteractionSettingsSection(
             checked = spacePlayedVideoLocatePromptEnabled,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setSpacePlayedVideoLocatePromptEnabled(context, it)
+                    viewModel.setSpacePlayedVideoLocatePromptEnabled(it)
                 }
             },
             iconTint = iOSTeal
@@ -1189,8 +1084,7 @@ private fun PlaybackInteractionSettingsSection(
             checked = autoPlayEnabled,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setAutoPlay(context, it)
+                    viewModel.setAutoPlay(it)
                 }
             },
             iconTint = com.android.purebilibili.core.theme.iOSPurple
@@ -1203,8 +1097,7 @@ private fun PlaybackInteractionSettingsSection(
             checked = externalPlaylistAutoContinueEnabled,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setExternalPlaylistAutoContinue(context, it)
+                    viewModel.setExternalPlaylistAutoContinue(it)
                 }
             },
             iconTint = iOSTeal
@@ -1224,8 +1117,7 @@ private fun PlaybackInteractionSettingsSection(
             selectedValue = playbackCompletionBehavior,
             onSelectionChange = { behavior ->
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setPlaybackCompletionBehavior(context, behavior)
+                    viewModel.setPlaybackCompletionBehavior(behavior)
                 }
             }
         )
@@ -1250,8 +1142,7 @@ private fun PlaybackInteractionSettingsSection(
                 selectedValue = subtitleAutoPreference,
                 onSelectionChange = { preference ->
                     scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager
-                            .setSubtitleAutoPreference(context, preference)
+                        viewModel.setSubtitleAutoPreference(preference)
                     }
                 }
             )
@@ -1268,8 +1159,7 @@ private fun PlaybackInteractionSettingsSection(
             checked = videoInfoDefaultExpanded,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setVideoInfoDefaultExpanded(context, it)
+                    viewModel.setVideoInfoDefaultExpanded(it)
                 }
             },
             iconTint = com.android.purebilibili.core.theme.iOSBlue
@@ -1286,8 +1176,7 @@ private fun PlaybackInteractionSettingsSection(
             checked = videoAiSummaryEntryEnabled,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setVideoAiSummaryEntryEnabled(context, it)
+                    viewModel.setVideoAiSummaryEntryEnabled(it)
                 }
             },
             iconTint = com.android.purebilibili.core.theme.iOSPurple
@@ -1304,8 +1193,7 @@ private fun PlaybackInteractionSettingsSection(
             checked = videoNoteEnabled,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setVideoNoteEnabled(context, it)
+                    viewModel.setVideoNoteEnabled(it)
                 }
             },
             iconTint = iOSTeal
@@ -1323,8 +1211,7 @@ private fun PlaybackInteractionSettingsSection(
                 checked = videoNoteDefaultCollapsed,
                 onCheckedChange = {
                     scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager
-                            .setVideoNoteDefaultCollapsed(context, it)
+                        viewModel.setVideoNoteDefaultCollapsed(it)
                     }
                 },
                 iconTint = com.android.purebilibili.core.theme.iOSBlue
@@ -1356,8 +1243,7 @@ private fun PlaybackInteractionSettingsSection(
             selectedValue = commentCollapsedReplyPreviewLimit,
             onSelectionChange = { limit ->
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setCommentCollapsedReplyPreviewLimit(context, limit)
+                    viewModel.setCommentCollapsedReplyPreviewLimit(limit)
                 }
             }
         )
@@ -1369,8 +1255,7 @@ private fun PlaybackInteractionSettingsSection(
             checked = commentFraudDetectionEnabled,
             onCheckedChange = { enabled ->
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setCommentFraudDetectionEnabled(context, enabled)
+                    viewModel.setCommentFraudDetectionEnabled(enabled)
                 }
             },
             iconTint = com.android.purebilibili.core.theme.iOSBlue
@@ -1383,8 +1268,7 @@ private fun PlaybackInteractionSettingsSection(
             checked = commentMemberDecorationsEnabled,
             onCheckedChange = { enabled ->
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setCommentMemberDecorationsEnabled(context, enabled)
+                    viewModel.setCommentMemberDecorationsEnabled(enabled)
                 }
             },
             iconTint = iOSOrange
@@ -1401,8 +1285,7 @@ private fun PlaybackInteractionSettingsSection(
             checked = imagePreviewLongPressSaveEnabled,
             onCheckedChange = { enabled ->
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setImagePreviewLongPressSaveEnabled(context, enabled)
+                    viewModel.setImagePreviewLongPressSaveEnabled(enabled)
                 }
             },
             iconTint = com.android.purebilibili.core.theme.iOSGreen
@@ -1413,20 +1296,16 @@ private fun PlaybackInteractionSettingsSection(
 
 @Composable
 private fun PlaybackFullscreenGestureSettingsSection(
-    context: Context
+    context: Context,
+    state: SettingsUiState,
+    viewModel: SettingsViewModel
 ) {
     val scope = rememberCoroutineScope()
-    val portraitPlayerCollapseMode by com.android.purebilibili.core.store.SettingsManager
-        .getPortraitPlayerCollapseMode(context)
-        .collectAsStateWithLifecycle(initialValue = PortraitPlayerCollapseMode.INTRO_ONLY)
-    val portraitSwipeToFullscreenEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getPortraitSwipeToFullscreenEnabled(context).collectAsStateWithLifecycle(initialValue = true)
-    val centerSwipeToFullscreenEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getCenterSwipeToFullscreenEnabled(context).collectAsStateWithLifecycle(initialValue = true)
-    val slideVolumeBrightnessEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getSlideVolumeBrightnessEnabled(context).collectAsStateWithLifecycle(initialValue = true)
-    val setSystemBrightnessEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getSetSystemBrightnessEnabled(context).collectAsStateWithLifecycle(initialValue = false)
+    val portraitPlayerCollapseMode = state.playback.portraitPlayerCollapseMode
+    val portraitSwipeToFullscreenEnabled = state.playback.portraitSwipeToFullscreenEnabled
+    val centerSwipeToFullscreenEnabled = state.playback.centerSwipeToFullscreenEnabled
+    val slideVolumeBrightnessEnabled = state.playback.slideVolumeBrightnessEnabled
+    val setSystemBrightnessEnabled = state.playback.setSystemBrightnessEnabled
     val lifecycleOwner = LocalLifecycleOwner.current
     var canWriteSystemSettings by remember(context) {
         mutableStateOf(Settings.System.canWrite(context))
@@ -1435,8 +1314,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
     var awaitingSystemBrightnessPermission by rememberSaveable { mutableStateOf(false) }
     fun persistSystemBrightnessSetting(enabled: Boolean) {
         scope.launch {
-            com.android.purebilibili.core.store.SettingsManager
-                .setSetSystemBrightnessEnabled(context, enabled)
+            viewModel.setSetSystemBrightnessEnabled(enabled)
         }
     }
     fun refreshSystemBrightnessPermission(resolvePendingRequest: Boolean) {
@@ -1459,8 +1337,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             canWriteSystemSettings = canWriteSystemSettings
         )
         if (normalizedSetting != setSystemBrightnessEnabled) {
-            com.android.purebilibili.core.store.SettingsManager
-                .setSetSystemBrightnessEnabled(context, normalizedSetting)
+            viewModel.setSetSystemBrightnessEnabled(normalizedSetting)
         }
     }
     DisposableEffect(
@@ -1483,24 +1360,14 @@ private fun PlaybackFullscreenGestureSettingsSection(
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
-    val inlineSwipeSeekSeconds by com.android.purebilibili.core.store.SettingsManager
-        .getInlineSwipeSeekSeconds(context).collectAsStateWithLifecycle(initialValue = 30)
-    val fullscreenSwipeSeekEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getFullscreenSwipeSeekEnabled(context).collectAsStateWithLifecycle(initialValue = true)
-    val fullscreenSwipeSeekSeconds by com.android.purebilibili.core.store.SettingsManager
-        .getFullscreenSwipeSeekSeconds(context).collectAsStateWithLifecycle(initialValue = 15)
-    val doubleTapSeekEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getDoubleTapSeekEnabled(context).collectAsStateWithLifecycle(initialValue = false)
-    val seekForwardSeconds by com.android.purebilibili.core.store.SettingsManager
-        .getSeekForwardSeconds(context).collectAsStateWithLifecycle(initialValue = 10)
-    val seekBackwardSeconds by com.android.purebilibili.core.store.SettingsManager
-        .getSeekBackwardSeconds(context).collectAsStateWithLifecycle(initialValue = 10)
-    val hideInteractiveCommandDanmaku by com.android.purebilibili.core.store.SettingsManager
-        .getDanmakuHideInteractiveCommands(context)
-        .collectAsStateWithLifecycle(initialValue = false)
-    val danmakuCloudSyncEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getDanmakuCloudSyncEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = true)
+    val inlineSwipeSeekSeconds = state.playback.inlineSwipeSeekSeconds
+    val fullscreenSwipeSeekEnabled = state.playback.fullscreenSwipeSeekEnabled
+    val fullscreenSwipeSeekSeconds = state.playback.fullscreenSwipeSeekSeconds
+    val doubleTapSeekEnabled = state.playback.doubleTapSeekEnabled
+    val seekForwardSeconds = state.playback.seekForwardSeconds
+    val seekBackwardSeconds = state.playback.seekBackwardSeconds
+    val hideInteractiveCommandDanmaku = state.playback.hideInteractiveCommandDanmaku
+    val danmakuCloudSyncEnabled = state.playback.danmakuCloudSyncEnabled
     if (showSystemBrightnessPermissionDialog) {
         com.android.purebilibili.core.ui.AppAlertDialog(
             onDismissRequest = { showSystemBrightnessPermissionDialog = false },
@@ -1578,8 +1445,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
                     checked = doubleTapSeekEnabled,
                     onCheckedChange = {
                         scope.launch {
-                            com.android.purebilibili.core.store.SettingsManager
-                                .setDoubleTapSeekEnabled(context, it)
+                            viewModel.setDoubleTapSeekEnabled(it)
                         }
                     }
                 )
@@ -1600,8 +1466,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
                     selectedValue = seekForwardSeconds,
                     onSelectionChange = { seconds ->
                         scope.launch {
-                            com.android.purebilibili.core.store.SettingsManager
-                                .setSeekForwardSeconds(context, seconds)
+                            viewModel.setSeekForwardSeconds(seconds)
                         }
                     }
                 )
@@ -1613,8 +1478,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
                     selectedValue = seekBackwardSeconds,
                     onSelectionChange = { seconds ->
                         scope.launch {
-                            com.android.purebilibili.core.store.SettingsManager
-                                .setSeekBackwardSeconds(context, seconds)
+                            viewModel.setSeekBackwardSeconds(seconds)
                         }
                     }
                 )
@@ -1632,8 +1496,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             checked = hideInteractiveCommandDanmaku,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setDanmakuHideInteractiveCommands(context, it)
+                    viewModel.setDanmakuHideInteractiveCommands(it)
                 }
             },
             iconTint = com.android.purebilibili.core.theme.iOSPink
@@ -1647,8 +1510,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             checked = danmakuCloudSyncEnabled,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setDanmakuCloudSyncEnabled(context, it)
+                    viewModel.setDanmakuCloudSyncEnabled(it)
                 }
             },
             iconTint = com.android.purebilibili.core.theme.iOSPurple
@@ -1661,15 +1523,12 @@ private fun PlaybackFullscreenGestureSettingsSection(
             selectedValue = portraitPlayerCollapseMode,
             onSelectionChange = { mode ->
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setPortraitPlayerCollapseMode(context, mode)
+                    viewModel.setPortraitPlayerCollapseMode(mode)
                 }
             }
         )
 
-        val pauseOnPlayerCollapseEnabled by com.android.purebilibili.core.store.SettingsManager
-            .getPauseOnPlayerCollapseEnabled(context)
-            .collectAsStateWithLifecycle(initialValue = true)
+        val pauseOnPlayerCollapseEnabled = state.playback.pauseOnPlayerCollapseEnabled
         AppPreferenceDivider()
         AppSwitchPreference(
             icon = rememberSettingsSemanticIcon(SettingsIconRole.HEADER_COLLAPSE),
@@ -1682,8 +1541,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             checked = pauseOnPlayerCollapseEnabled,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setPauseOnPlayerCollapseEnabled(context, it)
+                    viewModel.setPauseOnPlayerCollapseEnabled(it)
                 }
             },
             iconTint = iOSTeal
@@ -1701,8 +1559,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             checked = portraitSwipeToFullscreenEnabled,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setPortraitSwipeToFullscreenEnabled(context, it)
+                    viewModel.setPortraitSwipeToFullscreenEnabled(it)
                 }
             },
             iconTint = iOSTeal
@@ -1720,8 +1577,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             checked = centerSwipeToFullscreenEnabled,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setCenterSwipeToFullscreenEnabled(context, it)
+                    viewModel.setCenterSwipeToFullscreenEnabled(it)
                 }
             },
             iconTint = com.android.purebilibili.core.theme.iOSPurple
@@ -1739,8 +1595,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             checked = slideVolumeBrightnessEnabled,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setSlideVolumeBrightnessEnabled(context, it)
+                    viewModel.setSlideVolumeBrightnessEnabled(it)
                 }
             },
             iconTint = iOSTeal
@@ -1795,8 +1650,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             selectedValue = inlineSwipeSeekSeconds,
             onSelectionChange = { seconds ->
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setInlineSwipeSeekSeconds(context, seconds)
+                    viewModel.setInlineSwipeSeekSeconds(seconds)
                 }
             },
         )
@@ -1812,8 +1666,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             checked = fullscreenSwipeSeekEnabled,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setFullscreenSwipeSeekEnabled(context, it)
+                    viewModel.setFullscreenSwipeSeekEnabled(it)
                 }
             },
         )
@@ -1832,73 +1685,33 @@ private fun PlaybackFullscreenGestureSettingsSection(
             onSelectionChange = { seconds ->
                 if (fullscreenSwipeSeekEnabled) {
                     scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager
-                            .setFullscreenSwipeSeekSeconds(context, seconds)
+                        viewModel.setFullscreenSwipeSeekSeconds(seconds)
                     }
                 }
             },
         )
         AppPreferenceDivider()
-        val autoRotateEnabled by com.android.purebilibili.core.store.SettingsManager
-            .getAutoRotateEnabled(context).collectAsStateWithLifecycle(initialValue = false)
-        val fullscreenGestureReverse by com.android.purebilibili.core.store.SettingsManager
-            .getFullscreenGestureReverse(context).collectAsStateWithLifecycle(initialValue = false)
-        val autoEnterFullscreen by com.android.purebilibili.core.store.SettingsManager
-            .getAutoEnterFullscreen(context).collectAsStateWithLifecycle(initialValue = false)
-        val autoExitFullscreen by com.android.purebilibili.core.store.SettingsManager
-            .getAutoExitFullscreen(context).collectAsStateWithLifecycle(initialValue = true)
-        val showFullscreenLockButton by com.android.purebilibili.core.store.SettingsManager
-            .getShowFullscreenLockButton(context).collectAsStateWithLifecycle(initialValue = true)
-        val showFullscreenScreenshotButton by com.android.purebilibili.core.store.SettingsManager
-            .getShowFullscreenScreenshotButton(context).collectAsStateWithLifecycle(initialValue = true)
-        val appGestureScreenshotEnabled by SettingsManager
-            .getAppGestureScreenshotEnabled(context).collectAsStateWithLifecycle(initialValue = false)
-        val appScreenshotGestureMode by SettingsManager
-            .getAppScreenshotGestureMode(context)
-            .collectAsStateWithLifecycle(initialValue = AppScreenshotGestureMode.TOP_RIGHT_TWO_FINGER_LONG_PRESS)
-        val appScreenshotCaptureMode by SettingsManager
-            .getAppScreenshotCaptureMode(context)
-            .collectAsStateWithLifecycle(initialValue = AppScreenshotCaptureMode.FULL_WINDOW)
-        val showFullscreenBatteryLevel by com.android.purebilibili.core.store.SettingsManager
-            .getShowFullscreenBatteryLevel(context).collectAsStateWithLifecycle(initialValue = true)
-        val showFullscreenTime by com.android.purebilibili.core.store.SettingsManager
-            .getShowFullscreenTime(context).collectAsStateWithLifecycle(initialValue = true)
-        val showFullscreenActionItems by com.android.purebilibili.core.store.SettingsManager
-            .getShowFullscreenActionItems(context).collectAsStateWithLifecycle(initialValue = true)
-        val showOnlineCount by com.android.purebilibili.core.store.SettingsManager
-            .getShowOnlineCount(context).collectAsStateWithLifecycle(initialValue = false)
-        val bottomProgressBehavior by com.android.purebilibili.core.store.SettingsManager
-            .getBottomProgressBehavior(context)
-            .collectAsStateWithLifecycle(initialValue = BottomProgressBehavior.ALWAYS_HIDE)
-        val progressPeakDanmakuEnabled by SettingsManager
-            .getProgressPeakDanmakuEnabled(context)
-            .collectAsStateWithLifecycle(initialValue = false)
-        val playerControlVisibility by SettingsManager
-            .getPlayerControlVisibilitySettings(context)
-            .collectAsStateWithLifecycle(
-                initialValue = com.android.purebilibili.core.store.PlayerControlVisibilitySettings()
-            )
-        val playerProgressPlacement by SettingsManager
-            .getPlayerProgressPlacement(context)
-            .collectAsStateWithLifecycle(
-                initialValue = com.android.purebilibili.core.store.PlayerProgressPlacement.ABOVE_CONTROLS
-            )
+        val autoRotateEnabled = state.playback.autoRotateEnabled
+        val fullscreenGestureReverse = state.playback.fullscreenGestureReverse
+        val autoEnterFullscreen = state.playback.autoEnterFullscreen
+        val showFullscreenLockButton = state.playback.showFullscreenLockButton
+        val showFullscreenScreenshotButton = state.playback.showFullscreenScreenshotButton
+        val appGestureScreenshotEnabled = state.playback.appGestureScreenshotEnabled
+        val appScreenshotGestureMode = state.playback.appScreenshotGestureMode
+        val appScreenshotCaptureMode = state.playback.appScreenshotCaptureMode
+        val showFullscreenBatteryLevel = state.playback.showFullscreenBatteryLevel
+        val showFullscreenTime = state.playback.showFullscreenTime
+        val showFullscreenActionItems = state.playback.showFullscreenActionItems
+        val showOnlineCount = state.showOnlineCount
+        val bottomProgressBehavior = state.playback.bottomProgressBehavior
+        val progressPeakDanmakuEnabled = state.playback.progressPeakDanmakuEnabled
+        val playerProgressPlacement = state.playback.playerProgressPlacement
         val isLargeScreenDevice = context.resources.configuration.smallestScreenWidthDp >= 600
-        val horizontalAdaptationEnabled by com.android.purebilibili.core.store.SettingsManager
-            .getHorizontalAdaptationEnabled(context)
-            .collectAsStateWithLifecycle(initialValue = isLargeScreenDevice)
-        val immersiveVideoPageStatusBar by com.android.purebilibili.core.store.SettingsManager
-            .getHideVideoPageStatusBar(context)
-            .collectAsStateWithLifecycle(initialValue = false)
-        val tabletCommentPanelWidthPreset by com.android.purebilibili.core.store.SettingsManager
-            .getTabletCommentPanelWidthPreset(context)
-            .collectAsStateWithLifecycle(initialValue = com.android.purebilibili.core.store.TabletCommentPanelWidthPreset.STANDARD)
-        val fullscreenMode by com.android.purebilibili.core.store.SettingsManager
-            .getFullscreenMode(context)
-            .collectAsStateWithLifecycle(initialValue = com.android.purebilibili.core.store.FullscreenMode.AUTO)
-        val fullscreenAspectRatio by com.android.purebilibili.core.store.SettingsManager
-            .getFullscreenAspectRatio(context)
-            .collectAsStateWithLifecycle(initialValue = FullscreenAspectRatio.FIT)
+        val horizontalAdaptationEnabled = state.playback.horizontalAdaptationEnabled
+        val immersiveVideoPageStatusBar = state.playback.immersiveVideoPageStatusBar
+        val tabletCommentPanelWidthPreset = state.playback.tabletCommentPanelWidthPreset
+        val fullscreenMode = state.playback.fullscreenMode
+        val fullscreenAspectRatio = state.playback.fullscreenAspectRatio
         val fullscreenModeSubtitle = when {
             !autoRotateEnabled -> fullscreenMode.description
             isLargeScreenDevice ->
@@ -1924,8 +1737,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             checked = autoRotateEnabled,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setAutoRotateEnabled(context, it)
+                    viewModel.setAutoRotateEnabled(it)
                 }
             },
             iconTint = iOSTeal
@@ -1938,8 +1750,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             checked = horizontalAdaptationEnabled,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setHorizontalAdaptationEnabled(context, it)
+                    viewModel.setHorizontalAdaptationEnabled(it)
                 }
             },
             iconTint = com.android.purebilibili.core.theme.iOSBlue
@@ -1949,10 +1760,10 @@ private fun PlaybackFullscreenGestureSettingsSection(
             icon = rememberSettingsSemanticIcon(SettingsIconRole.CAST_BUTTON),
             title = "显示投屏按钮",
             subtitle = "同时控制半屏、横屏全屏和竖屏全屏的投屏入口",
-            checked = playerControlVisibility.showCastButton,
+            checked = state.playback.showPlayerCastButton,
             onCheckedChange = {
                 scope.launch {
-                    SettingsManager.setShowPlayerCastButton(context, it)
+                    viewModel.setShowPlayerCastButton(it)
                 }
             },
             iconTint = com.android.purebilibili.core.theme.iOSBlue
@@ -1962,10 +1773,10 @@ private fun PlaybackFullscreenGestureSettingsSection(
             icon = rememberSettingsSemanticIcon(SettingsIconRole.FOLLOW_BUTTON),
             title = "显示关注按钮",
             subtitle = "关闭后保留 UP 主头像、名称和主页入口",
-            checked = playerControlVisibility.showFollowButton,
+            checked = state.playback.showVideoFollowButton,
             onCheckedChange = {
                 scope.launch {
-                    SettingsManager.setShowVideoFollowButton(context, it)
+                    viewModel.setShowVideoFollowButton(it)
                 }
             },
             iconTint = com.android.purebilibili.core.theme.iOSPink
@@ -1982,8 +1793,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             selectedValue = tabletCommentPanelWidthPreset,
             onSelectionChange = { preset ->
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setTabletCommentPanelWidthPreset(context, preset)
+                    viewModel.setTabletCommentPanelWidthPreset(preset)
                 }
             }
         )
@@ -1995,8 +1805,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             selectedValue = fullscreenMode,
             onSelectionChange = { mode ->
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setFullscreenMode(context, mode)
+                    viewModel.setFullscreenMode(mode)
                 }
             }
         )
@@ -2008,8 +1817,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             selectedValue = fullscreenAspectRatio,
             onSelectionChange = { ratio ->
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setFullscreenAspectRatio(context, ratio)
+                    viewModel.setFullscreenAspectRatio(ratio)
                 }
             }
         )
@@ -2021,8 +1829,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             checked = fullscreenGestureReverse,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setFullscreenGestureReverse(context, it)
+                    viewModel.setFullscreenGestureReverse(it)
                 }
             },
             iconTint = com.android.purebilibili.core.theme.iOSPurple
@@ -2039,16 +1846,13 @@ private fun PlaybackFullscreenGestureSettingsSection(
             checked = immersiveVideoPageStatusBar,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setHideVideoPageStatusBar(context, it)
+                    viewModel.setHideVideoPageStatusBar(it)
                 }
             },
             iconTint = com.android.purebilibili.core.theme.iOSTeal
         )
         AppPreferenceDivider()
-        val portraitLetterboxAmbientHaze by com.android.purebilibili.core.store.SettingsManager
-            .getPortraitLetterboxAmbientHaze(context)
-            .collectAsStateWithLifecycle(initialValue = true)
+        val portraitLetterboxAmbientHaze = state.playback.portraitLetterboxAmbientHaze
         AppSwitchPreference(
             icon = rememberSettingsSemanticIcon(SettingsIconRole.IMMERSIVE_STATUS_BAR),
             title = "竖屏黑边动态模糊",
@@ -2060,8 +1864,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             checked = portraitLetterboxAmbientHaze,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setPortraitLetterboxAmbientHaze(context, it)
+                    viewModel.setPortraitLetterboxAmbientHaze(it)
                 }
             },
             iconTint = com.android.purebilibili.core.theme.iOSTeal
@@ -2074,18 +1877,13 @@ private fun PlaybackFullscreenGestureSettingsSection(
             checked = autoEnterFullscreen,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setAutoEnterFullscreen(context, it)
+                    viewModel.setAutoEnterFullscreen(it)
                 }
             },
             iconTint = com.android.purebilibili.core.theme.iOSGreen
         )
         AppPreferenceDivider()
-        val autoExitFullscreenMode by com.android.purebilibili.core.store.SettingsManager
-            .getAutoExitFullscreenMode(context)
-            .collectAsStateWithLifecycle(
-                initialValue = com.android.purebilibili.core.store.AutoExitFullscreenMode.ALL_PARTS
-            )
+        val autoExitFullscreenMode = state.playback.autoExitFullscreenMode
 	        AppSwitchPreference(
 	            icon = rememberSettingsSemanticIcon(SettingsIconRole.AUTO_EXIT_FULLSCREEN),
             title = "自动退出全屏",
@@ -2094,14 +1892,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
                 com.android.purebilibili.core.store.AutoExitFullscreenMode.OFF,
             onCheckedChange = { enabled ->
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager.setAutoExitFullscreenMode(
-                        context,
-                        if (enabled) {
-                            com.android.purebilibili.core.store.AutoExitFullscreenMode.ALL_PARTS
-                        } else {
-                            com.android.purebilibili.core.store.AutoExitFullscreenMode.OFF
-                        },
-                    )
+                    viewModel.setAutoExitFullscreenMode(if (enabled) com.android.purebilibili.core.store.AutoExitFullscreenMode.ALL_PARTS else com.android.purebilibili.core.store.AutoExitFullscreenMode.OFF)
                 }
             },
             iconTint = iOSOrange
@@ -2127,8 +1918,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
                 selectedValue = autoExitFullscreenMode,
                 onSelectionChange = { mode ->
                     scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager
-                            .setAutoExitFullscreenMode(context, mode)
+                        viewModel.setAutoExitFullscreenMode(mode)
                     }
                 },
             )
@@ -2141,8 +1931,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             checked = showFullscreenLockButton,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setShowFullscreenLockButton(context, it)
+                    viewModel.setShowFullscreenLockButton(it)
                 }
             },
             iconTint = iOSTeal
@@ -2155,8 +1944,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             checked = showFullscreenScreenshotButton,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setShowFullscreenScreenshotButton(context, it)
+                    viewModel.setShowFullscreenScreenshotButton(it)
                 }
             },
             iconTint = com.android.purebilibili.core.theme.iOSBlue
@@ -2169,7 +1957,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             checked = appGestureScreenshotEnabled,
             onCheckedChange = {
                 scope.launch {
-                    SettingsManager.setAppGestureScreenshotEnabled(context, it)
+                    viewModel.setAppGestureScreenshotEnabled(it)
                 }
             },
             iconTint = com.android.purebilibili.core.theme.iOSPurple
@@ -2182,7 +1970,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             selectedValue = appScreenshotGestureMode,
             onSelectionChange = { mode ->
                 scope.launch {
-                    SettingsManager.setAppScreenshotGestureMode(context, mode)
+                    viewModel.setAppScreenshotGestureMode(mode)
                 }
             }
         )
@@ -2194,7 +1982,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             selectedValue = appScreenshotCaptureMode,
             onSelectionChange = { mode ->
                 scope.launch {
-                    SettingsManager.setAppScreenshotCaptureMode(context, mode)
+                    viewModel.setAppScreenshotCaptureMode(mode)
                 }
             }
         )
@@ -2206,8 +1994,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             checked = showFullscreenBatteryLevel,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setShowFullscreenBatteryLevel(context, it)
+                    viewModel.setShowFullscreenBatteryLevel(it)
                 }
             },
             iconTint = iOSGreen
@@ -2220,8 +2007,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             checked = showFullscreenTime,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setShowFullscreenTime(context, it)
+                    viewModel.setShowFullscreenTime(it)
                 }
             },
             iconTint = iOSTeal
@@ -2238,8 +2024,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             checked = showFullscreenActionItems,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setShowFullscreenActionItems(context, it)
+                    viewModel.setShowFullscreenActionItems(it)
                 }
             },
             iconTint = com.android.purebilibili.core.theme.iOSPink
@@ -2256,8 +2041,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             checked = showOnlineCount,
             onCheckedChange = {
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setShowOnlineCount(context, it)
+                    viewModel.setShowOnlineCount(it)
                 }
             },
             iconTint = com.android.purebilibili.core.theme.iOSBlue
@@ -2275,8 +2059,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             selectedValue = bottomProgressBehavior,
             onSelectionChange = { behavior ->
                 scope.launch {
-                    com.android.purebilibili.core.store.SettingsManager
-                        .setBottomProgressBehavior(context, behavior)
+                    viewModel.setBottomProgressBehavior(behavior)
                 }
             }
         )
@@ -2292,7 +2075,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             checked = progressPeakDanmakuEnabled,
             onCheckedChange = { enabled ->
                 scope.launch {
-                    SettingsManager.setProgressPeakDanmakuEnabled(context, enabled)
+                    viewModel.setProgressPeakDanmakuEnabled(enabled)
                 }
             },
             iconTint = com.android.purebilibili.core.theme.iOSPurple,
@@ -2314,7 +2097,7 @@ private fun PlaybackFullscreenGestureSettingsSection(
             selectedValue = playerProgressPlacement,
             onSelectionChange = { placement ->
                 scope.launch {
-                    SettingsManager.setPlayerProgressPlacement(context, placement)
+                    viewModel.setPlayerProgressPlacement(placement)
                 }
             }
         )
