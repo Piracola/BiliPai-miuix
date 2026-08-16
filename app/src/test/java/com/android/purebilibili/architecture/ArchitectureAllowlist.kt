@@ -60,7 +60,6 @@ internal object ArchitectureAllowlist {
         "src/main/java/com/android/purebilibili/feature/search/SearchArticleNavigationPolicy.kt",
         "src/main/java/com/android/purebilibili/feature/search/SearchScreen.kt",
         "src/main/java/com/android/purebilibili/feature/settings/PlaybackSettingsSelectionPolicy.kt",
-        "src/main/java/com/android/purebilibili/feature/settings/screen/AnimationSettingsScreen.kt",
         "src/main/java/com/android/purebilibili/feature/settings/screen/AppearanceSettingsScreen.kt",
         "src/main/java/com/android/purebilibili/feature/settings/screen/BottomBarSettingsScreen.kt",
         "src/main/java/com/android/purebilibili/feature/settings/screen/PlaybackSettingsScreen.kt",

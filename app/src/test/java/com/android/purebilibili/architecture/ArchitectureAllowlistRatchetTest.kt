@@ -45,13 +45,13 @@ class ArchitectureAllowlistRatchetTest {
     }
 
     private companion object {
-        // 116 → 115：阶段 4 首个垂直切片 PartitionScreen 完成（设置读取移入
-        // ViewModel、M3 颜色换 AppSurfaceTokens），从白名单移除。
-        // 115 → 95：护栏规则修正——*ViewModel.kt 属 Coordinator 层（依赖 Core
-        // 合法），由规则豁免，20 个 ViewModel 文件移出白名单。
-        const val MAX_CORE_GLOBAL_OBJECT_FILES = 95
+        // 116 → 115：阶段 4 首个垂直切片 PartitionScreen 完成。
+        // 115 → 95：护栏规则修正——*ViewModel.kt 属 Coordinator 层，由规则豁免。
+        // 95 → 94：阶段 4 设置页切片——AnimationSettingsScreen 直读收拢到
+        // SettingsViewModel（5 处 → 0），从白名单移除。
+        const val MAX_CORE_GLOBAL_OBJECT_FILES = 94
 
         const val CORE_GLOBAL_OBJECT_FILES_SHA256 =
-            "6c8cb8a16f2c35c7c734bd1e97ded5c7087f63bbb3ed70b1220cad61cb7ca968"
+            "dbf1ffdac6e0012c3c99beb9fa4aff0c64c62e34f60959b017b8b20af88657be"
     }
 }

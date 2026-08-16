@@ -95,7 +95,11 @@ data class SettingsUiState(
     val tabletUseSidebar: Boolean = false,
     val isHeaderCollapseEnabled: Boolean = true,
     val gridColumnCount: Int = 0, // [New]
-    val homeFeedCardWidthPreset: HomeFeedCardWidthPreset = HomeFeedCardWidthPreset.AUTO
+    val homeFeedCardWidthPreset: HomeFeedCardWidthPreset = HomeFeedCardWidthPreset.AUTO,
+    // 阶段 4 设置页切片：动画/效果页直读收拢到 VM
+    val videoTransitionRealtimeBlurEnabled: Boolean = false,
+    val liveSurfaceCardTransitionEnabled: Boolean = false,
+    val fullScreenSwipeBackEnabled: Boolean = false
 )
 
 // 内部数据类，用于分批合并流
@@ -135,7 +139,11 @@ data class ExtraSettings(
     val tabletUseSidebar: Boolean, // [New]
     val isHeaderCollapseEnabled: Boolean,
     val gridColumnCount: Int, // [New]
-    val homeFeedCardWidthPreset: HomeFeedCardWidthPreset
+    val homeFeedCardWidthPreset: HomeFeedCardWidthPreset,
+    // 阶段 4 设置页切片：动画/效果页直读收拢
+    val videoTransitionRealtimeBlurEnabled: Boolean,
+    val liveSurfaceCardTransitionEnabled: Boolean,
+    val fullScreenSwipeBackEnabled: Boolean
 )
 
 
@@ -269,7 +277,11 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         SettingsManager.getTabletUseSidebar(context).asAnyFlow(), // [New]
         SettingsManager.getHeaderCollapseEnabled(context).asAnyFlow(),
         SettingsManager.getGridColumnCount(context).asAnyFlow(), // [New]
-        SettingsManager.getHomeFeedCardWidthPreset(context).asAnyFlow()
+        SettingsManager.getHomeFeedCardWidthPreset(context).asAnyFlow(),
+        // 阶段 4 设置页切片：动画/效果页三项
+        SettingsManager.getVideoTransitionRealtimeBlurEnabled(context).asAnyFlow(),
+        SettingsManager.getLiveSurfaceCardTransitionEnabled(context).asAnyFlow(),
+        SettingsManager.getFullScreenSwipeBackEnabled(context).asAnyFlow()
     ) { values ->
         val isBottomBarFloating = values[0] as Boolean
         val labelMode = values[1] as Int
@@ -287,6 +299,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         val headerCollapse = values[13] as Boolean
         val gridColumnCount = values[14] as Int
         val homeFeedCardWidthPreset = values[15] as HomeFeedCardWidthPreset
+        val videoTransitionRealtimeBlur = values[16] as Boolean
+        val liveSurfaceCardTransition = values[17] as Boolean
+        val fullScreenSwipeBack = values[18] as Boolean
         
         data class Ui2(
             val f: Boolean,
@@ -304,7 +319,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             val tus: Boolean,
             val hc: Boolean,
             val gcc: Int,
-            val hfcwp: HomeFeedCardWidthPreset
+            val hfcwp: HomeFeedCardWidthPreset,
+            val vtrb: Boolean,
+            val lsct: Boolean,
+            val fssb: Boolean
         )
         Ui2(
             isBottomBarFloating,
@@ -322,7 +340,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             tabletUseSidebar,
             headerCollapse,
             gridColumnCount,
-            homeFeedCardWidthPreset
+            homeFeedCardWidthPreset,
+            videoTransitionRealtimeBlur,
+            liveSurfaceCardTransition,
+            fullScreenSwipeBack
         )
     }
 
@@ -353,6 +374,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             isHeaderCollapseEnabled = ui2.hc,
             gridColumnCount = ui2.gcc, // [New]
             homeFeedCardWidthPreset = ui2.hfcwp,
+            videoTransitionRealtimeBlurEnabled = ui2.vtrb,
+            liveSurfaceCardTransitionEnabled = ui2.lsct,
+            fullScreenSwipeBackEnabled = ui2.fssb,
             headerBlurEnabled = false, // 暂存，将在下一步合并
             bottomBarBlurEnabled = false, // 暂存
             blurIntensity = BlurIntensity.THIN // 暂存
@@ -656,6 +680,13 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun toggleVideoTransitionRealtimeBlur(value: Boolean) {
         viewModelScope.launch {
             SettingsManager.setVideoTransitionRealtimeBlurEnabled(context, value)
+        }
+    }
+
+    // 阶段 4 设置页切片：全屏滑动返回写入收拢到 VM
+    fun setFullScreenSwipeBackEnabled(value: Boolean) {
+        viewModelScope.launch {
+            SettingsManager.setFullScreenSwipeBackEnabled(context, value)
         }
     }
 

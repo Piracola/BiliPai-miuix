@@ -32,12 +32,16 @@ class AnimationSettingsScreenStructureTest {
     @Test
     fun animationSettingsScreen_exposesLiveSurfaceCardTransitionToggle() {
         val source = animationSettingsSource()
+        val viewModelSource = settingsViewModelSource()
 
         assertTrue(source.contains("title = \"实时画面转场\""))
         assertTrue(source.contains("checked = liveSurfaceCardTransitionEnabled"))
-        assertTrue(source.contains("toggleLiveSurfaceCardTransition"))
+        assertTrue(source.contains("viewModel.toggleLiveSurfaceCardTransition(it)"))
         assertTrue(source.contains("enabled = state.cardTransitionEnabled"))
-        assertTrue(source.contains("getLiveSurfaceCardTransitionEnabled"))
+        // 阶段 4 切片：读取收拢到 SettingsViewModel，Screen 不再直读 getter。
+        assertFalse(source.contains("getLiveSurfaceCardTransitionEnabled"))
+        assertTrue(viewModelSource.contains("toggleLiveSurfaceCardTransition"))
+        assertTrue(viewModelSource.contains("getLiveSurfaceCardTransitionEnabled(context)"))
     }
 
     @Test
@@ -54,6 +58,13 @@ class AnimationSettingsScreenStructureTest {
         return listOf(
             File("app/src/main/java/com/android/purebilibili/feature/settings/screen/AnimationSettingsScreen.kt"),
             File("src/main/java/com/android/purebilibili/feature/settings/screen/AnimationSettingsScreen.kt"),
+        ).first { it.exists() }.readText()
+    }
+
+    private fun settingsViewModelSource(): String {
+        return listOf(
+            File("app/src/main/java/com/android/purebilibili/feature/settings/SettingsViewModel.kt"),
+            File("src/main/java/com/android/purebilibili/feature/settings/SettingsViewModel.kt"),
         ).first { it.exists() }.readText()
     }
 }

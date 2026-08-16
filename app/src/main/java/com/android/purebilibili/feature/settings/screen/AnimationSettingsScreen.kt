@@ -19,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -27,8 +26,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.purebilibili.R
 import com.android.purebilibili.core.theme.*
 import com.android.purebilibili.core.ui.blur.BlurIntensity
-import com.android.purebilibili.core.store.AppNavigationSettings
-import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.ui.ContainerLevel
@@ -42,8 +39,6 @@ import com.android.purebilibili.core.ui.transition.normalizeVideoSharedTransitio
 import com.android.purebilibili.core.util.LocalWindowSizeClass
 import androidx.compose.material.icons.outlined.*
 import com.android.purebilibili.core.ui.components.*
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import android.os.Build
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlin.math.roundToInt
@@ -58,7 +53,6 @@ fun AnimationSettingsScreen(
     viewModel: SettingsViewModel = viewModel(),
     onBack: () -> Unit
 ) {
-    val context = LocalContext.current
     val state by viewModel.state.collectAsStateWithLifecycle()
     val screenTitle = stringResource(R.string.animation_effects_title)
     val backLabel = stringResource(R.string.common_back)
@@ -85,8 +79,6 @@ fun AnimationSettingsContent(
     state: SettingsUiState,
     viewModel: SettingsViewModel
 ) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
     val focusRequest by SettingsSearchFocusController.request.collectAsStateWithLifecycle()
     val windowSizeClass = LocalWindowSizeClass.current
@@ -114,17 +106,9 @@ fun AnimationSettingsContent(
             MotionTier.Enhanced -> "更明显的层级与动势，适合大屏展示"
         }
     }
-    val appNavigationSettings by SettingsManager.getAppNavigationSettings(context)
-        .collectAsStateWithLifecycle(initialValue = AppNavigationSettings())
-    val videoTransitionRealtimeBlurEnabled by SettingsManager
-        .getVideoTransitionRealtimeBlurEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = false)
-    val liveSurfaceCardTransitionEnabled by SettingsManager
-        .getLiveSurfaceCardTransitionEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = false)
-    val fullScreenSwipeBackEnabled by SettingsManager
-        .getFullScreenSwipeBackEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = false)
+    val videoTransitionRealtimeBlurEnabled = state.videoTransitionRealtimeBlurEnabled
+    val liveSurfaceCardTransitionEnabled = state.liveSurfaceCardTransitionEnabled
+    val fullScreenSwipeBackEnabled = state.fullScreenSwipeBackEnabled
     val sharedTransitionSpeedOptions = remember {
         listOf(
             AppSegmentOption(VideoSharedTransitionSpeed.FAST, "快速"),
@@ -232,11 +216,7 @@ fun AnimationSettingsContent(
                                 "仅屏幕边缘系统手势触发返回"
                             },
                             checked = fullScreenSwipeBackEnabled,
-                            onCheckedChange = { enabled ->
-                                scope.launch {
-                                    SettingsManager.setFullScreenSwipeBackEnabled(context, enabled)
-                                }
-                            },
+                            onCheckedChange = viewModel::setFullScreenSwipeBackEnabled,
                             iconTint = iOSTeal
                         )
                         AppPreferenceDivider()
