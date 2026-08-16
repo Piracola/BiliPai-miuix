@@ -1,4 +1,4 @@
-package com.android.purebilibili.feature.video.danmaku
+package com.android.purebilibili.core.danmaku
 
 import com.bytedance.danmaku.render.engine.render.draw.text.TextData
 

@@ -1,5 +1,9 @@
 package com.android.purebilibili.feature.video.danmaku
 
+import com.android.purebilibili.core.danmaku.BasEasing
+import com.android.purebilibili.core.danmaku.DanmakuParser
+import com.android.purebilibili.core.danmaku.DanmakuProto
+
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

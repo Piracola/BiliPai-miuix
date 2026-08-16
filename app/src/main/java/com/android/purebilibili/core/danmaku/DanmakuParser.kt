@@ -1,5 +1,5 @@
 // 文件路径: feature/video/danmaku/DanmakuParser.kt
-package com.android.purebilibili.feature.video.danmaku
+package com.android.purebilibili.core.danmaku
 
 import android.util.Log
 import android.util.Xml

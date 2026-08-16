@@ -1,6 +1,13 @@
 // 文件路径: feature/video/danmaku/DanmakuManager.kt
 package com.android.purebilibili.feature.video.danmaku
 
+import com.android.purebilibili.core.danmaku.AdvancedDanmakuData
+import com.android.purebilibili.core.danmaku.ParsedDanmaku
+import com.android.purebilibili.core.danmaku.WeightedTextData
+
+import com.android.purebilibili.core.danmaku.DanmakuParser
+import com.android.purebilibili.core.danmaku.DanmakuProto
+
 import android.content.Context
 import android.graphics.Typeface
 import android.os.SystemClock

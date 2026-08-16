@@ -102,10 +102,10 @@ class ModuleBoundaryReadinessStructureTest {
         /**
          * 冻结于 2026-08-16 的实测反向依赖（相对 app 模块根），只减不增。
          * 消除后从快照中移除并同步本集合。
-         * 2026-08-16：移除 ArticleRepository（ArticleContentBlockParser 下沉 core.article）。
+         * 2026-08-16：移除 ArticleRepository（下沉 core.article）、
+         * DanmakuRepository（下沉 core.danmaku：DanmakuProto/Parser/Data 簇）。
          */
         val FROZEN_REPOSITORY_FEATURE_DEPENDENCIES: Set<String> = setOf(
-            "src/main/java/com/android/purebilibili/data/repository/DanmakuRepository.kt",
             "src/main/java/com/android/purebilibili/data/repository/VideoRepository.kt",
         )
 

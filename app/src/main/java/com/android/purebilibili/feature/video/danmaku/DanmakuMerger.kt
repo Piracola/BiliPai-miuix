@@ -1,5 +1,9 @@
 package com.android.purebilibili.feature.video.danmaku
 
+import com.android.purebilibili.core.danmaku.AdvancedDanmakuData
+import com.android.purebilibili.core.danmaku.ParsedDanmaku
+import com.android.purebilibili.core.danmaku.WeightedTextData
+
 import com.bytedance.danmaku.render.engine.data.DanmakuData
 import com.bytedance.danmaku.render.engine.render.draw.text.TextData
 import android.util.Log

@@ -1,5 +1,5 @@
 // 文件路径: feature/video/danmaku/DanmakuProto.kt
-package com.android.purebilibili.feature.video.danmaku
+package com.android.purebilibili.core.danmaku
 
 import android.util.Log
 import java.io.ByteArrayInputStream

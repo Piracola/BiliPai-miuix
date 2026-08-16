@@ -1,6 +1,9 @@
 // 文件路径: data/repository/DanmakuRepository.kt
 package com.android.purebilibili.data.repository
 
+import com.android.purebilibili.core.danmaku.DanmakuParser
+import com.android.purebilibili.core.danmaku.DanmakuProto
+
 import com.android.purebilibili.core.store.normalizeDanmakuDisplayArea
 import com.android.purebilibili.core.network.NetworkModule
 import com.android.purebilibili.data.model.response.DanmakuThumbupStatsItem
@@ -374,13 +377,13 @@ object DanmakuRepository {
     /**
      * 获取弹幕元数据 (High-Energy, Command Dms, etc.)
      */
-    suspend fun getDanmakuView(cid: Long, aid: Long): com.android.purebilibili.feature.video.danmaku.DanmakuProto.DmWebViewReply? = withContext(Dispatchers.IO) {
+    suspend fun getDanmakuView(cid: Long, aid: Long): com.android.purebilibili.core.danmaku.DanmakuProto.DmWebViewReply? = withContext(Dispatchers.IO) {
         try {
              com.android.purebilibili.core.util.Logger.d("DanmakuRepo", "🎯 getDanmakuView: cid=$cid, aid=$aid")
              val responseBody = api.getDanmakuView(oid = cid, pid = aid)
              val bytes = responseBody.bytes()
              if (bytes.isNotEmpty()) {
-                 val result = com.android.purebilibili.feature.video.danmaku.DanmakuParser.parseWebViewReply(bytes)
+                 val result = com.android.purebilibili.core.danmaku.DanmakuParser.parseWebViewReply(bytes)
                  com.android.purebilibili.core.util.Logger.d("DanmakuRepo", " Metadata parsed: count=${result.count}, special=${result.specialDms.size}, command=${result.commandDms.size}")
                  result
              } else {

@@ -1,5 +1,11 @@
 package com.android.purebilibili.feature.video.ui.overlay
 
+import com.android.purebilibili.core.danmaku.AdvancedDanmakuData
+import com.android.purebilibili.core.danmaku.BasPathPoint
+import com.android.purebilibili.core.danmaku.ParsedDanmaku
+import com.android.purebilibili.core.danmaku.WeightedTextData
+
+
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -24,7 +30,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.graphicsLayer
-import com.android.purebilibili.feature.video.danmaku.AdvancedDanmakuData
 import kotlin.math.roundToInt
 
 /**
@@ -136,7 +141,7 @@ private fun RenderSingleAdvancedDanmaku(
     } else {
         val currentX = danmaku.startX + (danmaku.endX - danmaku.startX) * easedProgress
         val currentY = danmaku.startY + (danmaku.endY - danmaku.startY) * easedProgress
-        com.android.purebilibili.feature.video.danmaku.BasPathPoint(currentX, currentY)
+        com.android.purebilibili.core.danmaku.BasPathPoint(currentX, currentY)
     }
 
     // 转换为像素坐标

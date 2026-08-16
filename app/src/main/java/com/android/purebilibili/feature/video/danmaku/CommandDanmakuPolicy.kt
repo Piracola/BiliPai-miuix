@@ -1,5 +1,12 @@
 package com.android.purebilibili.feature.video.danmaku
 
+import com.android.purebilibili.core.danmaku.AdvancedDanmakuData
+import com.android.purebilibili.core.danmaku.ParsedDanmaku
+import com.android.purebilibili.core.danmaku.WeightedTextData
+
+import com.android.purebilibili.core.danmaku.DanmakuParser
+import com.android.purebilibili.core.danmaku.DanmakuProto
+
 import org.json.JSONArray
 import org.json.JSONObject
 
