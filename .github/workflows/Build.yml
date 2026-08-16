@@ -58,6 +58,10 @@ jobs:
             --tests 'com.android.purebilibili.core.ui.lint.MigratedFeatureStyleLintTest' \
             --tests 'com.android.purebilibili.core.ui.lint.StyleLintAllowlistRatchetTest' \
             --tests 'com.android.purebilibili.core.ui.perf.FrameBudgetLintTest' \
+            --tests 'com.android.purebilibili.architecture.UiLayerMustNotTouchCoreDataStructureTest' \
+            --tests 'com.android.purebilibili.architecture.CoreLayerMustNotDependOnComposeStructureTest' \
+            --tests 'com.android.purebilibili.architecture.FeatureLayerIsolationStructureTest' \
+            --tests 'com.android.purebilibili.architecture.ArchitectureAllowlistRatchetTest' \
             --no-daemon \
             --console=plain
 
