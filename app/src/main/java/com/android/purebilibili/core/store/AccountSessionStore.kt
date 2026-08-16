@@ -23,7 +23,7 @@ data class StoredAccountSession(
     val lastUsedAt: Long = 0L
 )
 
-object AccountSessionStore {
+object AccountSessionStore : AccountSessionProvider {
     private const val SP_NAME = "multi_account_sessions"
     private const val KEY_ACCOUNTS = "accounts"
     private const val KEY_ACTIVE_MID = "active_mid"
@@ -34,7 +34,7 @@ object AccountSessionStore {
         encodeDefaults = true
     }
 
-    fun getAccounts(context: Context): List<StoredAccountSession> {
+    override fun getAccounts(context: Context): List<StoredAccountSession> {
         val raw = context.getSharedPreferences(SP_NAME, Context.MODE_PRIVATE)
             .getString(KEY_ACCOUNTS, null)
             .orEmpty()
@@ -44,7 +44,7 @@ object AccountSessionStore {
         }.getOrDefault(emptyList()).sortedByDescending { it.lastUsedAt }
     }
 
-    fun getActiveAccountMid(context: Context): Long? {
+    override fun getActiveAccountMid(context: Context): Long? {
         return context.getSharedPreferences(SP_NAME, Context.MODE_PRIVATE)
             .getLong(KEY_ACTIVE_MID, 0L)
             .takeIf { it > 0L }
@@ -54,19 +54,19 @@ object AccountSessionStore {
      * The optional account whose server-side entitlement is used only while
      * requesting playback URLs. A missing value means "use the main account".
      */
-    fun getPlaybackAccountMid(context: Context): Long? {
+    override fun getPlaybackAccountMid(context: Context): Long? {
         return context.getSharedPreferences(SP_NAME, Context.MODE_PRIVATE)
             .getLong(KEY_PLAYBACK_MID, 0L)
             .takeIf { it > 0L }
     }
 
-    fun getPlaybackAccount(context: Context): StoredAccountSession? {
+    override fun getPlaybackAccount(context: Context): StoredAccountSession? {
         val mid = getPlaybackAccountMid(context) ?: return null
         return getAccounts(context).firstOrNull { it.mid == mid && it.sessData.isNotBlank() }
     }
 
     /** Selects an already-verified local account for playback without switching the app account. */
-    fun setPlaybackAccountMid(context: Context, mid: Long?): Boolean {
+    override fun setPlaybackAccountMid(context: Context, mid: Long?): Boolean {
         if (mid != null && getAccounts(context).none { it.mid == mid && it.sessData.isNotBlank() }) {
             return false
         }
@@ -80,7 +80,7 @@ object AccountSessionStore {
         return true
     }
 
-    fun clearActiveAccount(context: Context) {
+    override fun clearActiveAccount(context: Context) {
         context.getSharedPreferences(SP_NAME, Context.MODE_PRIVATE)
             .edit()
             .remove(KEY_ACTIVE_MID)
@@ -88,7 +88,7 @@ object AccountSessionStore {
         NetworkModule.clearRuntimeCookies()
     }
 
-    fun removeAccount(context: Context, mid: Long): Boolean {
+    override fun removeAccount(context: Context, mid: Long): Boolean {
         val current = getAccounts(context)
         if (current.none { it.mid == mid }) return false
 
@@ -107,9 +107,9 @@ object AccountSessionStore {
         return true
     }
 
-    suspend fun upsertCurrentAccount(
+    override suspend fun upsertCurrentAccount(
         context: Context,
-        navData: NavData? = null
+        navData: NavData?
     ): StoredAccountSession? {
         val mid = navData?.mid?.takeIf { it > 0L } ?: TokenManager.midCache ?: return null
         val sessData = TokenManager.sessDataCache?.takeIf { it.isNotBlank() } ?: return null
@@ -141,7 +141,7 @@ object AccountSessionStore {
         return updated
     }
 
-    suspend fun activateAccount(context: Context, mid: Long): Boolean {
+    override suspend fun activateAccount(context: Context, mid: Long): Boolean {
         val target = getAccounts(context).firstOrNull { it.mid == mid } ?: return false
         if (target.sessData.isBlank()) return false
 

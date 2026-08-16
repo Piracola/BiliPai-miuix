@@ -2420,7 +2420,7 @@ interface MessageApi {
     ): com.android.purebilibili.data.model.response.SimpleApiResponse
 }
 
-object NetworkModule {
+object NetworkModule : NetworkClientProvider {
     internal var appContext: Context? = null
     private val appSessionCookieJar = AppSessionCookieJar()
     private var playbackAccountKey: String? = null
@@ -2452,7 +2452,7 @@ object NetworkModule {
      * decides access from the selected account's own server-side session.
      */
     @Synchronized
-    fun playbackApi(): BilibiliApi {
+    override fun playbackApi(): BilibiliApi {
         val context = appContext ?: return api
         val account = AccountSessionStore.getPlaybackAccount(context) ?: return api
         if (account.mid == TokenManager.midCache) return api
@@ -2463,7 +2463,7 @@ object NetworkModule {
     }
 
     @Synchronized
-    fun playbackBangumiApi(): BangumiApi {
+    override fun playbackBangumiApi(): BangumiApi {
         val context = appContext ?: return bangumiApi
         val account = AccountSessionStore.getPlaybackAccount(context) ?: return bangumiApi
         if (account.mid == TokenManager.midCache) return bangumiApi
@@ -2551,7 +2551,7 @@ object NetworkModule {
             .build()
     }
 
-    val okHttpClient: OkHttpClient by lazy {
+    override val okHttpClient: OkHttpClient by lazy {
         val builder = OkHttpClient.Builder()
             .protocols(resolveSharedNetworkProtocols())
             .proxySelector(buildAppProxySelector())
@@ -2751,7 +2751,7 @@ object NetworkModule {
             .build()
     }
 
-    val playbackOkHttpClient: OkHttpClient by lazy {
+    override val playbackOkHttpClient: OkHttpClient by lazy {
         buildPlaybackOkHttpClient(okHttpClient)
     }
     
@@ -2855,7 +2855,7 @@ object NetworkModule {
             .create(BilibiliApi::class.java)
     }
 
-    val api: BilibiliApi by lazy {
+    override val api: BilibiliApi by lazy {
         Retrofit.Builder().baseUrl("https://api.bilibili.com/").client(okHttpClient)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType())).build()
             .create(BilibiliApi::class.java)

@@ -16,7 +16,7 @@ import java.util.UUID
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "user_prefs")
 
-object TokenManager {
+object TokenManager : SessionCredentialProvider {
     private val SESSDATA_KEY = stringPreferencesKey("sessdata")
     private val BUVID3_KEY = stringPreferencesKey("buvid3")
 
@@ -66,6 +66,13 @@ object TokenManager {
     @Volatile
     var accessTokenPlatformCache: String = ACCESS_TOKEN_PLATFORM_TV
         private set
+
+    // SessionCredentialProvider 只读视图（阶段 2 接缝）。
+    override val sessData: String? get() = sessDataCache
+    override val csrf: String? get() = csrfCache
+    override val mid: Long? get() = midCache
+    override val buvid3: String? get() = buvid3Cache
+    override val isVip: Boolean get() = isVipCache
 
     fun init(context: Context) {
         // 1.  同步读取 SP 备份，确保主线程立即有数据
