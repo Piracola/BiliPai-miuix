@@ -48,10 +48,11 @@ class ArchitectureAllowlistRatchetTest {
         // 116 → 115：阶段 4 首个垂直切片 PartitionScreen 完成。
         // 115 → 95：护栏规则修正——*ViewModel.kt 属 Coordinator 层，由规则豁免。
         // 95 → 94：AnimationSettingsScreen 直读收拢到 VM。
-        // 94 → 93：AppearanceSettingsScreen 直读收拢到 VM（15 项外观 + splash 状态）。
-        const val MAX_CORE_GLOBAL_OBJECT_FILES = 93
+        // 94 → 93：AppearanceSettingsScreen 直读收拢到 VM。
+        // 93 → 92：BottomBarSettingsScreen 直读收拢到 VM（12 项 + 15 setter）。
+        const val MAX_CORE_GLOBAL_OBJECT_FILES = 92
 
         const val CORE_GLOBAL_OBJECT_FILES_SHA256 =
-            "0cf0856224ad6ecdbac7d297347c6ba7d33a07660757296ce958784f7c159a90"
+            "46d40d2624f12e41de34ca81a831b24e84b041e47e6d0eca621fc5a163435499"
     }
 }

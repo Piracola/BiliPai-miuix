@@ -18,6 +18,10 @@ import com.android.purebilibili.core.store.CommonListHeaderCollapseMode
 import com.android.purebilibili.core.store.HomeDurationStyle
 import com.android.purebilibili.core.store.HomeFeedCardStyle
 import com.android.purebilibili.core.store.HomeFeedCardWidthPreset
+import com.android.purebilibili.core.store.HomeHeaderBlurMode
+import com.android.purebilibili.core.store.HomeHeaderCollapseMode
+import com.android.purebilibili.core.store.HomeTopLayoutOrder
+import com.android.purebilibili.core.store.HomeTopRightAction
 import com.android.purebilibili.core.store.HomeWallpaperEffectMode
 import com.android.purebilibili.core.store.HomeWallpaperEffectScope
 import com.android.purebilibili.core.theme.AppFontSizePreset
@@ -129,7 +133,20 @@ data class SettingsUiState(
     val splashRandomEnabled: Boolean = false,
     val splashWallpaperUri: String = "",
     val splashRandomPoolUris: List<String> = emptyList(),
-    val splashIconAnimationEnabled: Boolean = true
+    val splashIconAnimationEnabled: Boolean = true,
+    // 阶段 4 切片：底栏页直读收拢（11 项）
+    val bottomBarOrder: List<String> = listOf("HOME", "DYNAMIC", "HISTORY", "PROFILE"),
+    val bottomBarVisibleTabs: Set<String> = setOf("HOME", "DYNAMIC", "HISTORY", "PROFILE"),
+    val topTabOrder: List<String> = emptyList(),
+    val topTabVisibleTabs: Set<String> = emptySet(),
+    val topTabLabelMode: Int = 2,
+    val headerBlurMode: HomeHeaderBlurMode = HomeHeaderBlurMode.FOLLOW_PRESET,
+    val homeTopLayoutOrder: HomeTopLayoutOrder = HomeTopLayoutOrder.SEARCH_THEN_TABS,
+    val homeHeaderCollapseMode: HomeHeaderCollapseMode = HomeHeaderCollapseMode.BOTH,
+    val homeTopRightAction: HomeTopRightAction = HomeTopRightAction.SETTINGS,
+    val bottomBarVisibilityMode: SettingsManager.BottomBarVisibilityMode = SettingsManager.BottomBarVisibilityMode.ALWAYS_VISIBLE,
+    val sidebarAccountSwitcherEnabled: Boolean = true,
+    val bottomBarItemColors: Map<String, Int> = emptyMap()
 )
 
 // 内部数据类，用于分批合并流
@@ -248,6 +265,24 @@ private data class AppearanceSettingsGroup(
     val splashWallpaperUri: String,
     val splashRandomPoolUris: List<String>,
     val splashIconAnimationEnabled: Boolean
+)
+
+/**
+ * 阶段 4 设置页切片：底栏页直读收拢分组（11 项）。
+ */
+private data class BottomBarSettingsGroup(
+    val bottomBarOrder: List<String>,
+    val bottomBarVisibleTabs: Set<String>,
+    val topTabOrder: List<String>,
+    val topTabVisibleTabs: Set<String>,
+    val topTabLabelMode: Int,
+    val headerBlurMode: HomeHeaderBlurMode,
+    val homeTopLayoutOrder: HomeTopLayoutOrder,
+    val homeHeaderCollapseMode: HomeHeaderCollapseMode,
+    val homeTopRightAction: HomeTopRightAction,
+    val bottomBarVisibilityMode: SettingsManager.BottomBarVisibilityMode,
+    val sidebarAccountSwitcherEnabled: Boolean,
+    val bottomBarItemColors: Map<String, Int>
 )
 
 private fun <T> Flow<T>.asAnyFlow(): Flow<Any?> = map { it }
@@ -544,9 +579,22 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         SettingsManager.getSplashRandomEnabled(context).asAnyFlow(),
         SettingsManager.getSplashWallpaperUri(context).asAnyFlow(),
         SettingsManager.getSplashRandomPoolUris(context).asAnyFlow(),
-        SettingsManager.getSplashIconAnimationEnabled(context).asAnyFlow()
+        SettingsManager.getSplashIconAnimationEnabled(context).asAnyFlow(),
+        // 阶段 4 切片：底栏页直读收拢（11 项，并入 appearance flow 保持 combine ≤5 参数）
+        SettingsManager.getBottomBarOrder(context).asAnyFlow(),
+        SettingsManager.getBottomBarVisibleTabs(context).asAnyFlow(),
+        SettingsManager.getTopTabOrder(context).asAnyFlow(),
+        SettingsManager.getTopTabVisibleTabs(context).asAnyFlow(),
+        SettingsManager.getTopTabLabelMode(context).asAnyFlow(),
+        SettingsManager.getHomeHeaderBlurMode(context).asAnyFlow(),
+        SettingsManager.getHomeTopLayoutOrder(context).asAnyFlow(),
+        SettingsManager.getHomeHeaderCollapseMode(context).asAnyFlow(),
+        SettingsManager.getHomeTopRightAction(context).asAnyFlow(),
+        SettingsManager.getBottomBarVisibilityMode(context).asAnyFlow(),
+        SettingsManager.getSidebarAccountSwitcherEnabled(context).asAnyFlow(),
+        SettingsManager.getBottomBarItemColors(context).asAnyFlow()
     ) { values ->
-        AppearanceSettingsGroup(
+        val appearance = AppearanceSettingsGroup(
             singleChoicePresentation = values[0] as AppSingleChoicePresentation,
             compactVideoStatsOnCover = values[1] as Boolean,
             homeWallpaperUri = values[2] as String,
@@ -561,11 +609,26 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             homeFeedCardStyle = values[11] as HomeFeedCardStyle,
             showOnlineCount = values[12] as Boolean,
             splashEnabled = values[13] as Boolean,
-            splashRandomEnabled = values[13] as Boolean,
-            splashWallpaperUri = values[14] as String,
-            splashRandomPoolUris = values[15] as List<String>,
-            splashIconAnimationEnabled = values[16] as Boolean
+            splashRandomEnabled = values[14] as Boolean,
+            splashWallpaperUri = values[15] as String,
+            splashRandomPoolUris = values[16] as List<String>,
+            splashIconAnimationEnabled = values[17] as Boolean
         )
+        val bottomBar = BottomBarSettingsGroup(
+            bottomBarOrder = values[18] as List<String>,
+            bottomBarVisibleTabs = values[19] as Set<String>,
+            topTabOrder = values[20] as List<String>,
+            topTabVisibleTabs = values[21] as Set<String>,
+            topTabLabelMode = values[22] as Int,
+            headerBlurMode = values[23] as HomeHeaderBlurMode,
+            homeTopLayoutOrder = values[24] as HomeTopLayoutOrder,
+            homeHeaderCollapseMode = values[25] as HomeHeaderCollapseMode,
+            homeTopRightAction = values[26] as HomeTopRightAction,
+            bottomBarVisibilityMode = values[27] as SettingsManager.BottomBarVisibilityMode,
+            sidebarAccountSwitcherEnabled = values[28] as Boolean,
+            bottomBarItemColors = values[29] as Map<String, Int>
+        )
+        appearance to bottomBar
     }
 
     val state: StateFlow<SettingsUiState> = combine(
@@ -574,7 +637,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         experimentalSettingsFlow,
         _diagnosticsState,
         appearanceSettingsFlow,
-    ) { settings, cache, experimental, diagnostics, appearance ->
+    ) { settings, cache, experimental, diagnostics, appearancePair ->
+        val appearance = appearancePair.first
+        val bottomBar = appearancePair.second
         SettingsUiState(
             hwDecode = settings.hwDecode,
             themeMode = settings.themeMode,
@@ -629,6 +694,18 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             splashWallpaperUri = appearance.splashWallpaperUri,
             splashRandomPoolUris = appearance.splashRandomPoolUris,
             splashIconAnimationEnabled = appearance.splashIconAnimationEnabled,
+            bottomBarOrder = bottomBar.bottomBarOrder,
+            bottomBarVisibleTabs = bottomBar.bottomBarVisibleTabs,
+            topTabOrder = bottomBar.topTabOrder,
+            topTabVisibleTabs = bottomBar.topTabVisibleTabs,
+            topTabLabelMode = bottomBar.topTabLabelMode,
+            headerBlurMode = bottomBar.headerBlurMode,
+            homeTopLayoutOrder = bottomBar.homeTopLayoutOrder,
+            homeHeaderCollapseMode = bottomBar.homeHeaderCollapseMode,
+            homeTopRightAction = bottomBar.homeTopRightAction,
+            bottomBarVisibilityMode = bottomBar.bottomBarVisibilityMode,
+            sidebarAccountSwitcherEnabled = bottomBar.sidebarAccountSwitcherEnabled,
+            bottomBarItemColors = bottomBar.bottomBarItemColors,
 
             cacheSize = cache.first,
             cacheBreakdown = cache.second,  //  详细缓存统计
@@ -878,6 +955,26 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun setHomeUpBadgesVisible(value: Boolean) { viewModelScope.launch { SettingsManager.setHomeUpBadgesVisible(context, value) } }
     fun setHomeUpAvatarsVisible(value: Boolean) { viewModelScope.launch { SettingsManager.setHomeUpAvatarsVisible(context, value) } }
     fun setShowOnlineCount(value: Boolean) { viewModelScope.launch { SettingsManager.setShowOnlineCount(context, value) } }
+
+    // 阶段 4 切片：底栏页显示模式选项（避开 UI 层直接引用 SettingsManager 嵌套枚举）
+    val bottomBarVisibilityModeOptions: List<SettingsManager.BottomBarVisibilityMode> =
+        SettingsManager.BottomBarVisibilityMode.entries
+
+    // 阶段 4 切片：底栏页写入收拢
+    fun setBottomBarOrder(order: List<String>) { viewModelScope.launch { SettingsManager.setBottomBarOrder(context, order) } }
+    fun setBottomBarVisibleTabs(tabs: Set<String>) { viewModelScope.launch { SettingsManager.setBottomBarVisibleTabs(context, tabs) } }
+    fun setTopTabOrder(order: List<String>) { viewModelScope.launch { SettingsManager.setTopTabOrder(context, order) } }
+    fun setTopTabVisibleTabs(tabs: Set<String>) { viewModelScope.launch { SettingsManager.setTopTabVisibleTabs(context, tabs) } }
+    fun setBottomBarItemColor(itemId: String, colorIndex: Int) { viewModelScope.launch { SettingsManager.setBottomBarItemColor(context, itemId, colorIndex) } }
+    fun setTopTabLabelMode(mode: Int) { viewModelScope.launch { SettingsManager.setTopTabLabelMode(context, mode) } }
+    fun setHomeTopRightAction(action: HomeTopRightAction) { viewModelScope.launch { SettingsManager.setHomeTopRightAction(context, action) } }
+    fun setHomeHeaderBlurMode(mode: HomeHeaderBlurMode) { viewModelScope.launch { SettingsManager.setHomeHeaderBlurMode(context, mode) } }
+    fun setHomeTopLayoutOrder(order: HomeTopLayoutOrder) { viewModelScope.launch { SettingsManager.setHomeTopLayoutOrder(context, order) } }
+    fun setHomeHeaderCollapseMode(mode: HomeHeaderCollapseMode) { viewModelScope.launch { SettingsManager.setHomeHeaderCollapseMode(context, mode) } }
+    fun setBottomBarVisibilityMode(mode: SettingsManager.BottomBarVisibilityMode) { viewModelScope.launch { SettingsManager.setBottomBarVisibilityMode(context, mode) } }
+    fun setTabletUseSidebar(value: Boolean) { viewModelScope.launch { SettingsManager.setTabletUseSidebar(context, value) } }
+    fun setSidebarAccountSwitcherEnabled(value: Boolean) { viewModelScope.launch { SettingsManager.setSidebarAccountSwitcherEnabled(context, value) } }
+
     fun toggleSplashEnabled(value: Boolean) { viewModelScope.launch { SettingsManager.setSplashEnabled(context, value) } }
     fun toggleSplashRandomEnabled(value: Boolean) { viewModelScope.launch { SettingsManager.setSplashRandomEnabled(context, value) } }
     fun toggleSplashIconAnimationEnabled(value: Boolean) {

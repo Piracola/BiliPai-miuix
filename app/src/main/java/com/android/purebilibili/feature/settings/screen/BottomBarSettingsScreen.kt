@@ -48,7 +48,6 @@ import com.android.purebilibili.core.store.HomeTopLayoutOrder
 import com.android.purebilibili.core.store.HomeTopRightAction
 import com.android.purebilibili.core.store.BottomBarSearchAutoExpandMode
 import com.android.purebilibili.core.store.BottomBarSearchLayoutMode
-import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.store.resolveHomeHeaderCollapseModeForSearch
 import com.android.purebilibili.core.store.resolveHomeHeaderCollapseModeForTopTabs
 import com.android.purebilibili.core.theme.BottomBarColors  //  统一底栏颜色配置
@@ -63,6 +62,7 @@ import com.android.purebilibili.core.util.LocalWindowSizeClass
 import kotlinx.coroutines.launch
 import com.android.purebilibili.core.ui.components.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 /**
  *  底栏项目配置
@@ -131,7 +131,8 @@ internal fun resolveAllTopTabs(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BottomBarSettingsScreen(
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    viewModel: SettingsViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val screenTitle = stringResource(R.string.bottom_bar_management_title)
@@ -145,14 +146,16 @@ fun BottomBarSettingsScreen(
         bottomContentPadding = bottomContentPadding,
         scrollHost = SettingsPageScrollHost.External,
     ) {
-        BottomBarSettingsContent()
+        BottomBarSettingsContent(viewModel = viewModel)
     }
 }
 
 @Composable
 fun BottomBarSettingsContent(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: SettingsViewModel = viewModel()
 ) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val iconFamily = rememberAppSemanticVisualPolicy().effectiveIconFamily
     val windowSizeClass = LocalWindowSizeClass.current
@@ -175,34 +178,23 @@ fun BottomBarSettingsContent(
     val allTopTabs = remember(iconFamily) { resolveAllTopTabs(iconFamily) }
 
     
-    // 读取当前配置
-    val order by SettingsManager.getBottomBarOrder(context).collectAsStateWithLifecycle(initialValue = listOf("HOME", "DYNAMIC", "HISTORY", "PROFILE"))
-    val visibleTabs by SettingsManager.getBottomBarVisibleTabs(context).collectAsStateWithLifecycle(initialValue = setOf("HOME", "DYNAMIC", "HISTORY", "PROFILE"))
-    val topTabOrder by SettingsManager.getTopTabOrder(context).collectAsStateWithLifecycle(initialValue = defaultTopTabIds)
-    val topTabVisible by SettingsManager.getTopTabVisibleTabs(context).collectAsStateWithLifecycle(initialValue = defaultTopTabIds.toSet())
-    val topTabLabelMode by SettingsManager.getTopTabLabelMode(context)
-        .collectAsStateWithLifecycle(initialValue = SettingsManager.TopTabLabelMode.TEXT_ONLY)
-    val headerBlurMode by SettingsManager.getHomeHeaderBlurMode(context)
-        .collectAsStateWithLifecycle(initialValue = HomeHeaderBlurMode.FOLLOW_PRESET)
-    val homeTopLayoutOrder by SettingsManager.getHomeTopLayoutOrder(context)
-        .collectAsStateWithLifecycle(initialValue = HomeTopLayoutOrder.SEARCH_THEN_TABS)
-    val homeHeaderCollapseMode by SettingsManager.getHomeHeaderCollapseMode(context)
-        .collectAsStateWithLifecycle(initialValue = HomeHeaderCollapseMode.BOTH)
-    val homeTopRightAction by SettingsManager.getHomeTopRightAction(context)
-        .collectAsStateWithLifecycle(initialValue = HomeTopRightAction.SETTINGS)
-    val isBottomBarFloating by SettingsManager.getBottomBarFloating(context)
-        .collectAsStateWithLifecycle(initialValue = true)
-    val bottomBarSearchEnabled by SettingsManager.getBottomBarSearchEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = false)
-    val bottomBarSearchAutoExpandMode by SettingsManager.getBottomBarSearchAutoExpandMode(context)
-        .collectAsStateWithLifecycle(initialValue = BottomBarSearchAutoExpandMode.DISABLED)
-    val bottomBarSearchLayoutMode by SettingsManager.getBottomBarSearchLayoutMode(context)
-        .collectAsStateWithLifecycle(initialValue = BottomBarSearchLayoutMode.FULL_DOCK)
+    // 阶段 4 切片：底栏页直读收拢到 SettingsViewModel.state
+    val order = state.bottomBarOrder
+    val visibleTabs = state.bottomBarVisibleTabs
+    val topTabOrder = state.topTabOrder
+    val topTabVisible = state.topTabVisibleTabs
+    val topTabLabelMode = state.topTabLabelMode
+    val headerBlurMode = state.headerBlurMode
+    val homeTopLayoutOrder = state.homeTopLayoutOrder
+    val homeHeaderCollapseMode = state.homeHeaderCollapseMode
+    val homeTopRightAction = state.homeTopRightAction
+    val isBottomBarFloating = state.isBottomBarFloating
+    val bottomBarSearchEnabled = state.bottomBarSearchEnabled
+    val bottomBarSearchAutoExpandMode = state.bottomBarSearchAutoExpandMode
+    val bottomBarSearchLayoutMode = state.bottomBarSearchLayoutMode
     val isTabletDevice = LocalConfiguration.current.smallestScreenWidthDp >= 600
-    val tabletUseSidebar by SettingsManager.getTabletUseSidebar(context)
-        .collectAsStateWithLifecycle(initialValue = isTabletDevice)
-    val sidebarAccountSwitcherEnabled by SettingsManager.getSidebarAccountSwitcherEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = true)
+    val tabletUseSidebar = state.tabletUseSidebar
+    val sidebarAccountSwitcherEnabled = state.sidebarAccountSwitcherEnabled
     
     // 可编辑的本地状态
     var localOrder by remember(order) { mutableStateOf(order) }
@@ -216,11 +208,11 @@ fun BottomBarSettingsContent(
     }
     var localTopTabVisible by remember(topTabVisible, topTabOrder) {
         mutableStateOf(
-            // 老配置可能超过上限：按用户顺序（含默认补全）裁剪到 SettingsManager.MAX_TOP_TABS
+            // 老配置可能超过上限：按用户顺序（含默认补全）裁剪到 5
             (topTabOrder + allTopTabs.map { it.id })
                 .distinct()
                 .filter { id -> topTabVisible.any { it == id } && allTopTabs.any { it.id == id } }
-                .take(SettingsManager.MAX_TOP_TABS)
+                .take(5)
                 .toSet()
         )
     }
@@ -246,20 +238,20 @@ fun BottomBarSettingsContent(
     }
     
     //  [新增] 读取项目颜色配置
-    val itemColors by SettingsManager.getBottomBarItemColors(context).collectAsStateWithLifecycle(initialValue = emptyMap())
+    val itemColors = state.bottomBarItemColors
     
     // 保存配置
     fun saveConfig() {
         scope.launch {
-            SettingsManager.setBottomBarOrder(context, localOrder)
-            SettingsManager.setBottomBarVisibleTabs(context, localVisibleTabs)
+            viewModel.setBottomBarOrder(localOrder)
+            viewModel.setBottomBarVisibleTabs(localVisibleTabs)
         }
     }
 
     fun saveTopTabConfig() {
         scope.launch {
-            SettingsManager.setTopTabOrder(context, localTopTabOrder)
-            SettingsManager.setTopTabVisibleTabs(context, localTopTabVisible)
+            viewModel.setTopTabOrder(localTopTabOrder)
+            viewModel.setTopTabVisibleTabs(localTopTabVisible)
         }
     }
 
@@ -285,7 +277,7 @@ fun BottomBarSettingsContent(
     //  [新增] 保存颜色配置
     fun saveItemColor(itemId: String, colorIndex: Int) {
         scope.launch {
-            SettingsManager.setBottomBarItemColor(context, itemId, colorIndex)
+            viewModel.setBottomBarItemColor(itemId, colorIndex)
         }
     }
 
@@ -321,7 +313,7 @@ fun BottomBarSettingsContent(
                             subtitle = "关闭后底栏沉浸式贴底显示",
                             checked = isBottomBarFloating,
                             onCheckedChange = { enabled ->
-                                scope.launch { SettingsManager.setBottomBarFloating(context, enabled) }
+                                viewModel.toggleBottomBarFloating(enabled)
                             },
                             iconTint = com.android.purebilibili.core.theme.iOSPurple,
                         )
@@ -332,7 +324,7 @@ fun BottomBarSettingsContent(
                             subtitle = "在悬浮底栏右侧显示搜索入口",
                             checked = bottomBarSearchEnabled,
                             onCheckedChange = { enabled ->
-                                scope.launch { SettingsManager.setBottomBarSearchEnabled(context, enabled) }
+                                viewModel.toggleBottomBarSearch(enabled)
                             },
                             iconTint = com.android.purebilibili.core.theme.iOSTeal,
                         )
@@ -346,7 +338,7 @@ fun BottomBarSettingsContent(
                             selectedValue = bottomBarSearchLayoutMode,
                             enabled = bottomBarSearchEnabled,
                             onSelectionChange = { mode ->
-                                scope.launch { SettingsManager.setBottomBarSearchLayoutMode(context, mode) }
+                                viewModel.setBottomBarSearchLayoutMode(mode)
                             },
                         )
                         AppPreferenceDivider()
@@ -359,9 +351,7 @@ fun BottomBarSettingsContent(
                             selectedValue = bottomBarSearchAutoExpandMode,
                             enabled = bottomBarSearchEnabled,
                             onSelectionChange = { mode ->
-                                scope.launch {
-                                    SettingsManager.setBottomBarSearchAutoExpandMode(context, mode)
-                                }
+                                viewModel.setBottomBarSearchAutoExpandMode(mode)
                             },
                         )
                     }
@@ -378,20 +368,18 @@ fun BottomBarSettingsContent(
             item {
                 Box(modifier = Modifier) {
                     AppPreferenceGroup {
-                        val visibilityMode by SettingsManager.getBottomBarVisibilityMode(context).collectAsStateWithLifecycle(initialValue = SettingsManager.BottomBarVisibilityMode.ALWAYS_VISIBLE)
-                        val labelMode by SettingsManager.getBottomBarLabelMode(context).collectAsStateWithLifecycle(initialValue = 0)
+                        val visibilityMode = state.bottomBarVisibilityMode
+                        val labelMode = state.bottomBarLabelMode
                         SettingsSingleChoicePreference(
                             icon = Icons.Outlined.Visibility,
                             iconTint = com.android.purebilibili.core.theme.iOSOrange,
                             title = "显示模式",
                             subtitle = visibilityMode.description,
-                            options = SettingsManager.BottomBarVisibilityMode.entries.map { mode ->
+                            options = viewModel.bottomBarVisibilityModeOptions.map { mode ->
                                 AppSegmentOption(mode, mode.label)
                             },
                             selectedValue = visibilityMode,
-                            onSelectionChange = { mode ->
-                                scope.launch { SettingsManager.setBottomBarVisibilityMode(context, mode) }
-                            },
+                            onSelectionChange = viewModel::setBottomBarVisibilityMode,
                         )
                         AppPreferenceDivider()
                         SettingsSingleChoicePreference(
@@ -404,9 +392,7 @@ fun BottomBarSettingsContent(
                                 AppSegmentOption(2, "仅文字"),
                             ),
                             selectedValue = labelMode,
-                            onSelectionChange = { mode ->
-                                scope.launch { SettingsManager.setBottomBarLabelMode(context, mode) }
-                            },
+                            onSelectionChange = viewModel::setBottomBarLabelMode,
                         )
                     }
                 }
@@ -427,13 +413,13 @@ fun BottomBarSettingsContent(
                                 iconTint = com.android.purebilibili.core.theme.iOSBlue,
                                 title = "顶部标签样式",
                                 options = listOf(
-                                    AppSegmentOption(SettingsManager.TopTabLabelMode.ICON_AND_TEXT, "图标 + 文字"),
-                                    AppSegmentOption(SettingsManager.TopTabLabelMode.ICON_ONLY, "仅图标"),
-                                    AppSegmentOption(SettingsManager.TopTabLabelMode.TEXT_ONLY, "仅文字"),
+                                    AppSegmentOption(0, "图标 + 文字"),
+                                    AppSegmentOption(1, "仅图标"),
+                                    AppSegmentOption(2, "仅文字"),
                                 ),
                                 selectedValue = topTabLabelMode,
                                 onSelectionChange = { mode ->
-                                    scope.launch { SettingsManager.setTopTabLabelMode(context, mode) }
+                                    viewModel.setTopTabLabelMode(mode)
                                 },
                             )
                             AppPreferenceDivider()
@@ -450,7 +436,7 @@ fun BottomBarSettingsContent(
                                 },
                                 selectedValue = homeTopRightAction,
                                 onSelectionChange = { action ->
-                                    scope.launch { SettingsManager.setHomeTopRightAction(context, action) }
+                                    viewModel.setHomeTopRightAction(action)
                                 },
                             )
                             AppPreferenceDivider()
@@ -465,7 +451,7 @@ fun BottomBarSettingsContent(
                                 ),
                                 selectedValue = headerBlurMode,
                                 onSelectionChange = { mode ->
-                                    scope.launch { SettingsManager.setHomeHeaderBlurMode(context, mode) }
+                                    viewModel.setHomeHeaderBlurMode(mode)
                                 },
                             )
                             AppPreferenceDivider()
@@ -478,7 +464,7 @@ fun BottomBarSettingsContent(
                                 },
                                 selectedValue = homeTopLayoutOrder,
                                 onSelectionChange = { order ->
-                                    scope.launch { SettingsManager.setHomeTopLayoutOrder(context, order) }
+                                    viewModel.setHomeTopLayoutOrder(order)
                                 },
                             )
                             AppPreferenceDivider()
@@ -496,7 +482,7 @@ fun BottomBarSettingsContent(
                                         currentMode = homeHeaderCollapseMode,
                                         collapseSearch = collapseSearch,
                                     )
-                                    scope.launch { SettingsManager.setHomeHeaderCollapseMode(context, nextMode) }
+                                    viewModel.setHomeHeaderCollapseMode(nextMode)
                                 },
                             )
                             AppPreferenceDivider()
@@ -514,7 +500,7 @@ fun BottomBarSettingsContent(
                                         currentMode = homeHeaderCollapseMode,
                                         collapseTabs = collapseTabs,
                                     )
-                                    scope.launch { SettingsManager.setHomeHeaderCollapseMode(context, nextMode) }
+                                    viewModel.setHomeHeaderCollapseMode(nextMode)
                                 },
                             )
                             AppHorizontalDivider()
@@ -523,7 +509,7 @@ fun BottomBarSettingsContent(
                                 verticalArrangement = Arrangement.spacedBy(10.dp),
                             ) {
                             AppText(
-                                text = "可调整顶部标签的显示/隐藏和顺序，第一位会直接显示在首页顶部。最多显示 ${SettingsManager.MAX_TOP_TABS} 个标签。",
+                                text = "可调整顶部标签的显示/隐藏和顺序，第一位会直接显示在首页顶部。最多显示 ${5} 个标签。",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -600,7 +586,7 @@ fun BottomBarSettingsContent(
                                 } else if (isVisibleTab) {
                                     localTopTabVisible.size > 2
                                 } else {
-                                    localTopTabVisible.size < SettingsManager.MAX_TOP_TABS
+                                    localTopTabVisible.size < 5
                                 }
                                 Row(
                                     modifier = Modifier
@@ -658,7 +644,7 @@ fun BottomBarSettingsContent(
                             checked = tabletUseSidebar,
                             onCheckedChange = { checked ->
                                 scope.launch {
-                                    SettingsManager.setTabletUseSidebar(context, checked)
+                                    viewModel.setTabletUseSidebar(checked)
                                 }
                             },
                             iconTint = com.android.purebilibili.core.theme.iOSBlue
@@ -670,7 +656,7 @@ fun BottomBarSettingsContent(
                             checked = sidebarAccountSwitcherEnabled,
                             onCheckedChange = { checked ->
                                 scope.launch {
-                                    SettingsManager.setSidebarAccountSwitcherEnabled(context, checked)
+                                    viewModel.setSidebarAccountSwitcherEnabled(checked)
                                 }
                             },
                             iconTint = com.android.purebilibili.core.theme.iOSBlue
@@ -773,11 +759,8 @@ fun BottomBarSettingsContent(
                                 localTopTabVisible = defaultTopTabIds.toSet()
                                 saveConfig()
                                 saveTopTabConfig()
-                                scope.launch {
-                                    SettingsManager.setHomeHeaderBlurMode(context, HomeHeaderBlurMode.FOLLOW_PRESET)
-                                    // 重置为设备类型默认：平板开侧栏，手机开底栏
-                                    SettingsManager.setTabletUseSidebar(context, isTabletDevice)
-                                }
+                                viewModel.setHomeHeaderBlurMode(HomeHeaderBlurMode.FOLLOW_PRESET)
+                                viewModel.setTabletUseSidebar(isTabletDevice)
                             },
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.outlinedButtonColors(
