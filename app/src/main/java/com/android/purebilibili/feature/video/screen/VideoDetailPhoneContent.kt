@@ -86,8 +86,13 @@ internal fun VideoDetailPhoneSuccessContentLayer(
     showFavoriteFolderDialog: Boolean,
     downloadProgress: Float,
     danmakuEnabledForDetail: Boolean,
+    danmakuSettings: com.android.purebilibili.core.store.DanmakuSettings,
+    danmakuSettingsActions: VideoDanmakuSettingsActions,
     onPersistSortMode: (Int) -> Unit,
     onPersistDanmakuEnabled: (Boolean) -> Unit,
+    videoAiSummaryEntryEnabled: Boolean,
+    videoNoteEnabled: Boolean,
+    videoNoteDefaultCollapsed: Boolean,
     isQuickReturnLimitedForSharedElements: Boolean,
     transitionEnabled: Boolean,
     sourceRouteForSharedElement: String?,
@@ -312,7 +317,12 @@ internal fun VideoDetailPhoneSuccessContentLayer(
                                 isVideoPlaying = isVideoPlaying,
                                 onSelectedTabChange = onSelectedTabChange,
                                 onIntroScrollThresholdChange = onIntroScrollThresholdChange,
-                                bottomContentPadding = videoContentBottomPadding
+                                bottomContentPadding = videoContentBottomPadding,
+                                danmakuSettings = danmakuSettings,
+                                danmakuSettingsActions = danmakuSettingsActions,
+                                videoAiSummaryEntryEnabled = videoAiSummaryEntryEnabled,
+                                videoNoteEnabled = videoNoteEnabled,
+                                videoNoteDefaultCollapsed = videoNoteDefaultCollapsed
                             )
                         }
 

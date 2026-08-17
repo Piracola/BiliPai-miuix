@@ -90,3 +90,43 @@ internal data class VideoDetailNavigationActions(
     val enterPortraitFullscreen: () -> Unit,
     val enterPip: () -> Unit
 )
+
+/** 详情页弹幕设置面板的持久化写入（阶段 4 切片：UI 不直接碰 SettingsManager）。 */
+@Immutable
+data class VideoDanmakuSettingsActions(
+    val setOpacity: (Float) -> Unit,
+    val setFontScale: (Float) -> Unit,
+    val setSpeed: (Float) -> Unit,
+    val setDisplayArea: (Float) -> Unit,
+    val setMergeDuplicates: (Boolean) -> Unit,
+    val setDuplicateMergeWindowMs: (Int) -> Unit,
+    val setDuplicateMergeCountThreshold: (Int) -> Unit,
+    val setAllowScroll: (Boolean) -> Unit,
+    val setAllowTop: (Boolean) -> Unit,
+    val setAllowBottom: (Boolean) -> Unit,
+    val setAllowColorful: (Boolean) -> Unit,
+    val setAllowSpecial: (Boolean) -> Unit,
+    val setHideInteractiveCommands: (Boolean) -> Unit,
+    val setPortraitDisplayAreaMode: (com.android.purebilibili.core.store.PortraitDanmakuDisplayAreaMode) -> Unit,
+    val setBlockRulesRaw: (String) -> Unit
+) {
+    companion object {
+        val NoOp = VideoDanmakuSettingsActions(
+            setOpacity = {},
+            setFontScale = {},
+            setSpeed = {},
+            setDisplayArea = {},
+            setMergeDuplicates = {},
+            setDuplicateMergeWindowMs = {},
+            setDuplicateMergeCountThreshold = {},
+            setAllowScroll = {},
+            setAllowTop = {},
+            setAllowBottom = {},
+            setAllowColorful = {},
+            setAllowSpecial = {},
+            setHideInteractiveCommands = {},
+            setPortraitDisplayAreaMode = {},
+            setBlockRulesRaw = {}
+        )
+    }
+}

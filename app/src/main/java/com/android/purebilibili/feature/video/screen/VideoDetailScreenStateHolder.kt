@@ -4021,6 +4021,27 @@ internal fun VideoDetailScreenStateHolder(
                                         showFavoriteFolderDialog = showFavoriteFolderDialog,
                                         downloadProgress = downloadProgress,
                                         danmakuEnabledForDetail = danmakuEnabledForDetail,
+                                        danmakuSettings = viewModel.danmakuSettings.collectAsStateWithLifecycle().value,
+                                        danmakuSettingsActions = VideoDanmakuSettingsActions(
+                                            setOpacity = viewModel::setDanmakuOpacity,
+                                            setFontScale = viewModel::setDanmakuFontScale,
+                                            setSpeed = viewModel::setDanmakuSpeed,
+                                            setDisplayArea = viewModel::setDanmakuArea,
+                                            setMergeDuplicates = viewModel::setDanmakuMergeDuplicates,
+                                            setDuplicateMergeWindowMs = viewModel::setDanmakuDuplicateMergeWindowMs,
+                                            setDuplicateMergeCountThreshold = viewModel::setDanmakuDuplicateMergeCountThreshold,
+                                            setAllowScroll = viewModel::setDanmakuAllowScroll,
+                                            setAllowTop = viewModel::setDanmakuAllowTop,
+                                            setAllowBottom = viewModel::setDanmakuAllowBottom,
+                                            setAllowColorful = viewModel::setDanmakuAllowColorful,
+                                            setAllowSpecial = viewModel::setDanmakuAllowSpecial,
+                                            setHideInteractiveCommands = viewModel::setDanmakuHideInteractiveCommands,
+                                            setPortraitDisplayAreaMode = viewModel::setPortraitDanmakuDisplayAreaMode,
+                                            setBlockRulesRaw = viewModel::setDanmakuBlockRulesRaw
+                                        ),
+                                        videoAiSummaryEntryEnabled = videoAiSummaryEntryEnabled,
+                                        videoNoteEnabled = videoNoteEnabled,
+                                        videoNoteDefaultCollapsed = videoNoteDefaultCollapsed,
                                         onPersistSortMode = { apiMode -> viewModel.setCommentDefaultSortMode(apiMode) },
                                         onPersistDanmakuEnabled = { enabled ->
                                             viewModel.setDanmakuEnabledForDetail(

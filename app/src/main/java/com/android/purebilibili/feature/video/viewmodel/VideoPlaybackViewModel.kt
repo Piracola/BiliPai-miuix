@@ -1447,6 +1447,12 @@ class VideoPlaybackViewModel(application: Application) : AndroidViewModel(applic
     fun setDanmakuHideInteractiveCommands(value: Boolean) = writeDanmakuSetting { scope ->
         com.android.purebilibili.core.store.SettingsManager.setDanmakuHideInteractiveCommands(app, value)
     }
+
+    fun setPortraitDanmakuDisplayAreaMode(value: com.android.purebilibili.core.store.PortraitDanmakuDisplayAreaMode) {
+        viewModelScope.launch {
+            com.android.purebilibili.core.store.SettingsManager.setPortraitDanmakuDisplayAreaMode(app, value)
+        }
+    }
     fun setDanmakuSmartOcclusion(value: Boolean) = writeDanmakuSetting { scope ->
         com.android.purebilibili.core.store.SettingsManager.setDanmakuSmartOcclusion(app, value, scope)
     }

@@ -65,7 +65,6 @@ import com.android.purebilibili.core.ui.performance.TrackJankStateFlag
 import com.android.purebilibili.core.ui.performance.TrackScrollJank
 import com.android.purebilibili.core.store.DanmakuSettings
 import com.android.purebilibili.core.store.HomeSettings
-import com.android.purebilibili.core.store.SettingsManager
 import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.LayerBackdrop
 import com.kyant.backdrop.backdrops.layerBackdrop
@@ -120,7 +119,6 @@ import com.android.purebilibili.feature.video.note.VideoNoteUiState
 import com.android.purebilibili.feature.video.note.buildVideoNoteShareText
 import com.android.purebilibili.feature.video.note.shouldShowVideoNoteCard
 import kotlin.math.abs
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.ContainerLevel
 
@@ -515,7 +513,12 @@ fun VideoContentSection(
     onSelectedTabChange: (Int) -> Unit = {},
     onIntroScrollThresholdChange: (Boolean) -> Unit = {},
     onCommentScrollStateChange: (Int, Int) -> Unit = { _, _ -> },
-    bottomContentPadding: Dp = if (showInteractionActions) 84.dp else 12.dp
+    bottomContentPadding: Dp = if (showInteractionActions) 84.dp else 12.dp,
+    danmakuSettings: DanmakuSettings = DanmakuSettings(),
+    danmakuSettingsActions: VideoDanmakuSettingsActions = VideoDanmakuSettingsActions.NoOp,
+    videoAiSummaryEntryEnabled: Boolean = true,
+    videoNoteEnabled: Boolean = true,
+    videoNoteDefaultCollapsed: Boolean = false
 ) {
     val context = LocalContext.current
     val tabs = listOf("简介", "评论 $replyCount")
@@ -847,7 +850,10 @@ fun VideoContentSection(
                         onDescriptionUrlClick = onDescriptionUrlClick,
                         onSearchKeywordClick = onSearchKeywordClick,
                         showInteractionActions = showInteractionActions,
-                        animateVideoDetailLayout = animateVideoDetailLayout
+                        animateVideoDetailLayout = animateVideoDetailLayout,
+                        videoAiSummaryEntryEnabled = videoAiSummaryEntryEnabled,
+                        videoNoteEnabled = videoNoteEnabled,
+                        videoNoteDefaultCollapsed = videoNoteDefaultCollapsed
                     )
                     1 -> VideoCommentTab(
                         listState = commentListState,
@@ -923,7 +929,9 @@ fun VideoContentSection(
 
         if (showDanmakuSettings) {
             VideoDetailDanmakuSettingsPanel(
-                onDismiss = { showDanmakuSettings = false }
+                onDismiss = { showDanmakuSettings = false },
+                settings = danmakuSettings,
+                actions = danmakuSettingsActions
             )
         }
 
@@ -1007,7 +1015,10 @@ private fun VideoIntroTab(
     showOnlineCount: Boolean = true,
     showInteractionActions: Boolean = true,
     animateVideoDetailLayout: Boolean = true,
-    chromeBackdrop: LayerBackdrop? = null
+    chromeBackdrop: LayerBackdrop? = null,
+    videoAiSummaryEntryEnabled: Boolean = true,
+    videoNoteEnabled: Boolean = true,
+    videoNoteDefaultCollapsed: Boolean = false
 ) {
     val hasPages = info.pages.size > 1
     var hiddenRelatedBvids by remember(info.bvid) { mutableStateOf(emptySet<String>()) }
@@ -1080,7 +1091,10 @@ private fun VideoIntroTab(
                 onRelatedVideoClick = onRelatedVideoClick,
                 onSearchKeywordClick = onSearchKeywordClick,
                 showInteractionActions = showInteractionActions,
-                animateVideoDetailLayout = animateVideoDetailLayout
+                animateVideoDetailLayout = animateVideoDetailLayout,
+                videoAiSummaryEntryEnabled = videoAiSummaryEntryEnabled,
+                videoNoteEnabled = videoNoteEnabled,
+                videoNoteDefaultCollapsed = videoNoteDefaultCollapsed
             )
         }
         if (hasPages) {
@@ -1520,21 +1534,12 @@ private fun VideoHeaderContent(
     onlineCount: String = "",
     showOnlineCount: Boolean = true,
     showInteractionActions: Boolean = true,
-    animateVideoDetailLayout: Boolean = true
+    animateVideoDetailLayout: Boolean = true,
+    videoAiSummaryEntryEnabled: Boolean = true,
+    videoNoteEnabled: Boolean = true,
+    videoNoteDefaultCollapsed: Boolean = false
 ) {
     val context = LocalContext.current
-    val videoAiSummaryEntryEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getVideoAiSummaryEntryEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = true
-        )
-    val videoNoteEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getVideoNoteEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = true
-        )
-    val videoNoteDefaultCollapsed by com.android.purebilibili.core.store.SettingsManager
-        .getVideoNoteDefaultCollapsed(context)
-        .collectAsStateWithLifecycle(initialValue = false
-        )
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -1643,40 +1648,34 @@ private fun VideoHeaderContent(
 
 @Composable
 private fun VideoDetailDanmakuSettingsPanel(
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    settings: DanmakuSettings,
+    actions: VideoDanmakuSettingsActions
 ) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val danmakuScope = com.android.purebilibili.core.store.DanmakuSettingsScope.PORTRAIT
-    val danmakuSettings by SettingsManager
-        .getDanmakuSettings(context, danmakuScope)
-        .collectAsStateWithLifecycle(initialValue = DanmakuSettings(),
-            context = kotlin.coroutines.EmptyCoroutineContext
-        )
-
-    var localOpacity by remember(danmakuSettings.opacity) { mutableFloatStateOf(danmakuSettings.opacity) }
-    var localFontScale by remember(danmakuSettings.fontScale) { mutableFloatStateOf(danmakuSettings.fontScale) }
-    var localSpeed by remember(danmakuSettings.speed) { mutableFloatStateOf(danmakuSettings.speed) }
-    var localDisplayArea by remember(danmakuSettings.displayArea) { mutableFloatStateOf(danmakuSettings.displayArea) }
-    var localMergeDuplicates by remember(danmakuSettings.mergeDuplicates) { mutableStateOf(danmakuSettings.mergeDuplicates) }
-    var localDuplicateMergeWindowMs by remember(danmakuSettings.duplicateMergeWindowMs) {
-        mutableIntStateOf(danmakuSettings.duplicateMergeWindowMs)
+    var localOpacity by remember(settings.opacity) { mutableFloatStateOf(settings.opacity) }
+    var localFontScale by remember(settings.fontScale) { mutableFloatStateOf(settings.fontScale) }
+    var localSpeed by remember(settings.speed) { mutableFloatStateOf(settings.speed) }
+    var localDisplayArea by remember(settings.displayArea) { mutableFloatStateOf(settings.displayArea) }
+    var localMergeDuplicates by remember(settings.mergeDuplicates) { mutableStateOf(settings.mergeDuplicates) }
+    var localDuplicateMergeWindowMs by remember(settings.duplicateMergeWindowMs) {
+        mutableIntStateOf(settings.duplicateMergeWindowMs)
     }
-    var localDuplicateMergeCountThreshold by remember(danmakuSettings.duplicateMergeCountThreshold) {
-        mutableIntStateOf(danmakuSettings.duplicateMergeCountThreshold)
+    var localDuplicateMergeCountThreshold by remember(settings.duplicateMergeCountThreshold) {
+        mutableIntStateOf(settings.duplicateMergeCountThreshold)
     }
-    var localAllowScroll by remember(danmakuSettings.allowScroll) { mutableStateOf(danmakuSettings.allowScroll) }
-    var localAllowTop by remember(danmakuSettings.allowTop) { mutableStateOf(danmakuSettings.allowTop) }
-    var localAllowBottom by remember(danmakuSettings.allowBottom) { mutableStateOf(danmakuSettings.allowBottom) }
-    var localAllowColorful by remember(danmakuSettings.allowColorful) { mutableStateOf(danmakuSettings.allowColorful) }
-    var localAllowSpecial by remember(danmakuSettings.allowSpecial) { mutableStateOf(danmakuSettings.allowSpecial) }
-    var localHideInteractiveCommands by remember(danmakuSettings.hideInteractiveCommands) {
-        mutableStateOf(danmakuSettings.hideInteractiveCommands)
+    var localAllowScroll by remember(settings.allowScroll) { mutableStateOf(settings.allowScroll) }
+    var localAllowTop by remember(settings.allowTop) { mutableStateOf(settings.allowTop) }
+    var localAllowBottom by remember(settings.allowBottom) { mutableStateOf(settings.allowBottom) }
+    var localAllowColorful by remember(settings.allowColorful) { mutableStateOf(settings.allowColorful) }
+    var localAllowSpecial by remember(settings.allowSpecial) { mutableStateOf(settings.allowSpecial) }
+    var localHideInteractiveCommands by remember(settings.hideInteractiveCommands) {
+        mutableStateOf(settings.hideInteractiveCommands)
     }
-    var localPortraitDisplayAreaMode by remember(danmakuSettings.portraitDisplayAreaMode) {
-        mutableStateOf(danmakuSettings.portraitDisplayAreaMode)
+    var localPortraitDisplayAreaMode by remember(settings.portraitDisplayAreaMode) {
+        mutableStateOf(settings.portraitDisplayAreaMode)
     }
-    var localBlockRulesRaw by remember(danmakuSettings.blockRulesRaw) { mutableStateOf(danmakuSettings.blockRulesRaw) }
+    var localBlockRulesRaw by remember(settings.blockRulesRaw) { mutableStateOf(settings.blockRulesRaw) }
 
     DanmakuSettingsPanel(
         isFullscreen = false,
@@ -1701,63 +1700,63 @@ private fun VideoDetailDanmakuSettingsPanel(
         smartOcclusion = false,
         onOpacityChange = {
             localOpacity = it
-            scope.launch { SettingsManager.setDanmakuOpacity(context, it, danmakuScope) }
+            actions.setOpacity(it)
         },
         onFontScaleChange = {
             localFontScale = it
-            scope.launch { SettingsManager.setDanmakuFontScale(context, it, danmakuScope) }
+            actions.setFontScale(it)
         },
         onSpeedChange = {
             localSpeed = it
-            scope.launch { SettingsManager.setDanmakuSpeed(context, it, danmakuScope) }
+            actions.setSpeed(it)
         },
         onDisplayAreaChange = {
             localDisplayArea = it
-            scope.launch { SettingsManager.setDanmakuArea(context, it, danmakuScope) }
+            actions.setDisplayArea(it)
         },
         onMergeDuplicatesChange = {
             localMergeDuplicates = it
-            scope.launch { SettingsManager.setDanmakuMergeDuplicates(context, it, danmakuScope) }
+            actions.setMergeDuplicates(it)
         },
         onDuplicateMergeWindowMsChange = {
             localDuplicateMergeWindowMs = it
-            scope.launch { SettingsManager.setDanmakuDuplicateMergeWindowMs(context, it, danmakuScope) }
+            actions.setDuplicateMergeWindowMs(it)
         },
         onDuplicateMergeCountThresholdChange = {
             localDuplicateMergeCountThreshold = it
-            scope.launch { SettingsManager.setDanmakuDuplicateMergeCountThreshold(context, it, danmakuScope) }
+            actions.setDuplicateMergeCountThreshold(it)
         },
         onAllowScrollChange = {
             localAllowScroll = it
-            scope.launch { SettingsManager.setDanmakuAllowScroll(context, it, danmakuScope) }
+            actions.setAllowScroll(it)
         },
         onAllowTopChange = {
             localAllowTop = it
-            scope.launch { SettingsManager.setDanmakuAllowTop(context, it, danmakuScope) }
+            actions.setAllowTop(it)
         },
         onAllowBottomChange = {
             localAllowBottom = it
-            scope.launch { SettingsManager.setDanmakuAllowBottom(context, it, danmakuScope) }
+            actions.setAllowBottom(it)
         },
         onAllowColorfulChange = {
             localAllowColorful = it
-            scope.launch { SettingsManager.setDanmakuAllowColorful(context, it, danmakuScope) }
+            actions.setAllowColorful(it)
         },
         onAllowSpecialChange = {
             localAllowSpecial = it
-            scope.launch { SettingsManager.setDanmakuAllowSpecial(context, it, danmakuScope) }
+            actions.setAllowSpecial(it)
         },
         onHideInteractiveCommandsChange = {
             localHideInteractiveCommands = it
-            scope.launch { SettingsManager.setDanmakuHideInteractiveCommands(context, it) }
+            actions.setHideInteractiveCommands(it)
         },
         onPortraitDisplayAreaModeChange = {
             localPortraitDisplayAreaMode = it
-            scope.launch { SettingsManager.setPortraitDanmakuDisplayAreaMode(context, it) }
+            actions.setPortraitDisplayAreaMode(it)
         },
         onBlockRulesRawChange = {
             localBlockRulesRaw = it
-            scope.launch { SettingsManager.setDanmakuBlockRulesRaw(context, it, danmakuScope) }
+            actions.setBlockRulesRaw(it)
         },
         onDismiss = onDismiss
     )
