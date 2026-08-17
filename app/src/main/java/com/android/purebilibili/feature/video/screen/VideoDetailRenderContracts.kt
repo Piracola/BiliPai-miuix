@@ -91,7 +91,7 @@ internal data class VideoDetailNavigationActions(
     val enterPip: () -> Unit
 )
 
-/** 详情页弹幕设置面板的持久化写入（阶段 4 切片：UI 不直接碰 SettingsManager）。 */
+/** 详情页弹幕设置面板的持久化写入（阶段 4 切片：UI 通过 VM 落盘设置，不直连 Core）。 */
 @Immutable
 data class VideoDanmakuSettingsActions(
     val setOpacity: (Float) -> Unit,

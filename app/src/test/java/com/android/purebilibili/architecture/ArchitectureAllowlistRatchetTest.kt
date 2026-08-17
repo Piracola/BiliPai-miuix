@@ -66,9 +66,11 @@ class ArchitectureAllowlistRatchetTest {
         // ProfileViewModel（隐私模式/主题/动态预览文本可见性 + 4 设置 StateFlow）。
         // 75 → 72：护栏规则对齐 §3.3——*UseCase.kt 与 *ViewModel.kt 同属 Coordinator 层，
         // 一并豁免；移除 video 三个 UseCase 白名单条目（SponsorBlock/Interaction/Playback）。
-        const val MAX_CORE_GLOBAL_OBJECT_FILES = 72
+        // 72 → 63：video 详情页切片——StateHolder + 5 个 overlay 适配器 + PhoneContent +
+        // ContentSection + TabletCinema/TabletVideo 共 9 个非播放器文件清零移出白名单。
+        const val MAX_CORE_GLOBAL_OBJECT_FILES = 63
 
         const val CORE_GLOBAL_OBJECT_FILES_SHA256 =
-            "a7241d980107542afe8174761e3d34cbd864d87400e970af31085e85e68225da"
+            "047c639e8a3c47efb43bb3205fbb470b56e284ab3b3e0bda2b675019cb2149a6"
     }
 }
