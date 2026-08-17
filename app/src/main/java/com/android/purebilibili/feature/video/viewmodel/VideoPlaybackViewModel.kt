@@ -1346,11 +1346,9 @@ class VideoPlaybackViewModel(application: Application) : AndroidViewModel(applic
         viewModelScope.launch { com.android.purebilibili.core.store.SettingsManager.setDanmakuSendFontSize(app, value) }
     }
 
-    fun setDanmakuEnabledForDetail(enabled: Boolean) {
+    fun setDanmakuEnabledForDetail(enabled: Boolean, scope: com.android.purebilibili.core.store.DanmakuSettingsScope) {
         viewModelScope.launch {
-            com.android.purebilibili.core.store.SettingsManager.setDanmakuEnabled(
-                app, enabled, _danmakuSettingsScope.value
-            )
+            com.android.purebilibili.core.store.SettingsManager.setDanmakuEnabled(app, enabled, scope)
         }
     }
 

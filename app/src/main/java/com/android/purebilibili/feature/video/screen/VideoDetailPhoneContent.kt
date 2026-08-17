@@ -86,6 +86,8 @@ internal fun VideoDetailPhoneSuccessContentLayer(
     showFavoriteFolderDialog: Boolean,
     downloadProgress: Float,
     danmakuEnabledForDetail: Boolean,
+    onPersistSortMode: (Int) -> Unit,
+    onPersistDanmakuEnabled: (Boolean) -> Unit,
     isQuickReturnLimitedForSharedElements: Boolean,
     transitionEnabled: Boolean,
     sourceRouteForSharedElement: String?,
@@ -221,8 +223,7 @@ internal fun VideoDetailPhoneSuccessContentLayer(
                                 onSortModeChange = { mode ->
                                     commentActions.setSortMode(mode)
                                     sortPreferenceScope.launch {
-                                        com.android.purebilibili.core.store.SettingsManager
-                                            .setCommentDefaultSortMode(context, mode.apiMode)
+                                        onPersistSortMode(mode.apiMode)
                                     }
                                 },
                                 onFollowClick = engagementActions.toggleFollow,
@@ -269,12 +270,7 @@ internal fun VideoDetailPhoneSuccessContentLayer(
                                         danmakuManager.clear()
                                     }
                                     sortPreferenceScope.launch {
-                                        com.android.purebilibili.core.store.SettingsManager
-                                            .setDanmakuEnabled(
-                                                context,
-                                                newValue,
-                                                com.android.purebilibili.core.store.DanmakuSettingsScope.PORTRAIT
-                                            )
+                                        onPersistDanmakuEnabled(newValue)
                                     }
                                 },
                                 transitionEnabled = transitionEnabled,

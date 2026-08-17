@@ -86,7 +86,6 @@ import coil.compose.AsyncImage
 import com.android.purebilibili.core.ui.LocalAnimatedVisibilityScope
 import com.android.purebilibili.core.ui.LocalSharedTransitionScope
 import com.android.purebilibili.core.ui.transition.LocalVideoCardSharedElementSourceRoute
-import com.android.purebilibili.core.store.SettingsManager
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import com.android.purebilibili.core.store.TabletCommentPanelWidthPreset
@@ -193,6 +192,7 @@ internal fun TabletCinemaLayout(
     predictiveBackCancelRecoveryGeneration: Int = 0,
     sponsorContributionState: SponsorContributionUiState = SponsorContributionUiState(),
     liveSurfaceCardTransitionEnabled: Boolean = true,
+    onPersistSortMode: (Int) -> Unit = {},
 ) {
     val appContext = LocalContext.current
     val policy = remember(configuration.screenWidthDp, tabletCommentPanelWidthPreset) {
@@ -383,7 +383,8 @@ internal fun TabletCinemaLayout(
                 showUpBadge = showUpBadge,
                 showIdentityDecorations = commentMemberDecorationsEnabled,
                 onSearchKeywordClick = onSearchKeywordClick,
-                onOpenBilibiliLink = onOpenBilibiliLink
+                onOpenBilibiliLink = onOpenBilibiliLink,
+                onPersistSortMode = onPersistSortMode
             )
         }
     }
@@ -957,7 +958,8 @@ private fun CinemaSideCurtain(
     showUpBadge: Boolean,
     showIdentityDecorations: Boolean,
     onSearchKeywordClick: (String) -> Unit,
-    onOpenBilibiliLink: ((String) -> Unit)?
+    onOpenBilibiliLink: ((String) -> Unit)?,
+    onPersistSortMode: (Int) -> Unit
 ) {
     val transition = updateTransition(targetState = state, label = "SideCurtainAnimation")
     LaunchedEffect(subReplyState.visible) {
@@ -1101,7 +1103,8 @@ private fun CinemaSideCurtain(
                                             onRelatedVideoClick = onRelatedVideoClick,
                                             showIdentityDecorations = showIdentityDecorations,
                                             onSearchKeywordClick = onSearchKeywordClick,
-                                            onOpenBilibiliLink = onOpenBilibiliLink
+                                            onOpenBilibiliLink = onOpenBilibiliLink,
+                                            onPersistSortMode = onPersistSortMode
                                         )
                                     }
 
@@ -1136,7 +1139,8 @@ private fun CinemaCommentsPane(
     onRelatedVideoClick: (String, android.os.Bundle?) -> Unit,
     showIdentityDecorations: Boolean,
     onSearchKeywordClick: (String) -> Unit,
-    onOpenBilibiliLink: ((String) -> Unit)?
+    onOpenBilibiliLink: ((String) -> Unit)?,
+    onPersistSortMode: (Int) -> Unit
 ) {
     val commentAppearance = rememberVideoCommentAppearance()
     val listState = rememberLazyListState()
@@ -1240,7 +1244,7 @@ private fun CinemaCommentsPane(
                 onSortModeChange = { mode ->
                     commentActions.setSortMode(mode)
                     scope.launch {
-                        SettingsManager.setCommentDefaultSortMode(context, mode.apiMode)
+                        onPersistSortMode(mode.apiMode)
                     }
                 },
                 backdrop = commentChromeBackdrop

@@ -3173,6 +3173,7 @@ internal fun VideoDetailScreenStateHolder(
                             forceCoverOnlyOnReturn = forceCoverOnlyForLiveSafeReturn,
                             predictiveBackCancelRecoveryGeneration = predictiveBackCancelRecoveryGeneration,
                             sponsorContributionState = sponsorContributionState,
+                            onPersistSortMode = { apiMode -> viewModel.setCommentDefaultSortMode(apiMode) },
                         )
                     } else {
                         // 📱 手机竖屏：原有单列布局
@@ -4019,7 +4020,14 @@ internal fun VideoDetailScreenStateHolder(
                                         isCommentThreadVisible = subReplyState.visible,
                                         showFavoriteFolderDialog = showFavoriteFolderDialog,
                                         downloadProgress = downloadProgress,
-                                        danmakuEnabledForDetail = effectiveDanmakuEnabledForDetail,
+                                        danmakuEnabledForDetail = danmakuEnabledForDetail,
+                                        onPersistSortMode = { apiMode -> viewModel.setCommentDefaultSortMode(apiMode) },
+                                        onPersistDanmakuEnabled = { enabled ->
+                                            viewModel.setDanmakuEnabledForDetail(
+                                                enabled,
+                                                com.android.purebilibili.core.store.DanmakuSettingsScope.PORTRAIT
+                                            )
+                                        },
                                         isQuickReturnLimitedForSharedElements =
                                             isReturningFromDetail && isQuickReturningFromDetail,
                                         transitionEnabled = detailChildTransitionEnabled,

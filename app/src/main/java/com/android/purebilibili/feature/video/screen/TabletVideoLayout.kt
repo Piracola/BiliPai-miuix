@@ -49,7 +49,6 @@ import com.android.purebilibili.feature.video.ui.section.VideoPlayerSection
 import com.android.purebilibili.feature.video.ui.section.VideoTitleWithDesc
 import com.android.purebilibili.feature.video.ui.section.resolveAllowLivePlayerSharedElementForMorph
 import com.android.purebilibili.feature.video.ui.section.resolveNavigationLiveSurfaceTextureEnabled
-import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.feature.video.usecase.seekPlayerFromUserAction
 import com.android.purebilibili.feature.video.viewmodel.CommentUiState
 import com.android.purebilibili.feature.video.viewmodel.SubReplyUiState
@@ -125,7 +124,8 @@ internal fun TabletVideoLayout(
     onPlayModeClick: () -> Unit = {},
     forceCoverOnlyOnReturn: Boolean = false,
     predictiveBackCancelRecoveryGeneration: Int = 0,
-    liveSurfaceCardTransitionEnabled: Boolean = true
+    liveSurfaceCardTransitionEnabled: Boolean = true,
+    onPersistSortMode: (Int) -> Unit = {}
 ) {
     val layoutPolicy = remember(configuration.screenWidthDp) {
         resolveTabletVideoLayoutPolicy(
@@ -323,7 +323,8 @@ internal fun TabletVideoLayout(
                     onSearchKeywordClick = onSearchKeywordClick,
                     showUpBadge = showUpBadge,
                     showIdentityDecorations = commentMemberDecorationsEnabled,
-                    onOpenBilibiliLink = onOpenBilibiliLink
+                    onOpenBilibiliLink = onOpenBilibiliLink,
+                    onPersistSortMode = onPersistSortMode
                 )
             }
         },
@@ -350,7 +351,8 @@ private fun TabletSecondaryContent(
     showUpBadge: Boolean,
     showIdentityDecorations: Boolean,
     onSearchKeywordClick: (String) -> Unit,
-    onOpenBilibiliLink: ((String) -> Unit)?
+    onOpenBilibiliLink: ((String) -> Unit)?,
+    onPersistSortMode: (Int) -> Unit = {}
 ) {
     val commentAppearance = rememberVideoCommentAppearance()
     var selectedTab by rememberSaveable(success.info.bvid) {
@@ -581,8 +583,7 @@ private fun TabletSecondaryContent(
                                 onSortModeChange = { mode ->
                                     commentActions.setSortMode(mode)
                                     scope.launch {
-                                        com.android.purebilibili.core.store.SettingsManager
-                                            .setCommentDefaultSortMode(context, mode.apiMode)
+                                        onPersistSortMode(mode.apiMode)
                                     }
                                 },
                                 backdrop = commentChromeBackdrop
