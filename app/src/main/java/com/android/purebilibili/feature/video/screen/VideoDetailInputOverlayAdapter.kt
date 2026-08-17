@@ -17,7 +17,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.data.model.response.EmotePackage
 import com.android.purebilibili.data.model.response.MentionSearchUser
 import com.android.purebilibili.feature.video.ui.components.CommentInputDialog
@@ -96,12 +95,9 @@ internal fun VideoDetailInputOverlayAdapter(
     val showDanmakuDialog by viewModel.showDanmakuDialog.collectAsStateWithLifecycle()
     val isSendingDanmaku by viewModel.isSendingDanmaku.collectAsStateWithLifecycle()
     val composerDrafts by viewModel.composerDrafts.collectAsStateWithLifecycle()
-    val rememberedDanmakuSendColor by SettingsManager.getDanmakuSendColor(context)
-        .collectAsStateWithLifecycle(initialValue = 16_777_215)
-    val rememberedDanmakuSendMode by SettingsManager.getDanmakuSendMode(context)
-        .collectAsStateWithLifecycle(initialValue = 1)
-    val rememberedDanmakuSendFontSize by SettingsManager.getDanmakuSendFontSize(context)
-        .collectAsStateWithLifecycle(initialValue = 25)
+    val rememberedDanmakuSendColor by viewModel.rememberedDanmakuSendColor.collectAsStateWithLifecycle()
+    val rememberedDanmakuSendMode by viewModel.rememberedDanmakuSendMode.collectAsStateWithLifecycle()
+    val rememberedDanmakuSendFontSize by viewModel.rememberedDanmakuSendFontSize.collectAsStateWithLifecycle()
     val preferenceScope = rememberCoroutineScope()
     val fallbackPlayerBottomPx = with(LocalDensity.current) {
         val playerHeight = configuration.screenWidthDp.dp * 9f / 16f
@@ -152,9 +148,9 @@ internal fun VideoDetailInputOverlayAdapter(
             updateDraft = viewModel::updateDanmakuDraft,
             updateSelection = { color, mode, fontSize ->
                 preferenceScope.launch {
-                    SettingsManager.setDanmakuSendColor(context, color)
-                    SettingsManager.setDanmakuSendMode(context, mode)
-                    SettingsManager.setDanmakuSendFontSize(context, fontSize)
+                    viewModel.setDanmakuSendColor(color)
+                    viewModel.setDanmakuSendMode(mode)
+                    viewModel.setDanmakuSendFontSize(fontSize)
                 }
             },
         ),

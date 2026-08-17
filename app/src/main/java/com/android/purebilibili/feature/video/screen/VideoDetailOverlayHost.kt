@@ -472,8 +472,7 @@ internal fun VideoDetailQualitySwitchFailureDialog(
             fun dismissQualitySwitchFailureDialogAfterUserChoice() {
                 qualitySwitchDialogScope.launch {
                     if (qualitySwitchFailureDialogOnceEnabled) {
-                        com.android.purebilibili.core.store.SettingsManager
-                            .markQualitySwitchFailureDialogShown(context)
+                        viewModel.markQualitySwitchFailureDialogShown()
                     }
                     viewModel.dismissQualitySwitchFailureDialog()
                 }
@@ -488,11 +487,7 @@ internal fun VideoDetailQualitySwitchFailureDialog(
                         AppTextButton(
                             onClick = {
                                 qualitySwitchDialogScope.launch {
-                                    com.android.purebilibili.core.store.SettingsManager
-                                        .setPlayerDiagnosticLoggingEnabled(
-                                            context,
-                                            !playerDiagnosticLoggingEnabled
-                                        )
+                                    viewModel.setPlayerDiagnosticLoggingEnabled(!playerDiagnosticLoggingEnabled)
                                 }
                             },
                             contentPadding = PaddingValues(0.dp)
@@ -511,8 +506,7 @@ internal fun VideoDetailQualitySwitchFailureDialog(
                                 .clickable {
                                     qualitySwitchDialogScope.launch {
                                         val nextValue = !qualitySwitchFailureDialogOnceEnabled
-                                        com.android.purebilibili.core.store.SettingsManager
-                                            .setQualitySwitchFailureDialogOnceEnabled(context, nextValue)
+                                        viewModel.setQualitySwitchFailureDialogOnceEnabled(nextValue)
                                     }
                                 },
                             verticalAlignment = Alignment.CenterVertically
@@ -521,8 +515,7 @@ internal fun VideoDetailQualitySwitchFailureDialog(
                                 checked = qualitySwitchFailureDialogOnceEnabled,
                                 onCheckedChange = { checked ->
                                     qualitySwitchDialogScope.launch {
-                                        com.android.purebilibili.core.store.SettingsManager
-                                            .setQualitySwitchFailureDialogOnceEnabled(context, checked)
+                                        viewModel.setQualitySwitchFailureDialogOnceEnabled(checked)
                                     }
                                 }
                             )
@@ -583,11 +576,7 @@ internal fun VideoDetailDanmakuContextMenu(
             )
             val changed = updatedRules != activeDanmakuBlockRulesRaw
             sortPreferenceScope.launch {
-                com.android.purebilibili.core.store.SettingsManager.setDanmakuBlockRulesRaw(
-                    context,
-                    updatedRules,
-                    activeDanmakuScope
-                )
+                viewModel.setDanmakuBlockRulesRaw(updatedRules, activeDanmakuScope)
             }
             viewModel.toast(
                 resolveDanmakuBlockActionFeedbackMessage(
@@ -608,11 +597,7 @@ internal fun VideoDetailDanmakuContextMenu(
                 )
                 val changed = updatedRules != activeDanmakuBlockRulesRaw
                 sortPreferenceScope.launch {
-                    com.android.purebilibili.core.store.SettingsManager.setDanmakuBlockRulesRaw(
-                        context,
-                        updatedRules,
-                        activeDanmakuScope
-                    )
+                    viewModel.setDanmakuBlockRulesRaw(updatedRules, activeDanmakuScope)
                 }
                 viewModel.toast(
                     resolveDanmakuBlockActionFeedbackMessage(

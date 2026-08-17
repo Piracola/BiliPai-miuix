@@ -1308,6 +1308,26 @@ class VideoPlaybackViewModel(application: Application) : AndroidViewModel(applic
     val danmakuEnabledForDetail: kotlinx.coroutines.flow.StateFlow<Boolean> =
         com.android.purebilibili.core.store.SettingsManager.getDanmakuEnabled(app)
             .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, true)
+    val playerDiagnosticLoggingEnabled: kotlinx.coroutines.flow.StateFlow<Boolean> =
+        com.android.purebilibili.core.store.SettingsManager.getPlayerDiagnosticLoggingEnabled(app)
+            .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, true)
+    val qualitySwitchFailureDialogEnabled: kotlinx.coroutines.flow.StateFlow<Boolean> =
+        com.android.purebilibili.core.store.SettingsManager.getQualitySwitchFailureDialogEnabled(app)
+            .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, true)
+    val qualitySwitchFailureDialogOnceEnabled: kotlinx.coroutines.flow.StateFlow<Boolean> =
+        com.android.purebilibili.core.store.SettingsManager.getQualitySwitchFailureDialogOnceEnabled(app)
+            .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, false)
+    val qualitySwitchFailureDialogShown: kotlinx.coroutines.flow.StateFlow<Boolean> =
+        com.android.purebilibili.core.store.SettingsManager.getQualitySwitchFailureDialogShown(app)
+            .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, false)
+    val longPressSpeedHintScale: kotlinx.coroutines.flow.StateFlow<Float> =
+        com.android.purebilibili.core.store.SettingsManager.getLongPressSpeedHintScale(app)
+            .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly,
+                com.android.purebilibili.core.store.SettingsManager.getLongPressSpeedHintScaleSync(app))
+    val longPressSpeedHintAlpha: kotlinx.coroutines.flow.StateFlow<Float> =
+        com.android.purebilibili.core.store.SettingsManager.getLongPressSpeedHintAlpha(app)
+            .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly,
+                com.android.purebilibili.core.store.SettingsManager.getLongPressSpeedHintAlphaSync(app))
 
     // 弹幕设置的 scope 随横竖屏切换，用状态流驱动 SettingsManager 读取。
     private val _danmakuSettingsScope = kotlinx.coroutines.flow.MutableStateFlow(
@@ -1329,6 +1349,17 @@ class VideoPlaybackViewModel(application: Application) : AndroidViewModel(applic
     fun setDanmakuSettingsScope(scope: com.android.purebilibili.core.store.DanmakuSettingsScope) {
         _danmakuSettingsScope.value = scope
     }
+
+    fun danmakuBlockRulesRaw(
+        scope: com.android.purebilibili.core.store.DanmakuSettingsScope,
+    ): kotlinx.coroutines.flow.StateFlow<String> =
+        com.android.purebilibili.core.store.SettingsManager
+            .getDanmakuBlockRulesRaw(app, scope)
+            .stateIn(
+                viewModelScope,
+                kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5_000),
+                ""
+            )
 
     fun setCommentDefaultSortMode(value: Int) {
         viewModelScope.launch { com.android.purebilibili.core.store.SettingsManager.setCommentDefaultSortMode(app, value) }
@@ -1426,6 +1457,30 @@ class VideoPlaybackViewModel(application: Application) : AndroidViewModel(applic
     }
     fun setDanmakuBlockRulesRaw(value: String) = writeDanmakuSetting { scope ->
         com.android.purebilibili.core.store.SettingsManager.setDanmakuBlockRulesRaw(app, value, scope)
+    }
+
+    fun setDanmakuBlockRulesRaw(value: String, scope: com.android.purebilibili.core.store.DanmakuSettingsScope) {
+        viewModelScope.launch {
+            com.android.purebilibili.core.store.SettingsManager.setDanmakuBlockRulesRaw(app, value, scope)
+        }
+    }
+
+    fun setPlayerDiagnosticLoggingEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            com.android.purebilibili.core.store.SettingsManager.setPlayerDiagnosticLoggingEnabled(app, enabled)
+        }
+    }
+
+    fun setQualitySwitchFailureDialogOnceEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            com.android.purebilibili.core.store.SettingsManager.setQualitySwitchFailureDialogOnceEnabled(app, enabled)
+        }
+    }
+
+    fun markQualitySwitchFailureDialogShown() {
+        viewModelScope.launch {
+            com.android.purebilibili.core.store.SettingsManager.markQualitySwitchFailureDialogShown(app)
+        }
     }
 
     private fun writeDanmakuSetting(write: suspend (com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit) {
