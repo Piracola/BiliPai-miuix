@@ -518,7 +518,14 @@ fun VideoContentSection(
     danmakuSettingsActions: VideoDanmakuSettingsActions = VideoDanmakuSettingsActions.NoOp,
     videoAiSummaryEntryEnabled: Boolean = true,
     videoNoteEnabled: Boolean = true,
-    videoNoteDefaultCollapsed: Boolean = false
+    videoNoteDefaultCollapsed: Boolean = false,
+    videoInfoDefaultExpanded: Boolean = true,
+    loadBgmDetail: suspend (String, Long, Long) -> com.android.purebilibili.data.model.response.BgmDetailData? =
+        { _, _, _ -> null },
+    loadBgmRecommendVideos: suspend (String, Long, Long, Int, Int) ->
+        List<com.android.purebilibili.data.model.response.BgmRecommendVideo> = { _, _, _, _, _ -> emptyList() },
+    playerControlVisibility: com.android.purebilibili.core.store.PlayerControlVisibilitySettings =
+        com.android.purebilibili.core.store.PlayerControlVisibilitySettings()
 ) {
     val context = LocalContext.current
     val tabs = listOf("简介", "评论 $replyCount")
@@ -853,7 +860,11 @@ fun VideoContentSection(
                         animateVideoDetailLayout = animateVideoDetailLayout,
                         videoAiSummaryEntryEnabled = videoAiSummaryEntryEnabled,
                         videoNoteEnabled = videoNoteEnabled,
-                        videoNoteDefaultCollapsed = videoNoteDefaultCollapsed
+                        videoNoteDefaultCollapsed = videoNoteDefaultCollapsed,
+                        videoInfoDefaultExpanded = videoInfoDefaultExpanded,
+                        loadBgmDetail = loadBgmDetail,
+                        loadBgmRecommendVideos = loadBgmRecommendVideos,
+                        playerControlVisibility = playerControlVisibility
                     )
                     1 -> VideoCommentTab(
                         listState = commentListState,
@@ -1018,7 +1029,14 @@ private fun VideoIntroTab(
     chromeBackdrop: LayerBackdrop? = null,
     videoAiSummaryEntryEnabled: Boolean = true,
     videoNoteEnabled: Boolean = true,
-    videoNoteDefaultCollapsed: Boolean = false
+    videoNoteDefaultCollapsed: Boolean = false,
+    videoInfoDefaultExpanded: Boolean = true,
+    loadBgmDetail: suspend (String, Long, Long) -> com.android.purebilibili.data.model.response.BgmDetailData? =
+        { _, _, _ -> null },
+    loadBgmRecommendVideos: suspend (String, Long, Long, Int, Int) ->
+        List<com.android.purebilibili.data.model.response.BgmRecommendVideo> = { _, _, _, _, _ -> emptyList() },
+    playerControlVisibility: com.android.purebilibili.core.store.PlayerControlVisibilitySettings =
+        com.android.purebilibili.core.store.PlayerControlVisibilitySettings()
 ) {
     val hasPages = info.pages.size > 1
     var hiddenRelatedBvids by remember(info.bvid) { mutableStateOf(emptySet<String>()) }
@@ -1094,7 +1112,11 @@ private fun VideoIntroTab(
                 animateVideoDetailLayout = animateVideoDetailLayout,
                 videoAiSummaryEntryEnabled = videoAiSummaryEntryEnabled,
                 videoNoteEnabled = videoNoteEnabled,
-                videoNoteDefaultCollapsed = videoNoteDefaultCollapsed
+                videoNoteDefaultCollapsed = videoNoteDefaultCollapsed,
+                videoInfoDefaultExpanded = videoInfoDefaultExpanded,
+                loadBgmDetail = loadBgmDetail,
+                loadBgmRecommendVideos = loadBgmRecommendVideos,
+                playerControlVisibility = playerControlVisibility
             )
         }
         if (hasPages) {
@@ -1537,7 +1559,14 @@ private fun VideoHeaderContent(
     animateVideoDetailLayout: Boolean = true,
     videoAiSummaryEntryEnabled: Boolean = true,
     videoNoteEnabled: Boolean = true,
-    videoNoteDefaultCollapsed: Boolean = false
+    videoNoteDefaultCollapsed: Boolean = false,
+    videoInfoDefaultExpanded: Boolean = true,
+    loadBgmDetail: suspend (String, Long, Long) -> com.android.purebilibili.data.model.response.BgmDetailData? =
+        { _, _, _ -> null },
+    loadBgmRecommendVideos: suspend (String, Long, Long, Int, Int) ->
+        List<com.android.purebilibili.data.model.response.BgmRecommendVideo> = { _, _, _, _, _ -> emptyList() },
+    playerControlVisibility: com.android.purebilibili.core.store.PlayerControlVisibilitySettings =
+        com.android.purebilibili.core.store.PlayerControlVisibilitySettings()
 ) {
     val context = LocalContext.current
     Column(
@@ -1558,7 +1587,8 @@ private fun VideoHeaderContent(
             videoCount = ownerVideoCount,
             transitionEnabled = transitionEnabled,  // 🔗 传递共享元素开关
             isQuickReturnLimitedForSharedElements = isQuickReturnLimitedForSharedElements,
-            sourceRouteForSharedElement = sourceRouteForSharedElement
+            sourceRouteForSharedElement = sourceRouteForSharedElement,
+            playerControlVisibility = playerControlVisibility
         )
 
         VideoTitleWithDesc(
@@ -1577,7 +1607,10 @@ private fun VideoHeaderContent(
             onDescriptionUrlClick = onDescriptionUrlClick,
             onRelatedVideoClick = onRelatedVideoClick,
             animateLayout = animateVideoDetailLayout,
-            onTagClick = onSearchKeywordClick
+            onTagClick = onSearchKeywordClick,
+            loadBgmDetail = loadBgmDetail,
+            loadBgmRecommendVideos = loadBgmRecommendVideos,
+            defaultExpanded = videoInfoDefaultExpanded
         )
 
         // [新增] AI Summary

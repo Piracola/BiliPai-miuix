@@ -112,7 +112,16 @@ internal fun VideoDetailPhoneSuccessContentLayer(
     onShareVideo: (VideoSharePayload) -> Unit,
     externalPlaylistQueueTitle: String,
     playlistItems: List<PlaylistItem>,
-    onShowExternalPlaylistQueueSheet: () -> Unit
+    onShowExternalPlaylistQueueSheet: () -> Unit,
+    videoInfoDefaultExpanded: Boolean = true,
+    homeFeedCardStyle: com.android.purebilibili.core.store.HomeFeedCardStyle =
+        com.android.purebilibili.core.store.HomeFeedCardStyle.CURRENT,
+    playerControlVisibility: com.android.purebilibili.core.store.PlayerControlVisibilitySettings =
+        com.android.purebilibili.core.store.PlayerControlVisibilitySettings(),
+    loadBgmDetail: suspend (String, Long, Long) -> com.android.purebilibili.data.model.response.BgmDetailData? =
+        { _, _, _ -> null },
+    loadBgmRecommendVideos: suspend (String, Long, Long, Int, Int) ->
+        List<com.android.purebilibili.data.model.response.BgmRecommendVideo> = { _, _, _, _, _ -> emptyList() }
 ) {
     val engagementSuccess = success.withEngagementUiState(engagementState)
     val danmakuManager = rememberDanmakuManager()
@@ -322,7 +331,11 @@ internal fun VideoDetailPhoneSuccessContentLayer(
                                 danmakuSettingsActions = danmakuSettingsActions,
                                 videoAiSummaryEntryEnabled = videoAiSummaryEntryEnabled,
                                 videoNoteEnabled = videoNoteEnabled,
-                                videoNoteDefaultCollapsed = videoNoteDefaultCollapsed
+                                videoNoteDefaultCollapsed = videoNoteDefaultCollapsed,
+                                videoInfoDefaultExpanded = videoInfoDefaultExpanded,
+                                loadBgmDetail = loadBgmDetail,
+                                loadBgmRecommendVideos = loadBgmRecommendVideos,
+                                playerControlVisibility = playerControlVisibility
                             )
                         }
 

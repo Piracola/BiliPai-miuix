@@ -79,11 +79,10 @@ import com.android.purebilibili.feature.video.screen.buildVideoNavigationOptions
 import com.android.purebilibili.feature.video.ui.FollowButtonTone
 import com.android.purebilibili.feature.video.ui.FollowTextTone
 import com.android.purebilibili.feature.video.ui.resolveVideoFollowVisualPolicy
-import com.android.purebilibili.data.repository.ViewGrpcRepository
 import com.android.purebilibili.feature.home.components.cards.ElegantVideoCard
 import com.android.purebilibili.feature.home.resolveHomeFeedCardLayout
 import com.android.purebilibili.core.store.HomeFeedCardStyle
-import com.android.purebilibili.core.store.SettingsManager
+import com.android.purebilibili.core.store.PlayerControlVisibilitySettings
 import com.android.purebilibili.feature.video.ui.components.ShimmerContainer
 import com.android.purebilibili.feature.video.ui.components.SkeletonBox
 import com.android.purebilibili.feature.video.ui.VideoDetailShapes
@@ -295,13 +294,11 @@ fun VideoTitleWithDesc(
     onDescriptionUrlClick: ((String) -> Unit)? = null,
     onBgmClick: (BgmInfo) -> Unit = {},
     onTagClick: (String) -> Unit = {},
-    onRelatedVideoClick: (String, android.os.Bundle?) -> Unit = { _, _ -> }
+    onRelatedVideoClick: (String, android.os.Bundle?) -> Unit = { _, _ -> },
+    loadBgmDetail: suspend (String, Long, Long) -> BgmDetailData? = { _, _, _ -> null },
+    loadBgmRecommendVideos: suspend (String, Long, Long, Int, Int) -> List<BgmRecommendVideo> = { _, _, _, _, _ -> emptyList() },
+    defaultExpanded: Boolean = true
 ) {
-    val context = LocalContext.current
-    val defaultExpanded by com.android.purebilibili.core.store.SettingsManager
-        .getVideoInfoDefaultExpanded(context)
-        .collectAsStateWithLifecycle(initialValue = true
-        )
     var expanded by remember(info.bvid, info.desc, videoTags.size, defaultExpanded) {
         mutableStateOf(
             resolveVideoInfoInitialExpandedState(
@@ -573,7 +570,9 @@ fun VideoTitleWithDesc(
             InlineBgmSection(
                 bgmList = bgmList,
                 onBgmClick = onBgmClick,
-                onRelatedVideoClick = onRelatedVideoClick
+                onRelatedVideoClick = onRelatedVideoClick,
+                loadBgmDetail = loadBgmDetail,
+                loadBgmRecommendVideos = loadBgmRecommendVideos
             )
         }
         
@@ -697,13 +696,9 @@ fun UpInfoSection(
     transitionEnabled: Boolean = false,  // 🔗 共享元素过渡开关
     isQuickReturnLimitedForSharedElements: Boolean = false,
     sourceRouteForSharedElement: String? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    playerControlVisibility: PlayerControlVisibilitySettings = PlayerControlVisibilitySettings()
 ) {
-    val playerControlVisibility by com.android.purebilibili.core.store.SettingsManager
-        .getPlayerControlVisibilitySettings(LocalContext.current)
-        .collectAsStateWithLifecycle(
-            initialValue = com.android.purebilibili.core.store.PlayerControlVisibilitySettings()
-        )
     //  尝试获取共享元素作用域
     val sharedTransitionScope = com.android.purebilibili.core.ui.LocalSharedTransitionScope.current
     val animatedVisibilityScope = com.android.purebilibili.core.ui.LocalAnimatedVisibilityScope.current
@@ -1129,7 +1124,10 @@ fun DescriptionSection(desc: String) {
 private fun InlineBgmSection(
     bgmList: List<BgmInfo>,
     onBgmClick: (BgmInfo) -> Unit = {},
-    onRelatedVideoClick: (String, android.os.Bundle?) -> Unit = { _, _ -> }
+    onRelatedVideoClick: (String, android.os.Bundle?) -> Unit = { _, _ -> },
+    loadBgmDetail: suspend (String, Long, Long) -> BgmDetailData? = { _, _, _ -> null },
+    loadBgmRecommendVideos: suspend (String, Long, Long, Int, Int) -> List<BgmRecommendVideo> = { _, _, _, _, _ -> emptyList() },
+    homeFeedCardStyle: HomeFeedCardStyle = HomeFeedCardStyle.CURRENT
 ) {
     if (bgmList.isEmpty()) return
 
@@ -1168,7 +1166,10 @@ private fun InlineBgmSection(
                 showSheet = false
                 onBgmClick(bgm)
             },
-            onRelatedVideoClick = onRelatedVideoClick
+            onRelatedVideoClick = onRelatedVideoClick,
+            loadBgmDetail = loadBgmDetail,
+            loadBgmRecommendVideos = loadBgmRecommendVideos,
+            homeFeedCardStyle = homeFeedCardStyle
         )
     }
 }
@@ -1250,7 +1251,10 @@ private fun BgmSelectionSheet(
     bgmList: List<BgmInfo>,
     onDismiss: () -> Unit,
     onBgmClick: (BgmInfo) -> Unit,
-    onRelatedVideoClick: (String, android.os.Bundle?) -> Unit
+    onRelatedVideoClick: (String, android.os.Bundle?) -> Unit,
+    loadBgmDetail: suspend (String, Long, Long) -> BgmDetailData?,
+    loadBgmRecommendVideos: suspend (String, Long, Long, Int, Int) -> List<BgmRecommendVideo>,
+    homeFeedCardStyle: HomeFeedCardStyle = HomeFeedCardStyle.CURRENT
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val itemKeys = remember(bgmList) {
@@ -1290,25 +1294,24 @@ private fun BgmSelectionSheet(
             isAppendingRecommendations = false
         )
 
-        val detail = ViewGrpcRepository.getBgmDetail(
-            musicId = selectedBgm.musicId,
-            aid = aid,
-            cid = cid
+        val detail = loadBgmDetail(
+            selectedBgm.musicId,
+            aid,
+            cid
         )
-        val recommendedVideos = ViewGrpcRepository.getBgmRecommendVideos(
-            musicId = selectedBgm.musicId,
-            aid = aid,
-            cid = cid,
-            page = 1,
-            pageSize = BGM_RECOMMEND_PAGE_SIZE
+        val recommendedVideos = loadBgmRecommendVideos(
+            selectedBgm.musicId,
+            aid,
+            cid,
+            1,
+            BGM_RECOMMEND_PAGE_SIZE
         )
-        val loadedDetail = detail.getOrNull()
-        val loadedVideos = recommendedVideos.getOrDefault(emptyList())
-        val errorMessage = detail.exceptionOrNull()?.message
-            ?: recommendedVideos.exceptionOrNull()?.message
+        val loadedDetail = detail
+        val loadedVideos = recommendedVideos
+        val errorMessage: String? = null
 
         itemStateByKey[selectedItemKey] = BgmSheetItemState(
-            status = if (detail.isSuccess || recommendedVideos.isSuccess) {
+            status = if (loadedDetail != null || loadedVideos.isNotEmpty()) {
                 BgmDiscoveryLoadStatus.Loaded
             } else {
                 BgmDiscoveryLoadStatus.Error
@@ -1316,8 +1319,8 @@ private fun BgmSelectionSheet(
             detail = loadedDetail,
             recommendedVideos = loadedVideos,
             errorMessage = errorMessage,
-            nextRecommendPage = if (recommendedVideos.isSuccess) 2 else 1,
-            hasMoreRecommendations = if (recommendedVideos.isSuccess) {
+            nextRecommendPage = if (loadedVideos.isNotEmpty()) 2 else 1,
+            hasMoreRecommendations = if (loadedVideos.isNotEmpty()) {
                 loadedVideos.size >= BGM_RECOMMEND_PAGE_SIZE
             } else {
                 true
@@ -1405,7 +1408,10 @@ private fun BgmSelectionSheet(
             if (shouldShowInitialRecommendationPlaceholders) {
                 repeat((BGM_RECOMMEND_PAGE_SIZE + 1) / 2) { placeholderRowIndex ->
                     item(key = "bgm-recommend-placeholder-row-$placeholderRowIndex") {
-                        BgmRecommendVideoSkeletonRow(indexBase = placeholderRowIndex * 2)
+                        BgmRecommendVideoSkeletonRow(
+                            indexBase = placeholderRowIndex * 2,
+                            homeFeedCardStyle = homeFeedCardStyle
+                        )
                     }
                 }
             } else if (selectedData.recommendedVideos.isNotEmpty()) {
@@ -1416,6 +1422,7 @@ private fun BgmSelectionSheet(
                     BgmRecommendVideoCardRow(
                         rowVideos = rowVideos,
                         rowIndex = rowIndex,
+                        homeFeedCardStyle = homeFeedCardStyle,
                         onVideoClick = { video ->
                             onDismiss()
                             onRelatedVideoClick(
@@ -1447,7 +1454,10 @@ private fun BgmSelectionSheet(
 
             if (selectedData.isAppendingRecommendations) {
                 item(key = "bgm-recommend-loading-more") {
-                    BgmRecommendVideoSkeletonRow(indexBase = recommendedVideoRows.size * 2)
+                    BgmRecommendVideoSkeletonRow(
+                        indexBase = recommendedVideoRows.size * 2,
+                        homeFeedCardStyle = homeFeedCardStyle
+                    )
                 }
             }
 
@@ -1485,7 +1495,8 @@ private fun BgmSelectionSheet(
                 itemKey = selectedItemKey,
                 bgm = selectedBgm,
                 aid = aid,
-                cid = cid
+                cid = cid,
+                loadBgmRecommendVideos = loadBgmRecommendVideos
             )
         }
     }
@@ -1512,12 +1523,9 @@ private fun BgmDiscoveryRelatedHeader() {
 private fun BgmRecommendVideoCardRow(
     rowVideos: List<BgmRecommendVideo>,
     rowIndex: Int,
-    onVideoClick: (BgmRecommendVideo) -> Unit
+    onVideoClick: (BgmRecommendVideo) -> Unit,
+    homeFeedCardStyle: HomeFeedCardStyle
 ) {
-    val context = LocalContext.current
-    val homeFeedCardStyle by SettingsManager
-        .getHomeFeedCardStyle(context)
-        .collectAsStateWithLifecycle(initialValue = HomeFeedCardStyle.CURRENT)
     val cardLayout = remember(homeFeedCardStyle) {
         resolveHomeFeedCardLayout(homeFeedCardStyle)
     }
@@ -1551,12 +1559,9 @@ private fun BgmRecommendVideoCardRow(
 
 @Composable
 private fun BgmRecommendVideoSkeletonRow(
-    indexBase: Int
+    indexBase: Int,
+    homeFeedCardStyle: HomeFeedCardStyle
 ) {
-    val context = LocalContext.current
-    val homeFeedCardStyle by SettingsManager
-        .getHomeFeedCardStyle(context)
-        .collectAsStateWithLifecycle(initialValue = HomeFeedCardStyle.CURRENT)
     val cardLayout = remember(homeFeedCardStyle) {
         resolveHomeFeedCardLayout(homeFeedCardStyle)
     }
@@ -2012,7 +2017,8 @@ private suspend fun loadMoreBgmRecommendations(
     itemKey: String,
     bgm: BgmInfo,
     aid: Long,
-    cid: Long
+    cid: Long,
+    loadBgmRecommendVideos: suspend (String, Long, Long, Int, Int) -> List<BgmRecommendVideo>
 ) {
     val currentState = itemStateByKey[itemKey] ?: return
     if (!shouldLoadMoreBgmRecommendations(currentState, bgm.musicId, aid, cid)) return
@@ -2022,14 +2028,13 @@ private suspend fun loadMoreBgmRecommendations(
         errorMessage = null
     )
 
-    val result = ViewGrpcRepository.getBgmRecommendVideos(
-        musicId = bgm.musicId,
-        aid = aid,
-        cid = cid,
-        page = currentState.nextRecommendPage,
-        pageSize = BGM_RECOMMEND_PAGE_SIZE
+    val incomingVideos = loadBgmRecommendVideos(
+        bgm.musicId,
+        aid,
+        cid,
+        currentState.nextRecommendPage,
+        BGM_RECOMMEND_PAGE_SIZE
     )
-    val incomingVideos = result.getOrDefault(emptyList())
     val mergedVideos = mergeBgmRecommendedVideos(
         existing = currentState.recommendedVideos,
         incoming = incomingVideos
@@ -2037,15 +2042,16 @@ private suspend fun loadMoreBgmRecommendations(
     val appendedCount = mergedVideos.size - currentState.recommendedVideos.size
 
     val latestState = itemStateByKey[itemKey] ?: currentState
+    val loadSucceeded = incomingVideos.isNotEmpty() || currentState.recommendedVideos.isNotEmpty()
     itemStateByKey[itemKey] = latestState.copy(
-        recommendedVideos = if (result.isSuccess) mergedVideos else latestState.recommendedVideos,
-        errorMessage = result.exceptionOrNull()?.message,
-        nextRecommendPage = if (result.isSuccess && appendedCount > 0) {
+        recommendedVideos = if (loadSucceeded) mergedVideos else latestState.recommendedVideos,
+        errorMessage = null,
+        nextRecommendPage = if (loadSucceeded && appendedCount > 0) {
             currentState.nextRecommendPage + 1
         } else {
             currentState.nextRecommendPage
         },
-        hasMoreRecommendations = if (result.isSuccess) {
+        hasMoreRecommendations = if (loadSucceeded) {
             incomingVideos.size >= BGM_RECOMMEND_PAGE_SIZE && appendedCount > 0
         } else {
             latestState.hasMoreRecommendations

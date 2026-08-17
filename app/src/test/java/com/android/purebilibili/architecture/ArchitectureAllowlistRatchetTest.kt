@@ -68,9 +68,11 @@ class ArchitectureAllowlistRatchetTest {
         // 一并豁免；移除 video 三个 UseCase 白名单条目（SponsorBlock/Interaction/Playback）。
         // 72 → 63：video 详情页切片——StateHolder + 5 个 overlay 适配器 + PhoneContent +
         // ContentSection + TabletCinema/TabletVideo 共 9 个非播放器文件清零移出白名单。
-        const val MAX_CORE_GLOBAL_OBJECT_FILES = 63
+        // 63 → 62：VideoInfoSection 清零——BGM 发现音乐经 VM 走 ViewGrpcRepository，
+        // 信息默认展开/首页卡片样式/播放器控件可见性参数化下传。
+        const val MAX_CORE_GLOBAL_OBJECT_FILES = 62
 
         const val CORE_GLOBAL_OBJECT_FILES_SHA256 =
-            "047c639e8a3c47efb43bb3205fbb470b56e284ab3b3e0bda2b675019cb2149a6"
+            "bd7999b942082bb26894092e57c84bb9e8b891ec4f6fda04a17e432047e85b00"
     }
 }

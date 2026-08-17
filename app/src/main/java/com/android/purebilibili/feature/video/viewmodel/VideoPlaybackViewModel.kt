@@ -1328,6 +1328,17 @@ class VideoPlaybackViewModel(application: Application) : AndroidViewModel(applic
         com.android.purebilibili.core.store.SettingsManager.getLongPressSpeedHintAlpha(app)
             .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly,
                 com.android.purebilibili.core.store.SettingsManager.getLongPressSpeedHintAlphaSync(app))
+    val videoInfoDefaultExpanded: kotlinx.coroutines.flow.StateFlow<Boolean> =
+        com.android.purebilibili.core.store.SettingsManager.getVideoInfoDefaultExpanded(app)
+            .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, true)
+    val homeFeedCardStyle: kotlinx.coroutines.flow.StateFlow<com.android.purebilibili.core.store.HomeFeedCardStyle> =
+        com.android.purebilibili.core.store.SettingsManager.getHomeFeedCardStyle(app)
+            .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly,
+                com.android.purebilibili.core.store.HomeFeedCardStyle.CURRENT)
+    val playerControlVisibility: kotlinx.coroutines.flow.StateFlow<com.android.purebilibili.core.store.PlayerControlVisibilitySettings> =
+        com.android.purebilibili.core.store.SettingsManager.getPlayerControlVisibilitySettings(app)
+            .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly,
+                com.android.purebilibili.core.store.PlayerControlVisibilitySettings())
 
     // 弹幕设置的 scope 随横竖屏切换，用状态流驱动 SettingsManager 读取。
     private val _danmakuSettingsScope = kotlinx.coroutines.flow.MutableStateFlow(
@@ -1510,6 +1521,21 @@ class VideoPlaybackViewModel(application: Application) : AndroidViewModel(applic
 
     val playbackAccountMid: Long?
         get() = com.android.purebilibili.core.network.NetworkModule.playbackAccount()?.mid
+
+    // BGM 发现音乐：UI 层经 VM 走 ViewGrpcRepository（阶段 4 切片）
+    suspend fun fetchBgmDetail(musicId: String, aid: Long, cid: Long): com.android.purebilibili.data.model.response.BgmDetailData? =
+        com.android.purebilibili.data.repository.ViewGrpcRepository.getBgmDetail(musicId, aid, cid).getOrNull()
+
+    suspend fun fetchBgmRecommendVideos(
+        musicId: String,
+        aid: Long,
+        cid: Long,
+        page: Int,
+        pageSize: Int
+    ): List<com.android.purebilibili.data.model.response.BgmRecommendVideo> =
+        com.android.purebilibili.data.repository.ViewGrpcRepository
+            .getBgmRecommendVideos(musicId, aid, cid, page, pageSize)
+            .getOrDefault(emptyList())
 
     // HDR auto-upgrade state
     private val attemptedUpgradeKeys = mutableSetOf<String>()

@@ -4042,6 +4042,11 @@ internal fun VideoDetailScreenStateHolder(
                                         videoAiSummaryEntryEnabled = videoAiSummaryEntryEnabled,
                                         videoNoteEnabled = videoNoteEnabled,
                                         videoNoteDefaultCollapsed = videoNoteDefaultCollapsed,
+                                        videoInfoDefaultExpanded = viewModel.videoInfoDefaultExpanded.value,
+                                        homeFeedCardStyle = viewModel.homeFeedCardStyle.value,
+                                        playerControlVisibility = viewModel.playerControlVisibility.value,
+                                        loadBgmDetail = viewModel::fetchBgmDetail,
+                                        loadBgmRecommendVideos = viewModel::fetchBgmRecommendVideos,
                                         onPersistSortMode = { apiMode -> viewModel.setCommentDefaultSortMode(apiMode) },
                                         onPersistDanmakuEnabled = { enabled ->
                                             viewModel.setDanmakuEnabledForDetail(
