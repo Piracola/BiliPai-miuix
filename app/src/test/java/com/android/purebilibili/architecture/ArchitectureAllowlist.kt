@@ -85,8 +85,5 @@ internal object ArchitectureAllowlist {
         "src/main/java/com/android/purebilibili/feature/video/ui/pager/PortraitVideoPager.kt",
         "src/main/java/com/android/purebilibili/feature/video/ui/section/VideoInfoSection.kt",
         "src/main/java/com/android/purebilibili/feature/video/ui/section/VideoPlayerSection.kt",
-        "src/main/java/com/android/purebilibili/feature/video/usecase/SponsorBlockUseCase.kt",
-        "src/main/java/com/android/purebilibili/feature/video/usecase/VideoInteractionUseCase.kt",
-        "src/main/java/com/android/purebilibili/feature/video/usecase/VideoPlaybackUseCase.kt",
     )
 }

@@ -16,7 +16,8 @@ import kotlin.test.assertTrue
  * 判定口径：**文件级**豁免而非调用点级。一个文件只要落在
  * [ArchitectureAllowlist.CORE_GLOBAL_OBJECT_FILES] 里，本测试就放行整个文件；
  * 白名单外的 feature 文件出现任何一个被禁止符号的调用，立即失败。
- * `*ViewModel.kt` 文件属于 Coordinator 层（依赖 Core 合法），由规则豁免。
+ * `*ViewModel.kt` / `*UseCase.kt` 文件属于 Coordinator 层（依赖 Core 合法），
+ * 由规则豁免——见 FULL_REFACTOR_PLAN.md §3.3「coordinator/ ViewModel、UseCase、状态归约」。
  * 文件被阶段 2/4 的切片迁移干净后，从白名单移除——那是一个必须同步调小
  * 棘轮上限、更新 SHA 摘要的显眼动作。
  */
@@ -26,7 +27,7 @@ class UiLayerMustNotTouchCoreDataStructureTest {
     fun `feature files outside allowlist do not reference core global objects`() {
         val offenders = featureSources()
             .filterNot { it.invariantPath in ArchitectureAllowlist.CORE_GLOBAL_OBJECT_FILES }
-            .filterNot { it.name.endsWith("ViewModel.kt") }
+            .filterNot { it.name.endsWith("ViewModel.kt") || it.name.endsWith("UseCase.kt") }
             .map { it to it.readText() }
             .flatMap { (file, text) ->
                 FORBIDDEN_SYMBOLS

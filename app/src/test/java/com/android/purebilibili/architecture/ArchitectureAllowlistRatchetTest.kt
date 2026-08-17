@@ -64,9 +64,11 @@ class ArchitectureAllowlistRatchetTest {
         // 77 → 75：SpaceScreen 空间页直读收拢到 SpaceViewModel（AndroidViewModel，
         // homeSettings + 拉黑开关 + 定位提示），ProfileScreen 个人中心页直读收拢到
         // ProfileViewModel（隐私模式/主题/动态预览文本可见性 + 4 设置 StateFlow）。
-        const val MAX_CORE_GLOBAL_OBJECT_FILES = 75
+        // 75 → 72：护栏规则对齐 §3.3——*UseCase.kt 与 *ViewModel.kt 同属 Coordinator 层，
+        // 一并豁免；移除 video 三个 UseCase 白名单条目（SponsorBlock/Interaction/Playback）。
+        const val MAX_CORE_GLOBAL_OBJECT_FILES = 72
 
         const val CORE_GLOBAL_OBJECT_FILES_SHA256 =
-            "af637974542ed794ca460aaf1d06020e476a5c1b269814f2d8688890d327c263"
+            "a7241d980107542afe8174761e3d34cbd864d87400e970af31085e85e68225da"
     }
 }
