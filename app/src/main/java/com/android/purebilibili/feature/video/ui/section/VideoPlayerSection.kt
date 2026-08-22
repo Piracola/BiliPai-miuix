@@ -146,7 +146,6 @@ import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.VideoSize
 import androidx.media3.ui.PlayerView
 import com.android.purebilibili.core.store.FullscreenAspectRatio
-import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.ui.rememberAppPlayerChromeProfile
 import com.android.purebilibili.core.ui.performance.TrackJankStateFlag
 import com.android.purebilibili.core.ui.performance.TrackJankStateValue
@@ -520,6 +519,10 @@ fun VideoPlayerSection(
     subtitleDisplayModePreferenceOverride: SubtitleDisplayMode? = null,
     onSubtitleDisplayModePreferenceOverrideChange: (SubtitleDisplayMode) -> Unit = {},
     onSubtitleTrackSelected: (String) -> Unit = {},
+    settings: com.android.purebilibili.feature.video.screen.VideoPlayerSettingsSnapshot =
+        com.android.purebilibili.feature.video.screen.resolveDefaultVideoPlayerSettingsSnapshot(),
+    settingsActions: com.android.purebilibili.feature.video.screen.VideoPlayerSettingsActions =
+        com.android.purebilibili.feature.video.screen.VideoPlayerSettingsActions.NoOp,
 ) {
     val context = LocalContext.current
     val localDensity = LocalDensity.current
@@ -570,34 +573,9 @@ fun VideoPlayerSection(
     val audioManager = remember { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
     val settingsScope = rememberCoroutineScope()
 
-    val playerInsightMode by com.android.purebilibili.core.store.SettingsManager
-        .getPlayerInsightMode(context)
-        .collectAsStateWithLifecycle(
-            initialValue = com.android.purebilibili.core.store.SettingsManager.getPlayerInsightModeSync(context),
-            lifecycle = lifecycleOwner.lifecycle
-        )
+    val playerInsightMode = settings.playerInsightMode
 
-    val playerInteractionSettings by com.android.purebilibili.core.store.SettingsManager
-        .getPlayerInteractionSettings(context)
-        .collectAsStateWithLifecycle(
-            initialValue = com.android.purebilibili.core.store.PlayerInteractionSettings(
-                longPressSpeedLockEnabled = com.android.purebilibili.core.store.SettingsManager
-                    .getLongPressSpeedLockEnabledSync(context),
-                longPressSpeedLockHintShown = com.android.purebilibili.core.store.SettingsManager
-                    .getLongPressSpeedLockHintShownSync(context),
-                longPressSpeedHintCloseEnabled = com.android.purebilibili.core.store.SettingsManager
-                    .getLongPressSpeedHintCloseEnabledSync(context),
-                longPressSpeedHintHidden = com.android.purebilibili.core.store.SettingsManager
-                    .getLongPressSpeedHintHiddenSync(context),
-                longPressSpeedHintScale = com.android.purebilibili.core.store.SettingsManager
-                    .getLongPressSpeedHintScaleSync(context),
-                longPressSpeedHintAlpha = com.android.purebilibili.core.store.SettingsManager
-                    .getLongPressSpeedHintAlphaSync(context),
-                hiResLongPressCompatHintShown = com.android.purebilibili.core.store.SettingsManager
-                    .getHiResLongPressCompatHintShownSync(context)
-            ),
-            lifecycle = lifecycleOwner.lifecycle
-        )
+    val playerInteractionSettings = settings.playerInteractionSettings
 
     val gestureSensitivity = playerInteractionSettings.gestureSensitivity
     val longPressSpeedHintScale = playerInteractionSettings.longPressSpeedHintScale
@@ -625,12 +603,7 @@ fun VideoPlayerSection(
             smallestScreenWidthDp = configuration.smallestScreenWidthDp
         )
     }
-    val playbackCompletionBehavior by com.android.purebilibili.core.store.SettingsManager
-        .getPlaybackCompletionBehavior(context)
-        .collectAsStateWithLifecycle(
-            initialValue = com.android.purebilibili.core.store.PlaybackCompletionBehavior.CONTINUE_CURRENT_LOGIC,
-            lifecycle = lifecycleOwner.lifecycle
-        )
+    val playbackCompletionBehavior = settings.playbackCompletionBehavior
     val willContinueToNextAfterEnd = remember(uiState, playbackCompletionBehavior) {
         val success = uiState as? VideoPlaybackUiState.Success
         if (success == null) {
@@ -713,18 +686,12 @@ fun VideoPlayerSection(
     var twoFingerSpeedFeedbackRevision by remember { mutableIntStateOf(0) }
     var twoFingerFeedbackSpeed by remember { mutableFloatStateOf(1.0f) }
     var hasShownHiResCompatHintLocally by remember {
-        mutableStateOf(
-            com.android.purebilibili.core.store.SettingsManager
-                .getHiResLongPressCompatHintShownSync(context)
-        )
+        mutableStateOf(settings.hiResLongPressCompatHintShown)
     }
     val hasShownHiResCompatHint = hiResCompatHintShownPersisted || hasShownHiResCompatHintLocally
     val longPressSpeedLockHintShownPersisted = playerInteractionSettings.longPressSpeedLockHintShown
     var hasShownLongPressSpeedLockHintLocally by remember {
-        mutableStateOf(
-            com.android.purebilibili.core.store.SettingsManager
-                .getLongPressSpeedLockHintShownSync(context)
-        )
+        mutableStateOf(settings.longPressSpeedLockHintShown)
     }
     val hasShownLongPressSpeedLockHint =
         longPressSpeedLockHintShownPersisted || hasShownLongPressSpeedLockHintLocally
@@ -946,9 +913,7 @@ fun VideoPlayerSection(
     val debugInfo by playerState.debugInfo.collectAsStateWithLifecycle()
     val diagnosticEvents by playerState.diagnosticEvents.collectAsStateWithLifecycle()
     val pendingUserAction by playerState.pendingUserAction.collectAsStateWithLifecycle()
-    val playerDiagnosticLoggingEnabled by SettingsManager
-        .getPlayerDiagnosticLoggingEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = true)
+    val playerDiagnosticLoggingEnabled = settings.playerDiagnosticLoggingEnabled
     val currentPlaybackIdentity = remember(bvid, uiState) {
         val success = uiState as? VideoPlaybackUiState.Success
         "${bvid}_${success?.info?.cid ?: 0L}"
@@ -984,11 +949,7 @@ fun VideoPlayerSection(
 
     // 「播放页沉浸状态栏」开启时，实时采样播放画面作为状态栏背景模糊源；
     // 关闭（默认）时背景为纯黑，不采样，零开销。
-    val statusBarHazeEnabled by SettingsManager
-        .getHideVideoPageStatusBar(context)
-        .collectAsStateWithLifecycle(
-            initialValue = SettingsManager.getHideVideoPageStatusBarSync(context),
-        )
+    val statusBarHazeEnabled = settings.statusBarHazeEnabled
     val shouldCaptureStatusBarAmbientFrame = contentTopInset.value > 0f &&
         !isFullscreen &&
         !isInPipMode &&
@@ -1313,8 +1274,7 @@ fun VideoPlayerSection(
             showLongPressSpeedLockHint = true
             longPressSpeedLockHintGeneration += 1
             settingsScope.launch {
-                com.android.purebilibili.core.store.SettingsManager
-                    .setLongPressSpeedLockHintShown(context, true)
+                settingsActions.setLongPressSpeedLockHintShown(true)
             }
         }
         if (
@@ -1331,8 +1291,7 @@ fun VideoPlayerSection(
                 Toast.LENGTH_SHORT
             ).show()
             settingsScope.launch {
-                com.android.purebilibili.core.store.SettingsManager
-                    .setHiResLongPressCompatHintShown(context, true)
+                settingsActions.setHiResLongPressCompatHintShown(true)
             }
         }
         isLongPressing = true
@@ -2229,12 +2188,10 @@ fun VideoPlayerSection(
             )
         }
 
-        val danmakuSettings by com.android.purebilibili.core.store.SettingsManager
-            .getDanmakuSettings(context, activeDanmakuScope)
-            .collectAsStateWithLifecycle(
-                initialValue = com.android.purebilibili.core.store.DanmakuSettings(),
-                lifecycle = lifecycleOwner.lifecycle
-            )
+        val danmakuSettings = settings.danmakuSettings
+        LaunchedEffect(activeDanmakuScope) {
+            settingsActions.setDanmakuSettingsScope(activeDanmakuScope)
+        }
         val danmakuEnabled = danmakuSettings.enabled
         val danmakuOpacity = danmakuSettings.opacity
         val danmakuFontScale = danmakuSettings.fontScale
@@ -2259,18 +2216,11 @@ fun VideoPlayerSection(
         val danmakuHideInteractiveCommands = danmakuSettings.hideInteractiveCommands
         val danmakuSmartOcclusion = danmakuSettings.smartOcclusion
         val portraitDanmakuDisplayAreaMode = danmakuSettings.portraitDisplayAreaMode
-        val danmakuFullscreenPanelWidthMode by com.android.purebilibili.core.store.SettingsManager
-            .getDanmakuFullscreenPanelWidthMode(context)
-            .collectAsStateWithLifecycle(
-                initialValue = com.android.purebilibili.core.store.DanmakuPanelWidthMode.THIRD,
-                lifecycle = lifecycleOwner.lifecycle
-            )
+        val danmakuFullscreenPanelWidthMode = settings.danmakuFullscreenPanelWidthMode
         val danmakuBlockRulesRaw = danmakuSettings.blockRulesRaw
         val danmakuBlockRules = danmakuSettings.blockRules
         val isLoggedIn = (uiState as? VideoPlaybackUiState.Success)?.isLoggedIn == true
-        val danmakuCloudSyncEnabled by com.android.purebilibili.core.store.SettingsManager
-            .getDanmakuCloudSyncEnabled(context)
-            .collectAsStateWithLifecycle(initialValue = true)
+        val danmakuCloudSyncEnabled = settings.danmakuCloudSyncEnabled
         val canSyncDanmakuCloud = com.android.purebilibili.feature.video.danmaku
             .shouldSyncDanmakuSettingsToCloud(
                 isLoggedIn = isLoggedIn,
@@ -2711,8 +2661,7 @@ fun VideoPlayerSection(
                 kotlinx.coroutines.delay(700)
             }
             danmakuCloudSyncUiState = resolveDanmakuCloudSyncStateAfterStarted(danmakuCloudSyncUiState)
-            val result = com.android.purebilibili.data.repository.DanmakuRepository
-                .syncDanmakuCloudConfig(settings)
+            val result = settingsActions.syncDanmakuCloudConfig(settings)
             val completedAtMillis = System.currentTimeMillis()
             danmakuCloudSyncUiState = resolveDanmakuCloudSyncStateAfterResult(
                 previous = danmakuCloudSyncUiState,
@@ -2858,9 +2807,7 @@ fun VideoPlayerSection(
         val persistedRenderedFirstFrame = remember(debugInfo.firstFrame) {
             debugInfo.firstFrame.equals("rendered", ignoreCase = true)
         }
-        val autoPlayOnOpenEnabled = remember(context) {
-            SettingsManager.getClickToPlaySync(context)
-        }
+        val autoPlayOnOpenEnabled = settings.autoPlayOnOpenEnabled
         var hasManualStartPlaybackIntent by remember(bvid) {
             mutableStateOf(
                 playerState.player.mediaItemCount > 0 &&
@@ -3701,12 +3648,12 @@ fun VideoPlayerSection(
                         val score = option.score
                         if (success != null && score != null && item.voteId.isNotBlank()) {
                             settingsScope.launch {
-                                val result = com.android.purebilibili.data.repository.DanmakuRepository.submitGradeDanmaku(
-                                    aid = success.info.aid,
-                                    cid = success.info.cid,
-                                    progress = item.startTimeMs,
-                                    gradeId = item.voteId,
-                                    gradeScore = score
+                                val result = settingsActions.submitGradeDanmaku(
+                                    success.info.aid,
+                                    success.info.cid,
+                                    item.startTimeMs,
+                                    item.voteId,
+                                    score
                                 )
                                 if (result.isFailure) {
                                     android.util.Log.w(
@@ -4025,12 +3972,9 @@ fun VideoPlayerSection(
                             },
                             onDragEnd = {
                                 isDraggingSubtitleOffset = false
-                                settingsScope.launch {
-                                    SettingsManager.setSubtitleVerticalOffsetFraction(
-                                        context,
-                                        subtitleVerticalOffsetFraction
-                                    )
-                                }
+                                settingsActions.setSubtitleVerticalOffsetFraction(
+                                    subtitleVerticalOffsetFraction
+                                )
                             },
                             onDragCancel = {
                                 isDraggingSubtitleOffset = false
@@ -4428,12 +4372,8 @@ fun VideoPlayerSection(
                             onClick = {
                                 showLongPressSpeedLockHint = false
                                 hasShownLongPressSpeedLockHintLocally = true
-                                settingsScope.launch {
-                                    com.android.purebilibili.core.store.SettingsManager
-                                        .setLongPressSpeedLockEnabled(context, true)
-                                    com.android.purebilibili.core.store.SettingsManager
-                                        .setLongPressSpeedLockHintShown(context, true)
-                                }
+                                settingsActions.setLongPressSpeedLockEnabled(true)
+                                settingsActions.setLongPressSpeedLockHintShown(true)
                             },
                             colors = ButtonDefaults.textButtonColors(contentColor = Color.White)
                         ) {
@@ -4444,10 +4384,7 @@ fun VideoPlayerSection(
                                 showLongPressSpeedLockHint = false
                                 hasShownLongPressSpeedLockHintLocally = true
                                 finishLongPressSpeedGesture(gestureEnded = true)
-                                settingsScope.launch {
-                                    com.android.purebilibili.core.store.SettingsManager
-                                        .setLongPressSpeedLockHintShown(context, true)
-                                }
+                                settingsActions.setLongPressSpeedLockHintShown(true)
                             },
                             colors = ButtonDefaults.textButtonColors(contentColor = Color.White)
                         ) {
@@ -4517,13 +4454,7 @@ fun VideoPlayerSection(
                     if (!newState) {
                         danmakuManager.clear()
                     }
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager.setDanmakuEnabled(
-                            context,
-                            newState,
-                            activeDanmakuScope
-                        )
-                    }
+                    settingsActions.setDanmakuEnabled(newState, activeDanmakuScope)
                     queueDanmakuCloudSync(enabled = newState)
                     //  记录弹幕开关事件
                     com.android.purebilibili.core.util.AnalyticsHelper.logDanmakuToggle(newState)
@@ -4571,236 +4502,99 @@ fun VideoPlayerSection(
                 danmakuSyncUiState = danmakuCloudSyncUiState,
                 onDanmakuOpacityChange = { value ->
                     danmakuManager.opacity = value
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager.setDanmakuOpacity(
-                            context,
-                            value,
-                            activeDanmakuScope
-                        )
-                    }
+                    settingsActions.setDanmakuOpacity(value, activeDanmakuScope)
                     queueDanmakuCloudSync(opacity = value)
                 },
                 onDanmakuFontScaleChange = { value ->
                     danmakuManager.fontScale = value
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager.setDanmakuFontScale(
-                            context,
-                            value,
-                            activeDanmakuScope
-                        )
-                    }
+                    settingsActions.setDanmakuFontScale(value, activeDanmakuScope)
                     queueDanmakuCloudSync(fontScale = value)
                 },
                 onDanmakuFontWeightChange = { value ->
                     danmakuManager.fontWeight = value
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager.setDanmakuFontWeight(
-                            context,
-                            value,
-                            activeDanmakuScope
-                        )
-                    }
+                    settingsActions.setDanmakuFontWeight(value, activeDanmakuScope)
                 },
                 onDanmakuSpeedChange = { value ->
                     danmakuManager.speedFactor = value
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager.setDanmakuSpeed(
-                            context,
-                            value,
-                            activeDanmakuScope
-                        )
-                    }
+                    settingsActions.setDanmakuSpeed(value, activeDanmakuScope)
                     queueDanmakuCloudSync(speed = value)
                 },
                 onDanmakuDisplayAreaChange = { value ->
                     danmakuManager.displayArea = value
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager.setDanmakuArea(
-                            context,
-                            value,
-                            activeDanmakuScope
-                        )
-                    }
+                    settingsActions.setDanmakuArea(value, activeDanmakuScope)
                     queueDanmakuCloudSync(displayAreaRatio = value)
                 },
                 onDanmakuStrokeWidthChange = { value ->
                     danmakuManager.strokeWidth = value
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager.setDanmakuStrokeWidth(
-                            context,
-                            value,
-                            activeDanmakuScope
-                        )
-                    }
+                    settingsActions.setDanmakuStrokeWidth(value, activeDanmakuScope)
                 },
                 onDanmakuLineHeightChange = { value ->
                     danmakuManager.lineHeight = value
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager.setDanmakuLineHeight(
-                            context,
-                            value,
-                            activeDanmakuScope
-                        )
-                    }
+                    settingsActions.setDanmakuLineHeight(value, activeDanmakuScope)
                 },
                 onDanmakuScrollDurationSecondsChange = { value ->
                     danmakuManager.scrollDurationSeconds = value
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager.setDanmakuScrollDurationSeconds(
-                            context,
-                            value,
-                            activeDanmakuScope
-                        )
-                    }
+                    settingsActions.setDanmakuScrollDurationSeconds(value, activeDanmakuScope)
                 },
                 onDanmakuStaticDurationSecondsChange = { value ->
                     danmakuManager.staticDurationSeconds = value
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager.setDanmakuStaticDurationSeconds(
-                            context,
-                            value,
-                            activeDanmakuScope
-                        )
-                    }
+                    settingsActions.setDanmakuStaticDurationSeconds(value, activeDanmakuScope)
                 },
                 onDanmakuScrollFixedVelocityChange = { value ->
                     danmakuManager.scrollFixedVelocity = value
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager.setDanmakuScrollFixedVelocity(
-                            context,
-                            value,
-                            activeDanmakuScope
-                        )
-                    }
+                    settingsActions.setDanmakuScrollFixedVelocity(value, activeDanmakuScope)
                 },
                 onDanmakuStaticToScrollChange = { value ->
                     danmakuManager.staticDanmakuToScroll = value
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager.setDanmakuStaticToScroll(
-                            context,
-                            value,
-                            activeDanmakuScope
-                        )
-                    }
+                    settingsActions.setDanmakuStaticToScroll(value, activeDanmakuScope)
                 },
                 onDanmakuMassiveModeChange = { value ->
                     danmakuManager.massiveMode = value
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager.setDanmakuMassiveMode(
-                            context,
-                            value,
-                            activeDanmakuScope
-                        )
-                    }
+                    settingsActions.setDanmakuMassiveMode(value, activeDanmakuScope)
                 },
                 onDanmakuMergeDuplicatesChange = { value ->
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager.setDanmakuMergeDuplicates(
-                            context,
-                            value,
-                            activeDanmakuScope
-                        )
-                    }
+                    settingsActions.setDanmakuMergeDuplicates(value, activeDanmakuScope)
                 },
                 onDanmakuDuplicateMergeWindowMsChange = { value ->
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager.setDanmakuDuplicateMergeWindowMs(
-                            context,
-                            value,
-                            activeDanmakuScope
-                        )
-                    }
+                    settingsActions.setDanmakuDuplicateMergeWindowMs(value, activeDanmakuScope)
                 },
                 onDanmakuDuplicateMergeCountThresholdChange = { value ->
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager.setDanmakuDuplicateMergeCountThreshold(
-                            context,
-                            value,
-                            activeDanmakuScope
-                        )
-                    }
+                    settingsActions.setDanmakuDuplicateMergeCountThreshold(value, activeDanmakuScope)
                 },
                 onDanmakuAllowScrollChange = { value ->
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager.setDanmakuAllowScroll(
-                            context,
-                            value,
-                            activeDanmakuScope
-                        )
-                    }
+                    settingsActions.setDanmakuAllowScroll(value, activeDanmakuScope)
                     queueDanmakuCloudSync(allowScroll = value)
                 },
                 onDanmakuAllowTopChange = { value ->
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager.setDanmakuAllowTop(
-                            context,
-                            value,
-                            activeDanmakuScope
-                        )
-                    }
+                    settingsActions.setDanmakuAllowTop(value, activeDanmakuScope)
                     queueDanmakuCloudSync(allowTop = value)
                 },
                 onDanmakuAllowBottomChange = { value ->
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager.setDanmakuAllowBottom(
-                            context,
-                            value,
-                            activeDanmakuScope
-                        )
-                    }
+                    settingsActions.setDanmakuAllowBottom(value, activeDanmakuScope)
                     queueDanmakuCloudSync(allowBottom = value)
                 },
                 onDanmakuAllowColorfulChange = { value ->
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager.setDanmakuAllowColorful(
-                            context,
-                            value,
-                            activeDanmakuScope
-                        )
-                    }
+                    settingsActions.setDanmakuAllowColorful(value, activeDanmakuScope)
                     queueDanmakuCloudSync(allowColorful = value)
                 },
                 onDanmakuAllowSpecialChange = { value ->
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager.setDanmakuAllowSpecial(
-                            context,
-                            value,
-                            activeDanmakuScope
-                        )
-                    }
+                    settingsActions.setDanmakuAllowSpecial(value, activeDanmakuScope)
                     queueDanmakuCloudSync(allowSpecial = value)
                 },
                 onDanmakuHideInteractiveCommandsChange = { value ->
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager
-                            .setDanmakuHideInteractiveCommands(context, value)
-                    }
+                    settingsActions.setDanmakuHideInteractiveCommands(value)
                 },
                 onDanmakuSmartOcclusionChange = { value ->
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager.setDanmakuSmartOcclusion(
-                            context,
-                            value,
-                            activeDanmakuScope
-                        )
-                    }
+                    settingsActions.setDanmakuSmartOcclusion(value, activeDanmakuScope)
                 },
                 onDanmakuFullscreenPanelWidthModeChange = { value ->
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager.setDanmakuFullscreenPanelWidthMode(context, value)
-                    }
+                    settingsActions.setDanmakuFullscreenPanelWidthMode(value)
                 },
                 onPortraitDanmakuDisplayAreaModeChange = { value ->
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager
-                            .setPortraitDanmakuDisplayAreaMode(context, value)
-                    }
+                    settingsActions.setPortraitDanmakuDisplayAreaMode(value)
                 },
                 onDanmakuCloudSyncEnabledChange = { enabled ->
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager
-                            .setDanmakuCloudSyncEnabled(context, enabled)
-                    }
+                    settingsActions.setDanmakuCloudSyncEnabled(enabled)
                     if (!enabled) {
                         pendingDanmakuCloudSync = null
                         danmakuCloudSyncUiState = DanmakuCloudSyncUiState()
@@ -4810,13 +4604,7 @@ fun VideoPlayerSection(
                     requestDanmakuCloudSyncNow()
                 },
                 onDanmakuBlockRulesRawChange = { value ->
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager.setDanmakuBlockRulesRaw(
-                            context,
-                            value,
-                            activeDanmakuScope
-                        )
-                    }
+                    settingsActions.setDanmakuBlockRulesRaw(value, activeDanmakuScope)
                 },
                 //  视频比例调节
 
@@ -4827,10 +4615,7 @@ fun VideoPlayerSection(
                         isVerticalVideo = isVerticalVideo
                     )
                     currentAspectRatio = safeRatio
-                    scope.launch {
-                        com.android.purebilibili.core.store.SettingsManager
-                            .setFullscreenAspectRatio(context, safeRatio.toFullscreenAspectRatio())
-                    }
+                    settingsActions.setFullscreenAspectRatio(safeRatio.toFullscreenAspectRatio())
                 },
                 // 🕺 [新增] 分享功能
                 bvid = bvid,

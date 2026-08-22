@@ -191,6 +191,8 @@ internal fun PortraitInlineVideoPlayerHost(
     suppressSubtitleOverlay: Boolean,
     subtitleDisplayModePreferenceOverride: SubtitleDisplayMode?,
     onSubtitleDisplayModePreferenceOverrideChange: (SubtitleDisplayMode) -> Unit,
+    settings: VideoPlayerSettingsSnapshot = resolveDefaultVideoPlayerSettingsSnapshot(),
+    settingsActions: VideoPlayerSettingsActions = VideoPlayerSettingsActions.NoOp,
     fullscreenExtras: ContinuousPlayerFullscreenExtras? = null,
 ) {
     val successState = uiState as? VideoPlaybackUiState.Success
@@ -320,7 +322,9 @@ internal fun PortraitInlineVideoPlayerHost(
             suppressSubtitleOverlay = suppressSubtitleOverlay,
             subtitleDisplayModePreferenceOverride = subtitleDisplayModePreferenceOverride,
             onSubtitleDisplayModePreferenceOverrideChange = onSubtitleDisplayModePreferenceOverrideChange,
-            onSubtitleTrackSelected = playbackActions.selectSubtitleTrack
+            onSubtitleTrackSelected = playbackActions.selectSubtitleTrack,
+            settings = settings,
+            settingsActions = settingsActions
         )
     }
 }

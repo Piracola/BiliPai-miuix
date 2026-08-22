@@ -21,7 +21,7 @@ internal data class DanmakuThumbupState(
     val liked: Boolean
 )
 
-internal data class DanmakuCloudSyncSettings(
+data class DanmakuCloudSyncSettings(
     val enabled: Boolean,
     val allowScroll: Boolean,
     val allowTop: Boolean,

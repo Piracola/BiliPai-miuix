@@ -130,3 +130,119 @@ data class VideoDanmakuSettingsActions(
         )
     }
 }
+
+/**
+ * 播放器控制层设置快照（阶段 4 切片）。
+ * 全部由 [com.android.purebilibili.feature.video.viewmodel.VideoPlaybackViewModel]
+ * 的状态流解析后经 StateHolder 传入，UI 通过 VM 落盘设置，不直连 Core。
+ */
+@Immutable
+data class VideoPlayerSettingsSnapshot(
+    val playerInsightMode: com.android.purebilibili.feature.video.viewmodel.PlayerInsightMode,
+    val playerInteractionSettings: com.android.purebilibili.core.store.PlayerInteractionSettings,
+    val playbackCompletionBehavior: com.android.purebilibili.core.store.PlaybackCompletionBehavior,
+    val playerDiagnosticLoggingEnabled: Boolean,
+    val statusBarHazeEnabled: Boolean,
+    val autoPlayOnOpenEnabled: Boolean,
+    val danmakuSettings: com.android.purebilibili.core.store.DanmakuSettings,
+    val danmakuFullscreenPanelWidthMode: com.android.purebilibili.core.store.DanmakuPanelWidthMode,
+    val danmakuCloudSyncEnabled: Boolean,
+    val longPressSpeedLockHintShown: Boolean,
+    val hiResLongPressCompatHintShown: Boolean,
+)
+
+/** 播放器控制层设置写入（scope 随横竖屏由调用方显式传入）。 */
+@Immutable
+data class VideoPlayerSettingsActions(
+    val setDanmakuSettingsScope: (com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit,
+    val setDanmakuEnabled: (Boolean, com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit,
+    val setDanmakuOpacity: (Float, com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit,
+    val setDanmakuFontScale: (Float, com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit,
+    val setDanmakuFontWeight: (Int, com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit,
+    val setDanmakuSpeed: (Float, com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit,
+    val setDanmakuArea: (Float, com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit,
+    val setDanmakuStrokeWidth: (Float, com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit,
+    val setDanmakuLineHeight: (Float, com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit,
+    val setDanmakuScrollDurationSeconds: (Float, com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit,
+    val setDanmakuStaticDurationSeconds: (Float, com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit,
+    val setDanmakuScrollFixedVelocity: (Boolean, com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit,
+    val setDanmakuStaticToScroll: (Boolean, com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit,
+    val setDanmakuMassiveMode: (Boolean, com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit,
+    val setDanmakuMergeDuplicates: (Boolean, com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit,
+    val setDanmakuDuplicateMergeWindowMs: (Int, com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit,
+    val setDanmakuDuplicateMergeCountThreshold: (Int, com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit,
+    val setDanmakuAllowScroll: (Boolean, com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit,
+    val setDanmakuAllowTop: (Boolean, com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit,
+    val setDanmakuAllowBottom: (Boolean, com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit,
+    val setDanmakuAllowColorful: (Boolean, com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit,
+    val setDanmakuAllowSpecial: (Boolean, com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit,
+    val setDanmakuHideInteractiveCommands: (Boolean) -> Unit,
+    val setDanmakuSmartOcclusion: (Boolean, com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit,
+    val setDanmakuFullscreenPanelWidthMode: (com.android.purebilibili.core.store.DanmakuPanelWidthMode) -> Unit,
+    val setPortraitDanmakuDisplayAreaMode: (com.android.purebilibili.core.store.PortraitDanmakuDisplayAreaMode) -> Unit,
+    val setDanmakuBlockRulesRaw: (String, com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit,
+    val setDanmakuCloudSyncEnabled: (Boolean) -> Unit,
+    val setSubtitleVerticalOffsetFraction: (Float) -> Unit,
+    val setLongPressSpeedLockEnabled: (Boolean) -> Unit,
+    val setLongPressSpeedLockHintShown: (Boolean) -> Unit,
+    val setHiResLongPressCompatHintShown: (Boolean) -> Unit,
+    val setFullscreenAspectRatio: (com.android.purebilibili.core.store.FullscreenAspectRatio) -> Unit,
+    val syncDanmakuCloudConfig: suspend (com.android.purebilibili.data.repository.DanmakuCloudSyncSettings) -> Result<Unit>,
+    val submitGradeDanmaku: suspend (Long, Long, Long, String, Int) -> Result<Unit>,
+) {
+    companion object {
+        val NoOp = VideoPlayerSettingsActions(
+            setDanmakuSettingsScope = {},
+            setDanmakuEnabled = { _, _ -> },
+            setDanmakuOpacity = { _, _ -> },
+            setDanmakuFontScale = { _, _ -> },
+            setDanmakuFontWeight = { _, _ -> },
+            setDanmakuSpeed = { _, _ -> },
+            setDanmakuArea = { _, _ -> },
+            setDanmakuStrokeWidth = { _, _ -> },
+            setDanmakuLineHeight = { _, _ -> },
+            setDanmakuScrollDurationSeconds = { _, _ -> },
+            setDanmakuStaticDurationSeconds = { _, _ -> },
+            setDanmakuScrollFixedVelocity = { _, _ -> },
+            setDanmakuStaticToScroll = { _, _ -> },
+            setDanmakuMassiveMode = { _, _ -> },
+            setDanmakuMergeDuplicates = { _, _ -> },
+            setDanmakuDuplicateMergeWindowMs = { _, _ -> },
+            setDanmakuDuplicateMergeCountThreshold = { _, _ -> },
+            setDanmakuAllowScroll = { _, _ -> },
+            setDanmakuAllowTop = { _, _ -> },
+            setDanmakuAllowBottom = { _, _ -> },
+            setDanmakuAllowColorful = { _, _ -> },
+            setDanmakuAllowSpecial = { _, _ -> },
+            setDanmakuHideInteractiveCommands = {},
+            setDanmakuSmartOcclusion = { _, _ -> },
+            setDanmakuFullscreenPanelWidthMode = {},
+            setPortraitDanmakuDisplayAreaMode = {},
+            setDanmakuBlockRulesRaw = { _, _ -> },
+            setDanmakuCloudSyncEnabled = {},
+            setSubtitleVerticalOffsetFraction = {},
+            setLongPressSpeedLockEnabled = {},
+            setLongPressSpeedLockHintShown = {},
+            setHiResLongPressCompatHintShown = {},
+            setFullscreenAspectRatio = {},
+            syncDanmakuCloudConfig = { Result.success(Unit) },
+            submitGradeDanmaku = { _, _, _, _, _ -> Result.success(Unit) },
+        )
+    }
+}
+
+/** 预览/预布局场景的设置快照缺省值，与各设置的存储默认值保持一致。 */
+internal fun resolveDefaultVideoPlayerSettingsSnapshot(): VideoPlayerSettingsSnapshot =
+    VideoPlayerSettingsSnapshot(
+        playerInsightMode = com.android.purebilibili.feature.video.viewmodel.PlayerInsightMode.OFF,
+        playerInteractionSettings = com.android.purebilibili.core.store.PlayerInteractionSettings(),
+        playbackCompletionBehavior = com.android.purebilibili.core.store.PlaybackCompletionBehavior.CONTINUE_CURRENT_LOGIC,
+        playerDiagnosticLoggingEnabled = true,
+        statusBarHazeEnabled = false,
+        autoPlayOnOpenEnabled = true,
+        danmakuSettings = com.android.purebilibili.core.store.DanmakuSettings(),
+        danmakuFullscreenPanelWidthMode = com.android.purebilibili.core.store.DanmakuPanelWidthMode.THIRD,
+        danmakuCloudSyncEnabled = true,
+        longPressSpeedLockHintShown = false,
+        hiResLongPressCompatHintShown = false,
+    )

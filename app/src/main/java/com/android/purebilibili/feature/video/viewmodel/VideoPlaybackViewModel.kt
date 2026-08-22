@@ -144,6 +144,9 @@ import com.android.purebilibili.core.video.subtitle.mapPlayerInfoSubtitleTracks
 import com.android.purebilibili.core.video.subtitle.normalizeBilibiliSubtitleUrl
 import com.android.purebilibili.core.video.subtitle.resolveDefaultSubtitleLanguages
 
+// 播放器洞察模式别名：供渲染契约层引用，避免契约文件直指 Core 存储类型。
+typealias PlayerInsightMode = com.android.purebilibili.core.store.player.PlayerSettingsStore.PlayerInsightMode
+
 private const val PLAYBACK_CDN_FIRST_FRAME_FALLBACK_TIMEOUT_MS = 2_500L
 private const val PLAYBACK_STALL_RECOVERY_TIMEOUT_MS = 10_000L
 
@@ -1339,6 +1342,51 @@ class VideoPlaybackViewModel(application: Application) : AndroidViewModel(applic
         com.android.purebilibili.core.store.SettingsManager.getPlayerControlVisibilitySettings(app)
             .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly,
                 com.android.purebilibili.core.store.PlayerControlVisibilitySettings())
+    val playerInsightMode: kotlinx.coroutines.flow.StateFlow<com.android.purebilibili.core.store.player.PlayerSettingsStore.PlayerInsightMode> =
+        com.android.purebilibili.core.store.SettingsManager.getPlayerInsightMode(app)
+            .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly,
+                com.android.purebilibili.core.store.SettingsManager.getPlayerInsightModeSync(app))
+    val playerInteractionSettings: kotlinx.coroutines.flow.StateFlow<com.android.purebilibili.core.store.PlayerInteractionSettings> =
+        com.android.purebilibili.core.store.SettingsManager.getPlayerInteractionSettings(app)
+            .stateIn(
+                viewModelScope,
+                kotlinx.coroutines.flow.SharingStarted.Eagerly,
+                com.android.purebilibili.core.store.PlayerInteractionSettings(
+                    longPressSpeedLockEnabled = com.android.purebilibili.core.store.SettingsManager
+                        .getLongPressSpeedLockEnabledSync(app),
+                    longPressSpeedLockHintShown = com.android.purebilibili.core.store.SettingsManager
+                        .getLongPressSpeedLockHintShownSync(app),
+                    longPressSpeedHintCloseEnabled = com.android.purebilibili.core.store.SettingsManager
+                        .getLongPressSpeedHintCloseEnabledSync(app),
+                    longPressSpeedHintHidden = com.android.purebilibili.core.store.SettingsManager
+                        .getLongPressSpeedHintHiddenSync(app),
+                    longPressSpeedHintScale = com.android.purebilibili.core.store.SettingsManager
+                        .getLongPressSpeedHintScaleSync(app),
+                    longPressSpeedHintAlpha = com.android.purebilibili.core.store.SettingsManager
+                        .getLongPressSpeedHintAlphaSync(app),
+                    hiResLongPressCompatHintShown = com.android.purebilibili.core.store.SettingsManager
+                        .getHiResLongPressCompatHintShownSync(app)
+                )
+            )
+    val playbackCompletionBehavior: kotlinx.coroutines.flow.StateFlow<com.android.purebilibili.core.store.PlaybackCompletionBehavior> =
+        com.android.purebilibili.core.store.SettingsManager.getPlaybackCompletionBehavior(app)
+            .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly,
+                com.android.purebilibili.core.store.PlaybackCompletionBehavior.CONTINUE_CURRENT_LOGIC)
+    val danmakuCloudSyncEnabled: kotlinx.coroutines.flow.StateFlow<Boolean> =
+        com.android.purebilibili.core.store.SettingsManager.getDanmakuCloudSyncEnabled(app)
+            .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, true)
+    val danmakuFullscreenPanelWidthMode: kotlinx.coroutines.flow.StateFlow<com.android.purebilibili.core.store.DanmakuPanelWidthMode> =
+        com.android.purebilibili.core.store.SettingsManager.getDanmakuFullscreenPanelWidthMode(app)
+            .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly,
+                com.android.purebilibili.core.store.DanmakuPanelWidthMode.THIRD)
+    val longPressSpeedLockHintShown: kotlinx.coroutines.flow.StateFlow<Boolean> =
+        com.android.purebilibili.core.store.SettingsManager.getLongPressSpeedLockHintShown(app)
+            .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly,
+                com.android.purebilibili.core.store.SettingsManager.getLongPressSpeedLockHintShownSync(app))
+    val hiResLongPressCompatHintShown: kotlinx.coroutines.flow.StateFlow<Boolean> =
+        com.android.purebilibili.core.store.SettingsManager.getHiResLongPressCompatHintShown(app)
+            .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly,
+                com.android.purebilibili.core.store.SettingsManager.getHiResLongPressCompatHintShownSync(app))
 
     // 弹幕设置的 scope 随横竖屏切换，用状态流驱动 SettingsManager 读取。
     private val _danmakuSettingsScope = kotlinx.coroutines.flow.MutableStateFlow(
@@ -1464,6 +1512,62 @@ class VideoPlaybackViewModel(application: Application) : AndroidViewModel(applic
             com.android.purebilibili.core.store.SettingsManager.setPortraitDanmakuDisplayAreaMode(app, value)
         }
     }
+
+    fun setSubtitleVerticalOffsetFraction(value: Float) {
+        viewModelScope.launch {
+            com.android.purebilibili.core.store.SettingsManager.setSubtitleVerticalOffsetFraction(app, value)
+        }
+    }
+
+    fun setLongPressSpeedLockEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            com.android.purebilibili.core.store.SettingsManager.setLongPressSpeedLockEnabled(app, enabled)
+        }
+    }
+
+    fun setLongPressSpeedLockHintShown(shown: Boolean) {
+        viewModelScope.launch {
+            com.android.purebilibili.core.store.SettingsManager.setLongPressSpeedLockHintShown(app, shown)
+        }
+    }
+
+    fun setHiResLongPressCompatHintShown(shown: Boolean) {
+        viewModelScope.launch {
+            com.android.purebilibili.core.store.SettingsManager.setHiResLongPressCompatHintShown(app, shown)
+        }
+    }
+
+    fun setDanmakuCloudSyncEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            com.android.purebilibili.core.store.SettingsManager.setDanmakuCloudSyncEnabled(app, enabled)
+        }
+    }
+
+    fun setFullscreenAspectRatio(ratio: com.android.purebilibili.core.store.FullscreenAspectRatio) {
+        viewModelScope.launch {
+            com.android.purebilibili.core.store.SettingsManager.setFullscreenAspectRatio(app, ratio)
+        }
+    }
+
+    fun setLastPlaybackSpeed(speed: Float) {
+        viewModelScope.launch {
+            com.android.purebilibili.core.store.SettingsManager.setLastPlaybackSpeed(app, speed)
+        }
+    }
+
+    suspend fun syncDanmakuCloudConfig(settings: com.android.purebilibili.data.repository.DanmakuCloudSyncSettings): Result<Unit> =
+        com.android.purebilibili.data.repository.DanmakuRepository.syncDanmakuCloudConfig(settings)
+
+    suspend fun submitGradeDanmaku(
+        aid: Long,
+        cid: Long,
+        progress: Long,
+        gradeId: String,
+        gradeScore: Int
+    ): Result<Unit> =
+        com.android.purebilibili.data.repository.DanmakuRepository.submitGradeDanmaku(
+            aid, cid, progress, gradeId, gradeScore
+        )
     fun setDanmakuSmartOcclusion(value: Boolean) = writeDanmakuSetting { scope ->
         com.android.purebilibili.core.store.SettingsManager.setDanmakuSmartOcclusion(app, value, scope)
     }
@@ -1482,6 +1586,61 @@ class VideoPlaybackViewModel(application: Application) : AndroidViewModel(applic
         }
     }
 
+    // 显式 scope 变体：播放器控制层主动传 activeDanmakuScope（跟随横竖屏），
+    // 与 setDanmakuSettingsScope 的隐式 scope 变体互补。
+    fun setDanmakuEnabled(value: Boolean, scope: com.android.purebilibili.core.store.DanmakuSettingsScope) =
+        writeDanmakuSetting(scope) { com.android.purebilibili.core.store.SettingsManager.setDanmakuEnabled(app, value, it) }
+    fun setDanmakuOpacity(value: Float, scope: com.android.purebilibili.core.store.DanmakuSettingsScope) =
+        writeDanmakuSetting(scope) { com.android.purebilibili.core.store.SettingsManager.setDanmakuOpacity(app, value, it) }
+    fun setDanmakuFontScale(value: Float, scope: com.android.purebilibili.core.store.DanmakuSettingsScope) =
+        writeDanmakuSetting(scope) { com.android.purebilibili.core.store.SettingsManager.setDanmakuFontScale(app, value, it) }
+    fun setDanmakuFontWeight(value: Int, scope: com.android.purebilibili.core.store.DanmakuSettingsScope) =
+        writeDanmakuSetting(scope) { com.android.purebilibili.core.store.SettingsManager.setDanmakuFontWeight(app, value, it) }
+    fun setDanmakuSpeed(value: Float, scope: com.android.purebilibili.core.store.DanmakuSettingsScope) =
+        writeDanmakuSetting(scope) { com.android.purebilibili.core.store.SettingsManager.setDanmakuSpeed(app, value, it) }
+    fun setDanmakuArea(value: Float, scope: com.android.purebilibili.core.store.DanmakuSettingsScope) =
+        writeDanmakuSetting(scope) { com.android.purebilibili.core.store.SettingsManager.setDanmakuArea(app, value, it) }
+    fun setDanmakuStrokeWidth(value: Float, scope: com.android.purebilibili.core.store.DanmakuSettingsScope) =
+        writeDanmakuSetting(scope) { com.android.purebilibili.core.store.SettingsManager.setDanmakuStrokeWidth(app, value, it) }
+    fun setDanmakuLineHeight(value: Float, scope: com.android.purebilibili.core.store.DanmakuSettingsScope) =
+        writeDanmakuSetting(scope) { com.android.purebilibili.core.store.SettingsManager.setDanmakuLineHeight(app, value, it) }
+    fun setDanmakuScrollDurationSeconds(value: Float, scope: com.android.purebilibili.core.store.DanmakuSettingsScope) =
+        writeDanmakuSetting(scope) { com.android.purebilibili.core.store.SettingsManager.setDanmakuScrollDurationSeconds(app, value, it) }
+    fun setDanmakuStaticDurationSeconds(value: Float, scope: com.android.purebilibili.core.store.DanmakuSettingsScope) =
+        writeDanmakuSetting(scope) { com.android.purebilibili.core.store.SettingsManager.setDanmakuStaticDurationSeconds(app, value, it) }
+    fun setDanmakuScrollFixedVelocity(value: Boolean, scope: com.android.purebilibili.core.store.DanmakuSettingsScope) =
+        writeDanmakuSetting(scope) { com.android.purebilibili.core.store.SettingsManager.setDanmakuScrollFixedVelocity(app, value, it) }
+    fun setDanmakuStaticToScroll(value: Boolean, scope: com.android.purebilibili.core.store.DanmakuSettingsScope) =
+        writeDanmakuSetting(scope) { com.android.purebilibili.core.store.SettingsManager.setDanmakuStaticToScroll(app, value, it) }
+    fun setDanmakuMassiveMode(value: Boolean, scope: com.android.purebilibili.core.store.DanmakuSettingsScope) =
+        writeDanmakuSetting(scope) { com.android.purebilibili.core.store.SettingsManager.setDanmakuMassiveMode(app, value, it) }
+    fun setDanmakuMergeDuplicates(value: Boolean, scope: com.android.purebilibili.core.store.DanmakuSettingsScope) =
+        writeDanmakuSetting(scope) { com.android.purebilibili.core.store.SettingsManager.setDanmakuMergeDuplicates(app, value, it) }
+    fun setDanmakuDuplicateMergeWindowMs(value: Int, scope: com.android.purebilibili.core.store.DanmakuSettingsScope) =
+        writeDanmakuSetting(scope) { com.android.purebilibili.core.store.SettingsManager.setDanmakuDuplicateMergeWindowMs(app, value, it) }
+    fun setDanmakuDuplicateMergeCountThreshold(value: Int, scope: com.android.purebilibili.core.store.DanmakuSettingsScope) =
+        writeDanmakuSetting(scope) { com.android.purebilibili.core.store.SettingsManager.setDanmakuDuplicateMergeCountThreshold(app, value, it) }
+    fun setDanmakuAllowScroll(value: Boolean, scope: com.android.purebilibili.core.store.DanmakuSettingsScope) =
+        writeDanmakuSetting(scope) { com.android.purebilibili.core.store.SettingsManager.setDanmakuAllowScroll(app, value, it) }
+    fun setDanmakuAllowTop(value: Boolean, scope: com.android.purebilibili.core.store.DanmakuSettingsScope) =
+        writeDanmakuSetting(scope) { com.android.purebilibili.core.store.SettingsManager.setDanmakuAllowTop(app, value, it) }
+    fun setDanmakuAllowBottom(value: Boolean, scope: com.android.purebilibili.core.store.DanmakuSettingsScope) =
+        writeDanmakuSetting(scope) { com.android.purebilibili.core.store.SettingsManager.setDanmakuAllowBottom(app, value, it) }
+    fun setDanmakuAllowColorful(value: Boolean, scope: com.android.purebilibili.core.store.DanmakuSettingsScope) =
+        writeDanmakuSetting(scope) { com.android.purebilibili.core.store.SettingsManager.setDanmakuAllowColorful(app, value, it) }
+    fun setDanmakuAllowSpecial(value: Boolean, scope: com.android.purebilibili.core.store.DanmakuSettingsScope) =
+        writeDanmakuSetting(scope) { com.android.purebilibili.core.store.SettingsManager.setDanmakuAllowSpecial(app, value, it) }
+    fun setDanmakuSmartOcclusion(value: Boolean, scope: com.android.purebilibili.core.store.DanmakuSettingsScope) =
+        writeDanmakuSetting(scope) { com.android.purebilibili.core.store.SettingsManager.setDanmakuSmartOcclusion(app, value, it) }
+
+    private fun writeDanmakuSetting(
+        explicitScope: com.android.purebilibili.core.store.DanmakuSettingsScope? = null,
+        write: suspend (com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit
+    ) {
+        val scope = explicitScope ?: _danmakuSettingsScope.value
+        viewModelScope.launch { write(scope) }
+    }
+
     fun setPlayerDiagnosticLoggingEnabled(enabled: Boolean) {
         viewModelScope.launch {
             com.android.purebilibili.core.store.SettingsManager.setPlayerDiagnosticLoggingEnabled(app, enabled)
@@ -1498,10 +1657,6 @@ class VideoPlaybackViewModel(application: Application) : AndroidViewModel(applic
         viewModelScope.launch {
             com.android.purebilibili.core.store.SettingsManager.markQualitySwitchFailureDialogShown(app)
         }
-    }
-
-    private fun writeDanmakuSetting(write: suspend (com.android.purebilibili.core.store.DanmakuSettingsScope) -> Unit) {
-        viewModelScope.launch { write(_danmakuSettingsScope.value) }
     }
 
     // VIP 播放账号切换（详情页错误重试卡片）

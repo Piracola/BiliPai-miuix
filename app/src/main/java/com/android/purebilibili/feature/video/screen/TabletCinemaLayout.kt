@@ -193,6 +193,8 @@ internal fun TabletCinemaLayout(
     sponsorContributionState: SponsorContributionUiState = SponsorContributionUiState(),
     liveSurfaceCardTransitionEnabled: Boolean = true,
     onPersistSortMode: (Int) -> Unit = {},
+    settings: VideoPlayerSettingsSnapshot = resolveDefaultVideoPlayerSettingsSnapshot(),
+    settingsActions: VideoPlayerSettingsActions = VideoPlayerSettingsActions.NoOp,
 ) {
     val appContext = LocalContext.current
     val policy = remember(configuration.screenWidthDp, tabletCommentPanelWidthPreset) {
@@ -297,6 +299,8 @@ internal fun TabletCinemaLayout(
                     predictiveBackCancelRecoveryGeneration = predictiveBackCancelRecoveryGeneration,
                     sponsorContributionState = sponsorContributionState,
                     liveSurfaceCardTransitionEnabled = liveSurfaceCardTransitionEnabled,
+                    settings = settings,
+                    settingsActions = settingsActions,
                 )
 
                 if (success != null) {
@@ -425,6 +429,8 @@ private fun CinemaStagePlayer(
     predictiveBackCancelRecoveryGeneration: Int,
     sponsorContributionState: SponsorContributionUiState,
     liveSurfaceCardTransitionEnabled: Boolean = true,
+    settings: VideoPlayerSettingsSnapshot = resolveDefaultVideoPlayerSettingsSnapshot(),
+    settingsActions: VideoPlayerSettingsActions = VideoPlayerSettingsActions.NoOp,
 ) {
     val success = uiState as? VideoPlaybackUiState.Success
     val sharedTransitionScope = LocalSharedTransitionScope.current
@@ -543,6 +549,8 @@ private fun CinemaStagePlayer(
                 onSponsorContributionActionTypeChange = playbackActions.setSponsorContributionActionType,
                 onSponsorContributionSubmit = playbackActions.submitSponsorContribution,
                 onSponsorContributionCancel = playbackActions.cancelSponsorContribution,
+                settings = settings,
+                settingsActions = settingsActions,
             )
         }
     }

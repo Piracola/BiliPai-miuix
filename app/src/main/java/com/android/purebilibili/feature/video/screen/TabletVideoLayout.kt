@@ -125,6 +125,8 @@ internal fun TabletVideoLayout(
     forceCoverOnlyOnReturn: Boolean = false,
     predictiveBackCancelRecoveryGeneration: Int = 0,
     liveSurfaceCardTransitionEnabled: Boolean = true,
+    settings: VideoPlayerSettingsSnapshot = resolveDefaultVideoPlayerSettingsSnapshot(),
+    settingsActions: VideoPlayerSettingsActions = VideoPlayerSettingsActions.NoOp,
     onPersistSortMode: (Int) -> Unit = {}
 ) {
     val layoutPolicy = remember(configuration.screenWidthDp) {
@@ -255,7 +257,9 @@ internal fun TabletVideoLayout(
                             // 🔁 [新增] 播放模式
                             currentPlayMode = currentPlayMode,
                             onPlayModeClick = onPlayModeClick,
-                            onSubtitleTrackSelected = playbackActions.selectSubtitleTrack
+                            onSubtitleTrackSelected = playbackActions.selectSubtitleTrack,
+                            settings = settings,
+                            settingsActions = settingsActions
                         )
                     }
                 }

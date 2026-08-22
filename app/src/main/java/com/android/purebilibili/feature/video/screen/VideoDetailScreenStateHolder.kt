@@ -937,6 +937,57 @@ internal fun VideoDetailScreenStateHolder(
     )
     val sortPreferenceScope = rememberCoroutineScope()
     val danmakuEnabledForDetail by viewModel.danmakuEnabledForDetail.collectAsStateWithLifecycle()
+    // 播放器控制层设置快照与写入（阶段 4 切片：UI 通过 VM 读写，不直连 Core）
+    val playerSettingsSnapshot = VideoPlayerSettingsSnapshot(
+        playerInsightMode = viewModel.playerInsightMode.collectAsStateWithLifecycle().value,
+        playerInteractionSettings = viewModel.playerInteractionSettings.collectAsStateWithLifecycle().value,
+        playbackCompletionBehavior = viewModel.playbackCompletionBehavior.collectAsStateWithLifecycle().value,
+        playerDiagnosticLoggingEnabled = viewModel.playerDiagnosticLoggingEnabled.collectAsStateWithLifecycle().value,
+        statusBarHazeEnabled = viewModel.immersiveVideoPageStatusBar.collectAsStateWithLifecycle().value,
+        autoPlayOnOpenEnabled = viewModel.clickToPlayEnabled.collectAsStateWithLifecycle().value,
+        danmakuSettings = viewModel.danmakuSettings.collectAsStateWithLifecycle().value,
+        danmakuFullscreenPanelWidthMode = viewModel.danmakuFullscreenPanelWidthMode.collectAsStateWithLifecycle().value,
+        danmakuCloudSyncEnabled = viewModel.danmakuCloudSyncEnabled.collectAsStateWithLifecycle().value,
+        longPressSpeedLockHintShown = viewModel.longPressSpeedLockHintShown.collectAsStateWithLifecycle().value,
+        hiResLongPressCompatHintShown = viewModel.hiResLongPressCompatHintShown.collectAsStateWithLifecycle().value,
+    )
+    val playerSettingsActions = VideoPlayerSettingsActions(
+        setDanmakuSettingsScope = viewModel::setDanmakuSettingsScope,
+        setDanmakuEnabled = viewModel::setDanmakuEnabled,
+        setDanmakuOpacity = viewModel::setDanmakuOpacity,
+        setDanmakuFontScale = viewModel::setDanmakuFontScale,
+        setDanmakuFontWeight = viewModel::setDanmakuFontWeight,
+        setDanmakuSpeed = viewModel::setDanmakuSpeed,
+        setDanmakuArea = viewModel::setDanmakuArea,
+        setDanmakuStrokeWidth = viewModel::setDanmakuStrokeWidth,
+        setDanmakuLineHeight = viewModel::setDanmakuLineHeight,
+        setDanmakuScrollDurationSeconds = viewModel::setDanmakuScrollDurationSeconds,
+        setDanmakuStaticDurationSeconds = viewModel::setDanmakuStaticDurationSeconds,
+        setDanmakuScrollFixedVelocity = viewModel::setDanmakuScrollFixedVelocity,
+        setDanmakuStaticToScroll = viewModel::setDanmakuStaticToScroll,
+        setDanmakuMassiveMode = viewModel::setDanmakuMassiveMode,
+        setDanmakuMergeDuplicates = viewModel::setDanmakuMergeDuplicates,
+        setDanmakuDuplicateMergeWindowMs = viewModel::setDanmakuDuplicateMergeWindowMs,
+        setDanmakuDuplicateMergeCountThreshold = viewModel::setDanmakuDuplicateMergeCountThreshold,
+        setDanmakuAllowScroll = viewModel::setDanmakuAllowScroll,
+        setDanmakuAllowTop = viewModel::setDanmakuAllowTop,
+        setDanmakuAllowBottom = viewModel::setDanmakuAllowBottom,
+        setDanmakuAllowColorful = viewModel::setDanmakuAllowColorful,
+        setDanmakuAllowSpecial = viewModel::setDanmakuAllowSpecial,
+        setDanmakuHideInteractiveCommands = viewModel::setDanmakuHideInteractiveCommands,
+        setDanmakuSmartOcclusion = viewModel::setDanmakuSmartOcclusion,
+        setDanmakuFullscreenPanelWidthMode = viewModel::setDanmakuFullscreenPanelWidthMode,
+        setPortraitDanmakuDisplayAreaMode = viewModel::setPortraitDanmakuDisplayAreaMode,
+        setDanmakuBlockRulesRaw = viewModel::setDanmakuBlockRulesRaw,
+        setDanmakuCloudSyncEnabled = viewModel::setDanmakuCloudSyncEnabled,
+        setSubtitleVerticalOffsetFraction = viewModel::setSubtitleVerticalOffsetFraction,
+        setLongPressSpeedLockEnabled = viewModel::setLongPressSpeedLockEnabled,
+        setLongPressSpeedLockHintShown = viewModel::setLongPressSpeedLockHintShown,
+        setHiResLongPressCompatHintShown = viewModel::setHiResLongPressCompatHintShown,
+        setFullscreenAspectRatio = viewModel::setFullscreenAspectRatio,
+        syncDanmakuCloudConfig = viewModel::syncDanmakuCloudConfig,
+        submitGradeDanmaku = viewModel::submitGradeDanmaku,
+    )
     val showFavoriteFolderDialog by viewModel.favoriteFolderDialogVisible.collectAsStateWithLifecycle()
     val showCommentInput by viewModel.showCommentDialog.collectAsStateWithLifecycle()
     // [Blur] Haze State
@@ -2779,6 +2830,8 @@ internal fun VideoDetailScreenStateHolder(
                 landscapeCommentPanelVisible = landscapeCommentPanelVisible,
                 landscapeCommentPanelOnLeft = landscapeCommentPanelOnLeft,
             ),
+            settings = playerSettingsSnapshot,
+            settingsActions = playerSettingsActions,
         )
     }
     val continuousPlayerContent = remember {
@@ -3174,6 +3227,8 @@ internal fun VideoDetailScreenStateHolder(
                             predictiveBackCancelRecoveryGeneration = predictiveBackCancelRecoveryGeneration,
                             sponsorContributionState = sponsorContributionState,
                             onPersistSortMode = { apiMode -> viewModel.setCommentDefaultSortMode(apiMode) },
+                            settings = playerSettingsSnapshot,
+                            settingsActions = playerSettingsActions,
                         )
                     } else {
                         // 📱 手机竖屏：原有单列布局
@@ -3872,7 +3927,9 @@ internal fun VideoDetailScreenStateHolder(
                                         useReturningVideoDetailVisualState,
                                 suppressSubtitleOverlay = shouldSuppressSubtitleOverlay,
                                 subtitleDisplayModePreferenceOverride = subtitleDisplayModeOverride,
-                                onSubtitleDisplayModePreferenceOverrideChange = { subtitleDisplayModeOverride = it }
+                                onSubtitleDisplayModePreferenceOverrideChange = { subtitleDisplayModeOverride = it },
+                                settings = playerSettingsSnapshot,
+                                settingsActions = playerSettingsActions
                             )
                             }
                             }

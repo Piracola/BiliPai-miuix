@@ -70,9 +70,12 @@ class ArchitectureAllowlistRatchetTest {
         // ContentSection + TabletCinema/TabletVideo 共 9 个非播放器文件清零移出白名单。
         // 63 → 62：VideoInfoSection 清零——BGM 发现音乐经 VM 走 ViewGrpcRepository，
         // 信息默认展开/首页卡片样式/播放器控件可见性参数化下传。
-        const val MAX_CORE_GLOBAL_OBJECT_FILES = 62
+        // 62 → 61：VideoPlayerSection 清零——播放器控制层设置快照
+        // VideoPlayerSettingsSnapshot/Actions 参数化，弹幕面板读写、长按倍速提示、
+        // 字幕偏移、云同步与评分弹幕全部经 VM 落盘。
+        const val MAX_CORE_GLOBAL_OBJECT_FILES = 61
 
         const val CORE_GLOBAL_OBJECT_FILES_SHA256 =
-            "bd7999b942082bb26894092e57c84bb9e8b891ec4f6fda04a17e432047e85b00"
+            "49f984299d03092b0061669b4c0923742a7d631f277bfb929a9b58d542bf0a85"
     }
 }
