@@ -16,7 +16,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,8 +53,10 @@ import com.android.purebilibili.core.ui.components.formatDefaultPlaybackSpeed
 import com.android.purebilibili.data.model.response.AiAudioInfo
 import com.android.purebilibili.feature.plugin.CdnLineDiagnostic
 import com.android.purebilibili.feature.video.playback.audio.AudioQualityOption
+import com.android.purebilibili.feature.video.screen.VideoPlayerSettingsActions
+import com.android.purebilibili.feature.video.screen.VideoPlayerSettingsSnapshot
+import com.android.purebilibili.feature.video.screen.resolveDefaultVideoPlayerSettingsSnapshot
 import com.android.purebilibili.core.ui.AppSurfaceTokens
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.ContainerLevel
 
@@ -183,7 +184,7 @@ fun VideoSettingsPanel(
     onProbeCdnCandidates: () -> Unit = {},
 
     // [New] Codec & Audio Quality
-    // Passed from VideoPlaybackViewModel/SettingsManager
+    // Passed from player settings contract
     currentCodec: String = "hev1", 
     onCodecChange: (String) -> Unit = {},
     currentSecondCodec: String = "avc1",
@@ -202,7 +203,9 @@ fun VideoSettingsPanel(
     onDownloadAudio: () -> Unit = {},
     
     // 关闭面板
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    settings: VideoPlayerSettingsSnapshot = resolveDefaultVideoPlayerSettingsSnapshot(),
+    settingsActions: VideoPlayerSettingsActions = VideoPlayerSettingsActions.NoOp
 ) {
     fun hasPermissionForQuality(qualityId: Int): Boolean {
         return when {
@@ -217,44 +220,19 @@ fun VideoSettingsPanel(
     val usesTonalContainerTreatment = rememberAppPlayerChromeProfile()
         .effects
         .usesTonalContainerTreatment
-    val context = androidx.compose.ui.platform.LocalContext.current
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
     val actionPolicy = remember(configuration.screenWidthDp) {
         resolveVideoSettingsPanelActionPolicy(widthDp = configuration.screenWidthDp)
     }
-    val scope = rememberCoroutineScope()
-    val seekForwardSeconds by com.android.purebilibili.core.store.SettingsManager
-        .getSeekForwardSeconds(context)
-        .collectAsStateWithLifecycle(initialValue = 10
-        )
-    val seekBackwardSeconds by com.android.purebilibili.core.store.SettingsManager
-        .getSeekBackwardSeconds(context)
-        .collectAsStateWithLifecycle(initialValue = 10
-        )
-    val longPressSpeed by com.android.purebilibili.core.store.SettingsManager
-        .getLongPressSpeed(context)
-        .collectAsStateWithLifecycle(initialValue = 2.0f
-        )
-    val longPressSpeedLockEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getLongPressSpeedLockEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = false
-        )
-    val twoFingerVerticalSpeedEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getTwoFingerVerticalSpeedEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = false
-        )
-    val twoFingerHorizontalSpeedEnabled by com.android.purebilibili.core.store.SettingsManager
-        .getTwoFingerHorizontalSpeedEnabled(context)
-        .collectAsStateWithLifecycle(initialValue = false
-        )
-    val defaultPlaybackSpeed by com.android.purebilibili.core.store.SettingsManager
-        .getDefaultPlaybackSpeed(context)
-        .collectAsStateWithLifecycle(initialValue = 1.0f
-        )
-    val rememberLastPlaybackSpeed by com.android.purebilibili.core.store.SettingsManager
-        .getRememberLastPlaybackSpeed(context)
-        .collectAsStateWithLifecycle(initialValue = false
-        )
+    val playerInteractionSettings = settings.playerInteractionSettings
+    val seekForwardSeconds = playerInteractionSettings.seekForwardSeconds
+    val seekBackwardSeconds = playerInteractionSettings.seekBackwardSeconds
+    val longPressSpeed = playerInteractionSettings.longPressSpeed
+    val longPressSpeedLockEnabled = playerInteractionSettings.longPressSpeedLockEnabled
+    val twoFingerVerticalSpeedEnabled = playerInteractionSettings.twoFingerVerticalSpeedEnabled
+    val twoFingerHorizontalSpeedEnabled = playerInteractionSettings.twoFingerHorizontalSpeedEnabled
+    val defaultPlaybackSpeed = settings.defaultPlaybackSpeed
+    val rememberLastPlaybackSpeed = settings.rememberLastPlaybackSpeed
     val timerIcon = rememberAppTimerIcon()
     val refreshIcon = rememberAppRefreshIcon()
     val photoIcon = rememberAppPhotoIcon()
@@ -872,10 +850,7 @@ fun VideoSettingsPanel(
                         },
                         checked = rememberLastPlaybackSpeed,
                         onCheckedChange = { checked ->
-                            scope.launch {
-                                com.android.purebilibili.core.store.SettingsManager
-                                    .setRememberLastPlaybackSpeed(context, checked)
-                            }
+                            settingsActions.setRememberLastPlaybackSpeed(checked)
                         }
                     )
 
@@ -884,10 +859,7 @@ fun VideoSettingsPanel(
                     DefaultPlaybackSpeedPreferenceControl(
                         currentSpeed = defaultPlaybackSpeed,
                         onSpeedChange = { speed ->
-                            scope.launch {
-                                com.android.purebilibili.core.store.SettingsManager
-                                    .setDefaultPlaybackSpeed(context, speed)
-                            }
+                            settingsActions.setDefaultPlaybackSpeed(speed)
                         },
                         title = null,
                         subtitle = null,
@@ -902,9 +874,7 @@ fun VideoSettingsPanel(
             //  [新增] 双击跳转秒数设置 (带开关)
             item {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    val doubleTapSeekEnabled by com.android.purebilibili.core.store.SettingsManager
-                        .getDoubleTapSeekEnabled(context)
-                        .collectAsStateWithLifecycle(initialValue = false)
+                    val doubleTapSeekEnabled = playerInteractionSettings.doubleTapSeekEnabled
 
                     VideoSettingsSwitchRow(
                         icon = speedIcon,
@@ -916,10 +886,7 @@ fun VideoSettingsPanel(
                         },
                         checked = doubleTapSeekEnabled,
                         onCheckedChange = { checked ->
-                            scope.launch {
-                                com.android.purebilibili.core.store.SettingsManager
-                                    .setDoubleTapSeekEnabled(context, checked)
-                            }
+                            settingsActions.setDoubleTapSeekEnabled(checked)
                         }
                     )
 
@@ -942,9 +909,7 @@ fun VideoSettingsPanel(
                             SeekSecondsOptions(
                                 currentSeconds = seekForwardSeconds,
                                 onSelect = { seconds ->
-                                    scope.launch {
-                                        com.android.purebilibili.core.store.SettingsManager.setSeekForwardSeconds(context, seconds)
-                                    }
+                                    settingsActions.setSeekForwardSeconds(seconds)
                                 }
                             )
                             
@@ -960,9 +925,7 @@ fun VideoSettingsPanel(
                             SeekSecondsOptions(
                                 currentSeconds = seekBackwardSeconds,
                                 onSelect = { seconds ->
-                                    scope.launch {
-                                        com.android.purebilibili.core.store.SettingsManager.setSeekBackwardSeconds(context, seconds)
-                                    }
+                                    settingsActions.setSeekBackwardSeconds(seconds)
                                 }
                             )
                         }
@@ -1008,9 +971,7 @@ fun VideoSettingsPanel(
                     LongPressSpeedOptions(
                         currentSpeed = longPressSpeed,
                         onSelect = { speed ->
-                            scope.launch {
-                                com.android.purebilibili.core.store.SettingsManager.setLongPressSpeed(context, speed)
-                            }
+                            settingsActions.setLongPressSpeed(speed)
                         }
                     )
                 }
@@ -1024,13 +985,9 @@ fun VideoSettingsPanel(
                     subtitle = "长按后拖至上下区域保持倍速",
                     checked = longPressSpeedLockEnabled,
                     onCheckedChange = { checked ->
-                        scope.launch {
-                            com.android.purebilibili.core.store.SettingsManager
-                                .setLongPressSpeedLockEnabled(context, checked)
-                            if (checked) {
-                                com.android.purebilibili.core.store.SettingsManager
-                                    .setLongPressSpeedLockHintShown(context, true)
-                            }
+                        settingsActions.setLongPressSpeedLockEnabled(checked)
+                        if (checked) {
+                            settingsActions.setLongPressSpeedLockHintShown(true)
                         }
                     }
                 )
@@ -1045,10 +1002,7 @@ fun VideoSettingsPanel(
                         subtitle = "仅全屏生效，开启一项时会关闭另一项",
                         checked = twoFingerVerticalSpeedEnabled,
                         onCheckedChange = { checked ->
-                            scope.launch {
-                                com.android.purebilibili.core.store.SettingsManager
-                                    .setTwoFingerVerticalSpeedEnabled(context, checked)
-                            }
+                            settingsActions.setTwoFingerVerticalSpeedEnabled(checked)
                         }
                     )
 
@@ -1058,10 +1012,7 @@ fun VideoSettingsPanel(
                         subtitle = "仅全屏生效，开启一项时会关闭另一项",
                         checked = twoFingerHorizontalSpeedEnabled,
                         onCheckedChange = { checked ->
-                            scope.launch {
-                                com.android.purebilibili.core.store.SettingsManager
-                                    .setTwoFingerHorizontalSpeedEnabled(context, checked)
-                            }
+                            settingsActions.setTwoFingerHorizontalSpeedEnabled(checked)
                         }
                     )
                 }

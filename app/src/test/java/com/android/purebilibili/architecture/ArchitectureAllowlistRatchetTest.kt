@@ -74,9 +74,10 @@ class ArchitectureAllowlistRatchetTest {
         // VideoPlayerSettingsSnapshot/Actions 参数化，弹幕面板读写、长按倍速提示、
         // 字幕偏移、云同步与评分弹幕全部经 VM 落盘。
         // 61 → 59：PortraitSubtitleOverlay + PlayerOverlayModels 清零——字幕偏移经 VM、洞察模式走 typealias。
-        const val MAX_CORE_GLOBAL_OBJECT_FILES = 59
+        // 59 → 58：VideoSettingsPanel 清零——播放器设置快照与写入 action 参数化。
+        const val MAX_CORE_GLOBAL_OBJECT_FILES = 58
 
         const val CORE_GLOBAL_OBJECT_FILES_SHA256 =
-            "aa48d6837e3a0bb689b4beed632dd211b402ca0f8871cef5ba452d470c994209"
+            "36b5b75933c6a67cc7b3bede12c303b416e1e36ac506a183cfb5841d959fc907"
     }
 }

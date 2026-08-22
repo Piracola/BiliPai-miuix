@@ -4839,6 +4839,8 @@ fun VideoPlayerSection(
                 onLandscapeCommentClick = onLandscapeCommentClick,
                 landscapeCommentPanelVisible = landscapeCommentPanelVisible,
                 landscapeCommentPanelOnLeft = landscapeCommentPanelOnLeft,
+                settings = settings,
+                settingsActions = settingsActions,
             )
             }
 

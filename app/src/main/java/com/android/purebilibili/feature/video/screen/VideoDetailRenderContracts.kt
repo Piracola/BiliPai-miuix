@@ -149,6 +149,8 @@ data class VideoPlayerSettingsSnapshot(
     val danmakuCloudSyncEnabled: Boolean,
     val longPressSpeedLockHintShown: Boolean,
     val hiResLongPressCompatHintShown: Boolean,
+    val defaultPlaybackSpeed: Float,
+    val rememberLastPlaybackSpeed: Boolean,
 )
 
 /** 播放器控制层设置写入（scope 随横竖屏由调用方显式传入）。 */
@@ -187,6 +189,15 @@ data class VideoPlayerSettingsActions(
     val setLongPressSpeedLockHintShown: (Boolean) -> Unit,
     val setHiResLongPressCompatHintShown: (Boolean) -> Unit,
     val setFullscreenAspectRatio: (com.android.purebilibili.core.store.FullscreenAspectRatio) -> Unit,
+    val setLastPlaybackSpeed: (Float) -> Unit,
+    val setRememberLastPlaybackSpeed: (Boolean) -> Unit,
+    val setDefaultPlaybackSpeed: (Float) -> Unit,
+    val setDoubleTapSeekEnabled: (Boolean) -> Unit,
+    val setSeekForwardSeconds: (Int) -> Unit,
+    val setSeekBackwardSeconds: (Int) -> Unit,
+    val setLongPressSpeed: (Float) -> Unit,
+    val setTwoFingerVerticalSpeedEnabled: (Boolean) -> Unit,
+    val setTwoFingerHorizontalSpeedEnabled: (Boolean) -> Unit,
     val syncDanmakuCloudConfig: suspend (com.android.purebilibili.data.repository.DanmakuCloudSyncSettings) -> Result<Unit>,
     val submitGradeDanmaku: suspend (Long, Long, Long, String, Int) -> Result<Unit>,
 ) {
@@ -225,6 +236,15 @@ data class VideoPlayerSettingsActions(
             setLongPressSpeedLockHintShown = {},
             setHiResLongPressCompatHintShown = {},
             setFullscreenAspectRatio = {},
+            setLastPlaybackSpeed = {},
+            setRememberLastPlaybackSpeed = {},
+            setDefaultPlaybackSpeed = {},
+            setDoubleTapSeekEnabled = {},
+            setSeekForwardSeconds = {},
+            setSeekBackwardSeconds = {},
+            setLongPressSpeed = {},
+            setTwoFingerVerticalSpeedEnabled = {},
+            setTwoFingerHorizontalSpeedEnabled = {},
             syncDanmakuCloudConfig = { Result.success(Unit) },
             submitGradeDanmaku = { _, _, _, _, _ -> Result.success(Unit) },
         )
@@ -245,4 +265,6 @@ internal fun resolveDefaultVideoPlayerSettingsSnapshot(): VideoPlayerSettingsSna
         danmakuCloudSyncEnabled = true,
         longPressSpeedLockHintShown = false,
         hiResLongPressCompatHintShown = false,
+        defaultPlaybackSpeed = 1.0f,
+        rememberLastPlaybackSpeed = false,
     )

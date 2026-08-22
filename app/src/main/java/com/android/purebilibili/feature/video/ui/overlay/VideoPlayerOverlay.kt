@@ -655,6 +655,10 @@ fun VideoPlayerOverlay(
     drawerHazeState: HazeState? = null,
     statusBarAmbientFrame: State<ImageBitmap?>? = null,
     statusBarBackdropHeight: androidx.compose.ui.unit.Dp = 0.dp,
+    settings: com.android.purebilibili.feature.video.screen.VideoPlayerSettingsSnapshot =
+        com.android.purebilibili.feature.video.screen.resolveDefaultVideoPlayerSettingsSnapshot(),
+    settingsActions: com.android.purebilibili.feature.video.screen.VideoPlayerSettingsActions =
+        com.android.purebilibili.feature.video.screen.VideoPlayerSettingsActions.NoOp,
 ) {
     var showQualityMenu by remember { mutableStateOf(false) }
     var showAudioQualityMenu by remember { mutableStateOf(false) }
@@ -1963,9 +1967,7 @@ fun VideoPlayerOverlay(
                 onSpeedSelected = { speed ->
                     currentSpeed = speed
                     onPlaybackSpeedChange(speed)
-                    scope.launch {
-                        SettingsManager.setLastPlaybackSpeed(context, speed)
-                    }
+                    settingsActions.setLastPlaybackSpeed(speed)
                     showSpeedMenu = false
                 },
                 onDismiss = { showSpeedMenu = false },
@@ -2087,9 +2089,7 @@ fun VideoPlayerOverlay(
                 onSpeedChange = { speed ->
                     currentSpeed = speed
                     onPlaybackSpeedChange(speed)
-                    scope.launch {
-                        SettingsManager.setLastPlaybackSpeed(context, speed)
-                    }
+                    settingsActions.setLastPlaybackSpeed(speed)
                 },
                 isFlippedHorizontal = isFlippedHorizontal,
                 isFlippedVertical = isFlippedVertical,
@@ -2143,6 +2143,8 @@ fun VideoPlayerOverlay(
                 onDownloadAudio = {
                     onDownloadAudio()
                 },
+                settings = settings,
+                settingsActions = settingsActions,
                 onDismiss = { showVideoSettings = false }
             )
         }

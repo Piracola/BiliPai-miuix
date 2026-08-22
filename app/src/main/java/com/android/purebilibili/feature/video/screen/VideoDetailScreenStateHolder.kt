@@ -950,6 +950,8 @@ internal fun VideoDetailScreenStateHolder(
         danmakuCloudSyncEnabled = viewModel.danmakuCloudSyncEnabled.collectAsStateWithLifecycle().value,
         longPressSpeedLockHintShown = viewModel.longPressSpeedLockHintShown.collectAsStateWithLifecycle().value,
         hiResLongPressCompatHintShown = viewModel.hiResLongPressCompatHintShown.collectAsStateWithLifecycle().value,
+        defaultPlaybackSpeed = viewModel.defaultPlaybackSpeed.collectAsStateWithLifecycle().value,
+        rememberLastPlaybackSpeed = viewModel.rememberLastPlaybackSpeed.collectAsStateWithLifecycle().value,
     )
     val playerSettingsActions = VideoPlayerSettingsActions(
         setDanmakuSettingsScope = viewModel::setDanmakuSettingsScope,
@@ -985,6 +987,15 @@ internal fun VideoDetailScreenStateHolder(
         setLongPressSpeedLockHintShown = viewModel::setLongPressSpeedLockHintShown,
         setHiResLongPressCompatHintShown = viewModel::setHiResLongPressCompatHintShown,
         setFullscreenAspectRatio = viewModel::setFullscreenAspectRatio,
+        setLastPlaybackSpeed = viewModel::setLastPlaybackSpeed,
+        setRememberLastPlaybackSpeed = viewModel::setRememberLastPlaybackSpeed,
+        setDefaultPlaybackSpeed = viewModel::setDefaultPlaybackSpeed,
+        setDoubleTapSeekEnabled = viewModel::setDoubleTapSeekEnabled,
+        setSeekForwardSeconds = viewModel::setSeekForwardSeconds,
+        setSeekBackwardSeconds = viewModel::setSeekBackwardSeconds,
+        setLongPressSpeed = viewModel::setLongPressSpeed,
+        setTwoFingerVerticalSpeedEnabled = viewModel::setTwoFingerVerticalSpeedEnabled,
+        setTwoFingerHorizontalSpeedEnabled = viewModel::setTwoFingerHorizontalSpeedEnabled,
         syncDanmakuCloudConfig = viewModel::syncDanmakuCloudConfig,
         submitGradeDanmaku = viewModel::submitGradeDanmaku,
     )

@@ -1368,6 +1368,12 @@ class VideoPlaybackViewModel(application: Application) : AndroidViewModel(applic
                         .getHiResLongPressCompatHintShownSync(app)
                 )
             )
+    val defaultPlaybackSpeed: kotlinx.coroutines.flow.StateFlow<Float> =
+        com.android.purebilibili.core.store.SettingsManager.getDefaultPlaybackSpeed(app)
+            .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, 1.0f)
+    val rememberLastPlaybackSpeed: kotlinx.coroutines.flow.StateFlow<Boolean> =
+        com.android.purebilibili.core.store.SettingsManager.getRememberLastPlaybackSpeed(app)
+            .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, false)
     val playbackCompletionBehavior: kotlinx.coroutines.flow.StateFlow<com.android.purebilibili.core.store.PlaybackCompletionBehavior> =
         com.android.purebilibili.core.store.SettingsManager.getPlaybackCompletionBehavior(app)
             .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly,
@@ -1558,6 +1564,54 @@ class VideoPlaybackViewModel(application: Application) : AndroidViewModel(applic
     fun setLastPlaybackSpeed(speed: Float) {
         viewModelScope.launch {
             com.android.purebilibili.core.store.SettingsManager.setLastPlaybackSpeed(app, speed)
+        }
+    }
+
+    fun setRememberLastPlaybackSpeed(enabled: Boolean) {
+        viewModelScope.launch {
+            com.android.purebilibili.core.store.SettingsManager.setRememberLastPlaybackSpeed(app, enabled)
+        }
+    }
+
+    fun setDefaultPlaybackSpeed(speed: Float) {
+        viewModelScope.launch {
+            com.android.purebilibili.core.store.SettingsManager.setDefaultPlaybackSpeed(app, speed)
+        }
+    }
+
+    fun setDoubleTapSeekEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            com.android.purebilibili.core.store.SettingsManager.setDoubleTapSeekEnabled(app, enabled)
+        }
+    }
+
+    fun setSeekForwardSeconds(seconds: Int) {
+        viewModelScope.launch {
+            com.android.purebilibili.core.store.SettingsManager.setSeekForwardSeconds(app, seconds)
+        }
+    }
+
+    fun setSeekBackwardSeconds(seconds: Int) {
+        viewModelScope.launch {
+            com.android.purebilibili.core.store.SettingsManager.setSeekBackwardSeconds(app, seconds)
+        }
+    }
+
+    fun setLongPressSpeed(speed: Float) {
+        viewModelScope.launch {
+            com.android.purebilibili.core.store.SettingsManager.setLongPressSpeed(app, speed)
+        }
+    }
+
+    fun setTwoFingerVerticalSpeedEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            com.android.purebilibili.core.store.SettingsManager.setTwoFingerVerticalSpeedEnabled(app, enabled)
+        }
+    }
+
+    fun setTwoFingerHorizontalSpeedEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            com.android.purebilibili.core.store.SettingsManager.setTwoFingerHorizontalSpeedEnabled(app, enabled)
         }
     }
 
