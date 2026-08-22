@@ -1712,6 +1712,7 @@ private fun VideoPageItem(
     val subtitleAutoPreference by SettingsManager
         .getSubtitleAutoPreference(context)
         .collectAsStateWithLifecycle(initialValue = SubtitleAutoPreference.OFF)
+    val playerInteractionSettings by viewModel.playerInteractionSettings.collectAsStateWithLifecycle()
     var keepPortraitPagerAwake by remember(exoPlayer) {
         mutableStateOf(
             shouldKeepVideoPlaybackAwake(
@@ -3232,7 +3233,9 @@ private fun VideoPageItem(
             },
             onTrackAvailableChange = { available ->
                 subtitleTrackAvailable = available
-            }
+            },
+            subtitlePortraitOffsetFraction = playerInteractionSettings.subtitlePortraitVerticalOffsetFraction,
+            onSubtitlePortraitOffsetFractionChange = viewModel::setSubtitlePortraitVerticalOffsetFraction
         )
 
         if (showQualityMenu && isCurrentPage) {

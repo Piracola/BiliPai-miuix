@@ -56,7 +56,7 @@ class UiLayerMustNotTouchCoreDataStructureTest {
     fun scannerActuallyReadsSources() {
         assertTrue(featureSources().size > 700, "feature 源码只扫到 ${featureSources().size} 个文件，扫描路径可能已失效")
         assertTrue(
-            ArchitectureAllowlist.CORE_GLOBAL_OBJECT_FILES.size >= 60,
+            ArchitectureAllowlist.CORE_GLOBAL_OBJECT_FILES.size >= 59,
             "白名单只读到了 ${ArchitectureAllowlist.CORE_GLOBAL_OBJECT_FILES.size} 条，允许清单可能已失效",
         )
     }

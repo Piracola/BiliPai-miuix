@@ -69,8 +69,6 @@ internal object ArchitectureAllowlist {
         "src/main/java/com/android/purebilibili/feature/video/ui/components/VideoCommentSheetHost.kt",
         "src/main/java/com/android/purebilibili/feature/video/ui/components/VideoSettingsPanel.kt",
         "src/main/java/com/android/purebilibili/feature/video/ui/overlay/FullscreenPlayerOverlay.kt",
-        "src/main/java/com/android/purebilibili/feature/video/ui/overlay/PlayerOverlayModels.kt",
-        "src/main/java/com/android/purebilibili/feature/video/ui/overlay/PortraitSubtitleOverlay.kt",
         "src/main/java/com/android/purebilibili/feature/video/ui/overlay/VideoPlayerOverlay.kt",
         "src/main/java/com/android/purebilibili/feature/video/ui/pager/PortraitVideoLoadPolicy.kt",
         "src/main/java/com/android/purebilibili/feature/video/ui/pager/PortraitVideoPager.kt",

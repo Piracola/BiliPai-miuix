@@ -27,7 +27,6 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -37,16 +36,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.exoplayer.ExoPlayer
-import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.ui.AppShapes
 import com.android.purebilibili.core.ui.ContainerLevel
 import com.android.purebilibili.core.video.subtitle.SubtitleDisplayMode
@@ -71,7 +67,6 @@ import com.android.purebilibili.feature.video.ui.section.resolveSubtitleLanguage
 import com.android.purebilibili.feature.video.viewmodel.VideoPlaybackUiState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 
 
 /**
@@ -119,6 +114,8 @@ fun PortraitSubtitleHost(
     onShowSubtitlePanelChange: (Boolean) -> Unit,
     onSubtitleEnabledChange: (Boolean) -> Unit = {},
     onTrackAvailableChange: (Boolean) -> Unit = {},
+    subtitlePortraitOffsetFraction: Float = 0f,
+    onSubtitlePortraitOffsetFractionChange: (Float) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val featureEnabled = isSubtitleFeatureEnabledForUser()
@@ -292,19 +289,14 @@ fun PortraitSubtitleHost(
         controlsVisible = controlsVisible,
         commentExpansionProgress = commentExpansionProgress
     )
-    val context = LocalContext.current
     val density = LocalDensity.current
-    val scope = rememberCoroutineScope()
-    val storedPortraitOffset by SettingsManager
-        .getSubtitlePortraitVerticalOffsetFraction(context)
-        .collectAsStateWithLifecycle(initialValue = 0f)
     var subtitleVerticalOffsetFraction by rememberSaveable(pageBvid) {
-        mutableFloatStateOf(storedPortraitOffset)
+        mutableFloatStateOf(subtitlePortraitOffsetFraction)
     }
     var isDraggingSubtitleOffset by remember { mutableStateOf(false) }
-    LaunchedEffect(storedPortraitOffset, pageBvid) {
+    LaunchedEffect(subtitlePortraitOffsetFraction, pageBvid) {
         if (!isDraggingSubtitleOffset) {
-            subtitleVerticalOffsetFraction = storedPortraitOffset
+            subtitleVerticalOffsetFraction = subtitlePortraitOffsetFraction
         }
     }
 
@@ -332,12 +324,7 @@ fun PortraitSubtitleHost(
                             onDragStart = { isDraggingSubtitleOffset = true },
                             onDragEnd = {
                                 isDraggingSubtitleOffset = false
-                                scope.launch {
-                                    SettingsManager.setSubtitlePortraitVerticalOffsetFraction(
-                                        context,
-                                        subtitleVerticalOffsetFraction
-                                    )
-                                }
+                                onSubtitlePortraitOffsetFractionChange(subtitleVerticalOffsetFraction)
                             },
                             onDragCancel = { isDraggingSubtitleOffset = false },
                             onDrag = { change, dragAmount ->
@@ -416,9 +403,7 @@ fun PortraitSubtitleHost(
                 onLargeTextChange = { largeTextEnabled = it },
                 onResetPosition = {
                     subtitleVerticalOffsetFraction = 0f
-                    scope.launch {
-                        SettingsManager.setSubtitlePortraitVerticalOffsetFraction(context, 0f)
-                    }
+                    onSubtitlePortraitOffsetFractionChange(0f)
                 },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)

@@ -1519,6 +1519,12 @@ class VideoPlaybackViewModel(application: Application) : AndroidViewModel(applic
         }
     }
 
+    fun setSubtitlePortraitVerticalOffsetFraction(value: Float) {
+        viewModelScope.launch {
+            com.android.purebilibili.core.store.SettingsManager.setSubtitlePortraitVerticalOffsetFraction(app, value)
+        }
+    }
+
     fun setLongPressSpeedLockEnabled(enabled: Boolean) {
         viewModelScope.launch {
             com.android.purebilibili.core.store.SettingsManager.setLongPressSpeedLockEnabled(app, enabled)
